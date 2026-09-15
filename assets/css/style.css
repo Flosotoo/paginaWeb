@@ -1,0 +1,100 @@
+/* ==================================================
+   EDUSALDO - ESTILOS GENERALES
+   ================================================== */
+
+body {
+    background-color: #f5f7fa;
+    font-family: Arial, sans-serif;
+}
+
+
+/* ==================================================
+   MÓDULO APODERADO
+   ================================================== */
+
+
+/* Encabezado del módulo Apoderado */
+.encabezado-apoderado {
+    background-color: #1f4e79;
+    color: white;
+    padding: 25px 0;
+}
+
+
+/* Menú del Apoderado */
+.menu-apoderado {
+    background-color: white;
+    border-bottom: 1px solid #dddddd;
+}
+
+.menu-apoderado a {
+    color: #333333;
+    text-decoration: none;
+}
+
+.menu-apoderado a:hover {
+    color: #1f4e79;
+}
+
+
+/* Sección de bienvenida */
+.bienvenida-apoderado {
+    margin-top: 40px;
+    margin-bottom: 35px;
+}
+
+.bienvenida-apoderado h2 {
+    color: #1f4e79;
+    font-weight: bold;
+}
+
+
+/* Tarjetas del menú principal */
+.tarjeta-apoderado {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.10);
+    transition: 0.3s;
+}
+
+.tarjeta-apoderado:hover {
+    transform: translateY(-4px);
+}
+
+.tarjeta-apoderado h3 {
+    color: #1f4e79;
+}
+
+
+/* Botones propios de EduSaldo */
+.btn-edusaldo {
+    background-color: #1f4e79;
+    color: white;
+    border: none;
+}
+
+.btn-edusaldo:hover {
+    background-color: #163a5c;
+    color: white;
+}
+
+
+/* Pie de página */
+.footer-edusaldo {
+    background-color: #1f2933;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin-top: 60px;
+}
+
+header.encabezado-apoderado {
+    background-color: #1f4e79 !important;
+    color: white !important;
+    padding: 25px 0;
+}
+
+header.encabezado-apoderado h1,
+header.encabezado-apoderado p {
+    color: white !important;
+}
