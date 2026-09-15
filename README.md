@@ -20,12 +20,14 @@ En algunas librerías escolares administradas por Centros de Padres, los aportes
 
 Desarrollar una aplicación web para gestionar una librería escolar y centralizar el registro de productos, usuarios, compras y saldos asociados a estudiantes, utilizando HTML, CSS y JavaScript, con el propósito de mejorar la trazabilidad, transparencia y control de las operaciones.
 
-## Roles
+## Organización y roles
 
-- **Cliente / Apoderado:** accede a la tienda y a las funciones habilitadas para cliente.
-- **Vendedor:** opera funciones de atención relacionadas con la librería.
-- **Administrador:** administra productos, usuarios y configuración.
-- **Estudiante:** entidad del dominio; en la primera etapa no requiere inicio de sesión.
+- **Organización:** Centro de Padres, responsable de gestionar la librería escolar.
+- **Sistema:** EduSaldo.
+- **Apoderado:** gestiona estudiantes, saldo, movimientos y reservas.
+- **Encargado de Librería / Vendedor:** gestiona stock, prepara reservas y entrega materiales.
+- **Administrador:** administra usuarios, estudiantes, productos y la configuración del sistema.
+- **Estudiante:** entidad del dominio; no requiere inicio de sesión.
 
 ## Alcance inicial
 
