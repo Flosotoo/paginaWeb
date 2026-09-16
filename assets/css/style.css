@@ -9,6 +9,7 @@ html {
 }
 
 body {
+  margin: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -41,6 +42,12 @@ body {
   font-size: var(--ce-txt-15);
   text-decoration: none;
   border-radius: 0 0 6px 0;
+}
+
+#header-container {
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .ce-titulo-pagina {
@@ -88,13 +95,9 @@ body {
 }
 
 .ce-cabecera {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-
-  background-color: var(--ce-papel);   /* opaco, si no el texto se transparenta */
+  background-color: var(--ce-papel);
   color: var(--ce-tinta);
-  border-bottom: 1px solid var(--ce-borde); 
+  border-bottom: 1px solid var(--ce-borde);
   box-shadow: 0 1px 3px rgba(59, 42, 33, 0.06);
 }
 
