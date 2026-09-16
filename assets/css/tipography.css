@@ -1,0 +1,42 @@
+:root {
+
+  /* Georgia para títulos, Helvetica para cuerpo e interfaz, Arial para texto secundario y ayudas de campo, Courier    → plata, folios, RUT y fechas*/
+  --ce-fuente-titulo:      Georgia, "Times New Roman", serif;
+  --ce-fuente-cuerpo:      Helvetica, Arial, sans-serif;
+  --ce-fuente-secundaria:  Arial, Helvetica, sans-serif;
+  --ce-fuente-dato:        "Courier New", Courier, monospace;
+
+  --ce-txt-12: 12px;   /* etiquetas, metadatos, pie de página          */
+  --ce-txt-13: 13px;   /* texto secundario y ayudas de campo (Arial)   */
+  --ce-txt-15: 15px;   /* cuerpo base y controles de interfaz          */
+  --ce-txt-18: 18px;   /* subtítulos y cifras destacadas               */
+  --ce-txt-22: 22px;   /* títulos de sección                           */
+  --ce-txt-30: 30px;   /* título de página, uno por vista              */
+
+  /*Altura de línea*/
+  --ce-interlineado-titulo: 1.25;
+  --ce-interlineado-cuerpo: 1.6;
+  --ce-interlineado-dato:   1.4;
+
+  /* Espaciado, siempre múltiplos de 4 */
+  --ce-esp-4:  4px;
+  --ce-esp-8:  8px;
+  --ce-esp-12: 12px;
+  --ce-esp-16: 16px;
+  --ce-esp-20: 20px;
+  --ce-esp-24: 24px;
+  --ce-esp-32: 32px;
+  --ce-esp-40: 40px;
+  --ce-esp-48: 48px;
+  --ce-esp-64: 64px;
+
+  /* Color  */
+  --ce-papel:         #FAF6F2;   /* fondo general                        */
+  --ce-superficie:    #FFFFFF;   /* tarjetas y tablas sobre el papel     */
+  --ce-tinta:         #3B2A21;   /* texto principal · 11.6:1 sobre papel */
+  --ce-tinta-tenue:   #7A6A60;   /* texto secundario                     */
+  --ce-borde:         #E4DAD1;
+  --ce-tierra:        #9E5837;   /* primario                             */
+  --ce-tierra-oscuro: #7A4229;   /* hover del primario                   */
+  --ce-sello:         #8C2018;   /* error, vencido, saldo corto          */
+}
