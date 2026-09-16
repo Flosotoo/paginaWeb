@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EduSaldo - Aportar saldo</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+          <!-- Estilos propios de EduSaldo -->
+<link rel="stylesheet" href="../../assets/css/style.css">
+
+
+</head>
+
+   
+
+
+
+
+<body>
+
+    <!-- Encabezado -->
+    <header class="encabezado-apoderado">
+        <div class="container">
+            <h1>EduSaldo</h1>
+            <p class="mb-0">Librería Escolar Digital</p>
+        </div>
+    </header>
+
+    <!-- Menú del apoderado -->
+    <nav class="navbar navbar-expand-lg menu-apoderado">
+        <div class="container">
+
+            <a class="navbar-brand" href="inicio.html">
+                Inicio
+            </a>
+
+            <div>
+                <a class="btn btn-light" href="mis-hijos.html">
+                    Mis hijos
+                </a>
+
+                <a class="btn btn-light" href="mis-reservas.html">
+                    Mis reservas
+                </a>
+
+                <a class="btn btn-light" href="movimientos.html">
+                    Movimientos
+                </a>
+
+                
+                
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+ <main class="container mt-5">
+
+    <!-- Título de la página -->
+    <section class="mb-4">
+        <h2>Aportar saldo</h2>
+
+        <p>
+            Selecciona uno de tus hijos e ingresa el monto
+            que deseas aportar.
+        </p>
+    </section>
+
+
+    <!-- Formulario de aporte -->
+    <section class="row">
+
+        <div class="col-md-6">
+
+            <form id="formAporte">
+
+                <!-- Selección del hijo -->
+                <div class="mb-3">
+
+                    <label for="hijo" class="form-label">
+                        Hijo
+                    </label>
+
+                    <select id="hijo"
+                            name="hijo"
+                            class="form-select"
+                            required>
+
+                        <option value="">
+                            Selecciona un hijo
+                        </option>
+
+                        <option value="martin">
+                            Martín Pérez
+                        </option>
+
+                        <option value="sofia">
+                            Sofía Pérez
+                        </option>
+
+                    </select>
+
+                    <div class="invalid-feedback">
+                        Debes seleccionar un hijo.
+                    </div>
+
+                </div>
+
+
+                <!-- Monto -->
+                <div class="mb-3">
+
+                    <label for="monto" class="form-label">
+                        Monto del aporte
+                    </label>
+
+                    <input type="number"
+                           id="monto"
+                           name="monto"
+                           class="form-control"
+                           min="1"
+                           required>
+
+                    <div class="form-text">
+                        Ingresa el monto que deseas aportar.
+                    </div>
+
+                    <div class="invalid-feedback">
+                        Debes ingresar un monto mayor a $0.
+                    </div>
+
+                </div>
+
+
+                <!-- Botones -->
+                <button type="submit"
+                        class="btn btn-edusaldo">
+                    Confirmar aporte
+                </button>
+
+                <a href="mis-hijos.html"
+                   class="btn btn-outline-secondary">
+                    Cancelar
+                </a>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+
+</main>
+     
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="footer-edusaldo">
+        <p class="mb-0">
+            © 2026 EduSaldo - Librería Escolar Digital
+        </p>
+    </footer>
+
+    <!-- JavaScript de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <!-- JavaScript de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <!-- JavaScript del módulo Apoderado -->
+    <script src="../../assets/js/apoderado.js"></script>
+
+
+</body>
+
+</html>
