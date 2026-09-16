@@ -1,27 +1,84 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduSaldo — Inicio</title>
+    <link rel="stylesheet" href="assets/css/typography.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="assets/css/buttons.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page</title>
-    <!-- Latest compiled and minified CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <main id="contenido-principal" class="ce-principal">
+      <section class="ce-portada">
+        <div class="ce-contenedor">
+          <h1 class="ce-titulo-pagina">La diferencia es clara</h1>
+          <p class="ce-bajada">
+            La plata del Centro General de Padres merece la misma transparencia
+            que cualquier cuenta bancaria.
+          </p>
+          <div class="ce-acciones">
+            <a href="pages/acceso/registro.html" class="btn-ce btn-ce--primario"
+              >Crear cuenta</a
+            >
+            <a
+              href="pages/publico/como-funciona.html"
+              class="btn-ce btn-ce--secundario"
+              >Cómo funciona</a
+            >
+          </div>
+        </div>
+      </section>
 
-</head>
+      <section class="ce-seccion">
+        <div class="ce-contenedor">
+          <h2 class="ce-titulo-seccion">El problema</h2>
+          <p>
+            Hoy el aporte que hace un apoderado queda anotado en un cuaderno.
+            Nadie puede comprobar en qué se gastó ni qué pasó con el sobrante a
+            fin de año, y eso genera desconfianza entre apoderados que además
+            son vecinos.
+          </p>
+        </div>
+      </section>
 
-<body>
-<h1>Cartola Escolar</h1>
-<a href="pages/publico/como-funciona.html">Cómo funciona</a>
-<a href="pages/publico/contacto.html">Contacto</a>
-<a href="index.html">Cartola Escolar</a>
-<a href="pages/publico/nosotros.html">Nosotros</a>
+      <section class="ce-seccion">
+        <div class="ce-contenedor">
+          <h2 class="ce-titulo-seccion">Qué hace EduSaldo</h2>
+          <div class="ce-grilla">
+            <article class="ce-tarjeta">
+              <span class="ce-etiqueta">Apoderado</span>
+              <h3 class="ce-subtitulo">Paga el aporte</h3>
+              <p>
+                Paga en línea con Webpay y elige a cuál de sus pupilos se
+                acredita el saldo.
+              </p>
+            </article>
+            <article class="ce-tarjeta">
+              <span class="ce-etiqueta">Centro General</span>
+              <h3 class="ce-subtitulo">Confirma la transferencia</h3>
+              <p>
+                La pasarela confirma el pago al centro y el saldo queda
+                acreditado al pupilo automáticamente.
+              </p>
+            </article>
+            <article class="ce-tarjeta">
+              <span class="ce-etiqueta">Biblioteca</span>
+              <h3 class="ce-subtitulo">Entrega los materiales</h3>
+              <p>
+                El descuento del saldo queda registrado solo, con fecha, monto y
+                responsable.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
 
-<p>La diferencia es clara</p>
-<p>La plata del Centro General de Padres merece la misma transparencia que cualquier cuenta bancaria</p>
+    <div id="footer-container"></div>
 
-    <!-- Latest compiled JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
+    <script src="assets/js/header-footer.js"></script>
+  </body>
 </html>

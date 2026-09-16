@@ -43,6 +43,44 @@ body {
   border-radius: 0 0 6px 0;
 }
 
+.ce-titulo-pagina {
+  font-family: var(--ce-fuente-titulo);
+  font-size: var(--ce-txt-30);
+  line-height: var(--ce-interlineado-titulo);
+  font-weight: 700;
+  color: var(--ce-tinta);
+  margin: 0 0 var(--ce-esp-16);
+}
+.ce-titulo-seccion {
+  font-family: var(--ce-fuente-titulo);
+  font-size: var(--ce-txt-22);
+  line-height: var(--ce-interlineado-titulo);
+  font-weight: 700;
+  color: var(--ce-tinta);
+  margin: 0 0 var(--ce-esp-12);
+}
+.ce-subtitulo {
+  font-family: var(--ce-fuente-titulo);
+  font-size: var(--ce-txt-18);
+  line-height: var(--ce-interlineado-titulo);
+  font-weight: 700;
+  color: var(--ce-tinta);
+  margin: 0 0 var(--ce-esp-8);
+}
+.ce-bajada {
+  font-family: var(--ce-fuente-cuerpo);
+  font-size: var(--ce-txt-18);
+  line-height: var(--ce-interlineado-cuerpo);
+  color: var(--ce-tinta-tenue);
+  margin: 0 0 var(--ce-esp-24);
+}
+.ce-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ce-esp-12);
+  margin-top: var(--ce-esp-16);
+}
+
 .ce-saltar:focus {
   left: 0;
   top: 0;
@@ -56,7 +94,7 @@ body {
 
   background-color: var(--ce-papel);   /* opaco, si no el texto se transparenta */
   color: var(--ce-tinta);
-  border-bottom: 1px solid var(--ce-borde);
+  border-bottom: 1px solid var(--ce-borde); 
   box-shadow: 0 1px 3px rgba(59, 42, 33, 0.06);
 }
 
@@ -172,7 +210,7 @@ body {
 /*  Bloques de contenido */
 .ce-portada {
   padding-block: var(--ce-esp-64);
-  border-bottom: 1px solid var(--ce-borde);
+  /* border-bottom: 1px solid var(--ce-borde); */
 }
 
 .ce-tarjeta {
