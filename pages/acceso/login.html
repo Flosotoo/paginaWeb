@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión · Cartola Escolar</title>
+
+    <link rel="stylesheet" href="../../assets/css/typography.css">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="../../assets/css/buttons.css">
+    <link rel="stylesheet" href="../../assets/css/forms.css">
+</head>
+
+<body>
+
+    <a class="ce-saltar" href="#contenido">Saltar al contenido</a>
+
+    <header class="ce-cabecera">
+        <div class="ce-contenedor ce-cabecera__interior">
+
+            <a class="ce-logo" href="../../index.html">
+                <svg class="ce-logo__marca" viewBox="0 0 32 32" aria-hidden="true">
+                    <rect x="2" y="7" width="6" height="18" rx="2" fill="#9E5837" />
+                    <rect x="11" y="3" width="6" height="22" rx="2" fill="#7A4229" />
+                    <rect x="20" y="12" width="6" height="13" rx="2" fill="#C99070" />
+                </svg>
+                Cartola Escolar
+            </a>
+
+            <div class="ce-cabecera__acciones">
+                <nav class="ce-nav" aria-label="Principal">
+                    <ul>
+                        <li><a href="../publico/como-funciona.html">Cómo funciona</a></li>
+                        <li><a href="../publico/nosotros.html">Nosotros</a></li>
+                        <li><a href="../publico/contacto.html">Contacto</a></li>
+                        <li><a href="pages/acceso/login.html">Iniciar sesión</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="ce-principal" id="contenido">
+        <div class="ce-contenedor">
+
+            <section class="ce-panel" aria-labelledby="t-login">
+
+                <h1 class="ce-panel__titulo" id="t-login">Iniciar sesión</h1>
+                <p class="ce-panel__bajada">Entra con el correo que registraste en el
+                    establecimiento.</p>
+
+                <!-- Aviso de error general. El JS lo muestra cuando las credenciales
+                     no son válidas. Se deja oculto en el marcado. -->
+                <p class="ce-aviso ce-aviso--error" id="aviso-credenciales" role="alert" hidden>
+                    El correo o la contraseña no son correctos.
+                </p>
+
+                <!-- HU13 · Iniciar sesión en el sistema
+                     Las validaciones nativas cubren formato y largo. El mensaje
+                     personalizado por campo (CA3) lo agrega el JS. -->
+                <form action="#" method="post" class="ce-formulario">
+
+                    <!-- CA1: correo de hasta 100 caracteres, dominios permitidos -->
+                    <div class="ce-campo">
+                        <label for="correo">
+                            Correo electrónico
+                            <span class="ce-obligatorio" aria-hidden="true">*</span>
+                        </label>
+                        <input type="email" id="correo" name="correo" class="ce-control"
+                            maxlength="100" required autocomplete="email"
+                            placeholder="nombre@gmail.com"
+                            pattern="[^@\s]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)">
+                        <span class="ce-ayuda">Solo se aceptan los dominios duoc.cl,
+                            profesor.duoc.cl y gmail.com.</span>
+                        <span class="ce-error" id="error-correo" role="alert"></span>
+                    </div>
+
+                    <!-- CA2: contraseña entre 4 y 10 caracteres -->
+                    <div class="ce-campo">
+                        <label for="clave">
+                            Contraseña
+                            <span class="ce-obligatorio" aria-hidden="true">*</span>
+                        </label>
+                        <input type="password" id="clave" name="clave" class="ce-control"
+                            minlength="4" maxlength="10" required autocomplete="current-password">
+                        <span class="ce-ayuda">Entre 4 y 10 caracteres.</span>
+                        <span class="ce-error" id="error-clave" role="alert"></span>
+                    </div>
+
+                    <div class="ce-formulario__acciones">
+                        <button type="submit" class="btn-ce btn-ce--primario btn-ce--ancho">
+                            Entrar
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- Opción para crear una cuenta, pedida explícitamente -->
+                <p class="ce-panel__pie">
+                    ¿Todavía no tienes cuenta?
+                    <a href="registro.html" class="btn-ce btn-ce--texto">Crear una cuenta</a>
+                </p>
+
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="ce-pie">
+        <div class="ce-contenedor ce-pie__interior">
+            <p>Cartola Escolar · Proyecto Fullstack II · 2026</p>
+            <ul>
+                <li><a href="../publico/como-funciona.html">Cómo funciona</a></li>
+                <li><a href="../publico/nosotros.html">Nosotros</a></li>
+                <li><a href="../publico/contacto.html">Contacto</a></li>
+            </ul>
+        </div>
+    </footer>
+
+</body>
+
+</html>

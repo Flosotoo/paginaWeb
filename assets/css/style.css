@@ -1,36 +1,46 @@
+/* Evita que padding + width: 100% desborde en celular */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+ 
 html {
   scroll-padding-top: 80px;
 }
-
+ 
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
 }
-
+ 
 body {
+  margin: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
-
+ 
 .ce-principal {
   flex: 1;
   padding-block: var(--ce-esp-40) var(--ce-esp-64);
 }
-
+ 
 .ce-contenedor {
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
   padding-inline: var(--ce-esp-24);
 }
-
+ 
 @media (max-width: 560px) {
   .ce-contenedor {
     padding-inline: var(--ce-esp-16);
   }
 }
+ 
+/* Saltar al contenido */
 .ce-saltar {
   position: fixed;
   left: -9999px;
@@ -42,24 +52,63 @@ body {
   text-decoration: none;
   border-radius: 0 0 6px 0;
 }
-
+ 
 .ce-saltar:focus {
   left: 0;
   top: 0;
   color: #FFF;
 }
-
-.ce-cabecera {
+ 
+/* Títulos y bajada */
+.ce-titulo-pagina {
+  font-family: var(--ce-fuente-titulo);
+  font-size: var(--ce-txt-30);
+  line-height: var(--ce-interlineado-titulo);
+  font-weight: 700;
+  color: var(--ce-tinta);
+  margin: 0 0 var(--ce-esp-16);
+}
+ 
+.ce-titulo-seccion {
+  font-family: var(--ce-fuente-titulo);
+  font-size: var(--ce-txt-22);
+  line-height: var(--ce-interlineado-titulo);
+  font-weight: 700;
+  color: var(--ce-tinta);
+  margin: 0 0 var(--ce-esp-12);
+}
+ 
+.ce-subtitulo {
+  font-family: var(--ce-fuente-titulo);
+  font-size: var(--ce-txt-18);
+  line-height: var(--ce-interlineado-titulo);
+  font-weight: 700;
+  color: var(--ce-tinta);
+  margin: 0 0 var(--ce-esp-8);
+}
+ 
+.ce-bajada {
+  font-family: var(--ce-fuente-cuerpo);
+  font-size: var(--ce-txt-18);
+  line-height: var(--ce-interlineado-cuerpo);
+  color: var(--ce-tinta-tenue);
+  margin: 0 0 var(--ce-esp-24);
+}
+ 
+/* Cabecera (la inyecta header-footer.js dentro de #header-container) */
+#header-container {
   position: sticky;
   top: 0;
   z-index: 20;
-
-  background-color: var(--ce-papel);   /* opaco, si no el texto se transparenta */
+}
+ 
+.ce-cabecera {
+  background-color: var(--ce-papel);
   color: var(--ce-tinta);
   border-bottom: 1px solid var(--ce-borde);
   box-shadow: 0 1px 3px rgba(59, 42, 33, 0.06);
 }
-
+ 
 .ce-cabecera__interior {
   display: flex;
   align-items: center;
@@ -68,8 +117,8 @@ body {
   min-height: 64px;
   padding-block: var(--ce-esp-12);
 }
-
-/*Logo: siempre lleva al inicio */
+ 
+/* Logo: texto fijo, no es enlace (para volver al inicio se usa "Inicio") */
 .ce-logo {
   display: inline-flex;
   align-items: center;
@@ -80,23 +129,27 @@ body {
   color: var(--ce-tinta);
   text-decoration: none;
   line-height: 1;
+  cursor: default;
+  user-select: none;
 }
-
-.ce-logo:hover {
+ 
+/* Solo si algún día el logo vuelve a ser un <a> */
+a.ce-logo:hover {
   color: var(--ce-tierra-oscuro);
 }
-
-.ce-logo:focus-visible {
+ 
+a.ce-logo:focus-visible {
   outline: 3px solid var(--ce-tierra);
   outline-offset: 4px;
   border-radius: 4px;
 }
-
+ 
 .ce-logo__marca {
   width: 32px;
   height: 32px;
   flex: none;
 }
+ 
 .ce-nav ul {
   display: flex;
   align-items: center;
@@ -105,7 +158,7 @@ body {
   padding: 0;
   list-style: none;
 }
-
+ 
 .ce-nav a {
   display: block;
   padding: var(--ce-esp-8) var(--ce-esp-12);
@@ -116,30 +169,30 @@ body {
   text-decoration: none;
   transition: background-color 140ms ease, color 140ms ease;
 }
-
+ 
 .ce-nav a:hover {
   background-color: #F0E6DE;
   color: var(--ce-tierra-oscuro);
 }
-
+ 
 .ce-nav a:focus-visible {
   outline: 3px solid var(--ce-tierra);
   outline-offset: 2px;
 }
-
+ 
 .ce-nav a[aria-current="page"] {
   color: var(--ce-tierra);
   font-weight: bold;
   box-shadow: inset 0 -2px 0 var(--ce-tierra);
   border-radius: 6px 6px 0 0;
 }
-
+ 
 /* En celular la cabecera se compacta */
 @media (max-width: 640px) {
   html {
     scroll-padding-top: 108px;
   }
-
+ 
   .ce-cabecera__interior {
     flex-wrap: wrap;
     justify-content: center;
@@ -147,34 +200,46 @@ body {
     min-height: 0;
     padding-block: var(--ce-esp-8);
   }
-
+ 
   .ce-logo {
     font-size: var(--ce-txt-18);
   }
-
+ 
   .ce-logo__marca {
     width: 24px;
     height: 24px;
   }
-
+ 
   .ce-nav ul {
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--ce-esp-4);
   }
-
+ 
   .ce-nav a {
     padding: var(--ce-esp-4) var(--ce-esp-8);
     font-size: var(--ce-txt-13);
   }
 }
-
-/*  Bloques de contenido */
+ 
+/* Bloques de contenido */
 .ce-portada {
   padding-block: var(--ce-esp-64);
-  border-bottom: 1px solid var(--ce-borde);
+  /* border-bottom: 1px solid var(--ce-borde); */
 }
-
+ 
+.ce-seccion {
+  padding-block: var(--ce-esp-40) 0;
+}
+ 
+.ce-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ce-esp-12);
+  margin-top: var(--ce-esp-24);
+}
+ 
 .ce-tarjeta {
   background-color: var(--ce-superficie);
   border: 1px solid var(--ce-borde);
@@ -182,20 +247,259 @@ body {
   padding: var(--ce-esp-24);
   margin-bottom: var(--ce-esp-24);
 }
-
+ 
+.ce-tarjeta > :first-child { margin-top: 0; }
+.ce-tarjeta > :last-child  { margin-bottom: 0; }
+ 
+/* La etiqueta de actor queda pegada al título de la tarjeta */
+.ce-tarjeta .ce-etiqueta + .ce-subtitulo {
+  margin-top: var(--ce-esp-4);
+}
+ 
 /* Grilla que se acomoda sola: tres columnas, dos o una según el ancho */
 .ce-grilla {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--ce-esp-24);
 }
+ 
+/* Dos columnas: formulario + lateral (Contacto) */
+.ce-dos-columnas {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--ce-esp-24);
+  align-items: start;
+}
+ 
+.ce-dos-columnas > .ce-tarjeta {
+  margin-bottom: 0;
+}
+ 
+@media (max-width: 800px) {
+  .ce-dos-columnas {
+    grid-template-columns: 1fr;
+  }
+}
+ 
+/* Pasos numerados (Cómo funciona) */
+.ce-pasos {
+  counter-reset: paso;
+  display: grid;
+  gap: var(--ce-esp-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+ 
+.ce-pasos > li {
+  counter-increment: paso;
+  position: relative;
+  margin-bottom: 0;
+  padding-left: var(--ce-esp-64);
+}
+ 
+.ce-pasos > li::before {
+  content: counter(paso);
+  position: absolute;
+  top: var(--ce-esp-24);
+  left: var(--ce-esp-20);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--ce-tierra);
+  color: #FFF;
+  font-family: var(--ce-fuente-dato);
+  font-weight: bold;
+}
+ 
+@media (max-width: 560px) {
+  .ce-pasos > li {
+    padding-left: var(--ce-esp-24);
+    padding-top: var(--ce-esp-64);
+  }
+}
+ 
+/* Video embebido responsive  */
+.ce-video {
+  max-width: 800px;
+  overflow: hidden;
+  border: 1px solid var(--ce-borde);
+  border-radius: 8px;
+  background-color: var(--ce-tinta);
+}
+ 
+.ce-video iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;   /* mantiene la proporción en cualquier ancho */
+  height: auto;
+  border: 0;
+}
+ 
+/* Preguntas frecuentes */
+.ce-preguntas details {
+  padding-block: var(--ce-esp-12);
+  border-bottom: 1px solid var(--ce-borde);
+}
+ 
+.ce-preguntas details:last-child {
+  border-bottom: none;
+}
+ 
+.ce-preguntas summary {
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--ce-tinta);
+}
+ 
+.ce-preguntas summary:focus-visible {
+  outline: 3px solid var(--ce-tierra);
+  outline-offset: 2px;
+}
+ 
+.ce-preguntas details p {
+  margin: var(--ce-esp-8) 0 0;
+}
+ 
+/* Formularios */
+.ce-campo {
+  margin-bottom: var(--ce-esp-20);
+}
+ 
+.ce-campo__etiqueta {
+  display: block;
+  margin-bottom: var(--ce-esp-4);
+  font-weight: bold;
+}
+ 
+.ce-control {
+  display: block;
+  width: 100%;
+  padding: var(--ce-esp-8) var(--ce-esp-12);
+  border: 1px solid var(--ce-borde);
+  border-radius: 6px;
+  background-color: var(--ce-superficie);
+  color: var(--ce-tinta);
+  font-family: var(--ce-fuente-cuerpo);
+  font-size: var(--ce-txt-15);
+  line-height: 1.5;
+}
+ 
+textarea.ce-control {
+  resize: vertical;
+}
+ 
+.ce-control:focus {
+  outline: none;
+  border-color: var(--ce-tierra);
+  box-shadow: 0 0 0 3px rgba(158, 88, 55, 0.2);
+}
+ 
+/* Estados que pone validaciones.js */
+.ce-control.is-invalid {
+  border-color: var(--ce-sello);
+  box-shadow: inset 3px 0 0 var(--ce-sello);
+}
+ 
+.ce-control.is-invalid:focus {
+  box-shadow: inset 3px 0 0 var(--ce-sello), 0 0 0 3px rgba(140, 32, 24, 0.2);
+}
+ 
+.ce-control.is-valid {
+  border-color: #2F6B3F;
+}
+ 
+.ce-campo__pie {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ce-esp-12);
+}
+ 
+.ce-contador {
+  margin-left: auto;
+  margin-top: var(--ce-esp-4);
+  flex: none;
+  font-family: var(--ce-fuente-dato);
+  font-size: var(--ce-txt-12);
+  color: var(--ce-tinta-tenue);
+}
+ 
+.ce-contador--excedido {
+  color: var(--ce-sello);
+  font-weight: bold;
+}
+ 
+/* Aviso de resultado del envío */
+.ce-aviso {
+  margin-bottom: var(--ce-esp-20);
+  padding: var(--ce-esp-12) var(--ce-esp-16);
+  border-left: 4px solid;
+  border-radius: 6px;
+}
+ 
+.ce-aviso p {
+  margin: 0;
+}
+ 
+.ce-aviso--ok {
+  border-color: #2F6B3F;
+  background-color: #EAF3EC;
+  color: #1F4A2B;
+}
+ 
+.ce-aviso--error {
+  border-color: var(--ce-sello);
+  background-color: #F9EAE8;
+  color: #6E170F;
+}
+ 
+/* Datos de contacto */
+.ce-datos {
+  margin: 0 0 var(--ce-esp-16);
+}
+ 
+.ce-datos dt {
+  display: block;
+  font-weight: normal;
+}
+ 
+.ce-datos dd {
+  margin: 0 0 var(--ce-esp-16);
+}
+ 
+/* Centros de padres (Nosotros) */
 
+/* Quita viñetas y sangría a una lista que se muestra como grilla */
+.ce-lista-limpia {
+  margin: var(--ce-esp-24) 0 0;
+  padding: 0;
+  list-style: none;
+}
+ 
+.ce-grilla > .ce-tarjeta {
+  margin-bottom: 0;
+}
+ 
+/* La tarjeta crece a lo alto y el enlace queda siempre abajo */
+.ce-centro {
+  display: flex;
+  flex-direction: column;
+}
+ 
+.ce-centro .ce-acciones {
+  margin-top: auto;
+  padding-top: var(--ce-esp-8);
+}
+ 
+/* Pie*/
 .ce-pie {
   background-color: var(--ce-papel);
   border-top: 1px solid var(--ce-borde);
   padding-block: var(--ce-esp-32);
 }
-
+ 
 .ce-pie__interior {
   display: flex;
   flex-wrap: wrap;
@@ -203,14 +507,14 @@ body {
   justify-content: space-between;
   gap: var(--ce-esp-16);
 }
-
+ 
 .ce-pie p {
   margin: 0;
   font-family: var(--ce-fuente-secundaria);
   font-size: var(--ce-txt-12);
   color: var(--ce-tinta-tenue);
 }
-
+ 
 .ce-pie ul {
   display: flex;
   flex-wrap: wrap;
@@ -219,13 +523,13 @@ body {
   padding: 0;
   list-style: none;
 }
-
+ 
 .ce-pie a {
   font-family: var(--ce-fuente-secundaria);
   font-size: var(--ce-txt-12);
   color: var(--ce-tinta-tenue);
 }
-
+ 
 .ce-pie a:hover {
   color: var(--ce-tierra-oscuro);
 }

@@ -1,24 +1,121 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Los pasos para aportar saldo a un pupilo, reservar materiales y retirarlos en la librería del colegio." />
+    <title>EduSaldo — Cómo funciona</title>
+    <link rel="stylesheet" href="../../assets/css/typography.css" />
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+    <link rel="stylesheet" href="../../assets/css/buttons.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>comoFunciona</title>
-    <!-- Latest compiled and minified CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <main id="contenido-principal" class="ce-principal">
+      <section class="ce-portada">
+        <div class="ce-contenedor">
+          <h1 class="ce-titulo-pagina">Cómo funciona</h1>
+          <p class="ce-bajada">
+            Del pago en línea al retiro en el mesón. Cada paso queda registrado
+            con fecha, monto y responsable.
+          </p>
+        </div>
+      </section>
 
-</head>
+      <!-- Es una secuencia real, por eso va en <ol> -->
+      <section class="ce-seccion" aria-labelledby="titulo-recorrido">
+        <div class="ce-contenedor">
+          <h2 id="titulo-recorrido" class="ce-titulo-seccion">El recorrido de un aporte</h2>
+          <ol class="ce-pasos">
+            <li class="ce-tarjeta">
+              <span class="ce-etiqueta">Apoderado</span>
+              <h3 class="ce-subtitulo">Crea su cuenta</h3>
+              <p>
+                Se registra con su RUN y su correo, y acepta el tratamiento de
+                sus datos y los de sus pupilos.
+              </p>
+            </li>
+            <li class="ce-tarjeta">
+              <span class="ce-etiqueta">Centro General</span>
+              <h3 class="ce-subtitulo">Vincula a los pupilos</h3>
+              <p>
+                Asocia a cada estudiante con su apoderado usando la nómina del
+                colegio. Cada apoderado ve solo a sus pupilos.
+              </p>
+            </li>
+            <li class="ce-tarjeta">
+              <span class="ce-etiqueta">Apoderado</span>
+              <h3 class="ce-subtitulo">Paga el aporte</h3>
+              <p>
+                Elige al pupilo, indica el monto y paga con Webpay. Cuando la
+                pasarela confirma, el saldo queda acreditado solo.
+              </p>
+            </li>
+            <li class="ce-tarjeta">
+              <span class="ce-etiqueta">Apoderado</span>
+              <h3 class="ce-subtitulo">Reserva los materiales</h3>
+              <p>
+                Revisa el catálogo de la librería de su colegio, filtra por
+                nivel o materia y reserva lo que falta.
+              </p>
+            </li>
+            <li class="ce-tarjeta">
+              <span class="ce-etiqueta">Librería</span>
+              <h3 class="ce-subtitulo">Entrega los materiales</h3>
+              <p>
+                Prepara la reserva y la entrega con su código. El descuento del
+                saldo queda en la cartola del pupilo.
+              </p>
+            </li>
+          </ol>
+        </div>
+      </section>
 
-<body>
-<h1>Como Funciona</h1>
-<a href="pages/publico/como-funciona.html">Cómo funciona</a>
-<a href="pages/publico/contacto.html">Contacto</a>
-<a href="index.html">Cartola Escolar</a>
-<a href="pages/publico/nosotros.html">Nosotros</a>
+      <section class="ce-seccion" aria-labelledby="titulo-preguntas">
+        <div class="ce-contenedor">
+          <h2 id="titulo-preguntas" class="ce-titulo-seccion">Preguntas frecuentes</h2>
+          <div class="ce-tarjeta ce-preguntas">
+            <details>
+              <summary>¿Puedo abonar distinto a cada hijo?</summary>
+              <p>
+                Sí. Cada pago se acredita a un solo pupilo y su saldo es
+                independiente del de sus hermanos.
+              </p>
+            </details>
+            <details>
+              <summary>¿Cómo sé que mi pago llegó?</summary>
+              <p>
+                El aporte aparece en la cartola del pupilo con estado Pagado en
+                cuanto la pasarela lo confirma.
+              </p>
+            </details>
+            <details>
+              <summary>¿Qué pasa si cierro el navegador mientras pago?</summary>
+              <p>
+                El sistema revisa con Transbank los pagos que quedaron sin
+                confirmar y acredita los que sí se aprobaron.
+              </p>
+            </details>
+            <details>
+              <summary>¿Qué pasa si mi pupilo no retira una reserva?</summary>
+              <p>
+                Al vencer el plazo de retiro la reserva se cancela y el material
+                vuelve a quedar disponible.
+              </p>
+            </details>
+          </div>
 
-    <!-- Latest compiled JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+          <div class="ce-acciones">
+            <a href="../acceso/registro.html" class="btn-ce btn-ce--primario">Crear cuenta</a>
+            <a href="contacto.html" class="btn-ce btn-ce--secundario">Hacer una consulta</a>
+          </div>
+        </div>
+      </section>
+    </main>
 
+    <div id="footer-container"></div>
+
+    <script src="../../assets/js/header-footer.js"></script>
+  </body>
 </html>

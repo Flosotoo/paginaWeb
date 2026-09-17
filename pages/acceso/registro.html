@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear cuenta · Cartola Escolar</title>
+
+    <link rel="stylesheet" href="../../assets/css/typography.css">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="../../assets/css/buttons.css">
+    <link rel="stylesheet" href="../../assets/css/forms.css">
+</head>
+
+<body>
+
+    <a class="ce-saltar" href="#contenido">Saltar al contenido</a>
+
+    <header class="ce-cabecera">
+        <div class="ce-contenedor ce-cabecera__interior">
+
+            <a class="ce-logo" href="../../index.html">
+                <svg class="ce-logo__marca" viewBox="0 0 32 32" aria-hidden="true">
+                    <rect x="2" y="7" width="6" height="18" rx="2" fill="#9E5837" />
+                    <rect x="11" y="3" width="6" height="22" rx="2" fill="#7A4229" />
+                    <rect x="20" y="12" width="6" height="13" rx="2" fill="#C99070" />
+                </svg>
+                Cartola Escolar
+            </a>
+
+            <div class="ce-cabecera__acciones">
+                <nav class="ce-nav" aria-label="Principal">
+                    <ul>
+                        <li><a href="../publico/como-funciona.html">Cómo funciona</a></li>
+                        <li><a href="../publico/nosotros.html">Nosotros</a></li>
+                        <li><a href="../publico/contacto.html">Contacto</a></li>
+                        <li><a href="login.html">Iniciar sesión</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="ce-principal" id="contenido">
+        <div class="ce-contenedor">
+
+            <section class="ce-panel ce-panel--ancho" aria-labelledby="t-registro">
+
+                <h1 class="ce-panel__titulo" id="t-registro">Crear cuenta</h1>
+                <p class="ce-panel__bajada">Los campos marcados con
+                    <span class="ce-obligatorio" aria-hidden="true">*</span> son obligatorios.
+                </p>
+
+                <!-- HU10 · Registrar una cuenta de apoderado
+                     HU11 · Seleccionar la región de residencia
+                     HU12 · Seleccionar la comuna dentro de la región -->
+                <form action="#" method="post" class="ce-formulario">
+
+                    <!-- ============================================================
+                         HU10 · CA1 y CA2 — RUN
+                         7 a 9 caracteres, sin puntos ni guion.
+                         El patrón valida el formato; el dígito verificador
+                         (módulo 11) necesita JavaScript.
+                         ============================================================ -->
+                    <div class="ce-campo">
+                        <label for="run">
+                            RUN
+                            <span class="ce-obligatorio" aria-hidden="true">*</span>
+                        </label>
+                        <input type="text" id="run" name="run" class="ce-control ce-control--dato"
+                            minlength="7" maxlength="9" required inputmode="text"
+                            placeholder="213456789" pattern="[0-9]{6,8}[0-9kK]">
+                        <span class="ce-ayuda">Sin puntos ni guion, de 7 a 9 caracteres. El último
+                            puede ser K.</span>
+                        <span class="ce-error" id="error-run" role="alert"></span>
+                    </div>
+
+                    <!-- ============================================================
+                         HU10 · CA3 — Nombre y apellidos
+                         ============================================================ -->
+                    <div class="ce-campos-par">
+
+                        <div class="ce-campo">
+                            <label for="nombre">
+                                Nombre
+                                <span class="ce-obligatorio" aria-hidden="true">*</span>
+                            </label>
+                            <input type="text" id="nombre" name="nombre" class="ce-control"
+                                maxlength="50" required autocomplete="given-name">
+                            <span class="ce-ayuda">Máximo 50 caracteres.</span>
+                            <span class="ce-error" id="error-nombre" role="alert"></span>
+                        </div>
+
+                        <div class="ce-campo">
+                            <label for="apellidos">
+                                Apellidos
+                                <span class="ce-obligatorio" aria-hidden="true">*</span>
+                            </label>
+                            <input type="text" id="apellidos" name="apellidos" class="ce-control"
+                                maxlength="100" required autocomplete="family-name">
+                            <span class="ce-ayuda">Máximo 100 caracteres.</span>
+                            <span class="ce-error" id="error-apellidos" role="alert"></span>
+                        </div>
+
+                    </div>
+
+                    <!-- ============================================================
+                         HU10 · CA4 — Correo con dominio restringido
+                         ============================================================ -->
+                    <div class="ce-campo">
+                        <label for="correo">
+                            Correo electrónico
+                            <span class="ce-obligatorio" aria-hidden="true">*</span>
+                        </label>
+                        <input type="email" id="correo" name="correo" class="ce-control"
+                            maxlength="100" required autocomplete="email"
+                            placeholder="nombre@gmail.com"
+                            pattern="[^@\s]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)">
+                    </div>
+
+                    <!-- ============================================================
+                         Contraseña
+                         Nota: HU10 no define este campo en sus criterios, pero
+                         HU13 exige contraseña de 4 a 10 caracteres para entrar.
+                         Se usa esa misma regla mientras se corrige la HU.
+                         ============================================================ -->
+                    <div class="ce-campos-par">
+
+                        <div class="ce-campo">
+                            <label for="clave">
+                                Contraseña
+                                <span class="ce-obligatorio" aria-hidden="true">*</span>
+                            </label>
+                            <input type="password" id="clave" name="clave" class="ce-control"
+                                minlength="4" maxlength="10" required autocomplete="new-password">
+                            <span class="ce-ayuda">Entre 4 y 10 caracteres.</span>
+                            <span class="ce-error" id="error-clave" role="alert"></span>
+                        </div>
+
+                        <div class="ce-campo">
+                            <label for="clave-repetir">
+                                Repetir contraseña
+                                <span class="ce-obligatorio" aria-hidden="true">*</span>
+                            </label>
+                            <input type="password" id="clave-repetir" name="clave_repetir"
+                                class="ce-control" minlength="4" maxlength="10" required
+                                autocomplete="new-password">
+                            <span class="ce-ayuda">Debe coincidir con la anterior.</span>
+                            <span class="ce-error" id="error-clave-repetir" role="alert"></span>
+                        </div>
+
+                    </div>
+
+                    <!-- ============================================================
+                         HU11 y HU12 · Región y comuna
+                         El CA1 de HU11 exige que las regiones se carguen desde un
+                         arreglo JavaScript. Estas opciones son solo de respaldo
+                         para que el formulario se vea completo sin JS.
+                         El select de comuna parte deshabilitado: se habilita
+                         recién al elegir región (HU11 CA2) y se recarga con las
+                         comunas de esa región (HU12 CA1).
+                         ============================================================ -->
+                    <div class="ce-campos-par">
+
+                        <div class="ce-campo">
+                            <label for="region">
+                                Región
+                                <span class="ce-obligatorio" aria-hidden="true">*</span>
+                            </label>
+                            <select id="region" name="region" class="ce-control" required>
+                                <option value="">Elige una región</option>
+                                <option value="RM">Región Metropolitana</option>
+                                <option value="V">Valparaíso</option>
+                                <option value="VIII">Biobío</option>
+                            </select>
+                            <span class="ce-error" id="error-region" role="alert"></span>
+                        </div>
+
+                        <div class="ce-campo">
+                            <label for="comuna">
+                                Comuna
+                                <span class="ce-obligatorio" aria-hidden="true">*</span>
+                            </label>
+                            <select id="comuna" name="comuna" class="ce-control" required disabled>
+                                <option value="">Elige primero una región</option>
+                            </select>
+                            <span class="ce-ayuda">Se habilita al seleccionar la región.</span>
+                            <span class="ce-error" id="error-comuna" role="alert"></span>
+                        </div>
+
+                    </div>
+
+                    <!-- ============================================================
+                         HU10 · CA5 — Dirección
+                         ============================================================ -->
+                    <div class="ce-campo">
+                        <label for="direccion">
+                            Dirección
+                            <span class="ce-obligatorio" aria-hidden="true">*</span>
+                        </label>
+                        <textarea id="direccion" name="direccion" class="ce-control" rows="2"
+                            maxlength="300" required autocomplete="street-address"></textarea>
+                        <span class="ce-ayuda">Calle, número y departamento. Máximo 300
+                            caracteres.</span>
+                        <span class="ce-error" id="error-direccion" role="alert"></span>
+                    </div>
+
+                    <!-- HU10 · CA6 — Confirmar el registro -->
+                    <div class="ce-formulario__acciones">
+                        <button type="submit" class="btn-ce btn-ce--primario btn-ce--ancho">
+                            Crear cuenta
+                        </button>
+                    </div>
+
+                </form>
+
+                <p class="ce-panel__pie">
+                    ¿Ya tienes cuenta?
+                    <a href="login.html" class="btn-ce btn-ce--texto">Iniciar sesión</a>
+                </p>
+
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="ce-pie">
+        <div class="ce-contenedor ce-pie__interior">
+            <p>Cartola Escolar · Proyecto Fullstack II · 2026</p>
+            <ul>
+                <li><a href="../publico/como-funciona.html">Cómo funciona</a></li>
+                <li><a href="../publico/nosotros.html">Nosotros</a></li>
+                <li><a href="../publico/contacto.html">Contacto</a></li>
+            </ul>
+        </div>
+    </footer>
+
+</body>
+
+</html>

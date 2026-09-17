@@ -19,7 +19,7 @@
   /* Forma */
   --ce-radio:           6px;
   --ce-transicion:      140ms ease;
-}
+} 
 
 /* Base común */
 .btn-ce {
@@ -63,6 +63,36 @@
 /* Al mantener presionado, el botón se hunde apenas */
 .btn-ce:active:not(:disabled):not([aria-disabled="true"]) {
   transform: translateY(1px);
+}
+
+.btn-ce--primario {
+  background-color: var(--ce-tierra);
+  border-color: var(--ce-tierra);
+  color: #FFFFFF;
+}
+.btn-ce--primario:hover {
+  background-color: var(--ce-tierra-oscuro);
+  border-color: var(--ce-tierra-oscuro);
+}
+.btn-ce--primario:active:not(:disabled) {
+  background-color: var(--ce-tierra-presion);
+  border-color: var(--ce-tierra-presion);
+}
+
+.btn-ce--chico {
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+.btn-ce--grande {
+  min-height: 52px;
+  padding: 14px 28px;
+  font-size: 17px;
+}
+.btn-ce-grupo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--ce-esp-8);
 }
 
 /*boton secundario*/
