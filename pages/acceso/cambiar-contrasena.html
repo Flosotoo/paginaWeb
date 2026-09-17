@@ -17,7 +17,8 @@
         <section class="ce-tarjeta ce-panel" aria-labelledby="titulo-cambio">
           <h1 id="titulo-cambio" class="ce-titulo-pagina">Cambiar contraseña</h1>
           <p class="ce-bajada">
-            Define una nueva contraseña para continuar usando tu cuenta.
+            Primer ingreso: define una nueva contraseña y acepta el tratamiento
+            de datos para continuar.
           </p>
           <p
             id="cambio-aviso"
@@ -71,6 +72,21 @@
               />
               <span class="ce-ayuda">Debe coincidir con la nueva contraseña.</span>
               <span class="ce-error" id="error-confirmacion" role="alert"></span>
+            </div>
+            <div class="ce-campo">
+              <label for="consentimiento">
+                <input
+                  id="consentimiento"
+                  name="consentimiento"
+                  type="checkbox"
+                  required
+                />
+                Acepto el tratamiento de mis datos personales y los de mis
+                pupilos según el aviso de privacidad.
+              </label>
+              <span class="ce-ayuda"
+                >Obligatorio para acceder a la información de tus pupilos.</span
+              >
             </div>
             <div class="ce-formulario__acciones">
               <button class="btn-ce btn-ce--primario btn-ce--ancho" type="submit">

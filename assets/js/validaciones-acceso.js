@@ -1,5 +1,6 @@
-// Formularios de acceso (HU10-HU15). HTML valida required, tipo, largos y
-// pattern; aquí solo van las reglas cruzadas y la confirmación del envío.
+// Formularios de acceso (HU13 login, HU15 cambio de contraseña, HU06
+// consentimiento). HTML valida required, tipo, largos y pattern; aquí solo van
+// las reglas cruzadas y la confirmación del envío.
 (function () {
   if (!window.Validacion) return;
   const V = window.Validacion;
@@ -24,56 +25,7 @@
     });
   }
 
-  // HU10 + HU11 + HU12 + HU06: registro de apoderado
-  const formRegistro = document.getElementById("formRegistro");
-  if (formRegistro) {
-    const run = document.getElementById("run");
-    const clave = document.getElementById("clave");
-    const repetir = document.getElementById("clave-repetir");
-    const region = document.getElementById("region");
-    const comuna = document.getElementById("comuna");
-    const aviso = document.getElementById("registro-aviso");
-
-    V.conectarRegionComuna(region, comuna);
-
-    V.preparar(formRegistro, {
-      cruzadas: [
-        { campo: run, validar: (valor) => V.mensajeRun(valor) },
-        {
-          campo: repetir,
-          dependeDe: [clave, repetir],
-          validar: (valor) =>
-            valor === clave.value ? "" : "Las contraseñas no coinciden.",
-        },
-        {
-          campo: comuna,
-          dependeDe: [region, comuna],
-          validar: (valor) =>
-            V.comunaPertenece(region.value, valor)
-              ? ""
-              : "La comuna no pertenece a la región seleccionada.",
-        },
-      ],
-      alValidar: () => {
-        // HU06 CA2: consentimiento con fecha y versión del aviso.
-        localStorage.setItem(
-          "edusaldoConsentimiento",
-          JSON.stringify({
-            aceptado: true,
-            fecha: new Date().toISOString(),
-            version: "v1",
-          }),
-        );
-        V.mostrarAviso(
-          aviso,
-          "Cuenta creada. Registramos tu consentimiento de datos y te enviamos la confirmación.",
-          "ok",
-        );
-      },
-    });
-  }
-
-  // HU15: cambio de contraseña temporal
+  // HU15 + HU06: primer ingreso. Cambio de contraseña y consentimiento.
   const formCambio = document.getElementById("formCambio");
   if (formCambio) {
     const actual = document.getElementById("actual");
@@ -100,12 +52,22 @@
               : "La confirmación no coincide con la nueva contraseña.",
         },
       ],
-      alValidar: () =>
+      alValidar: () => {
+        // HU06 CA2: consentimiento con fecha y versión del aviso.
+        localStorage.setItem(
+          "edusaldoConsentimiento",
+          JSON.stringify({
+            aceptado: true,
+            fecha: new Date().toISOString(),
+            version: "v1",
+          }),
+        );
         V.mostrarAviso(
           aviso,
-          "Contraseña actualizada. Usa la nueva en tu próximo inicio de sesión.",
+          "Contraseña actualizada y consentimiento registrado. Ya puedes usar la plataforma.",
           "ok",
-        ),
+        );
+      },
     });
   }
 })();
