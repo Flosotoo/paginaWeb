@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduSaldo - Entregar reservas</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/css/typography.css" />
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+    <link rel="stylesheet" href="../../assets/css/buttons.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
+    <main id="contenido-principal" class="ce-principal">
+      <section class="ce-contenedor">
+        <h1 class="ce-titulo-pagina">Entregar reservas</h1>
+        <form class="ce-tarjeta" action="#" method="post">
+          <label for="codigo">Código de reserva</label
+          ><input id="codigo" pattern="ED-[0-9]{4}-[0-9]{3}" required /><button
+            class="btn-ce btn-ce--primario"
+            type="submit"
+          >
+            Validar reserva
+          </button>
+        </form>
+        <article class="ce-tarjeta">
+          <h2 class="ce-subtitulo">ED-2026-014</h2>
+          <p>Camila Pérez · Cuaderno universitario · Lista para retirar</p>
+          <button class="btn-ce btn-ce--primario" type="button">
+            Confirmar entrega
+          </button>
+        </article>
+      </section>
+    </main>
+    <div id="footer-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/header-footer.js"></script>
+  </body>
+</html>
