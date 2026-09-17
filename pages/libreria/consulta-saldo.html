@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
@@ -18,13 +19,13 @@
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Consultar saldo</h1>
         <form class="ce-tarjeta" action="#" method="get">
-          <label for="estudiante">Nombre o identificador del estudiante</label
-          ><input id="estudiante" required /><button
-            class="btn-ce btn-ce--primario"
-            type="submit"
-          >
-            Buscar
-          </button>
+          <div class="ce-campo">
+            <label for="estudiante">Nombre o identificador del estudiante</label>
+            <input id="estudiante" name="estudiante" class="ce-control" required />
+          </div>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">Buscar</button>
+          </div>
         </form>
         <article class="ce-tarjeta">
           <h2 class="ce-subtitulo">Martín Pérez</h2>

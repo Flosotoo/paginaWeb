@@ -11,24 +11,90 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
     <main id="contenido-principal" class="ce-principal">
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Estudiantes</h1>
-        <form class="ce-tarjeta" action="#" method="post">
-          <label for="nombre">Nombre</label><input id="nombre" required /><label
-            for="apellido"
-            >Apellido</label
-          ><input id="apellido" required /><label for="curso">Curso</label
-          ><input id="curso" required /><button
-            class="btn-ce btn-ce--primario"
-            type="submit"
-          >
-            Registrar estudiante
-          </button>
+        <!-- HU49: registrar estudiante -->
+        <form class="ce-panel ce-panel--ancho" action="#" method="post">
+          <h2 class="ce-subtitulo">Registrar estudiante</h2>
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="nombre"
+                >Nombre
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <input id="nombre" name="nombre" class="ce-control" required />
+            </div>
+            <div class="ce-campo">
+              <label for="apellido"
+                >Apellido
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <input id="apellido" name="apellido" class="ce-control" required />
+            </div>
+          </div>
+          <div class="ce-campo">
+            <label for="curso"
+              >Curso
+              <span class="ce-obligatorio" aria-hidden="true">*</span></label
+            >
+            <input id="curso" name="curso" class="ce-control" required />
+          </div>
+          <div class="ce-formulario__acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">
+              Registrar estudiante
+            </button>
+          </div>
         </form>
+
+        <!-- HU50: asociar estudiante a un apoderado -->
+        <form class="ce-tarjeta" action="#" method="post">
+          <h2 class="ce-subtitulo">Asociar a un apoderado</h2>
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="asociar-estudiante"
+                >Estudiante
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <select
+                id="asociar-estudiante"
+                name="estudiante"
+                class="ce-control"
+                required
+              >
+                <option value="">Selecciona un estudiante</option>
+                <option value="martin">Martín Pérez</option>
+                <option value="sofia">Sofía Pérez</option>
+              </select>
+            </div>
+            <div class="ce-campo">
+              <label for="asociar-apoderado"
+                >Apoderado
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <select
+                id="asociar-apoderado"
+                name="apoderado"
+                class="ce-control"
+                required
+              >
+                <option value="">Selecciona un apoderado</option>
+                <option value="camila">Camila Pérez</option>
+                <option value="jorge">Jorge Díaz</option>
+              </select>
+            </div>
+          </div>
+          <div class="ce-formulario__acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">
+              Asociar estudiante
+            </button>
+          </div>
+        </form>
+
         <article class="ce-tarjeta">
           <h2 class="ce-subtitulo">Martín Pérez</h2>
           <p>7° Básico · Apoderado: Camila Pérez · Asociado</p>

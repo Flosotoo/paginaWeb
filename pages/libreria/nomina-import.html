@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
@@ -18,15 +19,23 @@
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Importar nómina</h1>
         <form class="ce-tarjeta" action="#" method="post">
-          <label for="archivo">Archivo CSV o XLSX</label
-          ><input
-            id="archivo"
-            type="file"
-            accept=".csv,.xlsx"
-            required
-          /><button class="btn-ce btn-ce--primario" type="submit">
-            Previsualizar nómina
-          </button>
+          <div class="ce-campo">
+            <label for="archivo">Archivo CSV o XLSX</label>
+            <input
+              id="archivo"
+              name="archivo"
+              class="ce-control"
+              type="file"
+              accept=".csv,.xlsx"
+              required
+            />
+            <span class="ce-ayuda">Debe incluir nombre, apellido, curso e identificador.</span>
+          </div>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">
+              Previsualizar nómina
+            </button>
+          </div>
         </form>
         <article class="ce-tarjeta">
           <h2 class="ce-subtitulo">Formato esperado</h2>

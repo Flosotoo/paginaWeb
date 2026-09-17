@@ -24,10 +24,11 @@ const headerHTML = `
       <nav class="ce-nav" aria-label="Navegación principal">
         <ul>
           <li><a href="${RAIZ}index.html">Inicio</a></li>
+          <li><a href="${RAIZ}pages/publico/blog.html">Blog</a></li>
           <li><a href="${RAIZ}pages/publico/como-funciona.html">Cómo funciona</a></li>
           <li><a href="${RAIZ}pages/publico/nosotros.html">Nosotros</a></li>
           <li><a href="${RAIZ}pages/publico/contacto.html">Contacto</a></li>
-          <li><a href="${RAIZ}pages/acceso/login.html">Iniciar sesión</a></li>
+          <li id="nav-sesion"></li>
         </ul>
       </nav>
     </div>
@@ -38,6 +39,12 @@ const footerHTML = `
   <footer class="ce-pie">
     <div class="ce-contenedor ce-pie__interior">
       <p>© 2026 EduSaldo - Centro General de Padres</p>
+      <ul>
+        <li><a href="${RAIZ}pages/publico/nosotros.html">Nosotros</a></li>
+        <li><a href="${RAIZ}pages/publico/como-funciona.html">Cómo funciona</a></li>
+        <li><a href="${RAIZ}pages/publico/blog.html">Blog</a></li>
+        <li><a href="${RAIZ}pages/publico/contacto.html">Contacto</a></li>
+      </ul>
     </div>
   </footer>
 `;
@@ -45,6 +52,75 @@ const footerHTML = `
 // "/sitio/" y "/sitio/index.html" cuentan como la misma página
 function normalizarRuta(pathname) {
   return pathname.endsWith("/") ? `${pathname}index.html` : pathname;
+}
+
+// HU16: la cabecera muestra "Iniciar sesión" o "Cerrar sesión" según la sesión.
+function pintarAccesoSesion() {
+  const contenedor = document.getElementById("nav-sesion");
+  if (!contenedor) return;
+
+  const sesion = sessionStorage.getItem("edusaldoSesion");
+  if (!sesion) {
+    contenedor.innerHTML = `<a href="${RAIZ}pages/acceso/login.html">Iniciar sesión</a>`;
+    return;
+  }
+
+  const enlace = document.createElement("a");
+  enlace.href = "#";
+  enlace.textContent = "Cerrar sesión";
+  enlace.addEventListener("click", (evento) => {
+    evento.preventDefault();
+    sessionStorage.removeItem("edusaldoSesion");
+    window.location.href = `${RAIZ}pages/acceso/login.html`;
+  });
+  contenedor.appendChild(enlace);
+}
+
+// HU05/HU18/HU29/HU36: botón "Volver" único para todo el sitio.
+// Se inyecta una sola vez y no aparece en el index raíz.
+function inyectarBotonAtras() {
+  const principal = document.getElementById("contenido-principal");
+  if (!principal) return;
+  if (window.location.pathname.split("/").pop() === "index.html") return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "ce-contenedor";
+  wrapper.innerHTML = `
+    <div class="ce-acciones">
+      <button class="btn-ce btn-ce--secundario btn-ce--chico" type="button" data-volver>
+        Volver
+      </button>
+    </div>
+  `;
+  principal.insertBefore(wrapper, principal.firstChild);
+
+  wrapper.querySelector("[data-volver]").addEventListener("click", () => {
+    let mismaOrigen = false;
+    try {
+      mismaOrigen =
+        Boolean(document.referrer) &&
+        new URL(document.referrer).origin === window.location.origin;
+    } catch (error) {
+      mismaOrigen = false;
+    }
+
+    if (mismaOrigen) {
+      window.history.back();
+    } else {
+      window.location.href = destinoSeccion();
+    }
+  });
+}
+
+// Si no hay historial propio, se vuelve al home de la sección (no a una URL rota).
+function destinoSeccion() {
+  const ruta = window.location.pathname;
+  if (ruta.includes("/pages/apoderado/")) return `${RAIZ}pages/apoderado/inicio.html`;
+  if (ruta.includes("/pages/libreria/")) return `${RAIZ}pages/libreria/inicio.html`;
+  if (ruta.includes("/pages/administrador/")) return `${RAIZ}pages/administrador/inicio.html`;
+  if (ruta.includes("/pages/acceso/")) return `${RAIZ}pages/acceso/login.html`;
+  if (ruta.includes("/pages/publico/")) return `${RAIZ}index.html`;
+  return `${RAIZ}index.html`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -60,6 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   headerContainer.innerHTML = headerHTML;
   footerContainer.innerHTML = footerHTML;
+  pintarAccesoSesion();
 
   // Marca el enlace activo comparando el pathname actual
   const pathActual = window.location.pathname.split("/").pop() || "index.html";
@@ -70,4 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
       a.setAttribute("aria-current", "page");
     }
   });
+
+  inyectarBotonAtras();
 });

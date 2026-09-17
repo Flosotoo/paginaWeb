@@ -17,23 +17,78 @@
     <main id="contenido-principal" class="ce-principal">
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Productos</h1>
-        <a class="btn-ce btn-ce--primario" href="producto-editar.html"
-          >Crear producto</a
-        >
-        <div class="ce-tarjeta">
+        <p class="ce-bajada">
+          Listado administrativo del catálogo con acciones de gestión.
+        </p>
+
+        <div class="ce-acciones">
+          <!-- HU27 CA3: acceso para crear un producto -->
+          <a class="btn-ce btn-ce--primario" href="producto-editar.html"
+            >Crear producto</a
+          >
+        </div>
+
+        <!-- HU32: la marca de reposición aparece cuando el stock alcanza el umbral -->
+        <article class="ce-tarjeta">
           <h2 class="ce-subtitulo">MAT-001 · Cuaderno universitario</h2>
-          <p>Precio: $3.490 · Stock disponible: 18 unidades · Categoría: Materiales</p>
-          <a class="btn-ce btn-ce--secundario" href="producto-editar.html"
-            >Editar</a
-          >
-        </div>
-        <div class="ce-tarjeta">
+          <p>
+            Precio: $3.490 · Stock disponible: 18 unidades · Stock crítico: 5 ·
+            Categoría: Materiales
+          </p>
+          <div class="ce-acciones">
+            <a class="btn-ce btn-ce--secundario btn-ce--chico" href="producto-editar.html"
+              >Editar</a
+            >
+            <button
+              class="btn-ce btn-ce--destructivo btn-ce--chico"
+              type="button"
+            >
+              Dar de baja
+            </button>
+          </div>
+          <details class="ce-preguntas">
+            <summary>Ver detalle</summary>
+            <dl class="ce-datos">
+              <dt class="ce-etiqueta">Código</dt>
+              <dd>MAT-001</dd>
+              <dt class="ce-etiqueta">Precio</dt>
+              <dd>$3.490</dd>
+              <dt class="ce-etiqueta">Stock</dt>
+              <dd>18 unidades</dd>
+            </dl>
+          </details>
+        </article>
+
+        <article class="ce-tarjeta">
           <h2 class="ce-subtitulo">MAT-002 · Set de geometría</h2>
-          <p>Precio: $4.990 · Stock disponible: 7 unidades · Categoría: Matemática</p>
-          <a class="btn-ce btn-ce--secundario" href="producto-editar.html"
-            >Editar</a
-          >
-        </div>
+          <p>
+            Precio: $4.990 · Stock disponible: 7 unidades · Stock crítico: 8 ·
+            Categoría: Matemática
+          </p>
+          <p class="ce-etiqueta">Reposición requerida</p>
+          <div class="ce-acciones">
+            <a class="btn-ce btn-ce--secundario btn-ce--chico" href="producto-editar.html"
+              >Editar</a
+            >
+            <button
+              class="btn-ce btn-ce--destructivo btn-ce--chico"
+              type="button"
+            >
+              Dar de baja
+            </button>
+          </div>
+          <details class="ce-preguntas">
+            <summary>Ver detalle</summary>
+            <dl class="ce-datos">
+              <dt class="ce-etiqueta">Código</dt>
+              <dd>MAT-002</dd>
+              <dt class="ce-etiqueta">Stock</dt>
+              <dd>7 unidades</dd>
+              <dt class="ce-etiqueta">Stock crítico</dt>
+              <dd>8 unidades</dd>
+            </dl>
+          </details>
+        </article>
       </section>
     </main>
     <div id="footer-container"></div>

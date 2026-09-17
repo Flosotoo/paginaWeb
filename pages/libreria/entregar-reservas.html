@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
@@ -18,13 +19,23 @@
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Entregar reservas</h1>
         <form class="ce-tarjeta" action="#" method="post">
-          <label for="codigo">Código de reserva</label
-          ><input id="codigo" pattern="ED-[0-9]{4}-[0-9]{3}" required /><button
-            class="btn-ce btn-ce--primario"
-            type="submit"
-          >
-            Validar reserva
-          </button>
+          <div class="ce-campo">
+            <label for="codigo">Código de reserva</label>
+            <input
+              id="codigo"
+              name="codigo"
+              class="ce-control ce-control--dato"
+              pattern="ED-[0-9]{4}-[0-9]{3}"
+              placeholder="ED-2026-014"
+              required
+            />
+            <span class="ce-ayuda">Formato ED-AAAA-NNN.</span>
+          </div>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">
+              Validar reserva
+            </button>
+          </div>
         </form>
         <article class="ce-tarjeta">
           <h2 class="ce-subtitulo">ED-2026-014</h2>

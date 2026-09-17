@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
@@ -27,15 +28,26 @@
           <h2 class="ce-subtitulo">Cuaderno universitario</h2>
           <p>Cuaderno cuadriculado para uso diario y actividades escolares.</p>
           <p><strong>$3.490</strong></p>
-          <label for="cantidad">Cantidad</label
-          ><input id="cantidad" type="number" min="1" value="1" /><button
-            class="btn-ce btn-ce--primario"
-            type="button"
-          >
-            Agregar al carrito</button
-          ><a class="btn-ce btn-ce--secundario" href="productos.html"
-            >Volver al catálogo</a
-          >
+          <div class="ce-campo">
+            <label for="cantidad">Cantidad</label>
+            <input
+              id="cantidad"
+              name="cantidad"
+              class="ce-control ce-control--dato"
+              type="number"
+              min="1"
+              step="1"
+              value="1"
+            />
+          </div>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--primario" type="button">
+              Agregar al carrito
+            </button>
+            <a class="btn-ce btn-ce--secundario" href="productos.html"
+              >Volver al catálogo</a
+            >
+          </div>
         </article>
       </section>
     </main>

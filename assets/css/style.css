@@ -251,6 +251,31 @@ a.ce-logo:focus-visible {
 .ce-tarjeta > :first-child { margin-top: 0; }
 .ce-tarjeta > :last-child  { margin-bottom: 0; }
  
+/* Etiqueta de actor (Apoderado, Librería, Centro General) */
+.ce-etiqueta {
+  display: inline-block;
+  padding: 2px var(--ce-esp-8);
+  border-radius: 999px;
+  background-color: #F0E6DE;
+  color: var(--ce-tierra-oscuro);
+  font-family: var(--ce-fuente-secundaria);
+  font-size: var(--ce-txt-12);
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Cuando la etiqueta es un botón removible (HU60/HU61) */
+button.ce-etiqueta {
+  border: 1px solid var(--ce-borde);
+  cursor: pointer;
+}
+
+button.ce-etiqueta:hover {
+  border-color: var(--ce-tierra);
+  color: var(--ce-tierra);
+}
+
 /* La etiqueta de actor queda pegada al título de la tarjeta */
 .ce-tarjeta .ce-etiqueta + .ce-subtitulo {
   margin-top: var(--ce-esp-4);

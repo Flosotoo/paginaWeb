@@ -33,6 +33,11 @@
   color: var(--ce-tinta-tenue);
 }
 
+/* Bloque base del formulario: ocupa el ancho del contenedor que lo envuelve. */
+.ce-formulario {
+  width: 100%;
+}
+
 @media (max-width: 560px) {
   .ce-panel {
     padding: var(--ce-esp-20);
@@ -117,6 +122,32 @@
 
 .ce-control::placeholder {
   color: #A2958C;
+}
+
+/* Ayuda de campo. Usa la fuente secundaria que define typography.css y el
+   interruptor de errores de contacto.js/validaciones.js se apoya en ella. */
+.ce-ayuda {
+  display: block;
+  margin-top: var(--ce-esp-4);
+  font-family: var(--ce-fuente-secundaria);
+  font-size: var(--ce-txt-13);
+  color: var(--ce-tinta-tenue);
+}
+
+/* Lista compacta de opciones para los filtros del catálogo (HU57/HU58). */
+.ce-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ce-esp-12);
+  margin-top: var(--ce-esp-4);
+}
+
+.ce-opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ce-esp-4);
+  font-family: var(--ce-fuente-cuerpo);
+  font-size: var(--ce-txt-15);
 }
 
 /* Flecha del select dibujada con un degradado, sin imagen externa */

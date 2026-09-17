@@ -11,39 +11,263 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
     <main id="contenido-principal" class="ce-principal">
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Usuarios</h1>
-        <a class="btn-ce btn-ce--primario" href="#form-usuario"
-          >Crear usuario</a
-        >
-        <div class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Camila Pérez</h2>
-          <p>camila@example.com · Perfil: Cliente · Estado: Activo</p>
+        <p class="ce-bajada">
+          Administra las cuentas, su perfil de acceso y sus datos de contacto.
+        </p>
+
+        <div class="ce-acciones">
+          <a class="btn-ce btn-ce--primario" href="#form-usuario"
+            >Crear usuario</a
+          >
         </div>
-        <form class="ce-tarjeta" id="form-usuario" action="#" method="post">
-          <h2 class="ce-subtitulo">Nuevo usuario</h2>
-          <label for="run">RUN</label><input id="run" required /><label
-            for="correo"
-            >Correo</label
-          ><input id="correo" type="email" required /><label for="perfil"
-            >Perfil</label
-          ><select id="perfil" required>
-            <option value="">Selecciona un perfil</option>
-            <option>Administrador</option>
-            <option>Cliente</option>
-            <option>Vendedor</option></select
-          ><button class="btn-ce btn-ce--primario" type="submit">
-            Guardar usuario
-          </button>
+
+        <!-- HU38: listado con acciones; HU41: detalle sin edición; HU42: baja -->
+        <article class="ce-tarjeta">
+          <h2 class="ce-subtitulo">Camila Pérez</h2>
+          <p>
+            camila@gmail.com · Perfil: Cliente · Región: Metropolitana · Estado:
+            Activo
+          </p>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--secundario btn-ce--chico" type="button">
+              Editar
+            </button>
+            <button
+              class="btn-ce btn-ce--destructivo btn-ce--chico"
+              type="button"
+            >
+              Dar de baja
+            </button>
+          </div>
+          <details class="ce-preguntas">
+            <summary>Ver detalle</summary>
+            <dl class="ce-datos">
+              <dt class="ce-etiqueta">RUN</dt>
+              <dd>21.234.567-8</dd>
+              <dt class="ce-etiqueta">Tipo de usuario</dt>
+              <dd>Cliente</dd>
+              <dt class="ce-etiqueta">Dirección</dt>
+              <dd>Av. Educación 123, Santiago</dd>
+            </dl>
+          </details>
+        </article>
+
+        <article class="ce-tarjeta">
+          <h2 class="ce-subtitulo">Diego Muñoz</h2>
+          <p>
+            diego@profesor.duoc.cl · Perfil: Vendedor · Región: Valparaíso ·
+            Estado: Activo
+          </p>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--secundario btn-ce--chico" type="button">
+              Editar
+            </button>
+            <button
+              class="btn-ce btn-ce--destructivo btn-ce--chico"
+              type="button"
+            >
+              Dar de baja
+            </button>
+          </div>
+          <details class="ce-preguntas">
+            <summary>Ver detalle</summary>
+            <dl class="ce-datos">
+              <dt class="ce-etiqueta">RUN</dt>
+              <dd>12.345.678-9</dd>
+              <dt class="ce-etiqueta">Tipo de usuario</dt>
+              <dd>Vendedor</dd>
+              <dt class="ce-etiqueta">Dirección</dt>
+              <dd>Av. del Puerto 456, Valparaíso</dd>
+            </dl>
+          </details>
+        </article>
+
+        <!-- HU39: formulario sin campo de contraseña; se genera una temporal -->
+        <form
+          class="ce-panel ce-panel--ancho"
+          id="formUsuario"
+          action="#"
+          method="post"
+        >
+          <h2 class="ce-panel__titulo ce-subtitulo">Nuevo usuario</h2>
+          <p class="ce-panel__bajada">
+            La contraseña se genera automáticamente y se envía al correo.
+          </p>
+
+          <p
+            id="usuario-aviso"
+            class="ce-aviso"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
+
+          <div class="ce-campo">
+            <label for="usuario-run"
+              >RUN
+              <span class="ce-obligatorio" aria-hidden="true">*</span></label
+            >
+            <input
+              id="usuario-run"
+              name="run"
+              class="ce-control ce-control--dato"
+              minlength="7"
+              maxlength="9"
+              required
+              placeholder="213456789"
+              pattern="[0-9]{6,8}[0-9kK]"
+              title="Sin puntos ni guion, de 7 a 9 caracteres. El último puede ser K."
+            />
+            <span class="ce-ayuda">Sin puntos ni guion, de 7 a 9 caracteres.</span>
+            <span class="ce-error" id="error-usuario-run" role="alert"></span>
+          </div>
+
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="usuario-nombre"
+                >Nombre
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <input
+                id="usuario-nombre"
+                name="nombre"
+                class="ce-control"
+                maxlength="50"
+                required
+              />
+              <span class="ce-ayuda">Máximo 50 caracteres.</span>
+              <span class="ce-error" id="error-usuario-nombre" role="alert"></span>
+            </div>
+            <div class="ce-campo">
+              <label for="usuario-apellidos"
+                >Apellidos
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <input
+                id="usuario-apellidos"
+                name="apellidos"
+                class="ce-control"
+                maxlength="100"
+                required
+              />
+              <span class="ce-ayuda">Máximo 100 caracteres.</span>
+              <span class="ce-error" id="error-usuario-apellidos" role="alert"></span>
+            </div>
+          </div>
+
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="usuario-correo"
+                >Correo
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <input
+                id="usuario-correo"
+                name="correo"
+                type="email"
+                class="ce-control"
+                maxlength="100"
+                pattern="[^@\s]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)"
+                title="Debe usar el dominio duoc.cl, profesor.duoc.cl o gmail.com."
+                required
+              />
+              <span class="ce-error" id="error-usuario-correo" role="alert"></span>
+            </div>
+            <div class="ce-campo">
+              <label for="usuario-nacimiento">Fecha de nacimiento</label>
+              <input
+                id="usuario-nacimiento"
+                name="nacimiento"
+                type="date"
+                class="ce-control ce-control--dato"
+              />
+              <span class="ce-ayuda">Opcional.</span>
+              <span class="ce-error" id="error-usuario-nacimiento" role="alert"></span>
+            </div>
+          </div>
+
+          <div class="ce-campo">
+            <label for="usuario-tipo"
+              >Tipo de usuario
+              <span class="ce-obligatorio" aria-hidden="true">*</span></label
+            >
+            <select id="usuario-tipo" name="tipo" class="ce-control" required>
+              <option value="">Selecciona un perfil</option>
+              <option>Administrador</option>
+              <option>Cliente</option>
+              <option>Vendedor</option>
+            </select>
+            <span class="ce-error" id="error-usuario-tipo" role="alert"></span>
+          </div>
+
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="usuario-region"
+                >Región
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <select id="usuario-region" name="region" class="ce-control" required>
+                <option value="">Elige una región</option>
+              </select>
+              <span class="ce-error" id="error-usuario-region" role="alert"></span>
+            </div>
+            <div class="ce-campo">
+              <label for="usuario-comuna"
+                >Comuna
+                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              >
+              <select
+                id="usuario-comuna"
+                name="comuna"
+                class="ce-control"
+                required
+                disabled
+              >
+                <option value="">Elige primero una región</option>
+              </select>
+              <span class="ce-error" id="error-usuario-comuna" role="alert"></span>
+            </div>
+          </div>
+
+          <div class="ce-campo">
+            <label for="usuario-direccion"
+              >Dirección
+              <span class="ce-obligatorio" aria-hidden="true">*</span></label
+            >
+            <textarea
+              id="usuario-direccion"
+              name="direccion"
+              class="ce-control"
+              rows="2"
+              maxlength="300"
+              required
+            ></textarea>
+            <span class="ce-ayuda">Máximo 300 caracteres.</span>
+            <span class="ce-error" id="error-usuario-direccion" role="alert"></span>
+          </div>
+
+          <div class="ce-formulario__acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">
+              Guardar usuario
+            </button>
+            <button class="btn-ce btn-ce--secundario" type="reset">
+              Limpiar
+            </button>
+          </div>
         </form>
       </section>
     </main>
     <div id="footer-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
+    <script src="../../assets/js/usuario.js"></script>
   </body>
 </html>

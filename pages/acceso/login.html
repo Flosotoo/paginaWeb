@@ -44,6 +44,8 @@
                 name="correo"
                 class="ce-control"
                 maxlength="100"
+                pattern="[^@\s]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)"
+                title="Debe usar el dominio duoc.cl, profesor.duoc.cl o gmail.com."
                 required
                 autocomplete="email"
                 placeholder="nombre@gmail.com"
@@ -98,6 +100,7 @@
     <div id="footer-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
     <script src="../../assets/js/validaciones-acceso.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
