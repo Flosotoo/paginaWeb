@@ -1,24 +1,114 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Formulario de contacto con el Centro General de Padres y la librería escolar." />
+    <title>EduSaldo — Contacto</title>
+    <link rel="stylesheet" href="../../assets/css/typography.css" />
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+    <link rel="stylesheet" href="../../assets/css/buttons.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contacto</title>
-    <!-- Latest compiled and minified CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <main id="contenido-principal" class="ce-principal">
+      <section class="ce-portada">
+        <div class="ce-contenedor">
+          <h1 class="ce-titulo-pagina">Contacto</h1>
+          <p class="ce-bajada">
+            Escribe tu duda sobre aportes, saldos o reservas. Te respondemos al
+            correo que indiques.
+          </p>
+        </div>
+      </section>
 
-</head>
+      <section class="ce-seccion">
+        <div class="ce-contenedor ce-dos-columnas">
 
-<body>
-<h1>Contacto</h1>
-<a href="pages/publico/como-funciona.html">Cómo funciona</a>
-<a href="pages/publico/contacto.html">Contacto</a>
-<a href="index.html">EduSaldo</a>
-<a href="pages/publico/nosotros.html">Nosotros</a>
+          <!-- HU25: formulario validado con JavaScript (HU44) -->
+          <section class="ce-tarjeta" aria-labelledby="titulo-formulario">
+            <h2 id="titulo-formulario" class="ce-titulo-seccion">Envía tu consulta</h2>
 
-    <!-- Latest compiled JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+            <!-- Resultado del envío: lo llena contacto.js -->
+            <div id="contacto-aviso" class="ce-aviso" role="status" aria-live="polite" tabindex="-1" hidden></div>
 
+            <!-- novalidate: los mensajes los muestra JavaScript, no el navegador -->
+            <form id="form-contacto" action="#" method="post" novalidate>
+              <div class="ce-campo">
+                <label class="ce-campo__etiqueta" for="contacto-nombre">Nombre completo</label>
+                <input
+                  class="ce-control"
+                  type="text"
+                  id="contacto-nombre"
+                  name="nombre"
+                  autocomplete="name"
+                  aria-describedby="contacto-nombre-ayuda contacto-nombre-error"
+                />
+                <span id="contacto-nombre-ayuda" class="ce-ayuda">Hasta 100 caracteres.</span>
+                <span id="contacto-nombre-error" class="ce-ayuda" hidden></span>
+              </div>
+
+              <div class="ce-campo">
+                <label class="ce-campo__etiqueta" for="contacto-correo">Correo</label>
+                <input
+                  class="ce-control"
+                  type="email"
+                  id="contacto-correo"
+                  name="correo"
+                  autocomplete="email"
+                  inputmode="email"
+                  aria-describedby="contacto-correo-ayuda contacto-correo-error"
+                />
+                <span id="contacto-correo-error" class="ce-ayuda" hidden></span>
+              </div>
+
+              <div class="ce-campo">
+                <label class="ce-campo__etiqueta" for="contacto-comentario">Consulta</label>
+                <textarea
+                  class="ce-control"
+                  id="contacto-comentario"
+                  name="comentario"
+                  rows="6"
+                  aria-describedby="contacto-comentario-contador contacto-comentario-error"
+                ></textarea>
+                <div class="ce-campo__pie">
+                  <span id="contacto-comentario-error" class="ce-ayuda" hidden></span>
+                  <span id="contacto-comentario-contador" class="ce-contador">0 / 500</span>
+                </div>
+              </div>
+
+              <div class="ce-acciones">
+                <button type="submit" class="btn-ce btn-ce--primario">Enviar consulta</button>
+                <button type="reset" class="btn-ce btn-ce--secundario">Borrar</button>
+              </div>
+            </form>
+          </section>
+
+          <aside class="ce-tarjeta" aria-labelledby="titulo-datos">
+            <h2 id="titulo-datos" class="ce-subtitulo">Otras formas de encontrarnos</h2>
+            <!-- TODO: completar con los datos reales -->
+            <dl class="ce-datos">
+              <dt class="ce-etiqueta">Librería del colegio</dt>
+              <dd>Primer piso, junto a la biblioteca</dd>
+              <dt class="ce-etiqueta">Horario de atención</dt>
+              <dd>Lunes a viernes, 8:00 a 16:30</dd>
+              <dt class="ce-etiqueta">Pagos con Webpay</dt>
+              <dd>Indica en tu consulta la fecha, el monto y el folio del pago.</dd>
+            </dl>
+            <p class="ce-secundario">
+              ¿Todavía no sabes cómo funciona? <a href="como-funciona.html">Revisa el paso a paso</a>.
+            </p>
+          </aside>
+
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="../../assets/js/header-footer.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
+    <script src="../../assets/js/contacto.js"></script>
+  </body>
 </html>
