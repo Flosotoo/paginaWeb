@@ -19,17 +19,17 @@
     <main id="contenido-principal" class="ce-principal">
       <div class="ce-contenedor">
         <section
-          class="ce-panel ce-panel--ancho"
+          class="ce-tarjeta ce-panel ce-panel--ancho"
           aria-labelledby="titulo-registro"
         >
-          <h1 id="titulo-registro" class="ce-panel__titulo">Crear cuenta</h1>
-          <p class="ce-panel__bajada">
+          <h1 id="titulo-registro" class="ce-titulo-pagina">Crear cuenta</h1>
+          <p class="ce-bajada">
             Los campos marcados con
             <span class="ce-obligatorio" aria-hidden="true">*</span>
             son obligatorios.
           </p>
 
-          <form action="#" method="post" class="ce-formulario">
+          <form id="formRegistro" action="#" method="post" class="ce-formulario">
             <div class="ce-campo">
               <label for="run">
                 RUN
@@ -105,12 +105,8 @@
                 required
                 autocomplete="email"
                 placeholder="nombre@gmail.com"
-                pattern="[^@\s]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)"
               />
-              <span class="ce-ayuda">
-                Solo se aceptan los dominios duoc.cl, profesor.duoc.cl y
-                gmail.com.
-              </span>
+              <span class="ce-ayuda">Ingresa una dirección de correo válida.</span>
               <span class="ce-error" id="error-correo" role="alert"></span>
             </div>
 
@@ -246,6 +242,7 @@
     <div id="footer-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/validaciones-acceso.js"></script>
     <script>
       const comunasPorRegion = {
         RM: ["Santiago", "Maipú", "La Florida"],
