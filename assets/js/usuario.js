@@ -5,6 +5,7 @@
   if (!form || !window.Validacion) return;
 
   const V = window.Validacion;
+  const run = document.getElementById("usuario-run");
   const region = document.getElementById("usuario-region");
   const comuna = document.getElementById("usuario-comuna");
   const aviso = document.getElementById("usuario-aviso");
@@ -13,6 +14,7 @@
 
   V.preparar(form, {
     cruzadas: [
+      { campo: run, validar: (valor) => V.mensajeRun(valor) },
       {
         campo: comuna,
         dependeDe: [region, comuna],

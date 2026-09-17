@@ -74,16 +74,50 @@
     return calculado === dv;
   }
 
-  function mensajeRun(valor) {
-    const run = String(valor || "")
-      .replace(/[.\-]/g, "")
+  // RUN tolerante: acepta con o sin puntos, con o sin guion, con o sin dígito
+  // verificador, y con K minúscula o mayúscula. Solo rechaza errores reales
+  // (caracteres inválidos, largo fuera de rango o DV incorrecto cuando se da).
+  function normalizarRun(valor) {
+    return String(valor == null ? "" : valor)
+      .replace(/[.\-\s]/g, "")
       .toUpperCase();
-    if (!/^[0-9]{6,8}[0-9K]$/.test(run)) {
-      return "RUN sin puntos ni guion, de 7 a 9 caracteres.";
-    }
+  }
+
+  function runEsValido(valor) {
+    const run = normalizarRun(valor);
+    if (run.length < 6 || run.length > 9) return false;
+    if (!/^[0-9K]+$/.test(run)) return false;
+    if (run.includes("K") && !run.endsWith("K")) return false;
+
     const cuerpo = run.slice(0, -1);
     const dv = run.slice(-1);
-    return digitoVerificadorValido(cuerpo, dv)
+
+    // 1) Venía con dígito verificador: se comprueba.
+    if (/^[0-9]+$/.test(cuerpo) && digitoVerificadorValido(cuerpo, dv)) {
+      return true;
+    }
+
+    // 2) No venía dígito verificador: se acepta si el cuerpo tiene 6 a 8 dígitos.
+    if (/^[0-9]+$/.test(run) && run.length >= 6 && run.length <= 8) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function mensajeRun(valor) {
+    const run = normalizarRun(valor);
+    if (run === "") return "Ingresa el RUN.";
+    if (!/^[0-9K]+$/.test(run)) {
+      return "El RUN solo puede contener números y la letra K.";
+    }
+    if (run.includes("K") && !run.endsWith("K")) {
+      return "La letra K solo puede ir al final como dígito verificador.";
+    }
+    if (run.length < 6 || run.length > 9) {
+      return "El RUN debe tener entre 6 y 9 caracteres.";
+    }
+    return runEsValido(run)
       ? ""
       : "El dígito verificador del RUN no es válido.";
   }
@@ -136,6 +170,8 @@
     conectarRegionComuna,
     digitoVerificadorValido,
     mensajeRun,
+    normalizarRun,
+    runEsValido,
     preparar,
     mostrarAviso,
   };
