@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EduSaldo - Reservar materiales</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <!-- Estilos propios de EduSaldo -->
+    <link rel="stylesheet" href="../../assets/css/style.css">
+
+</head>
+
+<body>
+
+    <!-- Encabezado -->
+    <header class="encabezado-apoderado">
+        <div class="container">
+            <h1>EduSaldo</h1>
+            <p class="mb-0">Librería Escolar Digital</p>
+        </div>
+    </header>
+
+    <!-- Menú del apoderado -->
+    <nav class="navbar navbar-expand-lg menu-apoderado">
+        <div class="container">
+
+            <a class="navbar-brand" href="inicio.html">
+                Inicio
+            </a>
+
+            <div>
+                <a class="btn btn-light" href="mis-hijos.html">
+                    Mis hijos
+                </a>
+
+                <a class="btn btn-light" href="mis-reservas.html">
+                    Mis reservas
+                </a>
+
+                <a class="btn btn-light" href="movimientos.html">
+                    Movimientos
+                </a>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="container mt-5">
+
+        <section class="mb-4">
+            <h2>Reservar materiales</h2>
+
+            <p>
+                Reserva materiales escolares para tus hijos menores de 12 años
+                y retíralos posteriormente en la librería.
+            </p>
+        </section>
+
+        <!-- Formulario de reserva -->
+        <section class="row">
+
+            <div class="col-md-6">
+
+                <form id="formReserva">
+
+                    <!-- Selección del hijo -->
+                    <div class="mb-3">
+
+                        <label for="hijoReserva" class="form-label">
+                            Hijo
+                        </label>
+
+                        <select id="hijoReserva"
+                                name="hijoReserva"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Selecciona un hijo
+                            </option>
+
+                            <option value="sofia">
+                                Sofía Pérez - 9 años
+                            </option>
+
+                        </select>
+
+                        <div class="form-text">
+                            Solo se muestran hijos menores de 12 años.
+                        </div>
+
+                    </div>
+
+         <!-- Búsqueda de material -->
+                    <div class="mb-3">
+
+                          <label for="buscarMaterial" class="form-label">
+             Buscar material
+                </label>
+
+                <input type="text"
+                      id="buscarMaterial"
+                         class="form-control"
+                            placeholder="Ej: cuaderno, lápices, block">
+
+                     <div class="form-text">
+        Escribe el nombre del material que necesitas.
+    </div>
+
+</div>
+
+
+<!-- Material y cantidad -->
+<div class="row mb-3">
+
+    <div class="col-md-9">
+
+        <label for="material" class="form-label">
+            Material
+        </label>
+
+        <select id="material"
+                name="material"
+                class="form-select"
+                required>
+
+            <option value="">
+                Selecciona un material
+            </option>
+
+            <option value="cuaderno">
+                Cuaderno universitario
+            </option>
+
+            <option value="lapices">
+                Caja de lápices de colores
+            </option>
+
+            <option value="block">
+                Block de dibujo
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <label for="cantidad" class="form-label">
+            Cantidad
+        </label>
+
+        <input type="number"
+               id="cantidad"
+               name="cantidad"
+               class="form-control"
+               min="1"
+               value="1"
+               required>
+
+    </div>
+
+</div>              
+
+                    <!-- Botones -->
+                    <button type="submit"
+                            class="btn btn-edusaldo">
+                        Confirmar reserva
+                    </button>
+
+                    <a href="mis-hijos.html"
+                       class="btn btn-outline-secondary">
+                        Cancelar
+                    </a>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="footer-edusaldo">
+        <p class="mb-0">
+            © 2026 EduSaldo - Librería Escolar Digital
+        </p>
+    </footer>
+
+    <!-- JavaScript de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <!-- JavaScript del módulo Apoderado -->
+    <script src="../../assets/js/apoderado.js"></script>
+
+</body>
+
+</html>
