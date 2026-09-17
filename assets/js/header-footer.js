@@ -36,6 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
   headerContainer.innerHTML = headerHTML;
   footerContainer.innerHTML = footerHTML;
 
+  // Ajusta los enlaces del header automáticamente según la ubicación de la página
+  const prefijoRaiz = window.location.pathname.includes('/pages/') ? '../../' : '';
+  headerContainer.querySelectorAll('a[href]').forEach((enlace) => {
+    const destino = enlace.getAttribute('href');
+    if (prefijoRaiz && (destino === 'index.html' || destino.startsWith('pages/'))) {
+      enlace.setAttribute('href', prefijoRaiz + destino);
+    }
+  });
+
   // Marca el enlace activo comparando el pathname actual
   const pathActual = window.location.pathname.split('/').pop() || 'index.html';
   const enlaces = headerContainer.querySelectorAll('.ce-nav a');
