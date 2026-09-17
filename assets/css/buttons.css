@@ -1,25 +1,25 @@
 :root {
   /* Marca */
---ce-tierra:          #9E5837;  /* primario: botones, enlaces, activo */
-  --ce-tierra-oscuro:   #7A4229;  /* hover del primario */
-  --ce-tierra-presion:  #5F3320;  /* al mantener presionado */
-  --ce-tierra-lavado:   #F4EAE4;  /* fondo suave para hover secundario */
- 
+  --ce-tierra: #9e5837; /* primario: botones, enlaces, activo */
+  --ce-tierra-oscuro: #7a4229; /* hover del primario */
+  --ce-tierra-presion: #5f3320; /* al mantener presionado */
+  --ce-tierra-lavado: #f4eae4; /* fondo suave para hover secundario */
+
   /* Estado de error */
-  --ce-sello:           #8C2018;  /* error, vencido, saldo corto */
-  --ce-sello-oscuro:    #6E170F;
-  --ce-sello-lavado:    #F9EAE8;
- 
+  --ce-sello: #8c2018; /* error, vencido, saldo corto */
+  --ce-sello-oscuro: #6e170f;
+  --ce-sello-lavado: #f9eae8;
+
   /* Neutros */
-  --ce-superficie:      #FFFFFF;
-  --ce-borde:           #D9CFC8;
-  --ce-texto:           #2B2320;
-  --ce-texto-tenue:     #8A7C74;
- 
+  --ce-superficie: #ffffff;
+  --ce-borde: #d9cfc8;
+  --ce-texto: #2b2320;
+  --ce-texto-tenue: #8a7c74;
+
   /* Forma */
-  --ce-radio:           6px;
-  --ce-transicion:      140ms ease;
-} 
+  --ce-radio: 6px;
+  --ce-transicion: 140ms ease;
+}
 
 /* Base común */
 .btn-ce {
@@ -29,11 +29,11 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;                 /* área táctil cómoda en celular */
+  min-height: 44px; /* área táctil cómoda en celular */
   padding: 11px 22px;
   border: 2px solid transparent;
   border-radius: var(--ce-radio);
- 
+
   /* texto */
   font-family: inherit;
   font-size: 15px;
@@ -42,16 +42,16 @@
   text-align: center;
   text-decoration: none;
   white-space: nowrap;
- 
+
   /* comportamiento */
   cursor: pointer;
   user-select: none;
   background: none;
   transition:
     background-color var(--ce-transicion),
-    border-color     var(--ce-transicion),
-    color            var(--ce-transicion),
-    transform        var(--ce-transicion);
+    border-color var(--ce-transicion),
+    color var(--ce-transicion),
+    transform var(--ce-transicion);
 }
 
 /* El foco de teclado siempre visible: es requisito de accesibilidad */
@@ -59,7 +59,7 @@
   outline: 3px solid var(--ce-tierra);
   outline-offset: 2px;
 }
- 
+
 /* Al mantener presionado, el botón se hunde apenas */
 .btn-ce:active:not(:disabled):not([aria-disabled="true"]) {
   transform: translateY(1px);
@@ -68,7 +68,7 @@
 .btn-ce--primario {
   background-color: var(--ce-tierra);
   border-color: var(--ce-tierra);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 .btn-ce--primario:hover {
   background-color: var(--ce-tierra-oscuro);
@@ -101,15 +101,15 @@
   border-color: var(--ce-borde);
   color: var(--ce-tierra);
 }
- 
+
 .btn-ce--secundario:hover {
   background-color: var(--ce-tierra-lavado);
   border-color: var(--ce-tierra);
   color: var(--ce-tierra-oscuro);
 }
- 
+
 .btn-ce--secundario:active:not(:disabled) {
-  background-color: #EADCD3;
+  background-color: #eadcd3;
 }
 
 /*Boton de texto*/
@@ -122,7 +122,7 @@
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
- 
+
 .btn-ce--texto:hover {
   color: var(--ce-tierra-oscuro);
   text-decoration-thickness: 2px;
@@ -134,18 +134,18 @@
   border-color: var(--ce-sello);
   color: var(--ce-sello);
 }
- 
+
 .btn-ce--destructivo:hover {
   background-color: var(--ce-sello);
   border-color: var(--ce-sello);
   color: var(--ce-superficie);
 }
- 
+
 .btn-ce--destructivo:active:not(:disabled) {
   background-color: var(--ce-sello-oscuro);
   border-color: var(--ce-sello-oscuro);
 }
- 
+
 .btn-ce--destructivo:focus-visible {
   outline-color: var(--ce-sello);
 }
@@ -157,7 +157,7 @@
   color: transparent;
   pointer-events: none;
 }
- 
+
 .btn-ce--cargando::after {
   content: "";
   position: absolute;
@@ -171,24 +171,26 @@
   border-radius: 50%;
   animation: ce-girar 720ms linear infinite;
 }
- 
+
 @keyframes ce-girar {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /*boton deshabilitado*/
 .btn-ce:disabled,
 .btn-ce[aria-disabled="true"] {
-  background-color: #EFEBE8;
-  border-color: #EFEBE8;
+  background-color: #efebe8;
+  border-color: #efebe8;
   color: var(--ce-texto-tenue);
   cursor: not-allowed;
   text-decoration: none;
 }
- 
+
 .btn-ce:disabled:hover,
 .btn-ce[aria-disabled="true"]:hover {
-  background-color: #EFEBE8;
-  border-color: #EFEBE8;
+  background-color: #efebe8;
+  border-color: #efebe8;
   color: var(--ce-texto-tenue);
 }
