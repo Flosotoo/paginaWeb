@@ -1,24 +1,146 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Centros Generales de Padres y Apoderados que administran sus aportes escolares con EduSaldo." />
+    <title>EduSaldo — Nosotros</title>
+    <link rel="stylesheet" href="../../assets/css/typography.css" />
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+    <link rel="stylesheet" href="../../assets/css/buttons.css" />
+  </head>
+  <body>
+    <div id="header-container"></div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nosotros</title>
-    <!-- Latest compiled and minified CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <main id="contenido-principal" class="ce-principal">
+      <section class="ce-portada">
+        <div class="ce-contenedor">
+          <h1 class="ce-titulo-pagina">Nosotros</h1>
+          <p class="ce-bajada">
+            EduSaldo lo usan Centros Generales de Padres que quieren rendir
+            cuentas de cada aporte con la misma claridad que una cartola
+            bancaria.
+          </p>
+        </div>
+      </section>
 
-</head>
+      <!-- Centros que tienen contratado EduSaldo.
+           TODO: reemplazar los datos de ejemplo por los centros reales. -->
+      <section class="ce-seccion" aria-labelledby="titulo-centros">
+        <div class="ce-contenedor">
+          <h2 id="titulo-centros" class="ce-titulo-seccion">Centros que usan EduSaldo</h2>
+          <p>
+            Cada centro administra su propia librería, su catálogo y sus
+            precios. Entra al sitio de tu centro para ver sus avisos y
+            horarios.
+          </p>
 
-<body>
-<h1>Nosotros</h1>
-<a href="pages/publico/como-funciona.html">Cómo funciona</a>
-<a href="pages/publico/contacto.html">Contacto</a>
-<a href="index.html">EduSaldo</a>
-<a href="pages/publico/nosotros.html">Nosotros</a>
+          <ul class="ce-grilla ce-lista-limpia">
+            <li class="ce-tarjeta ce-centro">
+              <span class="ce-etiqueta">La Florida, Región Metropolitana</span>
+              <h3 class="ce-subtitulo">Colegio Los Aromos</h3>
+              <p>Centro General de Padres y Apoderados</p>
+              <div class="ce-acciones">
+                <a href="https://www.ejemplo.cl/cgpa-los-aromos" class="btn-ce btn-ce--texto"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="Sitio del Centro de Padres del Colegio Los Aromos (se abre en otra pestaña)">
+                  Visitar sitio del centro
+                </a>
+              </div>
+            </li>
 
-    <!-- Latest compiled JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+            <li class="ce-tarjeta ce-centro">
+              <span class="ce-etiqueta">Maipú, Región Metropolitana</span>
+              <h3 class="ce-subtitulo">Colegio San Andrés</h3>
+              <p>Centro General de Padres y Apoderados</p>
+              <div class="ce-acciones">
+                <a href="https://www.ejemplo.cl/cgpa-san-andres" class="btn-ce btn-ce--texto"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="Sitio del Centro de Padres del Colegio San Andrés (se abre en otra pestaña)">
+                  Visitar sitio del centro
+                </a>
+              </div>
+            </li>
 
+            <li class="ce-tarjeta ce-centro">
+              <span class="ce-etiqueta">Puente Alto, Región Metropolitana</span>
+              <h3 class="ce-subtitulo">Liceo Bicentenario Las Araucarias</h3>
+              <p>Centro General de Padres y Apoderados</p>
+              <div class="ce-acciones">
+                <a href="https://www.ejemplo.cl/cgpa-las-araucarias" class="btn-ce btn-ce--texto"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="Sitio del Centro de Padres del Liceo Bicentenario Las Araucarias (se abre en otra pestaña)">
+                  Visitar sitio del centro
+                </a>
+              </div>
+            </li>
+
+            <li class="ce-tarjeta ce-centro">
+              <span class="ce-etiqueta">Viña del Mar, Región de Valparaíso</span>
+              <h3 class="ce-subtitulo">Colegio Santa Teresa</h3>
+              <p>Centro General de Padres y Apoderados</p>
+              <div class="ce-acciones">
+                <a href="https://www.ejemplo.cl/cgpa-santa-teresa" class="btn-ce btn-ce--texto"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="Sitio del Centro de Padres del Colegio Santa Teresa (se abre en otra pestaña)">
+                  Visitar sitio del centro
+                </a>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- HU03 CA2: rol del centro y su coordinación con la librería -->
+      <section class="ce-seccion" aria-labelledby="titulo-rol">
+        <div class="ce-contenedor">
+          <h2 id="titulo-rol" class="ce-titulo-seccion">Qué hace cada centro con EduSaldo</h2>
+          <div class="ce-grilla">
+            <article class="ce-tarjeta">
+              <h3 class="ce-subtitulo">Mantiene las cuentas al día</h3>
+              <p>
+                Carga la nómina del colegio y vincula a cada estudiante con su
+                apoderado. Cada familia ve solo a sus pupilos.
+              </p>
+            </article>
+            <article class="ce-tarjeta">
+              <h3 class="ce-subtitulo">Coordina con la librería</h3>
+              <p>
+                La librería publica sus materiales y precios, prepara las
+                reservas y las entrega en el mesón del colegio.
+              </p>
+            </article>
+            <article class="ce-tarjeta">
+              <h3 class="ce-subtitulo">Rinde cuentas a las familias</h3>
+              <p>
+                Cada aporte y cada entrega quedan con fecha, monto y
+                responsable. Ya no hay que confiar en un cuaderno.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="ce-seccion" aria-labelledby="titulo-sumarse">
+        <div class="ce-contenedor">
+          <div class="ce-tarjeta">
+            <h2 id="titulo-sumarse" class="ce-titulo-seccion">¿Tu centro de padres quiere usar EduSaldo?</h2>
+            <p>
+              Cuéntanos de qué colegio eres y cuántas familias tiene el centro.
+              Te respondemos con los pasos para empezar.
+            </p>
+            <div class="ce-acciones">
+              <a href="contacto.html" class="btn-ce btn-ce--primario">Escríbenos</a>
+              <a href="como-funciona.html" class="btn-ce btn-ce--secundario">Ver cómo funciona</a>
+              <a href="../../index.html" class="btn-ce btn-ce--texto">Volver al inicio</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="../../assets/js/header-footer.js"></script>
+  </body>
 </html>
