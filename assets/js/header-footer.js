@@ -52,11 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
  
   headerContainer.innerHTML = headerHTML;
   footerContainer.innerHTML = footerHTML;
- 
-  // Marca el enlace activo comparando la ruta completa
-  const rutaActual = normalizarRuta(window.location.pathname);
-  headerContainer.querySelectorAll('.ce-nav a').forEach((a) => {
-    if (normalizarRuta(new URL(a.href).pathname) === rutaActual) {
+
+  // Marca el enlace activo comparando el pathname actual
+  const pathActual = window.location.pathname.split('/').pop() || 'index.html';
+  const enlaces = headerContainer.querySelectorAll('.ce-nav a');
+  enlaces.forEach((a) => {
+    const destino = a.getAttribute('href').split('/').pop();
+    if (destino === pathActual) {
       a.setAttribute('aria-current', 'page');
     }
   });
