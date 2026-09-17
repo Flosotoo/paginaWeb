@@ -494,28 +494,9 @@ textarea.ce-control {
   margin: 0 0 var(--ce-esp-16);
 }
  
-/* Centros de padres (Nosotros) */
-
-/* Quita viñetas y sangría a una lista que se muestra como grilla */
-.ce-lista-limpia {
-  margin: var(--ce-esp-24) 0 0;
-  padding: 0;
-  list-style: none;
-}
- 
+/* Las tarjetas dentro de una grilla no llevan margen inferior */
 .ce-grilla > .ce-tarjeta {
   margin-bottom: 0;
-}
- 
-/* La tarjeta crece a lo alto y el enlace queda siempre abajo */
-.ce-centro {
-  display: flex;
-  flex-direction: column;
-}
- 
-.ce-centro .ce-acciones {
-  margin-top: auto;
-  padding-top: var(--ce-esp-8);
 }
  
 /* Pie*/
@@ -538,23 +519,4 @@ textarea.ce-control {
   font-family: var(--ce-fuente-secundaria);
   font-size: var(--ce-txt-12);
   color: var(--ce-tinta-tenue);
-}
- 
-.ce-pie ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ce-esp-16);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
- 
-.ce-pie a {
-  font-family: var(--ce-fuente-secundaria);
-  font-size: var(--ce-txt-12);
-  color: var(--ce-tinta-tenue);
-}
- 
-.ce-pie a:hover {
-  color: var(--ce-tierra-oscuro);
 }

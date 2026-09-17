@@ -26,7 +26,6 @@ const headerHTML = `
           <li><a href="${RAIZ}index.html">Inicio</a></li>
           <li><a href="${RAIZ}pages/publico/blog.html">Blog</a></li>
           <li><a href="${RAIZ}pages/publico/como-funciona.html">Cómo funciona</a></li>
-          <li><a href="${RAIZ}pages/publico/nosotros.html">Nosotros</a></li>
           <li><a href="${RAIZ}pages/publico/contacto.html">Contacto</a></li>
           <li id="nav-sesion"></li>
         </ul>
@@ -39,12 +38,6 @@ const footerHTML = `
   <footer class="ce-pie">
     <div class="ce-contenedor ce-pie__interior">
       <p>© 2026 EduSaldo - Centro General de Padres</p>
-      <ul>
-        <li><a href="${RAIZ}pages/publico/nosotros.html">Nosotros</a></li>
-        <li><a href="${RAIZ}pages/publico/como-funciona.html">Cómo funciona</a></li>
-        <li><a href="${RAIZ}pages/publico/blog.html">Blog</a></li>
-        <li><a href="${RAIZ}pages/publico/contacto.html">Contacto</a></li>
-      </ul>
     </div>
   </footer>
 `;
