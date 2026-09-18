@@ -152,11 +152,36 @@ a.ce-logo:focus-visible {
  
 .ce-nav ul {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--ce-esp-8);
+  justify-content: flex-end;
+  gap: var(--ce-esp-4) var(--ce-esp-8);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* Cada item puede traer más de un enlace (usuario + cerrar sesión) */
+.ce-nav li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ce-esp-8);
+}
+
+/* Separa los grupos del menú (público / área / acceso) */
+.ce-nav__separador {
+  width: 1px;
+  height: 20px;
+  margin-inline: var(--ce-esp-4);
+  background-color: var(--ce-borde);
+}
+
+/* Identificación del usuario en la cabecera */
+.ce-nav__usuario {
+  font-family: var(--ce-fuente-secundaria);
+  font-size: var(--ce-txt-13);
+  color: var(--ce-tinta-tenue);
+  white-space: nowrap;
 }
  
 .ce-nav a {
@@ -167,6 +192,7 @@ a.ce-logo:focus-visible {
   font-size: var(--ce-txt-15);
   color: var(--ce-tinta);
   text-decoration: none;
+  white-space: nowrap;
   transition: background-color 140ms ease, color 140ms ease;
 }
  
@@ -185,6 +211,71 @@ a.ce-logo:focus-visible {
   font-weight: bold;
   box-shadow: inset 0 -2px 0 var(--ce-tierra);
   border-radius: 6px 6px 0 0;
+}
+
+/* Desplegable "Mi panel" */
+.ce-nav__menu {
+  position: relative;
+}
+
+.ce-nav__disparador {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ce-esp-4);
+  padding: var(--ce-esp-8) var(--ce-esp-12);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  font-family: var(--ce-fuente-cuerpo);
+  font-size: var(--ce-txt-15);
+  color: var(--ce-tinta);
+  white-space: nowrap;
+}
+
+.ce-nav__disparador:hover {
+  background-color: #F0E6DE;
+  color: var(--ce-tierra-oscuro);
+}
+
+.ce-nav__disparador--activo {
+  color: var(--ce-tierra);
+  font-weight: bold;
+}
+
+.ce-nav__disparador:focus-visible {
+  outline: 3px solid var(--ce-tierra);
+  outline-offset: 2px;
+}
+
+ul.ce-nav__submenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  display: block;
+  min-width: 210px;
+  margin: var(--ce-esp-4) 0 0;
+  padding: var(--ce-esp-8);
+  list-style: none;
+  background-color: var(--ce-superficie);
+  border: 1px solid var(--ce-borde);
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(59, 42, 33, 0.14);
+}
+
+.ce-nav__disparador[aria-expanded="false"] + .ce-nav__submenu {
+  display: none;
+}
+
+ul.ce-nav__submenu li {
+  display: block;
+}
+
+ul.ce-nav__submenu a {
+  display: block;
+  padding: var(--ce-esp-8) var(--ce-esp-12);
+  border-radius: 6px;
 }
  
 /* En celular la cabecera se compacta */
@@ -214,6 +305,10 @@ a.ce-logo:focus-visible {
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--ce-esp-4);
+  }
+ 
+  .ce-nav__separador {
+    display: none;
   }
  
   .ce-nav a {
