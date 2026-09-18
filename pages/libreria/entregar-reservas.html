@@ -11,32 +11,48 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
     <main id="contenido-principal" class="ce-principal">
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Entregar reservas</h1>
-        <form class="ce-tarjeta" action="#" method="post">
-          <label for="codigo">Código de reserva</label
-          ><input id="codigo" pattern="ED-[0-9]{4}-[0-9]{3}" required /><button
-            class="btn-ce btn-ce--primario"
-            type="submit"
-          >
-            Validar reserva
-          </button>
+        <!-- HU36: validar el código y confirmar el retiro -->
+        <form class="ce-tarjeta" id="formEntrega" action="#" method="post">
+          <div class="ce-campo">
+            <label for="codigo">Código de reserva</label>
+            <input
+              id="codigo"
+              name="codigo"
+              class="ce-control ce-control--dato"
+              pattern="ED-[0-9]{4}-[0-9]{3}"
+              placeholder="ED-2026-014"
+              required
+            />
+            <span class="ce-ayuda">Formato ED-AAAA-NNN.</span>
+          </div>
+          <p
+            id="entrega-aviso"
+            class="ce-aviso"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">
+              Validar reserva
+            </button>
+          </div>
         </form>
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">ED-2026-014</h2>
-          <p>Camila Pérez · Cuaderno universitario · Lista para retirar</p>
-          <button class="btn-ce btn-ce--primario" type="button">
-            Confirmar entrega
-          </button>
-        </article>
+        <div id="lista-entregar-reservas"></div>
       </section>
     </main>
     <div id="footer-container"></div>
+    <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
+    <script src="../../assets/js/reserva.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
 </html>

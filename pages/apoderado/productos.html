@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
     <link rel="stylesheet" href="../../assets/css/buttons.css" />
+    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
   <body>
     <div id="header-container"></div>
@@ -18,63 +19,117 @@
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Catálogo de productos</h1>
         <p class="ce-bajada">
-          Materiales disponibles para apoderados autenticados.
+          Materiales disponibles para apoderados autenticados. Busca y combina
+          filtros para encontrar lo que necesitas.
         </p>
-        <form id="formFiltros" class="ce-tarjeta">
-          <label for="busqueda">Buscar por nombre, código o descripción</label
-          ><input id="busqueda" type="search" /><label for="orden"
-            >Ordenar</label
-          ><select id="orden">
-            <option value="nombre-asc">Nombre A-Z</option>
-            <option value="nombre-desc">Nombre Z-A</option>
-            <option value="precio-asc">Precio menor</option>
-            <option value="precio-desc">Precio mayor</option></select
-          ><label
-            ><input id="disponibles" type="checkbox" /> Solo disponibles</label
-          ><button class="btn-ce btn-ce--secundario" id="limpiar" type="button">
-            Limpiar filtros
-          </button>
+
+        <!-- HU55 a HU67: búsqueda, filtros, orden, etiquetas y estado vacío -->
+        <form class="ce-tarjeta" id="panelFiltros" action="#">
+          <div class="ce-campo">
+            <label for="busqueda">Buscar por nombre, código o descripción</label>
+            <input
+              id="busqueda"
+              name="busqueda"
+              type="search"
+              class="ce-control"
+              data-filtro="texto"
+            />
+          </div>
+
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="precio-min">Precio mínimo</label>
+              <input
+                id="precio-min"
+                name="precio-min"
+                type="number"
+                min="0"
+                step="1"
+                class="ce-control ce-control--dato"
+                data-filtro="minimo"
+              />
+            </div>
+            <div class="ce-campo">
+              <label for="precio-max">Precio máximo</label>
+              <input
+                id="precio-max"
+                name="precio-max"
+                type="number"
+                min="0"
+                step="1"
+                class="ce-control ce-control--dato"
+                data-filtro="maximo"
+              />
+            </div>
+          </div>
+          <span
+            id="error-precio"
+            class="ce-error"
+            role="alert"
+            data-filtro-precio-error
+          ></span>
+
+          <fieldset class="ce-campo">
+            <legend>Año escolar</legend>
+            <div class="ce-opciones" data-filtro-niveles></div>
+          </fieldset>
+
+          <fieldset class="ce-campo">
+            <legend>Materia</legend>
+            <div class="ce-opciones" data-filtro-materias></div>
+          </fieldset>
+
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="orden">Ordenar</label>
+              <select id="orden" name="orden" class="ce-control" data-filtro="orden">
+                <option value="nombre-asc">Nombre A-Z</option>
+                <option value="nombre-desc">Nombre Z-A</option>
+                <option value="precio-asc">Precio menor</option>
+                <option value="precio-desc">Precio mayor</option>
+              </select>
+            </div>
+            <div class="ce-campo">
+              <label>
+                <input type="checkbox" id="disponibles" data-filtro="disponibles" />
+                Solo disponibles
+              </label>
+            </div>
+          </div>
+
+          <div class="ce-acciones">
+            <button
+              class="btn-ce btn-ce--secundario"
+              type="button"
+              data-filtro-limpiar
+            >
+              Limpiar filtros
+            </button>
+          </div>
         </form>
-        <p id="resultado" aria-live="polite"></p>
-        <div id="lista-productos" class="ce-grilla"></div>
+
+        <div class="ce-acciones" data-filtro-tags hidden></div>
+        <p data-filtro-resultado aria-live="polite"></p>
+        <p
+          data-filtro-vacio
+          class="ce-aviso ce-aviso--info"
+          role="status"
+          hidden
+        ></p>
+        <div data-filtro-lista class="ce-grilla"></div>
       </section>
     </main>
     <div id="footer-container"></div>
+    <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/filtros.js"></script>
     <script>
-      const vista = window.filtros.crear(
-        "edusaldo-filtros-productos",
-        (items) => {
-          document.getElementById("resultado").textContent =
-            `${items.length} producto(s) encontrado(s)`;
-          document.getElementById("lista-productos").innerHTML =
-            items
-              .map(
-                (p) =>
-                  `<article class="ce-tarjeta"><img src="${p.imagen}" alt="${p.nombre}" width="240" height="120"><h2 class="ce-subtitulo">${p.nombre}</h2><p>${p.descripcion}</p><p><strong>$${p.precio.toLocaleString("es-CL")}</strong></p><a class="btn-ce btn-ce--primario" href="producto-detalle.html?id=${p.id}">Ver detalle</a></article>`,
-              )
-              .join("") || "<p>No hay productos con esos filtros.</p>";
-        },
-      );
-      document.getElementById("busqueda").addEventListener("input", (e) => {
-        vista.estado.texto = e.target.value;
-        vista.aplicar();
-      });
-      document.getElementById("orden").addEventListener("change", (e) => {
-        vista.estado.orden = e.target.value;
-        vista.aplicar();
-      });
-      document.getElementById("disponibles").addEventListener("change", (e) => {
-        vista.estado.disponibles = e.target.checked;
-        vista.aplicar();
-      });
-      document.getElementById("limpiar").addEventListener("click", () => {
-        vista.limpiar();
-        document.getElementById("busqueda").value = "";
-        document.getElementById("disponibles").checked = false;
-      });
-      vista.aplicar();
+      if (window.filtros) {
+        window.filtros.montar({
+          clave: "edusaldo-filtros-productos",
+          modo: "detalle",
+        });
+      }
     </script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>

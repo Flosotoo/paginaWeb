@@ -1,19 +1,17 @@
-const formAporte = document.getElementById("formAporte");
+// Formulario de aporte (HU68, fuera de E1). HTML valida requeridos y monto
+// (type=number min=1 step=1); aquí solo queda preparar el paso a Webpay.
+(function () {
+  const form = document.getElementById("formAporte");
+  if (!form || !window.Validacion) return;
 
-if (formAporte) {
-  formAporte.addEventListener("submit", (evento) => {
-    evento.preventDefault();
-    const aviso = document.getElementById("aporte-aviso");
+  const aviso = document.getElementById("aporte-aviso");
 
-    if (!formAporte.checkValidity()) {
-      formAporte.classList.add("was-validated");
-      if (aviso) aviso.textContent = "Revisa el pupilo y el monto ingresado.";
-      return;
-    }
-
-    if (aviso) {
-      aviso.textContent = "Aporte preparado para continuar a Webpay.";
-      aviso.hidden = false;
-    }
+  window.Validacion.preparar(form, {
+    alValidar: () =>
+      window.Validacion.mostrarAviso(
+        aviso,
+        "Aporte preparado para continuar a Webpay.",
+        "info",
+      ),
   });
-}
+})();

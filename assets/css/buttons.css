@@ -95,6 +95,12 @@
   gap: var(--ce-esp-8);
 }
 
+/* Variante de ancho completo: la usan los formularios de acceso y el perfil
+   para que la acción principal ocupe el ancho del panel. */
+.btn-ce--ancho {
+  width: 100%;
+}
+
 /*boton secundario*/
 .btn-ce--secundario {
   background-color: var(--ce-superficie);

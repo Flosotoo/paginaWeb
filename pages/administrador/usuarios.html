@@ -17,33 +17,25 @@
     <main id="contenido-principal" class="ce-principal">
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Usuarios</h1>
-        <a class="btn-ce btn-ce--primario" href="#form-usuario"
-          >Crear usuario</a
-        >
-        <div class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Camila Pérez</h2>
-          <p>camila@example.com · Perfil: Cliente · Estado: Activo</p>
+        <p class="ce-bajada">
+          Administra las cuentas, su perfil de acceso y sus datos de contacto.
+        </p>
+
+        <div class="ce-acciones">
+          <a class="btn-ce btn-ce--primario" href="usuario-crear.html"
+            >Crear usuario</a
+          >
         </div>
-        <form class="ce-tarjeta" id="form-usuario" action="#" method="post">
-          <h2 class="ce-subtitulo">Nuevo usuario</h2>
-          <label for="run">RUN</label><input id="run" required /><label
-            for="correo"
-            >Correo</label
-          ><input id="correo" type="email" required /><label for="perfil"
-            >Perfil</label
-          ><select id="perfil" required>
-            <option value="">Selecciona un perfil</option>
-            <option>Administrador</option>
-            <option>Cliente</option>
-            <option>Vendedor</option></select
-          ><button class="btn-ce btn-ce--primario" type="submit">
-            Guardar usuario
-          </button>
-        </form>
+
+        <!-- HU38/HU41/HU42: listado con detalle y baja desde la base simulada -->
+        <div id="lista-usuarios"></div>
       </section>
     </main>
     <div id="footer-container"></div>
+    <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
+    <script src="../../assets/js/usuario.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
 </html>

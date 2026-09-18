@@ -22,6 +22,8 @@
           Selecciona un pupilo, busca los materiales disponibles y prepara una
           reserva para retirar en la librería.
         </p>
+
+        <!-- HU23: la reserva se asocia a un pupilo y descuenta stock -->
         <form class="ce-tarjeta" id="formReserva" action="#" method="post">
           <div class="ce-campos-par">
             <div class="ce-campo">
@@ -39,6 +41,7 @@
                 <option value="martin">Martín Pérez, 7° Básico</option>
                 <option value="sofia">Sofía Pérez, 3° Básico</option>
               </select>
+              <span class="ce-error" id="error-hijoReserva" role="alert"></span>
             </div>
             <div class="ce-campo">
               <label for="cantidad"
@@ -48,87 +51,144 @@
               <input
                 id="cantidad"
                 name="cantidad"
-                class="ce-control"
+                class="ce-control ce-control--dato"
                 type="number"
                 min="1"
+                step="1"
                 value="1"
                 required
               />
+              <span class="ce-error" id="error-cantidad" role="alert"></span>
             </div>
           </div>
-          <label for="busquedaReserva">Buscar material</label>
-          <input
-            id="busquedaReserva"
-            class="ce-control"
-            type="search"
-            placeholder="Nombre, código o descripción"
-          />
-          <label for="ordenReserva">Ordenar resultados</label>
-          <select id="ordenReserva" class="ce-control">
-            <option value="nombre-asc">Nombre A-Z</option>
-            <option value="nombre-desc">Nombre Z-A</option>
-            <option value="precio-asc">Precio menor</option>
-            <option value="precio-desc">Precio mayor</option>
-          </select>
+          <p
+            id="reserva-aviso"
+            class="ce-aviso"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
+          <div class="ce-acciones">
+            <button class="btn-ce btn-ce--primario" type="submit">
+              Confirmar reserva
+            </button>
+          </div>
+        </form>
+
+        <!-- HU55 a HU67: búsqueda, filtros y orden compartidos con el catálogo -->
+        <form class="ce-tarjeta" id="panelFiltros" action="#">
+          <div class="ce-campo">
+            <label for="busquedaReserva">Buscar material</label>
+            <input
+              id="busquedaReserva"
+              name="busquedaReserva"
+              type="search"
+              class="ce-control"
+              data-filtro="texto"
+            />
+          </div>
+
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="precio-min">Precio mínimo</label>
+              <input
+                id="precio-min"
+                name="precio-min"
+                type="number"
+                min="0"
+                step="1"
+                class="ce-control ce-control--dato"
+                data-filtro="minimo"
+              />
+            </div>
+            <div class="ce-campo">
+              <label for="precio-max">Precio máximo</label>
+              <input
+                id="precio-max"
+                name="precio-max"
+                type="number"
+                min="0"
+                step="1"
+                class="ce-control ce-control--dato"
+                data-filtro="maximo"
+              />
+            </div>
+          </div>
+          <span
+            id="error-precio"
+            class="ce-error"
+            role="alert"
+            data-filtro-precio-error
+          ></span>
+
+          <fieldset class="ce-campo">
+            <legend>Año escolar</legend>
+            <div class="ce-opciones" data-filtro-niveles></div>
+          </fieldset>
+
+          <fieldset class="ce-campo">
+            <legend>Materia</legend>
+            <div class="ce-opciones" data-filtro-materias></div>
+          </fieldset>
+
+          <div class="ce-campos-par">
+            <div class="ce-campo">
+              <label for="ordenReserva">Ordenar</label>
+              <select
+                id="ordenReserva"
+                name="ordenReserva"
+                class="ce-control"
+                data-filtro="orden"
+              >
+                <option value="nombre-asc">Nombre A-Z</option>
+                <option value="nombre-desc">Nombre Z-A</option>
+                <option value="precio-asc">Precio menor</option>
+                <option value="precio-desc">Precio mayor</option>
+              </select>
+            </div>
+            <div class="ce-campo">
+              <label>
+                <input type="checkbox" id="disponibles" data-filtro="disponibles" />
+                Solo disponibles
+              </label>
+            </div>
+          </div>
+
           <div class="ce-acciones">
             <button
               class="btn-ce btn-ce--secundario"
               type="button"
-              id="limpiarReserva"
+              data-filtro-limpiar
             >
               Limpiar filtros
             </button>
           </div>
         </form>
-        <p id="resultadoReserva" aria-live="polite"></p>
-        <div id="listaReserva" class="ce-grilla"></div>
+
+        <div class="ce-acciones" data-filtro-tags hidden></div>
+        <p data-filtro-resultado aria-live="polite"></p>
+        <p
+          data-filtro-vacio
+          class="ce-aviso ce-aviso--info"
+          role="status"
+          hidden
+        ></p>
+        <div data-filtro-lista class="ce-grilla"></div>
       </section>
     </main>
     <div id="footer-container"></div>
+    <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
     <script src="../../assets/js/filtros.js"></script>
+    <script src="../../assets/js/reserva.js"></script>
     <script>
-      const reserva = window.filtros.crear(
-        "edusaldo-filtros-reservas",
-        (items) => {
-          document.getElementById("resultadoReserva").textContent =
-            `${items.length} material(es) encontrado(s)`;
-          document.getElementById("listaReserva").innerHTML =
-            items
-              .map(
-                (producto) => `
-          <article class="ce-tarjeta">
-            <img src="${producto.imagen}" alt="${producto.nombre}" width="240" height="120" />
-            <h2 class="ce-subtitulo">${producto.nombre}</h2>
-            <p>${producto.descripcion}</p>
-            <p><strong>$${producto.precio.toLocaleString("es-CL")}</strong> · ${producto.stock ? `${producto.stock} disponibles` : "Agotado"}</p>
-            <button class="btn-ce btn-ce--primario" type="button" ${producto.stock ? "" : "disabled"}>Añadir a la reserva</button>
-          </article>
-        `,
-              )
-              .join("") ||
-            "<p>No hay materiales que coincidan con la búsqueda.</p>";
-        },
-      );
-      document
-        .getElementById("busquedaReserva")
-        .addEventListener("input", (evento) => {
-          reserva.estado.texto = evento.target.value;
-          reserva.aplicar();
+      if (window.filtros) {
+        window.filtros.montar({
+          clave: "edusaldo-filtros-reservas",
+          modo: "reserva",
         });
-      document
-        .getElementById("ordenReserva")
-        .addEventListener("change", (evento) => {
-          reserva.estado.orden = evento.target.value;
-          reserva.aplicar();
-        });
-      document
-        .getElementById("limpiarReserva")
-        .addEventListener("click", () => {
-          reserva.limpiar();
-          document.getElementById("busquedaReserva").value = "";
-        });
-      reserva.aplicar();
+      }
     </script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
