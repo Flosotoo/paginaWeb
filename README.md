@@ -28,3 +28,9 @@ Desarrollar una aplicación web para gestionar una librería escolar y centraliz
 - **Encargado de Librería / Vendedor:** gestiona stock, prepara reservas y entrega materiales.
 - **Administrador:** administra usuarios, estudiantes, productos y la configuración del sistema.
 - **Estudiante:** entidad del dominio; no requiere inicio de sesión.
+
+## Ejecución y alcance
+
+- El sitio se abre directamente con `file://`, sin servidor, bundlers ni dependencias instaladas.
+- La demo interactiva (login con roles, sesión y datos simulados) está pensada para **navegadores Chromium** (Chrome, Edge, Brave). En Firefox/LibreWolf el almacenamiento local se aísla por archivo y la sesión no cruza entre páginas.
+- Bootstrap se carga por CDN solo por requisito formal de la rúbrica; el diseño propio es el sistema `ce-*`.
