@@ -19,8 +19,20 @@
       <section class="ce-contenedor">
         <h1 class="ce-titulo-pagina">Estudiantes</h1>
         <!-- HU49: registrar estudiante -->
-        <form class="ce-panel ce-panel--ancho" action="#" method="post">
+        <form
+          class="ce-panel ce-panel--ancho"
+          id="formEstudiante"
+          action="#"
+          method="post"
+        >
           <h2 class="ce-subtitulo">Registrar estudiante</h2>
+          <p
+            id="estudiante-aviso"
+            class="ce-aviso"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
           <div class="ce-campos-par">
             <div class="ce-campo">
               <label for="nombre"
@@ -52,8 +64,20 @@
         </form>
 
         <!-- HU50: asociar estudiante a un apoderado -->
-        <form class="ce-tarjeta" action="#" method="post">
+        <form
+          class="ce-tarjeta"
+          id="formAsociacion"
+          action="#"
+          method="post"
+        >
           <h2 class="ce-subtitulo">Asociar a un apoderado</h2>
+          <p
+            id="asociacion-aviso"
+            class="ce-aviso"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
           <div class="ce-campos-par">
             <div class="ce-campo">
               <label for="asociar-estudiante"
@@ -67,8 +91,6 @@
                 required
               >
                 <option value="">Selecciona un estudiante</option>
-                <option value="martin">Martín Pérez</option>
-                <option value="sofia">Sofía Pérez</option>
               </select>
             </div>
             <div class="ce-campo">
@@ -83,8 +105,6 @@
                 required
               >
                 <option value="">Selecciona un apoderado</option>
-                <option value="camila">Camila Pérez</option>
-                <option value="jorge">Jorge Díaz</option>
               </select>
             </div>
           </div>
@@ -95,14 +115,14 @@
           </div>
         </form>
 
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Martín Pérez</h2>
-          <p>7° Básico · Apoderado: Camila Pérez · Asociado</p>
-        </article>
+        <div id="lista-estudiantes"></div>
       </section>
     </main>
     <div id="footer-container"></div>
+    <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
+    <script src="../../assets/js/estudiante.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
 </html>

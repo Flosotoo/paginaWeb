@@ -27,70 +27,15 @@
           >
         </div>
 
-        <!-- HU38: listado con acciones; HU41: detalle sin edición; HU42: baja -->
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Camila Pérez</h2>
-          <p>
-            camila@correo.cl · Perfil: Cliente · Región: Metropolitana · Estado:
-            Activo
-          </p>
-          <div class="ce-acciones">
-            <button class="btn-ce btn-ce--secundario btn-ce--chico" type="button">
-              Editar
-            </button>
-            <button
-              class="btn-ce btn-ce--destructivo btn-ce--chico"
-              type="button"
-            >
-              Dar de baja
-            </button>
-          </div>
-          <details class="ce-preguntas">
-            <summary>Ver detalle</summary>
-            <dl class="ce-datos">
-              <dt class="ce-etiqueta">RUN</dt>
-              <dd>21.234.567-8</dd>
-              <dt class="ce-etiqueta">Tipo de usuario</dt>
-              <dd>Cliente</dd>
-              <dt class="ce-etiqueta">Dirección</dt>
-              <dd>Av. Educación 123, Santiago</dd>
-            </dl>
-          </details>
-        </article>
-
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Diego Muñoz</h2>
-          <p>
-            diego@correo.cl · Perfil: Vendedor · Región: Valparaíso ·
-            Estado: Activo
-          </p>
-          <div class="ce-acciones">
-            <button class="btn-ce btn-ce--secundario btn-ce--chico" type="button">
-              Editar
-            </button>
-            <button
-              class="btn-ce btn-ce--destructivo btn-ce--chico"
-              type="button"
-            >
-              Dar de baja
-            </button>
-          </div>
-          <details class="ce-preguntas">
-            <summary>Ver detalle</summary>
-            <dl class="ce-datos">
-              <dt class="ce-etiqueta">RUN</dt>
-              <dd>12.345.678-9</dd>
-              <dt class="ce-etiqueta">Tipo de usuario</dt>
-              <dd>Vendedor</dd>
-              <dt class="ce-etiqueta">Dirección</dt>
-              <dd>Av. del Puerto 456, Valparaíso</dd>
-            </dl>
-          </details>
-        </article>
+        <!-- HU38/HU41/HU42: listado con detalle y baja desde la base simulada -->
+        <div id="lista-usuarios"></div>
       </section>
     </main>
     <div id="footer-container"></div>
+    <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/validaciones.js"></script>
+    <script src="../../assets/js/usuario.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
 </html>
