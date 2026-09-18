@@ -1,63 +1,10 @@
-// Búsqueda y filtros del catálogo (HU55 a HU67) y control de acceso (HU17/HU55).
-// Un solo motor para las vistas de catálogo y de reserva.
+// Búsqueda y filtros del catálogo (HU55 a HU67) y control de acceso (HU17).
+// Los productos salen de la "base de datos" simulada (assets/js/app.js).
 (function () {
-  // HU17 CA2 / HU55 CA6: el catálogo es exclusivo de apoderados autenticados.
-  if (
-    !sessionStorage.getItem("edusaldoSesion") &&
-    /pages\/apoderado\/(productos|reservar-materiales)\.html$/.test(
-      window.location.pathname,
-    )
-  ) {
-    window.location.href = "../acceso/login.html";
-    return;
-  }
+  // HU17 CA2: el catálogo es exclusivo de apoderados autenticados.
+  if (window.Sesion && !window.Sesion.requerir(["Cliente"])) return;
 
-  const productos = [
-    {
-      id: 1,
-      codigo: "MAT-001",
-      nombre: "Cuaderno universitario",
-      descripcion: "Cuaderno cuadriculado para uso diario.",
-      precio: 3490,
-      niveles: ["7", "8"],
-      materias: ["Lenguaje"],
-      stock: 18,
-      imagen: "../../assets/img/landing-page.jpg",
-    },
-    {
-      id: 2,
-      codigo: "MAT-002",
-      nombre: "Set de geometría",
-      descripcion: "Regla, escuadra y transportador.",
-      precio: 4990,
-      niveles: ["5", "6", "7"],
-      materias: ["Matemática"],
-      stock: 7,
-      imagen: "../../assets/img/landing-page.jpg",
-    },
-    {
-      id: 3,
-      codigo: "MAT-003",
-      nombre: "Diccionario escolar",
-      descripcion: "Diccionario de consulta para todos los niveles.",
-      precio: 8990,
-      niveles: [],
-      materias: [],
-      stock: 0,
-      imagen: "../../assets/img/landing-page.jpg",
-    },
-    {
-      id: 4,
-      codigo: "MAT-004",
-      nombre: "Lápices de colores",
-      descripcion: "Caja de lápices para trabajos y proyectos.",
-      precio: 2990,
-      niveles: ["1", "2", "3", "4"],
-      materias: ["Artes"],
-      stock: 24,
-      imagen: "../../assets/img/landing-page.jpg",
-    },
-  ];
+  const productos = window.Datos ? window.Datos.productos() : [];
 
   const normalizar = (valor) =>
     String(valor || "")
@@ -71,10 +18,12 @@
     const disponible = producto.stock > 0;
     const accion =
       modo === "reserva"
-        ? `<button class="btn-ce btn-ce--primario" type="button" ${
+        ? `<button class="btn-ce btn-ce--primario" type="button" data-agregar="${producto.codigo}" ${
             disponible ? "" : "disabled"
           }>Añadir a la reserva</button>`
-        : `<a class="btn-ce btn-ce--primario" href="producto-detalle.html?id=${producto.id}">Ver detalle</a>`;
+        : `<a class="btn-ce btn-ce--primario" href="producto-detalle.html?codigo=${encodeURIComponent(
+            producto.codigo,
+          )}">Ver detalle</a>`;
     return `
       <article class="ce-tarjeta">
         <img src="${producto.imagen}" alt="${producto.nombre}" width="240" height="120" />
@@ -106,9 +55,10 @@
     const limpiarEl = document.querySelector("[data-filtro-limpiar]");
     const errorPrecioEl = document.querySelector("[data-filtro-precio-error]");
 
-    const precioMin = Math.min(...productos.map((p) => p.precio));
-    const precioMax = Math.max(...productos.map((p) => p.precio));
-    const guardado = JSON.parse(localStorage.getItem(clave) || "{}");
+    const precioMin = Math.min(...productos.map((p) => p.precio), 0);
+    const precioMax = Math.max(...productos.map((p) => p.precio), 0);
+    const guardado =
+      (window.Edusaldo && Edusaldo.almacen.leer(clave)) || {};
     const estado = {
       texto: "",
       minimo: precioMin,
@@ -126,7 +76,7 @@
       ? Number(estado.maximo)
       : precioMax;
 
-    // HU57/HU58: los niveles y materias se derivan de los productos cargados.
+    // HU57/HU58: niveles y materias se derivan del catálogo cargado.
     function poblarOpciones(box, tipo, valores) {
       if (!box) return;
       box.replaceChildren();
@@ -273,7 +223,11 @@
       if (minEl && maxEl && minEl.value !== "" && maxEl.value !== "") {
         const minimo = Number(minEl.value);
         const maximo = Number(maxEl.value);
-        if (Number.isFinite(minimo) && Number.isFinite(maximo) && minimo > maximo) {
+        if (
+          Number.isFinite(minimo) &&
+          Number.isFinite(maximo) &&
+          minimo > maximo
+        ) {
           if (errorPrecioEl) {
             errorPrecioEl.textContent =
               "El precio mínimo no puede ser mayor que el máximo.";
@@ -292,7 +246,7 @@
       if (maxEl && maxEl.value !== "") estado.maximo = Number(maxEl.value);
 
       const resultado = filtrar();
-      localStorage.setItem(clave, JSON.stringify(estado));
+      if (window.Edusaldo) Edusaldo.almacen.guardar(clave, estado);
 
       if (listaEl) {
         listaEl.innerHTML = resultado.map((p) => tarjeta(p, modo)).join("");
@@ -323,7 +277,7 @@
         errorPrecioEl.textContent = "";
         errorPrecioEl.classList.remove("ce-error--visible");
       }
-      localStorage.removeItem(clave);
+      if (window.Edusaldo) Edusaldo.almacen.quitar(clave);
       aplicar();
     }
 
