@@ -50,7 +50,14 @@
     Datos.usuarios()
       .filter((u) => u.rol === "Cliente")
       .forEach((u) =>
-        selectApoderado.add(new Option(`${u.nombre} ${u.apellidos}`, u.correo)),
+        selectApoderado.add(
+          new Option(
+            window.Edusaldo
+              ? Edusaldo.nombreCompletoUsuario(u)
+              : `${u.nombre} ${u.apellidos}`,
+            u.correo,
+          ),
+        ),
       );
 
     formAsociacion.addEventListener("submit", (evento) => {

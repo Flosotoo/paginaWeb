@@ -46,8 +46,15 @@
                 id="compra-estudiante"
                 name="estudiante"
                 class="form-control"
+                placeholder="Busca por nombre, curso o RUT"
+                autocomplete="off"
+                role="combobox"
+                aria-expanded="false"
+                aria-controls="resultados-estudiante"
                 required
               />
+              <div class="list-group mt-1" id="resultados-estudiante" hidden></div>
+              <span class="form-text" id="compra-estudiante-resumen"></span>
               <span class="invalid-feedback" id="error-compra-estudiante" role="alert"></span>
             </div>
   
@@ -104,6 +111,8 @@
     </main>
     <div id="footer-container"></div>
     <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/buscador.js"></script>
+    <script src="../../assets/js/logs.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
     <script src="../../assets/js/validaciones.js"></script>

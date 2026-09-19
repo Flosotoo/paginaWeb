@@ -575,49 +575,58 @@ function montarPanelAdmin(headerContainer, footerContainer) {
   conectarBuscadorAdmin(marco.querySelector("#buscador-admin"));
 }
 
-// Buscador de la barra superior: busca en la base simulada y muestra los
-// resultados como un menú desplegable de Bootstrap.
+// Buscador de la barra superior (HU27/HU38): usa el módulo común buscador.js
+// (normaliza tildes y aplica debounce) y muestra los resultados en un menú.
 function conectarBuscadorAdmin(form) {
   if (!form || !window.Datos) return;
   const campo = form.querySelector("#buscar-admin");
   const menu = form.querySelector("#resultados-admin");
-  const normal = (texto) =>
-    String(texto || "")
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase();
+  const normal = window.Buscador
+    ? window.Buscador.normalizar
+    : (texto) =>
+        String(texto || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .trim();
 
-  function buscar(consulta) {
-    const q = normal(consulta).trim();
-    if (q.length < 2) return [];
-    const coincide = (...campos) => campos.some((c) => normal(c).includes(q));
-    const rol = (r) => (window.Sesion && Sesion.etiquetaRol ? Sesion.etiquetaRol(r) : r);
+  function recolectar() {
+    const rol = (r) =>
+      window.Sesion && Sesion.etiquetaRol ? Sesion.etiquetaRol(r) : r;
+    const nombreU = (u) =>
+      window.Edusaldo
+        ? Edusaldo.nombreCompletoUsuario(u)
+        : `${u.nombre} ${u.apellidos}`;
     return [
-      ...Datos.usuarios()
-        .filter((u) => coincide(u.nombre, u.apellidos, u.correo, u.run))
-        .map((u) => ({
-          icono: "person",
-          titulo: `${u.nombre} ${u.apellidos}`,
-          detalle: `${rol(u.rol)} · ${u.correo}`,
-          url: `${RAIZ}${ADMIN}usuario-crear.html?correo=${encodeURIComponent(u.correo)}`,
-        })),
-      ...Datos.productos()
-        .filter((p) => coincide(p.codigo, p.nombre, p.categoria))
-        .map((p) => ({
-          icono: "box-seam",
-          titulo: `${p.codigo} · ${p.nombre}`,
-          detalle: `Producto · stock ${p.stock}`,
-          url: `${RAIZ}${ADMIN}producto-editar.html?codigo=${encodeURIComponent(p.codigo)}`,
-        })),
-      ...Datos.estudiantes()
-        .filter((e) => coincide(e.id, e.nombre, e.apellido, e.curso))
-        .map((e) => ({
-          icono: "mortarboard",
-          titulo: `${e.nombre} ${e.apellido}`,
-          detalle: `Estudiante · ${e.curso}`,
-          url: `${RAIZ}${ADMIN}estudiantes.html`,
-        })),
-    ].slice(0, 8);
+      ...Datos.usuarios().map((u) => ({
+        icono: "person",
+        titulo: nombreU(u),
+        detalle: `${rol(u.rol)} · ${u.correo}`,
+        url: `${RAIZ}${ADMIN}usuario-crear.html?correo=${encodeURIComponent(u.correo)}`,
+        claves: [
+          u.primerNombre,
+          u.segundoNombre,
+          u.apellidoPaterno,
+          u.apellidoMaterno,
+          u.correo,
+          u.run,
+        ],
+      })),
+      ...Datos.productos().map((p) => ({
+        icono: "box-seam",
+        titulo: `${p.codigo} · ${p.nombre}`,
+        detalle: `Producto · stock ${p.stock}`,
+        url: `${RAIZ}${ADMIN}producto-editar.html?codigo=${encodeURIComponent(p.codigo)}`,
+        claves: [p.codigo, p.nombre, p.categoria],
+      })),
+      ...Datos.estudiantes().map((e) => ({
+        icono: "mortarboard",
+        titulo: `${e.nombre} ${e.apellido}`,
+        detalle: `Estudiante · ${e.curso}`,
+        url: `${RAIZ}${ADMIN}estudiantes.html`,
+        claves: [e.id, e.nombre, e.apellido, e.curso],
+      })),
+    ];
   }
 
   function mostrar(abierto) {
@@ -625,15 +634,14 @@ function conectarBuscadorAdmin(form) {
     campo.setAttribute("aria-expanded", abierto ? "true" : "false");
   }
 
-  function pintar() {
-    const consulta = campo.value;
-    const resultados = buscar(consulta);
-    if (normal(consulta).trim().length < 2) {
+  function render(resultados, consulta) {
+    if (normal(consulta).length < 2) {
       mostrar(false);
       return;
     }
-    menu.innerHTML = resultados.length
-      ? resultados
+    const lista = resultados.slice(0, 8);
+    menu.innerHTML = lista.length
+      ? lista
           .map(
             (r) => `
         <a class="dropdown-item d-flex align-items-center gap-2" href="${r.url}">
@@ -649,8 +657,20 @@ function conectarBuscadorAdmin(form) {
     mostrar(true);
   }
 
-  campo.addEventListener("input", pintar);
-  campo.addEventListener("focus", pintar);
+  if (window.Buscador) {
+    window.Buscador.crear({
+      input: campo,
+      items: recolectar,
+      keys: (item) => item.claves,
+      minLength: 2,
+      render,
+    });
+  } else {
+    // Respaldo por si buscador.js no está cargado.
+    campo.addEventListener("input", () => render(recolectar(), campo.value));
+    campo.addEventListener("focus", () => render(recolectar(), campo.value));
+  }
+
   form.addEventListener("submit", (evento) => {
     evento.preventDefault();
     const primero = menu.querySelector("a.dropdown-item");

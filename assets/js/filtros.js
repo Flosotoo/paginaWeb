@@ -6,11 +6,13 @@
 
   const productos = window.Datos ? window.Datos.productos() : [];
 
-  const normalizar = (valor) =>
-    String(valor || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
+  const normalizar = window.Buscador
+    ? window.Buscador.normalizar
+    : (valor) =>
+        String(valor || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
 
   const precio = (valor) => `$${valor.toLocaleString("es-CL")}`;
 
@@ -291,7 +293,13 @@
 
     if (textoEl) {
       textoEl.value = estado.texto;
-      textoEl.addEventListener("input", aplicar);
+      // HU55/HU67: el texto se filtra con el buscador común (debounce).
+      textoEl.addEventListener(
+        "input",
+        window.Buscador && window.Buscador.debounce
+          ? window.Buscador.debounce(aplicar, 180)
+          : aplicar,
+      );
     }
     if (ordenEl) {
       ordenEl.value = estado.orden;

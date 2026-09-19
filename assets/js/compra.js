@@ -1,6 +1,6 @@
 // Operación de librería: consulta de saldo (HU51), registrar compra (HU52),
 // rechazo por saldo insuficiente (HU53), stock (HU31/HU32) y ventas del día
-// (HU37). Todo sobre la base simulada.
+// (HU37). El estudiante se elige con el buscador compartido (buscador.js).
 (function () {
   if (!window.Datos) return;
   const V = window.Validacion;
@@ -13,30 +13,118 @@
       hour: "2-digit",
       minute: "2-digit",
     });
+  const escapar = (texto) =>
+    String(texto == null ? "" : texto).replace(
+      /[&<>"']/g,
+      (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+          c
+        ],
+    );
+
+  // Alumnos con su identificador y saldo disponible.
+  function alumnos() {
+    return Datos.estudiantes().map((e) => {
+      const nombreCompleto = `${e.nombre} ${e.apellido}`;
+      return {
+        id: e.id,
+        rut: e.rut || e.id,
+        nombre: e.nombre,
+        apellido: e.apellido,
+        curso: e.curso,
+        nombreCompleto,
+        saldo: Datos.saldoDe(nombreCompleto),
+      };
+    });
+  }
+
+  // Buscador de estudiantes reutilizable (nombre, curso o RUT/identificador).
+  function montarBuscadorEstudiante(input, contenedor, alElegir) {
+    if (!window.Buscador || !input || !contenedor) return null;
+
+    const elegir = (alumno) => {
+      input.value = alumno.nombreCompleto;
+      contenedor.hidden = true;
+      contenedor.innerHTML = "";
+      alElegir(alumno);
+    };
+
+    contenedor.addEventListener("click", (evento) => {
+      const boton = evento.target.closest("[data-alumno]");
+      if (!boton) return;
+      const alumno = alumnos().find((a) => a.id === boton.dataset.alumno);
+      if (alumno) elegir(alumno);
+    });
+
+    return window.Buscador.crear({
+      input,
+      contenedor,
+      minLength: 1,
+      items: alumnos,
+      keys: (a) => [a.nombreCompleto, a.nombre, a.apellido, a.curso, a.rut],
+      render: (lista, consulta) => {
+        if (String(consulta).trim() === "") {
+          contenedor.hidden = true;
+          contenedor.innerHTML = "";
+          return;
+        }
+        contenedor.hidden = false;
+        contenedor.innerHTML = lista.length
+          ? lista
+              .map(
+                (a) => `
+            <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3" data-alumno="${a.id}">
+              <span>
+                <span class="fw-bold">${escapar(a.nombreCompleto)}</span>
+                <span class="small text-body-secondary d-block">${escapar(a.curso)} · ${escapar(a.rut)}</span>
+              </span>
+              <span class="font-monospace">${formato(a.saldo)}</span>
+            </button>`,
+              )
+              .join("")
+          : `<span class="list-group-item text-body-secondary">Sin resultados.</span>`;
+      },
+    });
+  }
 
   // HU51: consulta de saldo de un estudiante.
   const formSaldo = document.getElementById("formConsultaSaldo");
   if (formSaldo) {
     const input = document.getElementById("estudiante");
+    const contenedor = document.getElementById("resultados-estudiante");
     const resultado = document.getElementById("saldo-resultado");
-    formSaldo.addEventListener("submit", (evento) => {
-      evento.preventDefault();
-      const texto = input.value.trim();
-      const existe = Datos.pupilos().some(
-        (p) => p === window.Edusaldo.normalizar(texto),
-      );
-      if (!texto || !existe) {
-        resultado.innerHTML =
-          "<p>No encontramos un estudiante con ese nombre o identificador.</p>";
-        return;
-      }
+    let elegido = null;
+
+    const mostrarSaldo = (alumno) => {
       resultado.innerHTML = `
         <article class="card card-body mb-4">
-          <h2 class="h3 mb-2">${texto}</h2>
-          <p>Saldo disponible: <strong>${formato(
-            Datos.saldoDe(texto),
-          )}</strong></p>
+          <h2 class="h3 mb-1">${escapar(alumno.nombreCompleto)}</h2>
+          <p class="mb-1">${escapar(alumno.curso)} · ${escapar(alumno.rut)}</p>
+          <p class="mb-0">Saldo disponible: <strong>${formato(alumno.saldo)}</strong></p>
         </article>`;
+    };
+
+    montarBuscadorEstudiante(input, contenedor, (alumno) => {
+      elegido = alumno;
+      mostrarSaldo(alumno);
+    });
+
+    formSaldo.addEventListener("submit", (evento) => {
+      evento.preventDefault();
+      const alumno =
+        elegido ||
+        alumnos().find(
+          (a) =>
+            window.Edusaldo.normalizar(a.nombreCompleto) ===
+            window.Edusaldo.normalizar(input.value),
+        );
+      if (!alumno) {
+        resultado.innerHTML =
+          '<p class="text-body-secondary">No encontramos un estudiante con ese nombre o identificador.</p>';
+        return;
+      }
+      elegido = alumno;
+      mostrarSaldo(alumno);
     });
   }
 
@@ -44,11 +132,14 @@
   const formCompra = document.getElementById("formCompra");
   if (formCompra) {
     const estudiante = document.getElementById("compra-estudiante");
+    const resultados = document.getElementById("resultados-estudiante");
+    const resumen = document.getElementById("compra-estudiante-resumen");
     const select = document.getElementById("compra-producto");
     const cantidad = document.getElementById("compra-cantidad");
     const totalEl = document.getElementById("compra-total");
     const saldoEl = document.getElementById("compra-saldo");
     const aviso = document.getElementById("compra-aviso");
+    let elegido = null;
 
     select.replaceChildren(new Option("Selecciona un producto", ""));
     Datos.productos().forEach((p) =>
@@ -64,21 +155,36 @@
     function refrescar() {
       if (totalEl) totalEl.textContent = formato(calcularTotal());
       if (saldoEl)
-        saldoEl.textContent = formato(Datos.saldoDe(estudiante.value));
+        saldoEl.textContent = formato(elegido ? elegido.saldo : 0);
     }
+
+    montarBuscadorEstudiante(estudiante, resultados, (alumno) => {
+      elegido = alumno;
+      if (resumen) {
+        resumen.textContent = `${alumno.nombreCompleto} · ${alumno.curso} · ${alumno.rut} · saldo ${formato(alumno.saldo)}`;
+      }
+      refrescar();
+    });
 
     select.addEventListener("change", refrescar);
     cantidad.addEventListener("input", refrescar);
-    estudiante.addEventListener("input", refrescar);
     refrescar();
 
     if (V) {
       V.preparar(formCompra, {
         alValidar: () => {
+          if (!elegido) {
+            V.mostrarAviso(
+              aviso,
+              "Selecciona un estudiante de la lista de resultados.",
+              "error",
+            );
+            return;
+          }
           const producto = productoActual();
           const unidades = Number(cantidad.value);
           const total = calcularTotal();
-          const saldo = Datos.saldoDe(estudiante.value);
+          const saldo = elegido.saldo;
 
           if (unidades > producto.stock) {
             V.mostrarAviso(
@@ -103,12 +209,10 @@
           }
 
           Datos.descontarStock(producto.codigo, unidades);
-          Datos.ajustarSaldo(estudiante.value, -total);
-          // El movimiento es del alumno: se asocia a su apoderado para que
-          // lo vea en "Movimientos"; el vendedor queda como responsable.
+          Datos.ajustarSaldo(elegido.nombreCompleto, -total);
           Datos.agregarMovimiento({
-            correo: Datos.apoderadoDe(estudiante.value),
-            pupilo: estudiante.value,
+            correo: Datos.apoderadoDe(elegido.nombreCompleto),
+            pupilo: elegido.nombreCompleto,
             fecha: hoy(),
             tipo: "Compra",
             detalle: `Compra en la librería escolar · ${producto.nombre} x${unidades}`,
@@ -118,17 +222,21 @@
           Datos.agregarVenta({
             fecha: hoy(),
             hora: hora(),
-            pupilo: estudiante.value,
+            pupilo: elegido.nombreCompleto,
             detalle: `${producto.nombre} x${unidades}`,
             monto: total,
             responsable: sesion ? sesion.correo : "",
           });
 
+          elegido.saldo = Datos.saldoDe(elegido.nombreCompleto);
+          if (resumen) {
+            resumen.textContent = `${elegido.nombreCompleto} · ${elegido.curso} · ${elegido.rut} · saldo ${formato(elegido.saldo)}`;
+          }
           V.mostrarAviso(
             aviso,
             `Compra registrada por ${formato(total)}. Nuevo saldo disponible de ${
-              estudiante.value
-            }: ${formato(Datos.saldoDe(estudiante.value))}.`,
+              elegido.nombreCompleto
+            }: ${formato(elegido.saldo)}.`,
             "ok",
           );
           refrescar();

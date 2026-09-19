@@ -328,8 +328,10 @@
   const entregar = document.getElementById("lista-entregar-reservas");
   if (entregar) {
     const avisoEntregas = document.getElementById("entregas-aviso");
-    const pintarEntregar = () => {
-      const listas = Datos.reservas().filter((r) => r.estado === "Lista para retiro");
+    const listasEntregables = () =>
+      Datos.reservas().filter((r) => r.estado === "Lista para retiro");
+    const pintarEntregar = (reservas) => {
+      const listas = reservas || listasEntregables();
       entregar.innerHTML = listas.length
         ? listas
             .map((r) =>
@@ -390,9 +392,27 @@
         `Reserva ${reserva.codigo} entregada. Se registró la compra por ${pesos(monto)}; nuevo saldo de ${nombreAlumno(reserva.pupilo)}: ${pesos(Datos.saldoDe(reserva.pupilo))}.`,
         "ok",
       );
-      pintarEntregar();
+      refrescar();
     });
-    pintarEntregar();
+
+    // HU36: filtro en tiempo real por código de reserva con el buscador común.
+    let buscador = null;
+    const campoCodigo = document.getElementById("codigo");
+    if (window.Buscador && campoCodigo) {
+      buscador = window.Buscador.crear({
+        input: campoCodigo,
+        items: listasEntregables,
+        keys: (r) => [r.codigo, r.pupilo, r.producto],
+        render: (resultados) => pintarEntregar(resultados),
+      });
+    } else {
+      pintarEntregar();
+    }
+
+    function refrescar() {
+      if (buscador) buscador.pintar();
+      else pintarEntregar();
+    }
   }
 
   const formEntrega = document.getElementById("formEntrega");
