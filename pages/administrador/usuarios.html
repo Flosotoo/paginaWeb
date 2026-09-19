@@ -26,12 +26,31 @@
           >
         </div>
 
+        <div class="mb-3">
+          <label class="visually-hidden" for="buscar-usuarios">Buscar usuario</label>
+          <input
+            class="form-control"
+            type="search"
+            id="buscar-usuarios"
+            placeholder="Buscar por nombre, correo o RUN"
+            autocomplete="off"
+          />
+        </div>
+
         <!-- HU38/HU41/HU42: listado con detalle y baja desde la base simulada -->
         <div id="lista-usuarios"></div>
+
+        <!-- HU08 CA2/CA3: aprobación o rechazo de rectificaciones -->
+        <section class="mt-5">
+          <h2 class="h3 mb-3">Solicitudes de rectificación</h2>
+          <div id="lista-solicitudes"></div>
+        </section>
       </section>
     </main>
     <div id="footer-container"></div>
     <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/buscador.js"></script>
+    <script src="../../assets/js/logs.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/validaciones.js"></script>
     <script src="../../assets/js/usuario.js"></script>

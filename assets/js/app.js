@@ -17,8 +17,10 @@
     usuarios: [
       {
         run: "11111111-1",
-        nombre: "Ana",
-        apellidos: "Admin",
+        primerNombre: "Ana",
+        segundoNombre: "María",
+        apellidoPaterno: "González",
+        apellidoMaterno: "Rojas",
         correo: "admin@correo.cl",
         clave: "1234",
         rol: "Administrador",
@@ -32,8 +34,10 @@
       },
       {
         run: "22222222-2",
-        nombre: "Víctor",
-        apellidos: "Vendedor",
+        primerNombre: "Víctor",
+        segundoNombre: "Manuel",
+        apellidoPaterno: "Fuentes",
+        apellidoMaterno: "Díaz",
         correo: "vendedor@correo.cl",
         clave: "1234",
         rol: "Vendedor",
@@ -47,8 +51,10 @@
       },
       {
         run: "12345678-5",
-        nombre: "Camila",
-        apellidos: "Pérez",
+        primerNombre: "Camila",
+        segundoNombre: "Antonia",
+        apellidoPaterno: "Pérez",
+        apellidoMaterno: "González",
         correo: "apoderado@correo.cl",
         clave: "1234",
         rol: "Cliente",
@@ -62,8 +68,10 @@
       },
       {
         run: "33333333-3",
-        nombre: "Nuevo",
-        apellidos: "Apoderado",
+        primerNombre: "Nuevo",
+        segundoNombre: "",
+        apellidoPaterno: "Apoderado",
+        apellidoMaterno: "Demo",
         correo: "nuevo@correo.cl",
         clave: "abcd",
         rol: "Cliente",
@@ -148,6 +156,8 @@
         apoderado: "apoderado@correo.cl",
       },
     ],
+    // Solicitudes de rectificación (HU08): se aprueban o rechazan desde el admin.
+    solicitudes: [],
     reservas: [
       {
         codigo: "ED-2026-014",
@@ -307,12 +317,62 @@
     const base = JSON.parse(JSON.stringify(SEMILLA));
     const guardado = Almacen.leer(CLAVE_BD) || {};
     const bd = Object.assign(base, guardado);
+    // HU10/HU39/HU41: migra usuarios antiguos con "nombre"/"apellidos" a los
+    // cuatro campos de nombre.
+    bd.usuarios = (bd.usuarios || []).map((u) =>
+      normalizarUsuario(Object.assign({}, u)),
+    );
     Almacen.guardar(CLAVE_BD, bd);
     return bd;
   }
 
   function guardarBD(bd) {
     Almacen.guardar(CLAVE_BD, bd);
+  }
+
+  // HU10/HU39/HU40/HU41: el nombre de un usuario son cuatro campos.
+  const CAMPOS_NOMBRE = [
+    "primerNombre",
+    "segundoNombre",
+    "apellidoPaterno",
+    "apellidoMaterno",
+  ];
+  const ETIQUETAS_CAMPO = {
+    primerNombre: "Primer nombre",
+    segundoNombre: "Segundo nombre",
+    apellidoPaterno: "Apellido paterno",
+    apellidoMaterno: "Apellido materno",
+    correo: "Correo",
+    direccion: "Dirección",
+  };
+
+  function normalizarUsuario(usuario) {
+    if (!usuario) return usuario;
+    if (usuario.primerNombre == null) {
+      usuario.primerNombre = usuario.nombre || "";
+      usuario.segundoNombre = usuario.segundoNombre || "";
+      // El campo antiguo "apellidos" se conserva completo en el paterno para no
+      // perder información; el materno queda vacío hasta que se edite.
+      usuario.apellidoPaterno = usuario.apellidos || "";
+      usuario.apellidoMaterno = usuario.apellidoMaterno || "";
+    }
+    CAMPOS_NOMBRE.forEach((campo) => {
+      usuario[campo] = String(usuario[campo] == null ? "" : usuario[campo]);
+    });
+    return usuario;
+  }
+
+  function nombreCompletoUsuario(usuario) {
+    const u = normalizarUsuario(usuario) || {};
+    return [
+      u.primerNombre,
+      u.segundoNombre,
+      u.apellidoPaterno,
+      u.apellidoMaterno,
+    ]
+      .filter((parte) => String(parte || "").trim() !== "")
+      .join(" ")
+      .trim();
   }
 
   // El rol interno "Cliente" se muestra como "Apoderado" (HU14).
@@ -328,13 +388,14 @@
     usuarios() {
       return leerBD().usuarios;
     },
+    nombreCompletoUsuario,
     buscarUsuario(correo) {
       const buscado = normalizar(correo);
       return leerBD().usuarios.find((u) => normalizar(u.correo) === buscado);
     },
     crearUsuario(usuario) {
       const bd = leerBD();
-      bd.usuarios.push(usuario);
+      bd.usuarios.push(normalizarUsuario(Object.assign({}, usuario)));
       guardarBD(bd);
       return usuario;
     },
@@ -344,12 +405,42 @@
       const usuario = bd.usuarios.find((u) => normalizar(u.correo) === buscado);
       if (usuario) {
         Object.assign(usuario, cambios);
+        normalizarUsuario(usuario);
         guardarBD(bd);
       }
       return usuario;
     },
     darDeBajaUsuario(correo) {
       return Datos.actualizarUsuario(correo, { estado: "inactivo" });
+    },
+
+    // Solicitudes de rectificación (HU08)
+    solicitudes() {
+      return leerBD().solicitudes;
+    },
+    solicitudesPendientes() {
+      return leerBD().solicitudes.filter((s) => s.estado === "Pendiente");
+    },
+    buscarSolicitud(id) {
+      return leerBD().solicitudes.find((s) => s.id === id);
+    },
+    agregarSolicitud(solicitud) {
+      const bd = leerBD();
+      bd.solicitudes.push(solicitud);
+      guardarBD(bd);
+      return solicitud;
+    },
+    actualizarSolicitud(id, cambios) {
+      const bd = leerBD();
+      const solicitud = bd.solicitudes.find((s) => s.id === id);
+      if (solicitud) {
+        Object.assign(solicitud, cambios);
+        guardarBD(bd);
+      }
+      return solicitud;
+    },
+    siguienteIdSolicitud() {
+      return `SOL-${String(leerBD().solicitudes.length + 1).padStart(3, "0")}`;
     },
 
     // Productos
@@ -548,7 +639,7 @@
     iniciar(usuario) {
       const sesion = {
         correo: usuario.correo,
-        nombre: `${usuario.nombre} ${usuario.apellidos}`.trim(),
+        nombre: nombreCompletoUsuario(usuario),
         rol: usuario.rol,
         temporal: Boolean(usuario.temporal),
       };
@@ -617,5 +708,8 @@
     normalizar,
     etiquetaRol,
     almacen: Almacen,
+    nombreCompletoUsuario,
+    camposNombre: CAMPOS_NOMBRE,
+    etiquetasCampo: ETIQUETAS_CAMPO,
   };
 })();

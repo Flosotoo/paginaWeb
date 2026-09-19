@@ -159,8 +159,10 @@
 
         const usuario = Datos.crearUsuario({
           run: run.value.trim(),
-          nombre: campo("nombre").value.trim(),
-          apellidos: campo("apellidos").value.trim(),
+          primerNombre: campo("primer-nombre").value.trim(),
+          segundoNombre: campo("segundo-nombre").value.trim(),
+          apellidoPaterno: campo("apellido-paterno").value.trim(),
+          apellidoMaterno: campo("apellido-materno").value.trim(),
           correo,
           clave: clave.value,
           rol: "Cliente",
