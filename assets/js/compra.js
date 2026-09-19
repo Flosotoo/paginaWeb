@@ -31,8 +31,8 @@
         return;
       }
       resultado.innerHTML = `
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">${texto}</h2>
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">${texto}</h2>
           <p>Saldo disponible: <strong>${formato(
             Datos.saldoDe(texto),
           )}</strong></p>
@@ -144,10 +144,10 @@
       ? criticos
           .map(
             (p) => `
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">${p.codigo} · ${p.nombre}</h2>
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">${p.codigo} · ${p.nombre}</h2>
           <p>Disponible: ${p.stock} unidades · Stock crítico: ${p.stockCritico}</p>
-          <p class="ce-etiqueta">Reposición requerida</p>
+          <p><span class="badge rounded-pill">Reposición requerida</span></p>
         </article>`,
           )
           .join("")
@@ -168,8 +168,8 @@
       ? ventas
           .map(
             (v) => `
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">${v.hora} · ${v.pupilo}</h2>
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">${v.hora} · ${v.pupilo}</h2>
           <p>${v.detalle} · ${formato(v.monto)} · Responsable: ${v.responsable}</p>
         </article>`,
           )

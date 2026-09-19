@@ -10,87 +10,94 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
 
-    <main id="contenido-principal" class="ce-principal">
-      <div class="ce-contenedor">
-        <section class="ce-tarjeta ce-panel" aria-labelledby="titulo-login">
-          <h1 id="titulo-login" class="ce-titulo-pagina">Iniciar sesión</h1>
-          <p class="ce-bajada">
-            Entra con el correo que registraste en el establecimiento.
-          </p>
-          <p class="ce-aviso ce-aviso--info">
-            Cuentas de demostración (clave 1234): admin@correo.cl,
-            vendedor@correo.cl, apoderado@correo.cl. Primer ingreso:
-            nuevo@correo.cl (clave abcd).
-          </p>
-          <p
-            class="ce-aviso ce-aviso--error"
-            id="aviso-credenciales"
-            role="alert"
-            hidden
-          >
-            El correo o la contraseña no son correctos.
-          </p>
-
-          <form id="formLogin" action="#" method="post" class="ce-formulario">
-            <div class="ce-campo">
-              <label for="correo">
-                Correo electrónico
-                <span class="ce-obligatorio" aria-hidden="true">*</span>
-              </label>
-              <input
-                type="email"
-                id="correo"
-                name="correo"
-                class="ce-control"
-                maxlength="100"
-                required
-                autocomplete="email"
-                placeholder="nombre@correo.cl"
-              />
-              <span class="ce-ayuda">Ingresa una dirección de correo válida.</span>
-              <span class="ce-error" id="error-correo" role="alert"></span>
-            </div>
-
-            <div class="ce-campo">
-              <label for="clave">
-                Contraseña
-                <span class="ce-obligatorio" aria-hidden="true">*</span>
-              </label>
-              <input
-                type="password"
-                id="clave"
-                name="clave"
-                class="ce-control"
-                minlength="4"
-                maxlength="10"
-                required
-                autocomplete="current-password"
-              />
-              <span class="ce-ayuda">Entre 4 y 10 caracteres.</span>
-              <span class="ce-error" id="error-clave" role="alert"></span>
-            </div>
-
-            <div class="ce-formulario__acciones">
-              <button
-                type="submit"
-                class="btn-ce btn-ce--primario btn-ce--ancho"
-              >
-                Entrar
-              </button>
-            </div>
-          </form>
-
-          <p class="ce-panel__pie">
-            Tu cuenta es creada por el Centro General de Padres. Si tu primer
-            ingreso usa una contraseña temporal, el sistema te pedirá cambiarla.
-          </p>
-        </section>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-5">
+          <section class="card card-body" aria-labelledby="titulo-login">
+            <h1 id="titulo-login" class="h1 mb-3">Iniciar sesión</h1>
+            <p class="lead mb-4">
+              Entra con el correo que registraste en el establecimiento.
+            </p>
+            <p class="alert alert-info">
+              Cuentas de demostración (clave 1234): admin@correo.cl,
+              vendedor@correo.cl, apoderado@correo.cl. Primer ingreso:
+              nuevo@correo.cl (clave abcd).
+            </p>
+            <p
+              class="alert alert-danger"
+              id="aviso-credenciales"
+              role="alert"
+              hidden
+            >
+              El correo o la contraseña no son correctos.
+            </p>
+  
+            <form id="formLogin" action="#" method="post">
+              <div class="mb-3">
+                <label for="correo" class="form-label">
+                  Correo electrónico
+                  <span class="text-danger" aria-hidden="true">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="correo"
+                  name="correo"
+                  class="form-control"
+                  maxlength="100"
+                  required
+                  autocomplete="email"
+                  placeholder="nombre@correo.cl"
+                />
+                <span class="form-text">Ingresa una dirección de correo válida.</span>
+                <span class="invalid-feedback" id="error-correo" role="alert"></span>
+              </div>
+  
+              <div class="mb-3">
+                <label for="clave" class="form-label">
+                  Contraseña
+                  <span class="text-danger" aria-hidden="true">*</span>
+                </label>
+                <input
+                  type="password"
+                  id="clave"
+                  name="clave"
+                  class="form-control"
+                  minlength="4"
+                  maxlength="10"
+                  required
+                  autocomplete="current-password"
+                />
+                <div class="d-flex flex-wrap justify-content-between gap-2">
+                  <span class="form-text">Entre 4 y 10 caracteres.</span>
+                  <a class="form-text link-primary link-offset-2" href="recuperar-contrasena.html"
+                    >¿Olvidaste la contraseña?</a
+                  >
+                </div>
+                <span class="invalid-feedback" id="error-clave" role="alert"></span>
+              </div>
+  
+              <div class="d-flex flex-wrap gap-2 mt-4">
+                <button
+                  type="submit"
+                  class="btn btn-primary w-100"
+                >
+                  Entrar
+                </button>
+              </div>
+            </form>
+  
+            <p class="border-top pt-3 mt-4 text-center small text-body-secondary">
+              ¿No tienes cuenta?
+              <a class="link-primary link-offset-2" href="crear-cuenta.html">Crear cuenta</a>
+            </p>
+          </section>
+          </div>
+        </div>
       </div>
     </main>
 

@@ -18,22 +18,24 @@
     const disponible = producto.stock > 0;
     const accion =
       modo === "reserva"
-        ? `<button class="btn-ce btn-ce--primario" type="button" data-agregar="${producto.codigo}" ${
+        ? `<button class="btn btn-primary" type="button" data-agregar="${producto.codigo}" ${
             disponible ? "" : "disabled"
           }>Añadir a la reserva</button>`
-        : `<a class="btn-ce btn-ce--primario" href="producto-detalle.html?codigo=${encodeURIComponent(
+        : `<a class="btn btn-primary" href="producto-detalle.html?codigo=${encodeURIComponent(
             producto.codigo,
           )}">Ver detalle</a>`;
     return `
-      <article class="ce-tarjeta">
-        <img src="${producto.imagen}" alt="${producto.nombre}" width="240" height="120" />
-        <h2 class="ce-subtitulo">${producto.nombre}</h2>
+      <div class="col">
+      <article class="card card-body h-100">
+        <img class="img-fluid rounded mb-3" src="${producto.imagen}" alt="${producto.nombre}" width="240" height="120" />
+        <h2 class="h3 mb-2">${producto.nombre}</h2>
         <p>${producto.descripcion}</p>
         <p><strong>${precio(producto.precio)}</strong> · ${
           disponible ? `${producto.stock} disponibles` : "Agotado"
         }</p>
-        ${accion}
-      </article>`;
+        <div class="mt-auto pt-2">${accion}</div>
+      </article>
+      </div>`;
   }
 
   function montar({ clave, modo = "detalle" }) {
@@ -82,16 +84,22 @@
       box.replaceChildren();
       valores.forEach((valor) => {
         const label = document.createElement("label");
-        label.className = "ce-opcion";
+        label.className = "form-check-label";
         const input = document.createElement("input");
+        input.className = "form-check-input me-1";
         input.type = "checkbox";
         input.dataset.filtro = tipo;
         input.value = valor;
         if (estado[tipo === "nivel" ? "niveles" : "materias"].includes(valor)) {
           input.checked = true;
         }
-        label.append(input, document.createTextNode(` ${valor}`));
-        box.appendChild(label);
+        const item = document.createElement("div");
+        item.className = "form-check form-check-inline m-0";
+        input.id = `filtro-${tipo}-${valor}`.replace(/[^A-Za-z0-9_-]/g, "-");
+        label.htmlFor = input.id;
+        label.textContent = valor;
+        item.append(input, label);
+        box.appendChild(item);
       });
     }
 
@@ -176,7 +184,7 @@
       chips.forEach((chip) => {
         const boton = document.createElement("button");
         boton.type = "button";
-        boton.className = "ce-etiqueta";
+        boton.className = "btn btn-sm btn-outline-primary rounded-pill";
         boton.textContent = `${chip.label} ×`;
         boton.addEventListener("click", () => quitarFiltro(chip));
         tagsBox.appendChild(boton);
@@ -231,13 +239,13 @@
           if (errorPrecioEl) {
             errorPrecioEl.textContent =
               "El precio mínimo no puede ser mayor que el máximo.";
-            errorPrecioEl.classList.add("ce-error--visible");
+            errorPrecioEl.classList.add("d-block");
           }
           return;
         }
         if (errorPrecioEl) {
           errorPrecioEl.textContent = "";
-          errorPrecioEl.classList.remove("ce-error--visible");
+          errorPrecioEl.classList.remove("d-block");
         }
       }
 
@@ -275,7 +283,7 @@
       buscarTodos("materia").forEach((c) => (c.checked = false));
       if (errorPrecioEl) {
         errorPrecioEl.textContent = "";
-        errorPrecioEl.classList.remove("ce-error--visible");
+        errorPrecioEl.classList.remove("d-block");
       }
       if (window.Edusaldo) Edusaldo.almacen.quitar(clave);
       aplicar();

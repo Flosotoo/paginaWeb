@@ -10,47 +10,45 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Importar nómina</h1>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Importar nómina</h1>
         <!-- HU43: previsualización y validación del archivo antes de importar -->
-        <form class="ce-tarjeta" id="formNomina" action="#" method="post">
-          <div class="ce-campo">
-            <label for="nomina-archivo">Archivo CSV o XLSX</label>
+        <form class="card card-body mb-4" id="formNomina" action="#" method="post">
+          <div class="mb-3">
+            <label for="nomina-archivo" class="form-label">Archivo CSV o XLSX</label>
             <input
               id="nomina-archivo"
               name="archivo"
-              class="ce-control"
+              class="form-control"
               type="file"
               accept=".csv,.xlsx"
               required
             />
-            <span class="ce-ayuda"
+            <span class="form-text"
               >CSV con columnas: nombre, apellido, curso, identificador
               (opcional).</span
             >
           </div>
           <p
             id="nomina-aviso"
-            class="ce-aviso"
+            class="alert"
             role="status"
             aria-live="polite"
             hidden
           ></p>
-          <div class="ce-acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+            <button class="btn btn-primary" type="submit">
               Previsualizar nómina
             </button>
           </div>
         </form>
         <div id="nomina-preview"></div>
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Formato esperado</h2>
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">Formato esperado</h2>
           <p>
             El archivo debe incluir nombre, apellido, curso e identificador del
             estudiante. Si alguna fila es inválida, se rechaza el archivo

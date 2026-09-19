@@ -10,28 +10,33 @@ function obtenerRaiz() {
 const RAIZ = obtenerRaiz();
 
 const headerHTML = `
-  <a class="ce-saltar" href="#contenido-principal">Saltar al contenido</a>
-  <header class="ce-cabecera">
-    <div class="ce-contenedor ce-cabecera__interior">
-      <a class="ce-logo" href="${RAIZ}index.html">
-        <svg class="ce-logo__marca" viewBox="0 0 32 32" aria-hidden="true">
-          <rect x="2" y="7" width="6" height="18" rx="2" fill="#9E5837" />
-          <rect x="11" y="3" width="6" height="22" rx="2" fill="#7A4229" />
-          <rect x="20" y="12" width="6" height="13" rx="2" fill="#C99070" />
-        </svg>
-        EduSaldo
-      </a>
-      <nav class="ce-nav" aria-label="Navegación principal">
-        <ul id="nav-principal"></ul>
-      </nav>
-    </div>
+  <a class="visually-hidden-focusable position-fixed top-0 start-0 z-3 bg-primary text-white px-3 py-2 rounded-bottom" href="#contenido-principal">Saltar al contenido</a>
+  <header>
+    <nav class="navbar navbar-expand-md bg-body-tertiary border-bottom shadow-sm" aria-label="Navegación principal">
+      <div class="container">
+        <a class="navbar-brand d-inline-flex align-items-center gap-2" href="${RAIZ}index.html">
+          <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="2" y="7" width="6" height="18" rx="2" fill="#9E5837" />
+            <rect x="11" y="3" width="6" height="22" rx="2" fill="#7A4229" />
+            <rect x="20" y="12" width="6" height="13" rx="2" fill="#C99070" />
+          </svg>
+          EduSaldo
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu-principal" aria-controls="menu-principal" aria-expanded="false" aria-label="Abrir o cerrar el menú">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu-principal">
+          <ul class="navbar-nav ms-auto align-items-md-center gap-md-1" id="nav-principal"></ul>
+        </div>
+      </div>
+    </nav>
   </header>
 `;
 
 const footerHTML = `
-  <footer class="ce-pie">
-    <div class="ce-contenedor ce-pie__interior">
-      <p>© 2026 EduSaldo</p>
+  <footer class="bg-body-tertiary border-top py-4">
+    <div class="container">
+      <p class="small text-body-secondary mb-0">© 2026 EduSaldo</p>
     </div>
   </footer>
 `;
@@ -83,8 +88,9 @@ const AREAS = {
   ],
 };
 
-function crearEnlace(texto, url) {
+function crearEnlace(texto, url, clase = "nav-link") {
   const a = document.createElement("a");
+  a.className = clase;
   a.href = url;
   a.textContent = texto;
   return a;
@@ -92,14 +98,16 @@ function crearEnlace(texto, url) {
 
 function crearItem(texto, url) {
   const li = document.createElement("li");
+  li.className = "nav-item";
   li.appendChild(crearEnlace(texto, url));
   return li;
 }
 
 function crearSeparador() {
   const li = document.createElement("li");
-  li.className = "ce-nav__separador";
+  li.className = "nav-item d-none d-md-flex align-self-stretch py-2";
   li.setAttribute("aria-hidden", "true");
+  li.innerHTML = `<span class="vr"></span>`;
   return li;
 }
 
@@ -111,53 +119,35 @@ function crearGrupo(items) {
   return fragment;
 }
 
-// Desplegable "Mi panel": se abre al hacer clic (táctil) y también al pasar el
-// mouse en dispositivos con puntero. Es la única entrada al área del usuario.
+// Desplegable "Mi panel" (dropdown de Bootstrap): es la única entrada al área
+// del usuario.
 function crearMenuArea(items) {
   const li = document.createElement("li");
-  li.className = "ce-nav__menu";
+  li.className = "nav-item dropdown";
 
   const boton = document.createElement("button");
   boton.type = "button";
-  boton.className = "ce-nav__disparador";
+  boton.className = "nav-link dropdown-toggle";
+  boton.setAttribute("data-bs-toggle", "dropdown");
   boton.setAttribute("aria-expanded", "false");
-  boton.setAttribute("aria-haspopup", "true");
-  boton.innerHTML = `Mi panel <span aria-hidden="true">▾</span>`;
+  boton.textContent = "Mi panel";
   li.appendChild(boton);
 
   const submenu = document.createElement("ul");
-  submenu.className = "ce-nav__submenu";
-  items.forEach((item) => submenu.appendChild(crearItem(item.texto, item.url)));
+  submenu.className = "dropdown-menu dropdown-menu-md-end";
+  items.forEach((item) => {
+    const entrada = document.createElement("li");
+    entrada.appendChild(crearEnlace(item.texto, item.url, "dropdown-item"));
+    submenu.appendChild(entrada);
+  });
   li.appendChild(submenu);
-
-  const abrir = (valor) =>
-    boton.setAttribute("aria-expanded", valor ? "true" : "false");
-
-  boton.addEventListener("click", (evento) => {
-    evento.stopPropagation();
-    abrir(boton.getAttribute("aria-expanded") !== "true");
-  });
-
-  const conHover =
-    window.matchMedia && window.matchMedia("(hover: hover)").matches;
-  if (conHover) {
-    li.addEventListener("mouseenter", () => abrir(true));
-    li.addEventListener("mouseleave", () => abrir(false));
-  }
-
-  document.addEventListener("click", (evento) => {
-    if (!li.contains(evento.target)) abrir(false);
-  });
-  document.addEventListener("keydown", (evento) => {
-    if (evento.key === "Escape") abrir(false);
-  });
 
   return li;
 }
 
 function crearAcceso(sesion) {
   const li = document.createElement("li");
-  li.className = "ce-nav__sesion";
+  li.className = "nav-item d-md-flex align-items-md-center gap-md-2";
 
   if (!sesion) {
     li.appendChild(crearEnlace("Iniciar sesión", `${RAIZ}pages/acceso/login.html`));
@@ -165,7 +155,7 @@ function crearAcceso(sesion) {
   }
 
   const usuario = document.createElement("span");
-  usuario.className = "ce-nav__usuario";
+  usuario.className = "navbar-text small text-nowrap";
   const rolVisible = window.Sesion.etiquetaRol
     ? window.Sesion.etiquetaRol(sesion.rol)
     : sesion.rol;
@@ -212,10 +202,10 @@ function inyectarBotonAtras() {
   if (window.location.pathname.split("/").pop() === "index.html") return;
 
   const wrapper = document.createElement("div");
-  wrapper.className = "ce-contenedor";
+  wrapper.className = "container";
   wrapper.innerHTML = `
-    <div class="ce-acciones">
-      <button class="btn-ce btn-ce--secundario btn-ce--chico" type="button" data-volver>
+    <div class="mb-3">
+      <button class="btn btn-outline-primary btn-sm" type="button" data-volver>
         Volver
       </button>
     </div>
@@ -268,23 +258,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Marca el enlace activo comparando el pathname actual.
   const pathActual = window.location.pathname.split("/").pop() || "index.html";
-  headerContainer.querySelectorAll(".ce-nav a").forEach((a) => {
+  headerContainer.querySelectorAll(".nav-link, .dropdown-item").forEach((a) => {
     const href = a.getAttribute("href") || "";
     if (href.startsWith("#")) return;
     const destino = href.split("/").pop().split("#")[0];
     if (destino === pathActual) {
       a.setAttribute("aria-current", "page");
+      a.classList.add("active");
     }
   });
 
   // Si la página actual está dentro del área, resalta el disparador.
-  const activo = headerContainer.querySelector(
-    ".ce-nav__submenu a[aria-current='page']",
-  );
+  const activo = headerContainer.querySelector(".dropdown-item.active");
   if (activo) {
-    const menu = activo.closest(".ce-nav__menu");
-    const disparador = menu && menu.querySelector(".ce-nav__disparador");
-    if (disparador) disparador.classList.add("ce-nav__disparador--activo");
+    const menu = activo.closest(".dropdown");
+    const disparador = menu && menu.querySelector(".dropdown-toggle");
+    if (disparador) disparador.classList.add("active");
   }
 
   inyectarBotonAtras();

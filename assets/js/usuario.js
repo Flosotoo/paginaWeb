@@ -133,33 +133,41 @@
       const rol = (r) =>
         window.Edusaldo ? Edusaldo.etiquetaRol(r) : r;
       contenedor.innerHTML = usuarios
-        .map((u) => {
+        .map((u, i) => {
           const esPropia =
             sesion &&
             u.correo.toLowerCase() === String(sesion.correo).toLowerCase();
           const sinBaja = u.estado === "inactivo" || esPropia;
           return `
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">${u.nombre} ${u.apellidos}${
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">${u.nombre} ${u.apellidos}${
             esPropia ? " (tu cuenta)" : ""
           }</h2>
           <p>${u.correo} · Perfil: ${rol(u.rol)} · Estado: ${u.estado}</p>
-          <div class="ce-acciones">
-            <a class="btn-ce btn-ce--secundario btn-ce--chico" href="usuario-crear.html?correo=${encodeURIComponent(u.correo)}">Editar</a>
-            <button class="btn-ce btn-ce--destructivo btn-ce--chico" type="button" data-baja="${u.correo}" ${
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+            <a class="btn btn-outline-primary btn-sm" href="usuario-crear.html?correo=${encodeURIComponent(u.correo)}">Editar</a>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-baja="${u.correo}" ${
               sinBaja ? "disabled" : ""
             } ${esPropia ? 'title="No puedes dar de baja tu propia cuenta"' : ""}>
               ${esPropia ? "Tu cuenta" : "Dar de baja"}
             </button>
           </div>
-          <details class="ce-preguntas">
-            <summary>Ver detalle</summary>
-            <dl class="ce-datos">
-              <dt class="ce-etiqueta">RUN</dt><dd>${u.run}</dd>
-              <dt class="ce-etiqueta">Tipo de usuario</dt><dd>${rol(u.rol)}</dd>
-              <dt class="ce-etiqueta">Dirección</dt><dd>${u.direccion}, ${u.comuna}</dd>
+          <div class="accordion accordion-flush" id="det-${i}">
+                <div class="accordion-item">
+                  <h3 class="accordion-header">
+                    <button class="accordion-button collapsed px-0" type="button" data-bs-toggle="collapse" data-bs-target="#det-${i}-c" aria-expanded="false" aria-controls="det-${i}-c">Ver detalle</button>
+                  </h3>
+                  <div id="det-${i}-c" class="accordion-collapse collapse" data-bs-parent="#det-${i}">
+                    <div class="accordion-body px-0">
+            <dl class="mb-3">
+              <dt><span class="badge rounded-pill">RUN</span></dt><dd>${u.run}</dd>
+              <dt><span class="badge rounded-pill">Tipo de usuario</span></dt><dd>${rol(u.rol)}</dd>
+              <dt><span class="badge rounded-pill">Dirección</span></dt><dd>${u.direccion}, ${u.comuna}</dd>
             </dl>
-          </details>
+</div>
+                  </div>
+                </div>
+              </div>
         </article>`;
         })
         .join("");

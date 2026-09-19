@@ -10,7 +10,6 @@
     />
     <link rel="stylesheet" href="assets/css/typography.css" />
     <link rel="stylesheet" href="assets/css/style.css" />
-    <link rel="stylesheet" href="assets/css/buttons.css" />
     <style>
       #contenido-principal {
         position: relative;
@@ -34,31 +33,34 @@
       }
     </style>
   </head>
-  <body>
-    <div id="header-container"></div>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
 
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-portada">
-        <div class="ce-contenedor">
-          <h1 class="ce-titulo-pagina">
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="py-5">
+        <div class="container">
+          <h1 class="h1 mb-3">
             Aportes claros para nuestra comunidad escolar
           </h1>
-          <p class="ce-bajada">
+          <p class="lead mb-4">
             EduSaldo permite registrar los aportes de las familias, administrar
             el saldo de cada pupilo y coordinar la entrega de materiales
             escolares.
           </p>
-          <div class="ce-acciones">
-            <a href="pages/acceso/login.html" class="btn-ce btn-ce--primario"
-              >Iniciar sesión
-            </a>
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+            <a href="pages/acceso/login.html" class="btn btn-primary"
+              >Iniciar sesión</a
+            >
+            <a href="pages/acceso/crear-cuenta.html" class="btn btn-outline-primary"
+              >Crear cuenta</a
+            >
           </div>
         </div>
       </section>
 
-      <section class="ce-seccion">
-        <div class="ce-contenedor">
-          <h2 class="ce-titulo-seccion">Una gestión más transparente</h2>
+      <section class="pt-5">
+        <div class="container">
+          <h2 class="h2 mb-3">Una gestión más transparente</h2>
           <p>
             Los aportes de las familias y la compra de materiales necesitan un
             registro claro y disponible para la comunidad escolar. EduSaldo
@@ -68,35 +70,41 @@
         </div>
       </section>
 
-      <section class="ce-seccion">
-        <div class="ce-contenedor">
-          <h2 class="ce-titulo-seccion">Cómo participa cada área</h2>
-          <div class="ce-grilla">
-            <article class="ce-tarjeta">
-              <span class="ce-etiqueta">Apoderado</span>
-              <h3 class="ce-subtitulo">El apoderado realiza el aporte</h3>
+      <section class="pt-5">
+        <div class="container">
+          <h2 class="h2 mb-3">Cómo participa cada área</h2>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col">
+<article class="card card-body h-100">
+              <span class="badge rounded-pill">Apoderado</span>
+              <h3 class="h3 mb-2">El apoderado realiza el aporte</h3>
               <p>
                 Selecciona a uno de sus pupilos, indica el monto y realiza el
                 pago mediante Webpay. Una vez confirmado, el saldo se acredita
                 al pupilo correspondiente.
               </p>
             </article>
-            <article class="ce-tarjeta">
-              <span class="ce-etiqueta">Centro General de Padres</span>
-              <h3 class="ce-subtitulo">Administra los fondos</h3>
+</div>
+            <div class="col">
+<article class="card card-body h-100">
+              <span class="badge rounded-pill">Centro General de Padres</span>
+              <h3 class="h3 mb-2">Administra los fondos</h3>
               <p>
                 Registra los aportes y mantiene disponible la información de
                 los saldos y movimientos asociados a cada pupilo.
               </p>
             </article>
-            <article class="ce-tarjeta">
-              <span class="ce-etiqueta">Librería</span>
-              <h3 class="ce-subtitulo">Prepara y entrega los materiales</h3>
+</div>
+            <div class="col">
+<article class="card card-body h-100">
+              <span class="badge rounded-pill">Librería</span>
+              <h3 class="h3 mb-2">Prepara y entrega los materiales</h3>
               <p>
                 Gestiona las reservas, prepara los materiales y registra cada
                 entrega con su fecha, monto y responsable.
               </p>
             </article>
+</div>
           </div>
         </div>
       </section>

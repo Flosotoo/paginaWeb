@@ -10,70 +10,72 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Aportar saldo</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Aportar saldo</h1>
+        <p class="lead mb-4">
           Selecciona uno de tus pupilos e ingresa el monto que deseas aportar.
         </p>
-        <form
-          class="ce-panel"
-          id="formAporte"
-          action="#"
-          method="post"
-        >
-          <div class="ce-campo">
-            <label for="hijo"
-              >Pupilo
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <select id="hijo" name="hijo" class="ce-control" required>
-              <option value="">Selecciona un pupilo</option>
-              <option value="martin">Martín Pérez, 7° Básico</option>
-              <option value="sofia">Sofía Pérez, 3° Básico</option>
-            </select>
-            <span class="ce-error" id="error-hijo" role="alert"></span>
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-5">
+          <form
+            class="card card-body"
+            id="formAporte"
+            action="#"
+            method="post"
+          >
+            <div class="mb-3">
+              <label for="hijo" class="form-label"
+                >Pupilo
+                <span class="text-danger" aria-hidden="true">*</span></label
+              >
+              <select id="hijo" name="hijo" class="form-select" required>
+                <option value="">Selecciona un pupilo</option>
+                <option value="martin">Martín Pérez, 7° Básico</option>
+                <option value="sofia">Sofía Pérez, 3° Básico</option>
+              </select>
+              <span class="invalid-feedback" id="error-hijo" role="alert"></span>
+            </div>
+            <div class="mb-3">
+              <label for="monto" class="form-label"
+                >Monto del aporte
+                <span class="text-danger" aria-hidden="true">*</span></label
+              >
+              <input
+                id="monto"
+                name="monto"
+                class="form-control"
+                type="number"
+                min="1"
+                step="1"
+                required
+              />
+              <span class="form-text"
+                >Ingresa un monto entero mayor que cero.</span
+              >
+              <span class="invalid-feedback" id="error-monto" role="alert"></span>
+            </div>
+            <p
+              id="aporte-aviso"
+              class="alert alert-info"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></p>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <button class="btn btn-primary" type="submit">
+                Continuar a Webpay
+              </button>
+              <a class="btn btn-outline-primary" href="mis-hijos.html"
+                >Cancelar</a
+              >
+            </div>
+          </form>
           </div>
-          <div class="ce-campo">
-            <label for="monto"
-              >Monto del aporte
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <input
-              id="monto"
-              name="monto"
-              class="ce-control"
-              type="number"
-              min="1"
-              step="1"
-              required
-            />
-            <span class="ce-ayuda"
-              >Ingresa un monto entero mayor que cero.</span
-            >
-            <span class="ce-error" id="error-monto" role="alert"></span>
-          </div>
-          <p
-            id="aporte-aviso"
-            class="ce-aviso ce-aviso--info"
-            role="status"
-            aria-live="polite"
-            hidden
-          ></p>
-          <div class="ce-formulario__acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
-              Continuar a Webpay
-            </button>
-            <a class="btn-ce btn-ce--secundario" href="mis-hijos.html"
-              >Cancelar</a
-            >
-          </div>
-        </form>
+        </div>
       </section>
     </main>
     <div id="footer-container"></div>

@@ -10,17 +10,15 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Detalle del producto</h1>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Detalle del producto</h1>
 
         <!-- HU18: el detalle se carga desde el catálogo por codigo -->
-        <article class="ce-tarjeta">
+        <article class="card card-body mb-4">
           <img
             id="detalle-imagen"
             src="../../assets/img/landing-page.jpg"
@@ -28,35 +26,35 @@
             width="480"
             height="240"
           />
-          <h2 class="ce-subtitulo" id="detalle-nombre">Producto</h2>
+          <h2 class="h3 mb-2" id="detalle-nombre">Producto</h2>
           <p id="detalle-descripcion"></p>
           <p><strong id="detalle-precio"></strong></p>
           <p id="detalle-stock"></p>
-          <div class="ce-campo">
-            <label for="cantidad">Cantidad</label>
+          <div class="mb-3">
+            <label for="cantidad" class="form-label">Cantidad</label>
             <input
               id="cantidad"
               name="cantidad"
-              class="ce-control ce-control--dato"
+              class="form-control font-monospace"
               type="number"
               min="1"
               step="1"
               value="1"
             />
           </div>
-          <div class="ce-acciones">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
             <button
-              class="btn-ce btn-ce--primario"
+              class="btn btn-primary"
               type="button"
               id="btn-carrito"
             >
               Agregar al carrito
             </button>
-            <a class="btn-ce btn-ce--secundario" href="productos.html"
+            <a class="btn btn-outline-primary" href="productos.html"
               >Volver al catálogo</a
             >
           </div>
-          <p id="detalle-aviso" class="ce-aviso ce-aviso--error" hidden></p>
+          <p id="detalle-aviso" class="alert alert-danger" hidden></p>
         </article>
       </section>
     </main>
@@ -89,7 +87,7 @@
         }
 
         boton.addEventListener("click", () => {
-          aviso.className = "ce-aviso ce-aviso--info";
+          aviso.className = "alert alert-info";
           aviso.textContent =
             "El carrito se implementa en la Evaluación 2 (TypeScript).";
           aviso.hidden = false;

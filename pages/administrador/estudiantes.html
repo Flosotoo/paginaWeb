@@ -10,106 +10,108 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Estudiantes</h1>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Estudiantes</h1>
         <!-- HU49: registrar estudiante -->
-        <form
-          class="ce-panel ce-panel--ancho"
-          id="formEstudiante"
-          action="#"
-          method="post"
-        >
-          <h2 class="ce-subtitulo">Registrar estudiante</h2>
-          <p
-            id="estudiante-aviso"
-            class="ce-aviso"
-            role="status"
-            aria-live="polite"
-            hidden
-          ></p>
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="nombre"
-                >Nombre
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
-              >
-              <input id="nombre" name="nombre" class="ce-control" required />
+        <div class="row justify-content-center">
+          <div class="col-lg-7">
+          <form
+            class="card card-body mb-4"
+            id="formEstudiante"
+            action="#"
+            method="post"
+          >
+            <h2 class="h3 mb-2">Registrar estudiante</h2>
+            <p
+              id="estudiante-aviso"
+              class="alert"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></p>
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="nombre" class="form-label"
+                  >Nombre
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <input id="nombre" name="nombre" class="form-control" required />
+              </div>
+              <div class="col-sm-6">
+                <label for="apellido" class="form-label"
+                  >Apellido
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <input id="apellido" name="apellido" class="form-control" required />
+              </div>
             </div>
-            <div class="ce-campo">
-              <label for="apellido"
-                >Apellido
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+            <div class="mb-3">
+              <label for="curso" class="form-label"
+                >Curso
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
-              <input id="apellido" name="apellido" class="ce-control" required />
+              <input id="curso" name="curso" class="form-control" required />
             </div>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <button class="btn btn-primary" type="submit">
+                Registrar estudiante
+              </button>
+            </div>
+          </form>
           </div>
-          <div class="ce-campo">
-            <label for="curso"
-              >Curso
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <input id="curso" name="curso" class="ce-control" required />
-          </div>
-          <div class="ce-formulario__acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
-              Registrar estudiante
-            </button>
-          </div>
-        </form>
+        </div>
 
         <!-- HU50: asociar estudiante a un apoderado -->
         <form
-          class="ce-tarjeta"
+          class="card card-body mb-4"
           id="formAsociacion"
           action="#"
           method="post"
         >
-          <h2 class="ce-subtitulo">Asociar a un apoderado</h2>
+          <h2 class="h3 mb-2">Asociar a un apoderado</h2>
           <p
             id="asociacion-aviso"
-            class="ce-aviso"
+            class="alert"
             role="status"
             aria-live="polite"
             hidden
           ></p>
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="asociar-estudiante"
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="asociar-estudiante" class="form-label"
                 >Estudiante
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
               <select
                 id="asociar-estudiante"
                 name="estudiante"
-                class="ce-control"
+                class="form-select"
                 required
               >
                 <option value="">Selecciona un estudiante</option>
               </select>
             </div>
-            <div class="ce-campo">
-              <label for="asociar-apoderado"
+            <div class="col-sm-6">
+              <label for="asociar-apoderado" class="form-label"
                 >Apoderado
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
               <select
                 id="asociar-apoderado"
                 name="apoderado"
-                class="ce-control"
+                class="form-select"
                 required
               >
                 <option value="">Selecciona un apoderado</option>
               </select>
             </div>
           </div>
-          <div class="ce-formulario__acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <button class="btn btn-primary" type="submit">
               Asociar estudiante
             </button>
           </div>

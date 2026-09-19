@@ -100,8 +100,8 @@
       ? reservas
           .map(
             (r) => `
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">${r.codigo} · ${r.estado}</h2>
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">${r.codigo} · ${r.estado}</h2>
           <p>${r.producto} · ${r.cantidad} unidad(es) · Creada el ${r.fecha}</p>
           <p>Retiro disponible hasta el ${r.fechaLimite}.</p>
         </article>`,
@@ -123,10 +123,10 @@
         ? pendientes
             .map(
               (r) => `
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">${r.codigo}</h2>
+          <article class="card card-body mb-4">
+            <h2 class="h3 mb-2">${r.codigo}</h2>
             <p>${r.pupilo} · ${r.producto} · ${r.cantidad} unidad(es) · Creada el ${r.fecha}</p>
-            <button class="btn-ce btn-ce--primario" type="button" data-preparar="${r.codigo}">
+            <button class="btn btn-primary" type="button" data-preparar="${r.codigo}">
               Marcar como lista para retirar
             </button>
           </article>`,
@@ -160,10 +160,10 @@
         ? listas
             .map(
               (r) => `
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">${r.codigo}</h2>
+          <article class="card card-body mb-4">
+            <h2 class="h3 mb-2">${r.codigo}</h2>
             <p>${r.pupilo} · ${r.producto} · ${r.cantidad} unidad(es)</p>
-            <button class="btn-ce btn-ce--primario" type="button" data-entregar="${r.codigo}">
+            <button class="btn btn-primary" type="button" data-entregar="${r.codigo}">
               Confirmar entrega
             </button>
           </article>`,

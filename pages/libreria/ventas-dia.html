@@ -10,14 +10,13 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Ventas del día</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Ventas del día</h1>
+        <p class="lead mb-4">
           Resumen de las ventas registradas durante la jornada.
         </p>
         <p>Total acumulado: <strong id="total-ventas">$0</strong></p>

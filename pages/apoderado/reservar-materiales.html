@@ -10,134 +10,132 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Reservar materiales</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Reservar materiales</h1>
+        <p class="lead mb-4">
           Selecciona un pupilo, busca los materiales disponibles y prepara una
           reserva para retirar en la librería.
         </p>
 
         <!-- HU23: la reserva se asocia a un pupilo y descuenta stock -->
-        <form class="ce-tarjeta" id="formReserva" action="#" method="post">
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="hijoReserva"
+        <form class="card card-body mb-4" id="formReserva" action="#" method="post">
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="hijoReserva" class="form-label"
                 >Pupilo
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
               <select
                 id="hijoReserva"
                 name="hijoReserva"
-                class="ce-control"
+                class="form-select"
                 required
               >
                 <option value="">Selecciona un pupilo</option>
                 <option value="martin">Martín Pérez, 7° Básico</option>
                 <option value="sofia">Sofía Pérez, 3° Básico</option>
               </select>
-              <span class="ce-error" id="error-hijoReserva" role="alert"></span>
+              <span class="invalid-feedback" id="error-hijoReserva" role="alert"></span>
             </div>
-            <div class="ce-campo">
-              <label for="cantidad"
+            <div class="col-sm-6">
+              <label for="cantidad" class="form-label"
                 >Cantidad
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
               <input
                 id="cantidad"
                 name="cantidad"
-                class="ce-control ce-control--dato"
+                class="form-control font-monospace"
                 type="number"
                 min="1"
                 step="1"
                 value="1"
                 required
               />
-              <span class="ce-error" id="error-cantidad" role="alert"></span>
+              <span class="invalid-feedback" id="error-cantidad" role="alert"></span>
             </div>
           </div>
           <p
             id="reserva-aviso"
-            class="ce-aviso"
+            class="alert"
             role="status"
             aria-live="polite"
             hidden
           ></p>
-          <div class="ce-acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+            <button class="btn btn-primary" type="submit">
               Confirmar reserva
             </button>
           </div>
         </form>
 
         <!-- HU55 a HU67: búsqueda, filtros y orden compartidos con el catálogo -->
-        <form class="ce-tarjeta" id="panelFiltros" action="#">
-          <div class="ce-campo">
-            <label for="busquedaReserva">Buscar material</label>
+        <form class="card card-body mb-4" id="panelFiltros" action="#">
+          <div class="mb-3">
+            <label for="busquedaReserva" class="form-label">Buscar material</label>
             <input
               id="busquedaReserva"
               name="busquedaReserva"
               type="search"
-              class="ce-control"
+              class="form-control"
               data-filtro="texto"
             />
           </div>
 
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="precio-min">Precio mínimo</label>
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="precio-min" class="form-label">Precio mínimo</label>
               <input
                 id="precio-min"
                 name="precio-min"
                 type="number"
                 min="0"
                 step="1"
-                class="ce-control ce-control--dato"
+                class="form-control font-monospace"
                 data-filtro="minimo"
               />
             </div>
-            <div class="ce-campo">
-              <label for="precio-max">Precio máximo</label>
+            <div class="col-sm-6">
+              <label for="precio-max" class="form-label">Precio máximo</label>
               <input
                 id="precio-max"
                 name="precio-max"
                 type="number"
                 min="0"
                 step="1"
-                class="ce-control ce-control--dato"
+                class="form-control font-monospace"
                 data-filtro="maximo"
               />
             </div>
           </div>
           <span
             id="error-precio"
-            class="ce-error"
+            class="invalid-feedback"
             role="alert"
             data-filtro-precio-error
           ></span>
 
-          <fieldset class="ce-campo">
+          <fieldset class="mb-3">
             <legend>Año escolar</legend>
-            <div class="ce-opciones" data-filtro-niveles></div>
+            <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-niveles></div>
           </fieldset>
 
-          <fieldset class="ce-campo">
+          <fieldset class="mb-3">
             <legend>Materia</legend>
-            <div class="ce-opciones" data-filtro-materias></div>
+            <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-materias></div>
           </fieldset>
 
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="ordenReserva">Ordenar</label>
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="ordenReserva" class="form-label">Ordenar</label>
               <select
                 id="ordenReserva"
                 name="ordenReserva"
-                class="ce-control"
+                class="form-select"
                 data-filtro="orden"
               >
                 <option value="nombre-asc">Nombre A-Z</option>
@@ -146,17 +144,17 @@
                 <option value="precio-desc">Precio mayor</option>
               </select>
             </div>
-            <div class="ce-campo">
-              <label>
-                <input type="checkbox" id="disponibles" data-filtro="disponibles" />
-                Solo disponibles
-              </label>
+            <div class="col-sm-6">
+              <div class="form-check mt-md-4 pt-md-2">
+                <input class="form-check-input" type="checkbox" id="disponibles" data-filtro="disponibles" />
+                <label class="form-check-label" for="disponibles">Solo disponibles</label>
+              </div>
             </div>
           </div>
 
-          <div class="ce-acciones">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
             <button
-              class="btn-ce btn-ce--secundario"
+              class="btn btn-outline-primary"
               type="button"
               data-filtro-limpiar
             >
@@ -165,15 +163,15 @@
           </div>
         </form>
 
-        <div class="ce-acciones" data-filtro-tags hidden></div>
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-4" data-filtro-tags hidden></div>
         <p data-filtro-resultado aria-live="polite"></p>
         <p
           data-filtro-vacio
-          class="ce-aviso ce-aviso--info"
+          class="alert alert-info"
           role="status"
           hidden
         ></p>
-        <div data-filtro-lista class="ce-grilla"></div>
+        <div data-filtro-lista class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
       </section>
     </main>
     <div id="footer-container"></div>

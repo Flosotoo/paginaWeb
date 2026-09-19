@@ -14,16 +14,15 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
 
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-portada">
-        <div class="ce-contenedor">
-          <h1 class="ce-titulo-pagina">Cómo funciona</h1>
-          <p class="ce-bajada">
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="py-5">
+        <div class="container">
+          <h1 class="h1 mb-3">Cómo funciona</h1>
+          <p class="lead mb-4">
             Del pago en línea al retiro en el mesón. Cada paso queda registrado
             con fecha, monto y responsable.
           </p>
@@ -31,98 +30,116 @@
       </section>
 
       <!-- Es una secuencia real, por eso va en <ol> -->
-      <section class="ce-seccion" aria-labelledby="titulo-recorrido">
-        <div class="ce-contenedor">
-          <h2 id="titulo-recorrido" class="ce-titulo-seccion">
+      <section class="pt-5" aria-labelledby="titulo-recorrido">
+        <div class="container">
+          <h2 id="titulo-recorrido" class="h2 mb-3">
             El recorrido de un aporte
           </h2>
-          <ol class="ce-pasos">
-            <li class="ce-tarjeta">
-              <span class="ce-etiqueta">Centro General</span>
-              <h3 class="ce-subtitulo">Crea la cuenta del apoderado</h3>
-              <p>
+          <ol class="list-group list-group-numbered gap-3">
+            <li class="list-group-item d-flex align-items-start rounded border py-3">
+<div>
+              <span class="badge rounded-pill">Centro General</span>
+              <h3 class="h3 mt-1 mb-2">Crea la cuenta del apoderado</h3>
+<p class="mb-0">
                 Desde el panel administrativo se registra al apoderado con su
                 RUN y su correo. El sistema envía una contraseña temporal al
                 correo registrado.
               </p>
-            </li>
-            <li class="ce-tarjeta">
-              <span class="ce-etiqueta">Centro General</span>
-              <h3 class="ce-subtitulo">Vincula a los pupilos</h3>
-              <p>
+            </div>
+</li>
+            <li class="list-group-item d-flex align-items-start rounded border py-3">
+<div>
+              <span class="badge rounded-pill">Centro General</span>
+              <h3 class="h3 mt-1 mb-2">Vincula a los pupilos</h3>
+<p class="mb-0">
                 Asocia a cada estudiante con su apoderado usando la nómina del
                 colegio. Cada apoderado ve solo a sus pupilos.
               </p>
-            </li>
-            <li class="ce-tarjeta">
-              <span class="ce-etiqueta">Apoderado</span>
-              <h3 class="ce-subtitulo">Paga el aporte</h3>
-              <p>
+            </div>
+</li>
+            <li class="list-group-item d-flex align-items-start rounded border py-3">
+<div>
+              <span class="badge rounded-pill">Apoderado</span>
+              <h3 class="h3 mt-1 mb-2">Paga el aporte</h3>
+<p class="mb-0">
                 Elige al pupilo, indica el monto y paga con Webpay. Cuando la
                 pasarela confirma, el saldo queda acreditado solo.
               </p>
-            </li>
-            <li class="ce-tarjeta">
-              <span class="ce-etiqueta">Apoderado</span>
-              <h3 class="ce-subtitulo">Reserva los materiales</h3>
-              <p>
+            </div>
+</li>
+            <li class="list-group-item d-flex align-items-start rounded border py-3">
+<div>
+              <span class="badge rounded-pill">Apoderado</span>
+              <h3 class="h3 mt-1 mb-2">Reserva los materiales</h3>
+<p class="mb-0">
                 Revisa el catálogo de la librería de su colegio, filtra por
                 nivel o materia y reserva lo que falta.
               </p>
-            </li>
-            <li class="ce-tarjeta">
-              <span class="ce-etiqueta">Librería</span>
-              <h3 class="ce-subtitulo">Entrega los materiales</h3>
-              <p>
+            </div>
+</li>
+            <li class="list-group-item d-flex align-items-start rounded border py-3">
+<div>
+              <span class="badge rounded-pill">Librería</span>
+              <h3 class="h3 mt-1 mb-2">Entrega los materiales</h3>
+<p class="mb-0">
                 Prepara la reserva y la entrega con su código. El descuento del
                 saldo queda en el historial de movimientos del pupilo.
               </p>
-            </li>
+            </div>
+</li>
           </ol>
         </div>
       </section>
 
-      <section class="ce-seccion" aria-labelledby="titulo-preguntas">
-        <div class="ce-contenedor">
-          <h2 id="titulo-preguntas" class="ce-titulo-seccion">
+      <section class="pt-5" aria-labelledby="titulo-preguntas">
+        <div class="container">
+          <h2 id="titulo-preguntas" class="h2 mb-3">
             Preguntas frecuentes
           </h2>
-          <div class="ce-tarjeta ce-preguntas">
-            <details>
-              <summary>¿Puedo abonar distinto a cada hijo?</summary>
-              <p>
-                Sí. Cada pago se acredita a un solo pupilo y su saldo es
-                independiente del de sus hermanos.
-              </p>
-            </details>
-            <details>
-              <summary>¿Cómo sé que mi pago llegó?</summary>
-              <p>
-                El aporte aparece en el historial de movimientos del pupilo con
-                estado Pagado en cuanto la pasarela lo confirma.
-              </p>
-            </details>
-            <details>
-              <summary>¿Qué pasa si cierro el navegador mientras pago?</summary>
-              <p>
-                El sistema revisa con Transbank los pagos que quedaron sin
-                confirmar y acredita los que sí se aprobaron.
-              </p>
-            </details>
-            <details>
-              <summary>¿Qué pasa si mi pupilo no retira una reserva?</summary>
-              <p>
-                Al vencer el plazo de retiro la reserva se cancela y el material
-                vuelve a quedar disponible.
-              </p>
-            </details>
-          </div>
+          <div class="accordion" id="faq">
+  <div class="accordion-item">
+    <h3 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-0" aria-expanded="false" aria-controls="faq-0">¿Puedo abonar distinto a cada hijo?</button>
+    </h3>
+    <div id="faq-0" class="accordion-collapse collapse" data-bs-parent="#faq">
+      <div class="accordion-body">Sí. Cada pago se acredita a un solo pupilo y su saldo es
+                independiente del de sus hermanos.</div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h3 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-1" aria-expanded="false" aria-controls="faq-1">¿Cómo sé que mi pago llegó?</button>
+    </h3>
+    <div id="faq-1" class="accordion-collapse collapse" data-bs-parent="#faq">
+      <div class="accordion-body">El aporte aparece en el historial de movimientos del pupilo con
+                estado Pagado en cuanto la pasarela lo confirma.</div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h3 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-2" aria-expanded="false" aria-controls="faq-2">¿Qué pasa si cierro el navegador mientras pago?</button>
+    </h3>
+    <div id="faq-2" class="accordion-collapse collapse" data-bs-parent="#faq">
+      <div class="accordion-body">El sistema revisa con Transbank los pagos que quedaron sin
+                confirmar y acredita los que sí se aprobaron.</div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h3 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-3" aria-expanded="false" aria-controls="faq-3">¿Qué pasa si mi pupilo no retira una reserva?</button>
+    </h3>
+    <div id="faq-3" class="accordion-collapse collapse" data-bs-parent="#faq">
+      <div class="accordion-body">Al vencer el plazo de retiro la reserva se cancela y el material
+                vuelve a quedar disponible.</div>
+    </div>
+  </div>
+</div>
 
-          <div class="ce-acciones">
-            <a href="../acceso/login.html" class="btn-ce btn-ce--primario"
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+            <a href="../acceso/login.html" class="btn btn-primary"
               >Iniciar sesión</a
             >
-            <a href="contacto.html" class="btn-ce btn-ce--secundario"
+            <a href="contacto.html" class="btn btn-outline-primary"
               >Hacer una consulta</a
             >
           </div>

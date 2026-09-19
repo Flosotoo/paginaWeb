@@ -157,7 +157,8 @@
 
   function mostrarAviso(elemento, mensaje, tipo) {
     if (!elemento) return;
-    elemento.className = `ce-aviso ce-aviso--${tipo || "info"}`;
+    const clases = { ok: "alert-success", error: "alert-danger", info: "alert-info" };
+    elemento.className = `alert ${clases[tipo] || clases.info}`;
     elemento.textContent = mensaje;
     elemento.hidden = false;
   }

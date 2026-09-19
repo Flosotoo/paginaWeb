@@ -10,33 +10,30 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Blog EduSaldo</h1>
-        <div class="ce-grilla">
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Cómo organizar los materiales del año</h2>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Blog EduSaldo</h1>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Cómo organizar los materiales del año</h2>
             <p>
               Ideas para planificar las compras escolares y aprovechar el saldo.
             </p>
-            <a class="btn-ce btn-ce--primario" href="blog-detalle.html"
-              >Leer noticia</a
-            >
           </article>
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Transparencia en cada aporte</h2>
+</div>
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Transparencia en cada aporte</h2>
             <p>
               Conoce cómo se registra cada movimiento del Centro General de
               Padres.
             </p>
-            <a class="btn-ce btn-ce--primario" href="blog-detalle-2.html"
-              >Leer noticia</a
-            >
           </article>
+</div>
         </div>
       </section>
     </main>

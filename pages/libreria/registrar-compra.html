@@ -10,94 +10,96 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Registrar compra</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Registrar compra</h1>
+        <p class="lead mb-4">
           Registra una compra presencial descontando el saldo del estudiante.
         </p>
 
         <p
           id="compra-aviso"
-          class="ce-aviso"
+          class="alert"
           role="status"
           aria-live="polite"
           hidden
         ></p>
 
         <!-- HU52: la compra descuenta saldo y stock; HU53: rechazo por saldo corto -->
-        <form
-          class="ce-panel ce-panel--ancho"
-          id="formCompra"
-          action="#"
-          method="post"
-        >
-          <div class="ce-campo">
-            <label for="compra-estudiante"
-              >Estudiante
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <input
-              id="compra-estudiante"
-              name="estudiante"
-              class="ce-control"
-              required
-            />
-            <span class="ce-error" id="error-compra-estudiante" role="alert"></span>
+        <div class="row justify-content-center">
+          <div class="col-lg-7">
+          <form
+            class="card card-body"
+            id="formCompra"
+            action="#"
+            method="post"
+          >
+            <div class="mb-3">
+              <label for="compra-estudiante" class="form-label"
+                >Estudiante
+                <span class="text-danger" aria-hidden="true">*</span></label
+              >
+              <input
+                id="compra-estudiante"
+                name="estudiante"
+                class="form-control"
+                required
+              />
+              <span class="invalid-feedback" id="error-compra-estudiante" role="alert"></span>
+            </div>
+  
+            <div class="mb-3">
+              <label for="compra-producto" class="form-label"
+                >Producto
+                <span class="text-danger" aria-hidden="true">*</span></label
+              >
+              <select
+                id="compra-producto"
+                name="producto"
+                class="form-select"
+                required
+              >
+                <option value="">Selecciona un producto</option>
+              </select>
+              <span class="invalid-feedback" id="error-compra-producto" role="alert"></span>
+            </div>
+  
+            <div class="mb-3">
+              <label for="compra-cantidad" class="form-label"
+                >Cantidad
+                <span class="text-danger" aria-hidden="true">*</span></label
+              >
+              <input
+                id="compra-cantidad"
+                name="cantidad"
+                class="form-control font-monospace"
+                type="number"
+                min="1"
+                step="1"
+                value="1"
+                required
+              />
+              <span class="invalid-feedback" id="error-compra-cantidad" role="alert"></span>
+            </div>
+  
+            <dl class="mb-3">
+              <dt><span class="badge rounded-pill">Total de la compra</span></dt>
+              <dd><strong id="compra-total">$0</strong></dd>
+              <dt><span class="badge rounded-pill">Saldo disponible</span></dt>
+              <dd><strong id="compra-saldo">$0</strong></dd>
+            </dl>
+  
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <button class="btn btn-primary" type="submit">
+                Confirmar compra
+              </button>
+            </div>
+          </form>
           </div>
-
-          <div class="ce-campo">
-            <label for="compra-producto"
-              >Producto
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <select
-              id="compra-producto"
-              name="producto"
-              class="ce-control"
-              required
-            >
-              <option value="">Selecciona un producto</option>
-            </select>
-            <span class="ce-error" id="error-compra-producto" role="alert"></span>
-          </div>
-
-          <div class="ce-campo">
-            <label for="compra-cantidad"
-              >Cantidad
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <input
-              id="compra-cantidad"
-              name="cantidad"
-              class="ce-control ce-control--dato"
-              type="number"
-              min="1"
-              step="1"
-              value="1"
-              required
-            />
-            <span class="ce-error" id="error-compra-cantidad" role="alert"></span>
-          </div>
-
-          <dl class="ce-datos">
-            <dt class="ce-etiqueta">Total de la compra</dt>
-            <dd><strong id="compra-total">$0</strong></dd>
-            <dt class="ce-etiqueta">Saldo disponible</dt>
-            <dd><strong id="compra-saldo">$0</strong></dd>
-          </dl>
-
-          <div class="ce-formulario__acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
-              Confirmar compra
-            </button>
-          </div>
-        </form>
+        </div>
       </section>
     </main>
     <div id="footer-container"></div>

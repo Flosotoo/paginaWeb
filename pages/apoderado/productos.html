@@ -10,96 +10,94 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Catálogo de productos</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Catálogo de productos</h1>
+        <p class="lead mb-4">
           Materiales disponibles para apoderados autenticados. Busca y combina
           filtros para encontrar lo que necesitas.
         </p>
 
         <!-- HU55 a HU67: búsqueda, filtros, orden, etiquetas y estado vacío -->
-        <form class="ce-tarjeta" id="panelFiltros" action="#">
-          <div class="ce-campo">
-            <label for="busqueda">Buscar por nombre, código o descripción</label>
+        <form class="card card-body mb-4" id="panelFiltros" action="#">
+          <div class="mb-3">
+            <label for="busqueda" class="form-label">Buscar por nombre, código o descripción</label>
             <input
               id="busqueda"
               name="busqueda"
               type="search"
-              class="ce-control"
+              class="form-control"
               data-filtro="texto"
             />
           </div>
 
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="precio-min">Precio mínimo</label>
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="precio-min" class="form-label">Precio mínimo</label>
               <input
                 id="precio-min"
                 name="precio-min"
                 type="number"
                 min="0"
                 step="1"
-                class="ce-control ce-control--dato"
+                class="form-control font-monospace"
                 data-filtro="minimo"
               />
             </div>
-            <div class="ce-campo">
-              <label for="precio-max">Precio máximo</label>
+            <div class="col-sm-6">
+              <label for="precio-max" class="form-label">Precio máximo</label>
               <input
                 id="precio-max"
                 name="precio-max"
                 type="number"
                 min="0"
                 step="1"
-                class="ce-control ce-control--dato"
+                class="form-control font-monospace"
                 data-filtro="maximo"
               />
             </div>
           </div>
           <span
             id="error-precio"
-            class="ce-error"
+            class="invalid-feedback"
             role="alert"
             data-filtro-precio-error
           ></span>
 
-          <fieldset class="ce-campo">
+          <fieldset class="mb-3">
             <legend>Año escolar</legend>
-            <div class="ce-opciones" data-filtro-niveles></div>
+            <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-niveles></div>
           </fieldset>
 
-          <fieldset class="ce-campo">
+          <fieldset class="mb-3">
             <legend>Materia</legend>
-            <div class="ce-opciones" data-filtro-materias></div>
+            <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-materias></div>
           </fieldset>
 
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="orden">Ordenar</label>
-              <select id="orden" name="orden" class="ce-control" data-filtro="orden">
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="orden" class="form-label">Ordenar</label>
+              <select id="orden" name="orden" class="form-select" data-filtro="orden">
                 <option value="nombre-asc">Nombre A-Z</option>
                 <option value="nombre-desc">Nombre Z-A</option>
                 <option value="precio-asc">Precio menor</option>
                 <option value="precio-desc">Precio mayor</option>
               </select>
             </div>
-            <div class="ce-campo">
-              <label>
-                <input type="checkbox" id="disponibles" data-filtro="disponibles" />
-                Solo disponibles
-              </label>
+            <div class="col-sm-6">
+              <div class="form-check mt-md-4 pt-md-2">
+                <input class="form-check-input" type="checkbox" id="disponibles" data-filtro="disponibles" />
+                <label class="form-check-label" for="disponibles">Solo disponibles</label>
+              </div>
             </div>
           </div>
 
-          <div class="ce-acciones">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
             <button
-              class="btn-ce btn-ce--secundario"
+              class="btn btn-outline-primary"
               type="button"
               data-filtro-limpiar
             >
@@ -108,15 +106,15 @@
           </div>
         </form>
 
-        <div class="ce-acciones" data-filtro-tags hidden></div>
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-4" data-filtro-tags hidden></div>
         <p data-filtro-resultado aria-live="polite"></p>
         <p
           data-filtro-vacio
-          class="ce-aviso ce-aviso--info"
+          class="alert alert-info"
           role="status"
           hidden
         ></p>
-        <div data-filtro-lista class="ce-grilla"></div>
+        <div data-filtro-lista class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
       </section>
     </main>
     <div id="footer-container"></div>

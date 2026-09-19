@@ -10,75 +10,73 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Mi perfil</h1>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Mi perfil</h1>
         <p
           id="perfil-aviso"
-          class="ce-aviso"
+          class="alert"
           role="status"
           aria-live="polite"
           hidden
         ></p>
 
         <!-- HU08: rectificación de datos personales -->
-        <form class="ce-tarjeta" id="formPerfil" action="#" method="post">
-          <h2 class="ce-subtitulo">Rectificar mis datos</h2>
-          <div class="ce-campo">
-            <label for="perfil-nombre">Nombre completo</label>
+        <form class="card card-body mb-4" id="formPerfil" action="#" method="post">
+          <h2 class="h3 mb-2">Rectificar mis datos</h2>
+          <div class="mb-3">
+            <label for="perfil-nombre" class="form-label">Nombre completo</label>
             <input
               id="perfil-nombre"
               name="nombre"
-              class="ce-control"
+              class="form-control"
               value="Camila Pérez"
               maxlength="100"
               required
             />
-            <span class="ce-error" id="error-perfil-nombre" role="alert"></span>
+            <span class="invalid-feedback" id="error-perfil-nombre" role="alert"></span>
           </div>
-          <div class="ce-campo">
-            <label for="perfil-correo">Correo</label>
+          <div class="mb-3">
+            <label for="perfil-correo" class="form-label">Correo</label>
             <input
               id="perfil-correo"
               name="correo"
               type="email"
-              class="ce-control"
+              class="form-control"
               value="camila@correo.cl"
               maxlength="100"
               required
             />
-            <span class="ce-error" id="error-perfil-correo" role="alert"></span>
+            <span class="invalid-feedback" id="error-perfil-correo" role="alert"></span>
           </div>
-          <div class="ce-campo">
-            <label for="perfil-direccion">Dirección</label>
+          <div class="mb-3">
+            <label for="perfil-direccion" class="form-label">Dirección</label>
             <textarea
               id="perfil-direccion"
               name="direccion"
-              class="ce-control"
+              class="form-control"
               maxlength="300"
               required
             >Av. Educación 123</textarea>
-            <span class="ce-error" id="error-perfil-direccion" role="alert"></span>
+            <span class="invalid-feedback" id="error-perfil-direccion" role="alert"></span>
           </div>
-          <div class="ce-formulario__acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <button class="btn btn-primary" type="submit">
               Solicitar rectificación
             </button>
           </div>
         </form>
 
         <!-- HU07: acceso a los datos personales -->
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Mis datos personales</h2>
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">Mis datos personales</h2>
           <p>Puedes descargar una copia legible de tus datos registrados.</p>
-          <div class="ce-acciones">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
             <button
-              class="btn-ce btn-ce--secundario"
+              class="btn btn-outline-primary"
               type="button"
               id="btn-descargar-datos"
             >
@@ -88,16 +86,16 @@
         </article>
 
         <!-- HU06: consentimiento de datos y su revocación -->
-        <article class="ce-tarjeta">
-          <h2 class="ce-subtitulo">Consentimiento de datos</h2>
+        <article class="card card-body mb-4">
+          <h2 class="h3 mb-2">Consentimiento de datos</h2>
           <p id="consentimiento-estado"></p>
           <p>
             Al revocar el consentimiento, tus datos y los de tus pupilos se
             anonimizan en un plazo no mayor a 30 días.
           </p>
-          <div class="ce-acciones">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
             <button
-              class="btn-ce btn-ce--destructivo"
+              class="btn btn-outline-danger"
               type="button"
               id="btn-revocar-consentimiento"
             >

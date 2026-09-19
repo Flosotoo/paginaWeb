@@ -12,7 +12,7 @@
     if (!contador || !comentario) return;
     contador.textContent = `${comentario.value.length} / 500`;
     contador.classList.toggle(
-      "ce-contador--excedido",
+      "text-danger",
       comentario.value.length > 500,
     );
   }

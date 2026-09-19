@@ -112,4 +112,106 @@
       },
     });
   }
+
+  // Registro público: solo crea cuentas de apoderado. El personal (Administrador
+  // y Vendedor) sigue creándose desde el panel de administración.
+  const formRegistro = document.getElementById("formRegistro");
+  if (formRegistro && window.Datos && window.Sesion) {
+    const campo = (id) => document.getElementById(`registro-${id}`);
+    const run = campo("run");
+    const region = campo("region");
+    const comuna = campo("comuna");
+    const clave = campo("clave");
+    const confirmacion = campo("confirmacion");
+    const aviso = document.getElementById("registro-aviso");
+
+    V.conectarRegionComuna(region, comuna);
+
+    V.preparar(formRegistro, {
+      cruzadas: [
+        { campo: run, validar: (valor) => V.mensajeRun(valor) },
+        {
+          campo: comuna,
+          dependeDe: [region, comuna],
+          validar: (valor) =>
+            V.comunaPertenece(region.value, valor)
+              ? ""
+              : "La comuna no pertenece a la región seleccionada.",
+        },
+        {
+          campo: confirmacion,
+          dependeDe: [clave, confirmacion],
+          validar: (valor) =>
+            valor === clave.value ? "" : "Las contraseñas no coinciden.",
+        },
+      ],
+      alValidar: () => {
+        const correo = campo("correo").value.trim().toLowerCase();
+        if (Datos.buscarUsuario(correo)) {
+          V.mostrarAviso(aviso, "Ya existe una cuenta con ese correo.", "error");
+          return;
+        }
+        const runNormal = V.normalizarRun(run.value);
+        if (Datos.usuarios().some((u) => V.normalizarRun(u.run) === runNormal)) {
+          V.mostrarAviso(aviso, "Ya existe una cuenta con ese RUN.", "error");
+          return;
+        }
+
+        const usuario = Datos.crearUsuario({
+          run: run.value.trim(),
+          nombre: campo("nombre").value.trim(),
+          apellidos: campo("apellidos").value.trim(),
+          correo,
+          clave: clave.value,
+          rol: "Cliente",
+          region: region.value,
+          comuna: comuna.value,
+          direccion: campo("direccion").value.trim(),
+          nacimiento: "",
+          temporal: false,
+          consentimiento: true,
+          consentimientoFecha: new Date().toISOString(),
+          consentimientoVersion: window.Edusaldo
+            ? window.Edusaldo.VERSION_CONSENTIMIENTO
+            : "v1",
+          estado: "activo",
+        });
+        Sesion.iniciar(usuario);
+        V.mostrarAviso(aviso, "Cuenta creada. Entrando a tu área...", "ok");
+        window.setTimeout(
+          () => window.location.assign(Sesion.homeDe(usuario.rol)),
+          600,
+        );
+      },
+    });
+  }
+
+  // Recuperar contraseña: genera una temporal que obliga a cambiarla en el
+  // siguiente ingreso (mismo flujo que HU15).
+  const formRecuperar = document.getElementById("formRecuperar");
+  if (formRecuperar && window.Datos) {
+    const correo = document.getElementById("recuperar-correo");
+    const aviso = document.getElementById("recuperar-aviso");
+
+    V.preparar(formRecuperar, {
+      alValidar: () => {
+        // El mensaje es el mismo exista o no la cuenta, para no revelar qué
+        // correos están registrados.
+        let mensaje =
+          "Si el correo está registrado, te enviamos una contraseña temporal.";
+        const usuario = Datos.buscarUsuario(correo.value.trim());
+        if (usuario && usuario.estado === "activo") {
+          const temporal = Math.random().toString(36).slice(2, 8);
+          Datos.actualizarUsuario(usuario.correo, {
+            clave: temporal,
+            temporal: true,
+          });
+          // Sin servidor de correo, la demo la muestra en pantalla.
+          mensaje += ` (Demostración: tu contraseña temporal es ${temporal}).`;
+        }
+        V.mostrarAviso(aviso, mensaje, "info");
+        formRecuperar.reset();
+      },
+    });
+  }
 })();

@@ -10,37 +10,35 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Entregar reservas</h1>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Entregar reservas</h1>
         <!-- HU36: validar el código y confirmar el retiro -->
-        <form class="ce-tarjeta" id="formEntrega" action="#" method="post">
-          <div class="ce-campo">
-            <label for="codigo">Código de reserva</label>
+        <form class="card card-body mb-4" id="formEntrega" action="#" method="post">
+          <div class="mb-3">
+            <label for="codigo" class="form-label">Código de reserva</label>
             <input
               id="codigo"
               name="codigo"
-              class="ce-control ce-control--dato"
+              class="form-control font-monospace"
               pattern="ED-[0-9]{4}-[0-9]{3}"
               placeholder="ED-2026-014"
               required
             />
-            <span class="ce-ayuda">Formato ED-AAAA-NNN.</span>
+            <span class="form-text">Formato ED-AAAA-NNN.</span>
           </div>
           <p
             id="entrega-aviso"
-            class="ce-aviso"
+            class="alert"
             role="status"
             aria-live="polite"
             hidden
           ></p>
-          <div class="ce-acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+            <button class="btn btn-primary" type="submit">
               Validar reserva
             </button>
           </div>

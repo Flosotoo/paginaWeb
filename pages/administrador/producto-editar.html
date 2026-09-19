@@ -10,155 +10,157 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina" id="titulo-producto">Editar producto</h1>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3" id="titulo-producto">Editar producto</h1>
         <p
           id="producto-aviso"
-          class="ce-aviso"
+          class="alert"
           role="status"
           aria-live="polite"
           hidden
         ></p>
         <!-- HU28 (crear, si el código está editable) y HU29 (editar, código en solo lectura) -->
-        <form
-          class="ce-panel ce-panel--ancho"
-          id="formProducto"
-          action="#"
-          method="post"
-        >
-          <div class="ce-campo">
-            <label for="codigo"
-              >Código
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <input
-              id="codigo"
-              name="codigo"
-              class="ce-control ce-control--dato"
-              value="MAT-001"
-              minlength="3"
-              maxlength="20"
-              required
-              readonly
-            />
-            <span class="ce-ayuda">Al menos 3 caracteres. No se modifica.</span>
-            <span class="ce-error" id="error-codigo" role="alert"></span>
-          </div>
-
-          <div class="ce-campo">
-            <label for="nombre"
-              >Nombre
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <input
-              id="nombre"
-              name="nombre"
-              class="ce-control"
-              maxlength="100"
-              value="Cuaderno universitario"
-              required
-            />
-            <span class="ce-ayuda">Máximo 100 caracteres.</span>
-            <span class="ce-error" id="error-nombre" role="alert"></span>
-          </div>
-
-          <div class="ce-campo">
-            <label for="descripcion">Descripción</label>
-            <textarea
-              id="descripcion"
-              name="descripcion"
-              class="ce-control"
-              rows="3"
-              maxlength="500"
-            ></textarea>
-            <span class="ce-ayuda">Máximo 500 caracteres. Es opcional.</span>
-            <span class="ce-error" id="error-descripcion" role="alert"></span>
-          </div>
-
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="precio"
-                >Precio
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+        <div class="row justify-content-center">
+          <div class="col-lg-7">
+          <form
+            class="card card-body"
+            id="formProducto"
+            action="#"
+            method="post"
+          >
+            <div class="mb-3">
+              <label for="codigo" class="form-label"
+                >Código
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
               <input
-                id="precio"
-                name="precio"
-                class="ce-control ce-control--dato"
-                type="number"
-                min="0"
-                step="0.01"
+                id="codigo"
+                name="codigo"
+                class="form-control font-monospace"
+                value="MAT-001"
+                minlength="3"
+                maxlength="20"
+                required
+                readonly
+              />
+              <span class="form-text">Al menos 3 caracteres. No se modifica.</span>
+              <span class="invalid-feedback" id="error-codigo" role="alert"></span>
+            </div>
+  
+            <div class="mb-3">
+              <label for="nombre" class="form-label"
+                >Nombre
+                <span class="text-danger" aria-hidden="true">*</span></label
+              >
+              <input
+                id="nombre"
+                name="nombre"
+                class="form-control"
+                maxlength="100"
+                value="Cuaderno universitario"
                 required
               />
-              <span class="ce-ayuda">Mayor o igual a cero, admite decimales.</span>
-              <span class="ce-error" id="error-precio" role="alert"></span>
+              <span class="form-text">Máximo 100 caracteres.</span>
+              <span class="invalid-feedback" id="error-nombre" role="alert"></span>
             </div>
-
-            <div class="ce-campo">
-              <label for="categoria"
-                >Categoría
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+  
+            <div class="mb-3">
+              <label for="descripcion" class="form-label">Descripción</label>
+              <textarea
+                id="descripcion"
+                name="descripcion"
+                class="form-control"
+                rows="3"
+                maxlength="500"
+              ></textarea>
+              <span class="form-text">Máximo 500 caracteres. Es opcional.</span>
+              <span class="invalid-feedback" id="error-descripcion" role="alert"></span>
+            </div>
+  
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="precio" class="form-label"
+                  >Precio
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <input
+                  id="precio"
+                  name="precio"
+                  class="form-control font-monospace"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+                <span class="form-text">Mayor o igual a cero, admite decimales.</span>
+                <span class="invalid-feedback" id="error-precio" role="alert"></span>
+              </div>
+  
+              <div class="col-sm-6">
+                <label for="categoria" class="form-label"
+                  >Categoría
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <select id="categoria" name="categoria" class="form-select" required>
+                  <option value="">Selecciona una categoría</option>
+                  <option>Materiales</option>
+                  <option>Matemática</option>
+                  <option>Lenguaje</option>
+                  <option>Artes</option>
+                </select>
+                <span class="invalid-feedback" id="error-categoria" role="alert"></span>
+              </div>
+            </div>
+  
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="stock" class="form-label"
+                  >Stock
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <input
+                  id="stock"
+                  name="stock"
+                  class="form-control font-monospace"
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                />
+                <span class="form-text">Entero mayor o igual a cero.</span>
+                <span class="invalid-feedback" id="error-stock" role="alert"></span>
+              </div>
+  
+              <div class="col-sm-6">
+                <label for="stock-critico" class="form-label">Stock crítico</label>
+                <input
+                  id="stock-critico"
+                  name="stock_critico"
+                  class="form-control font-monospace"
+                  type="number"
+                  min="0"
+                  step="1"
+                />
+                <span class="form-text">Entero mayor o igual a cero. Opcional.</span>
+                <span class="invalid-feedback" id="error-stock-critico" role="alert"></span>
+              </div>
+            </div>
+  
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <button class="btn btn-primary" type="submit">
+                Guardar producto
+              </button>
+              <a class="btn btn-outline-primary" href="productos.html"
+                >Cancelar</a
               >
-              <select id="categoria" name="categoria" class="ce-control" required>
-                <option value="">Selecciona una categoría</option>
-                <option>Materiales</option>
-                <option>Matemática</option>
-                <option>Lenguaje</option>
-                <option>Artes</option>
-              </select>
-              <span class="ce-error" id="error-categoria" role="alert"></span>
             </div>
+          </form>
           </div>
-
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="stock"
-                >Stock
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
-              >
-              <input
-                id="stock"
-                name="stock"
-                class="ce-control ce-control--dato"
-                type="number"
-                min="0"
-                step="1"
-                required
-              />
-              <span class="ce-ayuda">Entero mayor o igual a cero.</span>
-              <span class="ce-error" id="error-stock" role="alert"></span>
-            </div>
-
-            <div class="ce-campo">
-              <label for="stock-critico">Stock crítico</label>
-              <input
-                id="stock-critico"
-                name="stock_critico"
-                class="ce-control ce-control--dato"
-                type="number"
-                min="0"
-                step="1"
-              />
-              <span class="ce-ayuda">Entero mayor o igual a cero. Opcional.</span>
-              <span class="ce-error" id="error-stock-critico" role="alert"></span>
-            </div>
-          </div>
-
-          <div class="ce-formulario__acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
-              Guardar producto
-            </button>
-            <a class="btn-ce btn-ce--secundario" href="productos.html"
-              >Cancelar</a
-            >
-          </div>
-        </form>
+        </div>
       </section>
     </main>
     <div id="footer-container"></div>

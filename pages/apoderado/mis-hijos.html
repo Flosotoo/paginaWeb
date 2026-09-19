@@ -10,40 +10,43 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Mis pupilos</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Mis pupilos</h1>
+        <p class="lead mb-4">
           Consulta la información y el saldo disponible de tus pupilos
           asociados.
         </p>
-        <div class="ce-grilla">
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Martín Pérez</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Martín Pérez</h2>
             <p>RUT: 21.234.***-8<br />Curso: 7° Básico</p>
             <p><strong>Saldo disponible: $21.510</strong></p>
-            <a class="btn-ce btn-ce--primario" href="aportar-saldo.html"
+            <a class="btn btn-primary mt-auto" href="aportar-saldo.html"
               >Aportar saldo</a
-            ><a class="btn-ce btn-ce--secundario" href="movimientos.html"
+            ><a class="btn btn-outline-primary" href="movimientos.html"
               >Ver movimientos</a
             >
           </article>
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Sofía Pérez</h2>
+</div>
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Sofía Pérez</h2>
             <p>RUT: 25.345.***-9<br />Curso: 3° Básico</p>
             <p><strong>Saldo disponible: $18.000</strong></p>
-            <a class="btn-ce btn-ce--primario" href="aportar-saldo.html"
+            <a class="btn btn-primary mt-auto" href="aportar-saldo.html"
               >Aportar saldo</a
             ><a
-              class="btn-ce btn-ce--secundario"
+              class="btn btn-outline-primary"
               href="reservar-materiales.html"
               >Reservar materiales</a
             >
           </article>
+</div>
         </div>
       </section>
     </main>

@@ -10,60 +10,71 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Bienvenido a tu cuenta</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Bienvenido a tu cuenta</h1>
+        <p class="lead mb-4">
           Consulta la información de tus pupilos, sus saldos, reservas y
           movimientos desde un solo lugar.
         </p>
-        <div class="ce-grilla">
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Catálogo de productos</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Catálogo de productos</h2>
             <p>Explora los materiales disponibles con búsqueda y filtros.</p>
-            <a class="btn-ce btn-ce--primario" href="productos.html"
+            <a class="btn btn-primary mt-auto" href="productos.html"
               >Ver catálogo</a
             >
           </article>
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Reservar materiales</h2>
+</div>
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Reservar materiales</h2>
             <p>Prepara una reserva para retirar en la librería.</p>
-            <a class="btn-ce btn-ce--primario" href="reservar-materiales.html"
+            <a class="btn btn-primary mt-auto" href="reservar-materiales.html"
               >Reservar materiales</a
             >
           </article>
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Mis pupilos</h2>
+</div>
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Mis pupilos</h2>
             <p>Consulta sus datos registrados y saldos disponibles.</p>
-            <a class="btn-ce btn-ce--primario" href="mis-hijos.html"
+            <a class="btn btn-primary mt-auto" href="mis-hijos.html"
               >Ver mis pupilos</a
             >
           </article>
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Mis aportes</h2>
+</div>
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Mis aportes</h2>
             <p>Revisa el estado de los aportes realizados.</p>
-            <a class="btn-ce btn-ce--primario" href="mis-aportes.html"
+            <a class="btn btn-primary mt-auto" href="mis-aportes.html"
               >Ver mis aportes</a
             >
           </article>
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Mis reservas</h2>
+</div>
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Mis reservas</h2>
             <p>Revisa el estado de los materiales reservados.</p>
-            <a class="btn-ce btn-ce--primario" href="mis-reservas.html"
+            <a class="btn btn-primary mt-auto" href="mis-reservas.html"
               >Ver reservas</a
             >
           </article>
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Movimientos</h2>
+</div>
+          <div class="col">
+<article class="card card-body h-100">
+            <h2 class="h3 mb-2">Movimientos</h2>
             <p>Revisa aportes y compras asociados a tus pupilos.</p>
-            <a class="btn-ce btn-ce--primario" href="movimientos.html"
+            <a class="btn btn-primary mt-auto" href="movimientos.html"
               >Ver movimientos</a
             >
           </article>
+</div>
         </div>
       </section>
     </main>

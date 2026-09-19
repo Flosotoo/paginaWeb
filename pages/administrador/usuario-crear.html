@@ -10,184 +10,186 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina" id="titulo-usuario">Crear usuario</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3" id="titulo-usuario">Crear usuario</h1>
+        <p class="lead mb-4">
           Alta de apoderados y de personal (Administrador o Vendedor). La
           contraseña se genera automáticamente y se envía al correo registrado.
         </p>
 
         <!-- HU10 y HU39: alta sin campo de contraseña; se genera una temporal -->
-        <form
-          class="ce-panel ce-panel--ancho"
-          id="formUsuario"
-          action="#"
-          method="post"
-        >
-          <p
-            id="usuario-aviso"
-            class="ce-aviso"
-            role="status"
-            aria-live="polite"
-            hidden
-          ></p>
-
-          <div class="ce-campo">
-            <label for="usuario-run"
-              >RUN
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <input
-              id="usuario-run"
-              name="run"
-              class="ce-control ce-control--dato"
-              maxlength="14"
-              required
-              placeholder="12.345.678-5"
-            />
-            <span class="ce-ayuda"
-              >Con o sin puntos, guion y dígito verificador.</span
-            >
-            <span class="ce-error" id="error-usuario-run" role="alert"></span>
-          </div>
-
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="usuario-nombre"
-                >Nombre
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+        <div class="row justify-content-center">
+          <div class="col-lg-7">
+          <form
+            class="card card-body"
+            id="formUsuario"
+            action="#"
+            method="post"
+          >
+            <p
+              id="usuario-aviso"
+              class="alert"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></p>
+  
+            <div class="mb-3">
+              <label for="usuario-run" class="form-label"
+                >RUN
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
               <input
-                id="usuario-nombre"
-                name="nombre"
-                class="ce-control"
-                maxlength="50"
+                id="usuario-run"
+                name="run"
+                class="form-control font-monospace"
+                maxlength="14"
                 required
+                placeholder="12.345.678-5"
               />
-              <span class="ce-ayuda">Máximo 50 caracteres.</span>
-              <span class="ce-error" id="error-usuario-nombre" role="alert"></span>
-            </div>
-            <div class="ce-campo">
-              <label for="usuario-apellidos"
-                >Apellidos
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+              <span class="form-text"
+                >Con o sin puntos, guion y dígito verificador.</span
               >
-              <input
-                id="usuario-apellidos"
-                name="apellidos"
-                class="ce-control"
-                maxlength="100"
-                required
-              />
-              <span class="ce-ayuda">Máximo 100 caracteres.</span>
-              <span class="ce-error" id="error-usuario-apellidos" role="alert"></span>
+              <span class="invalid-feedback" id="error-usuario-run" role="alert"></span>
             </div>
-          </div>
-
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="usuario-correo"
-                >Correo
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+  
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="usuario-nombre" class="form-label"
+                  >Nombre
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <input
+                  id="usuario-nombre"
+                  name="nombre"
+                  class="form-control"
+                  maxlength="50"
+                  required
+                />
+                <span class="form-text">Máximo 50 caracteres.</span>
+                <span class="invalid-feedback" id="error-usuario-nombre" role="alert"></span>
+              </div>
+              <div class="col-sm-6">
+                <label for="usuario-apellidos" class="form-label"
+                  >Apellidos
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <input
+                  id="usuario-apellidos"
+                  name="apellidos"
+                  class="form-control"
+                  maxlength="100"
+                  required
+                />
+                <span class="form-text">Máximo 100 caracteres.</span>
+                <span class="invalid-feedback" id="error-usuario-apellidos" role="alert"></span>
+              </div>
+            </div>
+  
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="usuario-correo" class="form-label"
+                  >Correo
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <input
+                  id="usuario-correo"
+                  name="correo"
+                  type="email"
+                  class="form-control"
+                  maxlength="100"
+                  required
+                />
+                <span class="invalid-feedback" id="error-usuario-correo" role="alert"></span>
+              </div>
+              <div class="col-sm-6">
+                <label for="usuario-nacimiento" class="form-label">Fecha de nacimiento</label>
+                <input
+                  id="usuario-nacimiento"
+                  name="nacimiento"
+                  type="date"
+                  class="form-control font-monospace"
+                />
+                <span class="form-text">Opcional.</span>
+                <span class="invalid-feedback" id="error-usuario-nacimiento" role="alert"></span>
+              </div>
+            </div>
+  
+            <div class="mb-3">
+              <label for="usuario-tipo" class="form-label"
+                >Tipo de usuario
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
-              <input
-                id="usuario-correo"
-                name="correo"
-                type="email"
-                class="ce-control"
-                maxlength="100"
-                required
-              />
-              <span class="ce-error" id="error-usuario-correo" role="alert"></span>
-            </div>
-            <div class="ce-campo">
-              <label for="usuario-nacimiento">Fecha de nacimiento</label>
-              <input
-                id="usuario-nacimiento"
-                name="nacimiento"
-                type="date"
-                class="ce-control ce-control--dato"
-              />
-              <span class="ce-ayuda">Opcional.</span>
-              <span class="ce-error" id="error-usuario-nacimiento" role="alert"></span>
-            </div>
-          </div>
-
-          <div class="ce-campo">
-            <label for="usuario-tipo"
-              >Tipo de usuario
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <select id="usuario-tipo" name="tipo" class="ce-control" required>
-              <option value="">Selecciona un perfil</option>
-              <option>Administrador</option>
-              <option value="Cliente">Apoderado</option>
-              <option>Vendedor</option>
-            </select>
-            <span class="ce-error" id="error-usuario-tipo" role="alert"></span>
-          </div>
-
-          <div class="ce-campos-par">
-            <div class="ce-campo">
-              <label for="usuario-region"
-                >Región
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
-              >
-              <select id="usuario-region" name="region" class="ce-control" required>
-                <option value="">Elige una región</option>
+              <select id="usuario-tipo" name="tipo" class="form-select" required>
+                <option value="">Selecciona un perfil</option>
+                <option>Administrador</option>
+                <option value="Cliente">Apoderado</option>
+                <option>Vendedor</option>
               </select>
-              <span class="ce-error" id="error-usuario-region" role="alert"></span>
+              <span class="invalid-feedback" id="error-usuario-tipo" role="alert"></span>
             </div>
-            <div class="ce-campo">
-              <label for="usuario-comuna"
-                >Comuna
-                <span class="ce-obligatorio" aria-hidden="true">*</span></label
+  
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="usuario-region" class="form-label"
+                  >Región
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <select id="usuario-region" name="region" class="form-select" required>
+                  <option value="">Elige una región</option>
+                </select>
+                <span class="invalid-feedback" id="error-usuario-region" role="alert"></span>
+              </div>
+              <div class="col-sm-6">
+                <label for="usuario-comuna" class="form-label"
+                  >Comuna
+                  <span class="text-danger" aria-hidden="true">*</span></label
+                >
+                <select
+                  id="usuario-comuna"
+                  name="comuna"
+                  class="form-select"
+                  required
+                  disabled
+                >
+                  <option value="">Elige primero una región</option>
+                </select>
+                <span class="invalid-feedback" id="error-usuario-comuna" role="alert"></span>
+              </div>
+            </div>
+  
+            <div class="mb-3">
+              <label for="usuario-direccion" class="form-label"
+                >Dirección
+                <span class="text-danger" aria-hidden="true">*</span></label
               >
-              <select
-                id="usuario-comuna"
-                name="comuna"
-                class="ce-control"
+              <textarea
+                id="usuario-direccion"
+                name="direccion"
+                class="form-control"
+                rows="2"
+                maxlength="300"
                 required
-                disabled
-              >
-                <option value="">Elige primero una región</option>
-              </select>
-              <span class="ce-error" id="error-usuario-comuna" role="alert"></span>
+              ></textarea>
+              <span class="form-text">Máximo 300 caracteres.</span>
+              <span class="invalid-feedback" id="error-usuario-direccion" role="alert"></span>
             </div>
+  
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <button class="btn btn-primary" type="submit">
+                Guardar usuario
+              </button>
+              <a class="btn btn-outline-primary" href="usuarios.html"
+                >Cancelar</a
+              >
+            </div>
+          </form>
           </div>
-
-          <div class="ce-campo">
-            <label for="usuario-direccion"
-              >Dirección
-              <span class="ce-obligatorio" aria-hidden="true">*</span></label
-            >
-            <textarea
-              id="usuario-direccion"
-              name="direccion"
-              class="ce-control"
-              rows="2"
-              maxlength="300"
-              required
-            ></textarea>
-            <span class="ce-ayuda">Máximo 300 caracteres.</span>
-            <span class="ce-error" id="error-usuario-direccion" role="alert"></span>
-          </div>
-
-          <div class="ce-formulario__acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">
-              Guardar usuario
-            </button>
-            <a class="btn-ce btn-ce--secundario" href="usuarios.html"
-              >Cancelar</a
-            >
-          </div>
-        </form>
+        </div>
       </section>
     </main>
     <div id="footer-container"></div>

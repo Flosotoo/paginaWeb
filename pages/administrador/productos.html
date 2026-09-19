@@ -10,20 +10,19 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Productos</h1>
-        <p class="ce-bajada">
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Productos</h1>
+        <p class="lead mb-4">
           Listado administrativo del catálogo con acciones de gestión.
         </p>
 
-        <div class="ce-acciones">
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
           <!-- HU27 CA3: acceso para crear un producto -->
-          <a class="btn-ce btn-ce--primario" href="producto-editar.html?nuevo=1"
+          <a class="btn btn-primary" href="producto-editar.html?nuevo=1"
             >Crear producto</a
           >
         </div>

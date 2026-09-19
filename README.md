@@ -33,4 +33,5 @@ Desarrollar una aplicación web para gestionar una librería escolar y centraliz
 
 - El sitio se abre directamente con `file://`, sin servidor, bundlers ni dependencias instaladas.
 - La demo interactiva (login con roles, sesión y datos simulados) está pensada para **navegadores Chromium** (Chrome, Edge, Brave). En Firefox/LibreWolf el almacenamiento local se aísla por archivo y la sesión no cruza entre páginas.
-- Bootstrap se carga por CDN solo por requisito formal de la rúbrica; el diseño propio es el sistema `ce-*`.
+- La interfaz está construida con **Bootstrap 5.3** (CSS y JS por CDN): grilla, navbar con desplegable, tarjetas, formularios, avisos, acordeones y utilidades. No hay clases propias en el HTML.
+- El color y la tipografía de la marca se mantienen en dos hojas propias que se cargan **después** de Bootstrap: `assets/css/typography.css` define los tokens (`--ce-*`) y `assets/css/style.css` los aplica reasignando las variables de Bootstrap (`--bs-primary`, `--bs-body-font-family`, `--bs-btn-*`, etc.).

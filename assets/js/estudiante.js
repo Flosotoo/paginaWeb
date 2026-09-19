@@ -84,8 +84,8 @@
     lista.innerHTML = estudiantes
       .map(
         (e) => `
-      <article class="ce-tarjeta">
-        <h2 class="ce-subtitulo">${e.nombre} ${e.apellido}</h2>
+      <article class="card card-body mb-4">
+        <h2 class="h3 mb-2">${e.nombre} ${e.apellido}</h2>
         <p>${e.id} · ${e.curso} · ${
           e.apoderado ? `Apoderado: ${e.apoderado}` : "Sin apoderado asociado"
         }</p>
@@ -169,8 +169,8 @@
         }
         filas = filasValidas;
         preview.innerHTML = `
-          <article class="ce-tarjeta">
-            <h2 class="ce-subtitulo">Previsualización (${filas.length} filas)</h2>
+          <article class="card card-body mb-4">
+            <h2 class="h3 mb-2">Previsualización (${filas.length} filas)</h2>
             <ul>
               ${filas
                 .slice(0, 10)
@@ -179,7 +179,7 @@
                 )
                 .join("")}
             </ul>
-            <button class="btn-ce btn-ce--primario" type="button" id="nomina-importar">
+            <button class="btn btn-primary" type="button" id="nomina-importar">
               Confirmar importación
             </button>
           </article>`;

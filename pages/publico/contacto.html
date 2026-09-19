@@ -14,35 +14,35 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
 
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-portada">
-        <div class="ce-contenedor">
-          <h1 class="ce-titulo-pagina">Contacto</h1>
-          <p class="ce-bajada">
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="py-5">
+        <div class="container">
+          <h1 class="h1 mb-3">Contacto</h1>
+          <p class="lead mb-4">
             Escribe tu duda sobre aportes, saldos o reservas. Te respondemos al
             correo que indiques.
           </p>
         </div>
       </section>
 
-      <section class="ce-seccion">
-        <div class="ce-contenedor ce-dos-columnas">
+      <section class="pt-5">
+        <div class="container">
+          <div class="row g-4">
+          <div class="col-lg-7">
           <!-- HU25: formulario validado con JavaScript (HU44) -->
-          <section class="ce-tarjeta" aria-labelledby="titulo-formulario">
-            <h2 id="titulo-formulario" class="ce-titulo-seccion">
+          <section class="card card-body h-100" aria-labelledby="titulo-formulario">
+            <h2 id="titulo-formulario" class="h2 mb-3">
               Envía tu consulta
             </h2>
 
             <!-- Resultado del envío: lo llena contacto.js -->
             <div
               id="contacto-aviso"
-              class="ce-aviso"
+              class="alert"
               role="status"
               aria-live="polite"
               tabindex="-1"
@@ -51,30 +51,30 @@
 
             <!-- Los campos se validan con HTML; JS solo confirma el envío -->
             <form id="form-contacto" action="#" method="post">
-              <div class="ce-campo">
-                <label class="ce-campo__etiqueta" for="contacto-nombre"
+              <div class="mb-3">
+                <label class="form-label" for="contacto-nombre"
                   >Nombre completo</label
                 >
                 <input
-                  class="ce-control"
+                  class="form-control"
                   type="text"
                   id="contacto-nombre"
                   name="nombre"
                   autocomplete="name"
                   aria-describedby="contacto-nombre-ayuda error-contacto-nombre"
                 />
-                <span id="contacto-nombre-ayuda" class="ce-ayuda"
+                <span id="contacto-nombre-ayuda" class="form-text"
                   >Hasta 100 caracteres.</span
                 >
-                <span id="error-contacto-nombre" class="ce-error" role="alert"></span>
+                <span id="error-contacto-nombre" class="invalid-feedback" role="alert"></span>
               </div>
 
-              <div class="ce-campo">
-                <label class="ce-campo__etiqueta" for="contacto-correo"
+              <div class="mb-3">
+                <label class="form-label" for="contacto-correo"
                   >Correo</label
                 >
                 <input
-                  class="ce-control"
+                  class="form-control"
                   type="email"
                   id="contacto-correo"
                   name="correo"
@@ -83,55 +83,57 @@
                   maxlength="100"
                   aria-describedby="error-contacto-correo"
                 />
-                <span id="error-contacto-correo" class="ce-error" role="alert"></span>
+                <span id="error-contacto-correo" class="invalid-feedback" role="alert"></span>
               </div>
 
-              <div class="ce-campo">
-                <label class="ce-campo__etiqueta" for="contacto-comentario"
+              <div class="mb-3">
+                <label class="form-label" for="contacto-comentario"
                   >Consulta</label
                 >
                 <textarea
-                  class="ce-control"
+                  class="form-control"
                   id="contacto-comentario"
                   name="comentario"
                   rows="6"
                   maxlength="500"
                   aria-describedby="contacto-comentario-contador error-contacto-comentario"
                 ></textarea>
-                <div class="ce-campo__pie">
+                <div class="d-flex justify-content-between gap-2">
                   <span
                     id="error-contacto-comentario"
-                    class="ce-error"
+                    class="invalid-feedback"
                     role="alert"
                   ></span>
-                  <span id="contacto-comentario-contador" class="ce-contador"
+                  <span id="contacto-comentario-contador" class="form-text ms-auto"
                     >0 / 500</span
                   >
                 </div>
               </div>
 
-              <div class="ce-acciones">
-                <button type="submit" class="btn-ce btn-ce--primario">
+              <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+                <button type="submit" class="btn btn-primary">
                   Enviar consulta
                 </button>
-                <button type="reset" class="btn-ce btn-ce--secundario">
+                <button type="reset" class="btn btn-outline-primary">
                   Borrar
                 </button>
               </div>
             </form>
           </section>
+          </div>
 
-          <aside class="ce-tarjeta" aria-labelledby="titulo-datos">
-            <h2 id="titulo-datos" class="ce-subtitulo">
+          <div class="col-lg-5">
+          <aside class="card card-body h-100" aria-labelledby="titulo-datos">
+            <h2 id="titulo-datos" class="h3 mb-2">
               Otras formas de encontrarnos
             </h2>
             <!-- TODO: completar con los datos reales -->
-            <dl class="ce-datos">
-              <dt class="ce-etiqueta">Librería del colegio</dt>
+            <dl class="mb-3">
+              <dt><span class="badge rounded-pill">Librería del colegio</span></dt>
               <dd>Primer piso, junto a la biblioteca</dd>
-              <dt class="ce-etiqueta">Horario de atención</dt>
+              <dt><span class="badge rounded-pill">Horario de atención</span></dt>
               <dd>Lunes a viernes, 8:00 a 16:30</dd>
-              <dt class="ce-etiqueta">Pagos con Webpay</dt>
+              <dt><span class="badge rounded-pill">Pagos con Webpay</span></dt>
               <dd>
                 Indica en tu consulta la fecha, el monto y el folio del pago.
               </dd>
@@ -141,6 +143,8 @@
               <a href="como-funciona.html">Revisa el paso a paso</a>.
             </p>
           </aside>
+          </div>
+          </div>
         </div>
       </section>
     </main>

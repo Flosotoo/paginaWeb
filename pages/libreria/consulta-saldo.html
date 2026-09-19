@@ -10,23 +10,21 @@
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
     <link rel="stylesheet" href="../../assets/css/style.css" />
-    <link rel="stylesheet" href="../../assets/css/buttons.css" />
-    <link rel="stylesheet" href="../../assets/css/forms.css" />
   </head>
-  <body>
-    <div id="header-container"></div>
-    <main id="contenido-principal" class="ce-principal">
-      <section class="ce-contenedor">
-        <h1 class="ce-titulo-pagina">Consultar saldo</h1>
+  <body class="d-flex flex-column min-vh-100">
+    <div id="header-container" class="sticky-top"></div>
+    <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
+      <section class="container">
+        <h1 class="h1 mb-3">Consultar saldo</h1>
         <!-- HU51: búsqueda por nombre o identificador -->
-        <form class="ce-tarjeta" id="formConsultaSaldo" action="#">
-          <div class="ce-campo">
-            <label for="estudiante">Nombre o identificador del estudiante</label>
-            <input id="estudiante" name="estudiante" class="ce-control" required />
-            <span class="ce-ayuda">Prueba con: Martín Pérez o Sofía Pérez.</span>
+        <form class="card card-body mb-4" id="formConsultaSaldo" action="#">
+          <div class="mb-3">
+            <label for="estudiante" class="form-label">Nombre o identificador del estudiante</label>
+            <input id="estudiante" name="estudiante" class="form-control" required />
+            <span class="form-text">Prueba con: Martín Pérez o Sofía Pérez.</span>
           </div>
-          <div class="ce-acciones">
-            <button class="btn-ce btn-ce--primario" type="submit">Buscar</button>
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+            <button class="btn btn-primary" type="submit">Buscar</button>
           </div>
         </form>
         <div id="saldo-resultado" aria-live="polite"></div>

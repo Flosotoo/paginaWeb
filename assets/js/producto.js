@@ -86,33 +86,41 @@
       const productos = Datos.productos();
       contenedor.innerHTML =
         productos
-          .map((p) => {
+          .map((p, i) => {
             const critico =
               p.stockCritico != null && p.stock <= p.stockCritico;
             const acciones = esAdmin
-              ? `<a class="btn-ce btn-ce--secundario btn-ce--chico" href="producto-editar.html?codigo=${encodeURIComponent(
+              ? `<a class="btn btn-outline-primary btn-sm" href="producto-editar.html?codigo=${encodeURIComponent(
                   p.codigo,
                 )}">Editar</a>
-                 <button class="btn-ce btn-ce--destructivo btn-ce--chico" type="button" data-baja="${p.codigo}">Dar de baja</button>`
+                 <button class="btn btn-outline-danger btn-sm" type="button" data-baja="${p.codigo}">Dar de baja</button>`
               : "";
             return `
-            <article class="ce-tarjeta">
-              <h2 class="ce-subtitulo">${p.codigo} · ${p.nombre}</h2>
+            <article class="card card-body mb-4">
+              <h2 class="h3 mb-2">${p.codigo} · ${p.nombre}</h2>
               <p>Precio: ${formato(p.precio)} · Stock: ${p.stock} · Crítico: ${
                 p.stockCritico == null ? "-" : p.stockCritico
               } · Categoría: ${p.categoria}</p>
-              ${critico ? '<p class="ce-etiqueta">Reposición requerida</p>' : ""}
-              <div class="ce-acciones">${acciones}</div>
-              <details class="ce-preguntas">
-                <summary>Ver detalle</summary>
-                <dl class="ce-datos">
-                  <dt class="ce-etiqueta">Descripción</dt><dd>${p.descripcion}</dd>
-                  <dt class="ce-etiqueta">Stock</dt><dd>${p.stock}</dd>
-                  <dt class="ce-etiqueta">Stock crítico</dt><dd>${
+              ${critico ? '<p><span class="badge rounded-pill">Reposición requerida</span></p>' : ""}
+              <div class="d-flex flex-wrap align-items-center gap-3 mt-4">${acciones}</div>
+              <div class="accordion accordion-flush" id="det-${i}">
+                <div class="accordion-item">
+                  <h3 class="accordion-header">
+                    <button class="accordion-button collapsed px-0" type="button" data-bs-toggle="collapse" data-bs-target="#det-${i}-c" aria-expanded="false" aria-controls="det-${i}-c">Ver detalle</button>
+                  </h3>
+                  <div id="det-${i}-c" class="accordion-collapse collapse" data-bs-parent="#det-${i}">
+                    <div class="accordion-body px-0">
+                <dl class="mb-3">
+                  <dt><span class="badge rounded-pill">Descripción</span></dt><dd>${p.descripcion}</dd>
+                  <dt><span class="badge rounded-pill">Stock</span></dt><dd>${p.stock}</dd>
+                  <dt><span class="badge rounded-pill">Stock crítico</span></dt><dd>${
                     p.stockCritico == null ? "Sin definir" : p.stockCritico
                   }</dd>
                 </dl>
-              </details>
+</div>
+                  </div>
+                </div>
+              </div>
             </article>`;
           })
           .join("") || "<p>No hay productos registrados.</p>";
