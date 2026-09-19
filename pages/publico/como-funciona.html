@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Los pasos para aportar saldo a un pupilo, reservar materiales y retirarlos en la librería del colegio."
+      content="Cómo aportar saldo a un alumno con Webpay, reservar materiales y retirarlos en la librería escolar."
     />
     <title>EduSaldo - Cómo funciona</title>
     <link
@@ -23,8 +23,8 @@
         <div class="container">
           <h1 class="h1 mb-3">Cómo funciona</h1>
           <p class="lead mb-4">
-            Del pago en línea al retiro en el mesón. Cada paso queda registrado
-            con fecha, monto y responsable.
+            Del aporte con Webpay al retiro en la librería escolar. Cada
+            operación queda registrada con fecha, monto y responsable.
           </p>
         </div>
       </section>
@@ -32,116 +32,134 @@
       <!-- Es una secuencia real, por eso va en <ol> -->
       <section class="pt-5" aria-labelledby="titulo-recorrido">
         <div class="container">
-          <h2 id="titulo-recorrido" class="h2 mb-3">
-            El recorrido de un aporte
-          </h2>
+          <h2 id="titulo-recorrido" class="h2 mb-3">El recorrido de un aporte</h2>
           <ol class="list-group list-group-numbered gap-3">
             <li class="list-group-item d-flex align-items-start rounded border py-3">
-<div>
-              <span class="badge rounded-pill">Centro General</span>
-              <h3 class="h3 mt-1 mb-2">Crea la cuenta del apoderado</h3>
-<p class="mb-0">
-                Desde el panel administrativo se registra al apoderado con su
-                RUN y su correo. El sistema envía una contraseña temporal al
-                correo registrado.
-              </p>
-            </div>
-</li>
+              <div>
+                <span class="badge rounded-pill">Centro de Padres</span>
+                <h3 class="h3 mt-1 mb-2">Asocia a los alumnos</h3>
+                <p class="mb-0">El Centro General de Padres y Apoderados vincula a cada alumno con su apoderado usando la nómina del colegio. Cada apoderado ve solo a sus alumnos.</p>
+              </div>
+            </li>
             <li class="list-group-item d-flex align-items-start rounded border py-3">
-<div>
-              <span class="badge rounded-pill">Centro General</span>
-              <h3 class="h3 mt-1 mb-2">Vincula a los pupilos</h3>
-<p class="mb-0">
-                Asocia a cada estudiante con su apoderado usando la nómina del
-                colegio. Cada apoderado ve solo a sus pupilos.
-              </p>
-            </div>
-</li>
+              <div>
+                <span class="badge rounded-pill">Apoderado</span>
+                <h3 class="h3 mt-1 mb-2">Aporta saldo con Webpay</h3>
+                <p class="mb-0">En «Aportar saldo» elige al alumno, ingresa el monto y continúa a Webpay. Cuando el pago se aprueba, el monto se acredita de inmediato al saldo disponible del alumno y queda registrado como movimiento.</p>
+              </div>
+            </li>
             <li class="list-group-item d-flex align-items-start rounded border py-3">
-<div>
-              <span class="badge rounded-pill">Apoderado</span>
-              <h3 class="h3 mt-1 mb-2">Paga el aporte</h3>
-<p class="mb-0">
-                Elige al pupilo, indica el monto y paga con Webpay. Cuando la
-                pasarela confirma, el saldo queda acreditado solo.
-              </p>
-            </div>
-</li>
+              <div>
+                <span class="badge rounded-pill">Apoderado</span>
+                <h3 class="h3 mt-1 mb-2">Reserva los materiales</h3>
+                <p class="mb-0">Revisa el catálogo de la librería escolar, ve el valor de cada material y el saldo que quedaría disponible, y confirma la reserva. Reservar no descuenta el saldo.</p>
+              </div>
+            </li>
             <li class="list-group-item d-flex align-items-start rounded border py-3">
-<div>
-              <span class="badge rounded-pill">Apoderado</span>
-              <h3 class="h3 mt-1 mb-2">Reserva los materiales</h3>
-<p class="mb-0">
-                Revisa el catálogo de la librería de su colegio, filtra por
-                nivel o materia y reserva lo que falta.
-              </p>
-            </div>
-</li>
+              <div>
+                <span class="badge rounded-pill">Librería escolar</span>
+                <h3 class="h3 mt-1 mb-2">Prepara la reserva</h3>
+                <p class="mb-0">La librería escolar junta los materiales y marca la reserva como lista para retiro.</p>
+              </div>
+            </li>
             <li class="list-group-item d-flex align-items-start rounded border py-3">
-<div>
-              <span class="badge rounded-pill">Librería</span>
-              <h3 class="h3 mt-1 mb-2">Entrega los materiales</h3>
-<p class="mb-0">
-                Prepara la reserva y la entrega con su código. El descuento del
-                saldo queda en el historial de movimientos del pupilo.
-              </p>
-            </div>
-</li>
+              <div>
+                <span class="badge rounded-pill">Librería escolar</span>
+                <h3 class="h3 mt-1 mb-2">Entrega los materiales</h3>
+                <p class="mb-0">Al retirar la reserva se registra la compra: su valor se descuenta del saldo del alumno y aparece en sus movimientos.</p>
+              </div>
+            </li>
           </ol>
+        </div>
+      </section>
+
+      <section class="pt-5" aria-labelledby="titulo-conceptos">
+        <div class="container">
+          <h2 id="titulo-conceptos" class="h2 mb-3">Conceptos clave</h2>
+          <dl class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col">
+              <div class="card card-body h-100">
+                <dt class="h3 mb-2">Aporte</dt>
+                <dd class="mb-0">Dinero que el apoderado incorpora, mediante Webpay, al saldo de uno de sus alumnos.</dd>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card card-body h-100">
+                <dt class="h3 mb-2">Saldo disponible</dt>
+                <dd class="mb-0">Dinero que tiene el alumno para comprar materiales en la librería escolar.</dd>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card card-body h-100">
+                <dt class="h3 mb-2">Compra</dt>
+                <dd class="mb-0">Adquisición de materiales en la librería escolar. Descuenta el valor del saldo del alumno.</dd>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card card-body h-100">
+                <dt class="h3 mb-2">Reserva</dt>
+                <dd class="mb-0">Selección anticipada de materiales para retirarlos después. Se convierte en compra recién al retirarla.</dd>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card card-body h-100">
+                <dt class="h3 mb-2">Movimiento</dt>
+                <dd class="mb-0">Registro de un aporte, una compra u otra operación que afecta el saldo del alumno.</dd>
+              </div>
+            </div>
+          </dl>
         </div>
       </section>
 
       <section class="pt-5" aria-labelledby="titulo-preguntas">
         <div class="container">
-          <h2 id="titulo-preguntas" class="h2 mb-3">
-            Preguntas frecuentes
-          </h2>
+          <h2 id="titulo-preguntas" class="h2 mb-3">Preguntas frecuentes</h2>
           <div class="accordion" id="faq">
-  <div class="accordion-item">
-    <h3 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-0" aria-expanded="false" aria-controls="faq-0">¿Puedo abonar distinto a cada hijo?</button>
-    </h3>
-    <div id="faq-0" class="accordion-collapse collapse" data-bs-parent="#faq">
-      <div class="accordion-body">Sí. Cada pago se acredita a un solo pupilo y su saldo es
-                independiente del de sus hermanos.</div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h3 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-1" aria-expanded="false" aria-controls="faq-1">¿Cómo sé que mi pago llegó?</button>
-    </h3>
-    <div id="faq-1" class="accordion-collapse collapse" data-bs-parent="#faq">
-      <div class="accordion-body">El aporte aparece en el historial de movimientos del pupilo con
-                estado Pagado en cuanto la pasarela lo confirma.</div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h3 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-2" aria-expanded="false" aria-controls="faq-2">¿Qué pasa si cierro el navegador mientras pago?</button>
-    </h3>
-    <div id="faq-2" class="accordion-collapse collapse" data-bs-parent="#faq">
-      <div class="accordion-body">El sistema revisa con Transbank los pagos que quedaron sin
-                confirmar y acredita los que sí se aprobaron.</div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h3 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-3" aria-expanded="false" aria-controls="faq-3">¿Qué pasa si mi pupilo no retira una reserva?</button>
-    </h3>
-    <div id="faq-3" class="accordion-collapse collapse" data-bs-parent="#faq">
-      <div class="accordion-body">Al vencer el plazo de retiro la reserva se cancela y el material
-                vuelve a quedar disponible.</div>
-    </div>
-  </div>
-</div>
+            <div class="accordion-item">
+              <h3 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-0" aria-expanded="false" aria-controls="faq-0">¿Puedo hacer aportes distintos a cada alumno?</button>
+              </h3>
+              <div id="faq-0" class="accordion-collapse collapse" data-bs-parent="#faq">
+                <div class="accordion-body">Sí. Cada aporte se acredita a un solo alumno y su saldo es independiente del de los demás.</div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h3 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-1" aria-expanded="false" aria-controls="faq-1">¿Tengo que hacer una transferencia o esperar una confirmación?</button>
+              </h3>
+              <div id="faq-1" class="accordion-collapse collapse" data-bs-parent="#faq">
+                <div class="accordion-body">No. El aporte se paga con Webpay. Si el pago se aprueba, el monto se acredita en ese momento al saldo del alumno; si se rechaza, no se hace ningún cargo.</div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h3 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-2" aria-expanded="false" aria-controls="faq-2">¿Cómo sé que mi aporte se acreditó?</button>
+              </h3>
+              <div id="faq-2" class="accordion-collapse collapse" data-bs-parent="#faq">
+                <div class="accordion-body">Aparece en «Mis aportes» con estado Aprobado y en los movimientos del alumno, junto con el nuevo saldo disponible.</div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h3 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-3" aria-expanded="false" aria-controls="faq-3">¿Cuál es la diferencia entre reservar y comprar?</button>
+              </h3>
+              <div id="faq-3" class="accordion-collapse collapse" data-bs-parent="#faq">
+                <div class="accordion-body">La reserva solo aparta los materiales y muestra cuánto saldo quedaría disponible. La compra ocurre al retirar los materiales en la librería escolar, y es ahí cuando se descuenta el saldo.</div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h3 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-4" aria-expanded="false" aria-controls="faq-4">¿Qué pasa si no se retira una reserva?</button>
+              </h3>
+              <div id="faq-4" class="accordion-collapse collapse" data-bs-parent="#faq">
+                <div class="accordion-body">Al vencer el plazo de retiro la reserva se cancela, los materiales vuelven a quedar disponibles y el saldo del alumno no se modifica.</div>
+              </div>
+            </div>
+          </div>
 
           <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
-            <a href="../acceso/login.html" class="btn btn-primary"
-              >Iniciar sesión</a
-            >
-            <a href="contacto.html" class="btn btn-outline-primary"
-              >Hacer una consulta</a
-            >
+            <a href="../acceso/login.html" class="btn btn-primary">Iniciar sesión</a>
+            <a href="contacto.html" class="btn btn-outline-primary">Hacer una consulta</a>
           </div>
         </div>
       </section>

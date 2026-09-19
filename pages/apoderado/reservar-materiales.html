@@ -17,20 +17,21 @@
       <section class="container">
         <h1 class="h1 mb-3">Reservar materiales</h1>
         <p class="lead mb-4">
-          Elige a uno de tus pupilos, agrega los materiales que necesitas al
-          carrito y confirma la reserva para retirarla en la librería escolar.
+          Elige al alumno, agrega los materiales que necesitas y confirma la
+          reserva. Luego la retiras en la librería escolar: recién ahí se
+          registra la compra y se descuenta el saldo.
         </p>
 
-        <!-- HU23 · Paso 1: el pupilo define el saldo disponible de la reserva -->
-        <section class="card card-body mb-4" aria-labelledby="titulo-pupilo">
-          <h2 id="titulo-pupilo" class="h3 mb-1">1. ¿Para quién es la reserva?</h2>
+        <!-- HU23 · Paso 1: el alumno define el saldo disponible para reservar -->
+        <section class="card card-body mb-4" aria-labelledby="titulo-alumno">
+          <h2 id="titulo-alumno" class="h3 mb-1">1. ¿Para quién es la reserva?</h2>
           <p class="text-body-secondary mb-3">
-            El total de la reserva no puede superar el saldo del pupilo.
+            El total de la reserva no puede superar el saldo disponible del alumno.
           </p>
           <div
             class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3"
             role="radiogroup"
-            aria-labelledby="titulo-pupilo"
+            aria-labelledby="titulo-alumno"
             id="lista-pupilos"
           ></div>
         </section>
@@ -160,7 +161,7 @@
               <div class="card-header bg-body">
                 <h2 id="titulo-carrito" class="h3 mb-0">3. Mi reserva</h2>
                 <p class="small text-body-secondary mb-0" id="carrito-pupilo">
-                  Aún no eliges un pupilo.
+                  Aún no eliges un alumno.
                 </p>
               </div>
 
@@ -174,11 +175,17 @@
                 <dl class="row small mb-0">
                   <dt class="col-7 fw-normal">Saldo disponible</dt>
                   <dd class="col-5 text-end font-monospace mb-2" id="carrito-saldo">$0</dd>
-                  <dt class="col-7 fw-normal">Total reserva</dt>
+                  <dt class="col-7 fw-normal" data-comprometido hidden>Reservas sin retirar</dt>
+                  <dd class="col-5 text-end font-monospace mb-2" id="carrito-comprometido" data-comprometido hidden>$0</dd>
+                  <dt class="col-7 fw-normal">Valor de esta reserva</dt>
                   <dd class="col-5 text-end font-monospace mb-2" id="carrito-total">$0</dd>
-                  <dt class="col-7 border-top pt-2">Saldo restante</dt>
+                  <dt class="col-7 border-top pt-2">Saldo que quedaría disponible</dt>
                   <dd class="col-5 text-end font-monospace fw-bold border-top pt-2 mb-0" id="carrito-restante">$0</dd>
                 </dl>
+                <p class="form-text mb-0 mt-2">
+                  Confirmar no descuenta el saldo: el monto se descuenta como
+                  compra cuando retiras los materiales en la librería escolar.
+                </p>
 
                 <p
                   id="reserva-aviso"

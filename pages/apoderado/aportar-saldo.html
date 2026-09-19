@@ -17,67 +17,126 @@
       <section class="container">
         <h1 class="h1 mb-3">Aportar saldo</h1>
         <p class="lead mb-4">
-          Selecciona uno de tus pupilos e ingresa el monto que deseas aportar.
+          Elige al alumno que recibirá el aporte, ingresa el monto y paga con
+          Webpay. Cuando el pago se aprueba, el monto se acredita de inmediato
+          a su saldo disponible.
         </p>
+
         <div class="row justify-content-center">
-          <div class="col-md-8 col-lg-5">
-          <form
-            class="card card-body"
-            id="formAporte"
-            action="#"
-            method="post"
-          >
-            <div class="mb-3">
-              <label for="hijo" class="form-label"
-                >Pupilo
-                <span class="text-danger" aria-hidden="true">*</span></label
-              >
-              <select id="hijo" name="hijo" class="form-select" required>
-                <option value="">Selecciona un pupilo</option>
-                <option value="martin">Martín Pérez, 7° Básico</option>
-                <option value="sofia">Sofía Pérez, 3° Básico</option>
-              </select>
-              <span class="invalid-feedback" id="error-hijo" role="alert"></span>
-            </div>
-            <div class="mb-3">
-              <label for="monto" class="form-label"
-                >Monto del aporte
-                <span class="text-danger" aria-hidden="true">*</span></label
-              >
-              <input
-                id="monto"
-                name="monto"
-                class="form-control"
-                type="number"
-                min="1"
-                step="1"
-                required
-              />
-              <span class="form-text"
-                >Ingresa un monto entero mayor que cero.</span
-              >
-              <span class="invalid-feedback" id="error-monto" role="alert"></span>
-            </div>
-            <p
-              id="aporte-aviso"
-              class="alert alert-info"
-              role="status"
-              aria-live="polite"
-              hidden
-            ></p>
-            <div class="d-flex flex-wrap gap-2 mt-4">
-              <button class="btn btn-primary" type="submit">
-                Continuar a Webpay
-              </button>
-              <a class="btn btn-outline-primary" href="mis-hijos.html"
-                >Cancelar</a
-              >
-            </div>
-          </form>
+          <div class="col-lg-8">
+            <!-- HU68: el aporte se paga con Webpay (simulado en este proyecto) -->
+            <form class="card card-body" id="formAporte" action="#" method="post" novalidate>
+              <ol class="list-unstyled d-flex flex-wrap gap-3 small text-body-secondary mb-4" aria-label="Pasos del aporte">
+                <li><span class="badge rounded-pill">1</span> Alumno</li>
+                <li><span class="badge rounded-pill">2</span> Monto</li>
+                <li><span class="badge rounded-pill">3</span> Pago con Webpay</li>
+                <li><span class="badge rounded-pill">4</span> Acreditación</li>
+              </ol>
+
+              <fieldset class="mb-4">
+                <legend class="h3 mb-1">1. ¿A qué alumno le aportas?</legend>
+                <p class="form-text mt-0 mb-3">
+                  Cada aporte se acredita a un solo alumno.
+                </p>
+                <div class="row row-cols-1 row-cols-sm-2 g-3" id="aporte-alumnos"></div>
+              </fieldset>
+
+              <div class="mb-4">
+                <label for="monto" class="form-label h3 mb-1">2. Monto del aporte</label>
+                <p class="form-text mt-0 mb-3">Entre $1.000 y $500.000, en pesos chilenos.</p>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input
+                    id="monto"
+                    name="monto"
+                    class="form-control font-monospace"
+                    type="number"
+                    min="1000"
+                    max="500000"
+                    step="1"
+                    inputmode="numeric"
+                    required
+                  />
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-2" aria-label="Montos sugeridos">
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-monto="5000">$5.000</button>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-monto="10000">$10.000</button>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-monto="20000">$20.000</button>
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-monto="30000">$30.000</button>
+                </div>
+              </div>
+
+              <div class="border rounded p-3 bg-body-tertiary mb-3" aria-live="polite">
+                <p class="small text-uppercase fw-bold text-body-secondary mb-2">Resumen</p>
+                <dl class="row small mb-0">
+                  <dt class="col-6 fw-normal">Alumno</dt>
+                  <dd class="col-6 text-end mb-1" id="resumen-alumno">Sin elegir</dd>
+                  <dt class="col-6 fw-normal">Saldo disponible actual</dt>
+                  <dd class="col-6 text-end font-monospace mb-1" id="resumen-saldo">$0</dd>
+                  <dt class="col-6 fw-normal">Aporte</dt>
+                  <dd class="col-6 text-end font-monospace mb-1" id="resumen-monto">$0</dd>
+                  <dt class="col-6 border-top pt-2">Saldo disponible después del aporte</dt>
+                  <dd class="col-6 text-end font-monospace fw-bold border-top pt-2 mb-0" id="resumen-final">$0</dd>
+                </dl>
+              </div>
+
+              <p id="aporte-aviso" class="alert" role="alert" hidden></p>
+
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" type="submit">3. Continuar a Webpay</button>
+                <a class="btn btn-outline-primary" href="mis-alumnos.html">Cancelar</a>
+              </div>
+              <p class="form-text mb-0 mt-3">
+                El pago lo recibe el Centro General de Padres y Apoderados, que
+                administra los fondos. No necesitas hacer transferencias ni
+                esperar una confirmación manual.
+              </p>
+            </form>
+
+            <!-- 4. Comprobante: lo muestra apoderado.js tras el pago -->
+            <section class="card card-body" id="aporte-comprobante" aria-live="polite" tabindex="-1" hidden></section>
           </div>
         </div>
       </section>
     </main>
+
+    <!-- Webpay simulado: representa la pasarela sin cobrar ni pedir datos reales -->
+    <div class="modal fade" id="webpay" tabindex="-1" aria-labelledby="webpay-titulo" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title h5 mb-0" id="webpay-titulo">Webpay</h2>
+              <p class="small text-body-secondary mb-0">Pasarela de pago · simulación académica</p>
+            </div>
+          </div>
+          <div class="modal-body">
+            <dl class="row small mb-3">
+              <dt class="col-5 fw-normal">Comercio</dt>
+              <dd class="col-7 text-end mb-1">Centro General de Padres y Apoderados</dd>
+              <dt class="col-5 fw-normal">Orden de compra</dt>
+              <dd class="col-7 text-end font-monospace mb-1" id="webpay-orden"></dd>
+              <dt class="col-5 fw-normal">Detalle</dt>
+              <dd class="col-7 text-end mb-1" id="webpay-detalle"></dd>
+              <dt class="col-5 border-top pt-2">Monto a pagar</dt>
+              <dd class="col-7 text-end font-monospace fw-bold border-top pt-2 mb-0" id="webpay-monto"></dd>
+            </dl>
+            <p class="alert alert-info mb-0">
+              Esta ventana reemplaza a Webpay en la demo: no se piden datos de
+              tarjeta ni se hace un cobro real. Elige el resultado del pago.
+            </p>
+          </div>
+          <div class="modal-footer justify-content-between flex-wrap gap-2">
+            <button class="btn btn-link" type="button" data-webpay="anular">Anular y volver</button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-danger" type="button" data-webpay="rechazar">Rechazar pago</button>
+              <button class="btn btn-primary" type="button" data-webpay="aprobar">Aprobar pago</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="footer-container"></div>
     <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

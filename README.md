@@ -10,11 +10,11 @@ Proyecto semestral para la asignatura **Desarrollo Fullstack II (DSY1104)**.
 
 ## Problema
 
-En algunas librerías escolares administradas por Centros de Padres, los aportes de los apoderados y las compras de los estudiantes dependen de procesos manuales. Esto dificulta mantener saldos actualizados, seguir los movimientos y entregar información clara a los apoderados.
+Cuando los aportes, compras y saldos se gestionan mediante registros manuales o planillas independientes, los apoderados no siempre pueden consultar de manera inmediata los movimientos asociados a sus alumnos. Falta un sistema centralizado que permita consultar oportunamente los aportes, compras, saldos y movimientos de cada alumno, y que facilite el control administrativo de la librería escolar.
 
 ## Solución propuesta
 
-**EduSaldo** será una aplicación web que permitirá gestionar una librería escolar, sus productos y usuarios, y evolucionará hacia la administración de estudiantes, cargas de saldo, compras, movimientos e inventario.
+**EduSaldo** será una aplicación web que permitirá gestionar una librería escolar, sus productos y usuarios, y evolucionará hacia la administración de estudiantes, aportes de saldo mediante Webpay (simulado), compras, reservas, movimientos e inventario.
 
 ## Objetivo general
 
@@ -22,12 +22,22 @@ Desarrollar una aplicación web para gestionar una librería escolar y centraliz
 
 ## Organización y roles
 
-- **Organización:** Centro de Padres, responsable de gestionar la librería escolar.
+- **Organización:** Centro General de Padres y Apoderados (Centro de Padres), que administra los fondos y es responsable de la librería escolar, donde se realizan las compras y entregas de materiales.
 - **Sistema:** EduSaldo.
-- **Apoderado:** gestiona estudiantes, saldo, movimientos y reservas.
+- **Apoderado:** aporta saldo a sus alumnos con Webpay, consulta sus movimientos y reserva materiales.
 - **Encargado de Librería / Vendedor:** gestiona stock, prepara reservas y entrega materiales.
 - **Administrador:** administra usuarios, estudiantes, productos y la configuración del sistema.
-- **Estudiante:** entidad del dominio; no requiere inicio de sesión.
+- **Alumno (estudiante):** entidad del dominio; tiene saldo disponible y no requiere inicio de sesión.
+
+## Conceptos
+
+- **Aporte:** dinero que el apoderado incorpora, mediante Webpay, al saldo de uno de sus alumnos.
+- **Saldo disponible:** dinero que tiene el alumno para comprar materiales.
+- **Compra:** adquisición de materiales en la librería escolar; descuenta el saldo.
+- **Reserva:** selección anticipada de materiales para retirarlos después; se convierte en compra al retirarla.
+- **Movimiento:** registro de un aporte, compra u otra operación que afecta el saldo.
+
+Flujo del aporte: *Aportar saldo* → elegir alumno → ingresar monto → pago en Webpay → al aprobarse, el monto se acredita al saldo del alumno → queda registrado como movimiento. Webpay está **simulado**: no hay pasarela real ni se piden datos de tarjeta.
 
 ## Ejecución y alcance
 

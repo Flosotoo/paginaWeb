@@ -3,7 +3,7 @@
 (function () {
   if (!window.Datos) return;
 
-  // Meta mensual de aportes que define el Centro General de Padres.
+  // Meta mensual de aportes que define el Centro de Padres.
   const META_APORTES_MES = 100000;
   const COLORES = ["#9e5837", "#c99070", "#7a4229", "#e0b595", "#5f3320", "#b8764f"];
   const SELLO = "#8c2018";
@@ -83,7 +83,7 @@
   const saldos = Object.values(bd.saldos);
   const totalSaldo = saldos.reduce((suma, s) => suma + s, 0);
   $("kpi-saldo").textContent = pesos(totalSaldo);
-  $("kpi-saldo-detalle").textContent = `${saldos.length} pupilo(s) con cuenta · ${bd.ventas.length} venta(s) registradas`;
+  $("kpi-saldo-detalle").textContent = `${saldos.length} alumno(s) con saldo · ${bd.ventas.length} venta(s) registradas`;
 
   const delMes = bd.movimientos.filter((m) => {
     const f = aFecha(m.fecha);
@@ -199,7 +199,7 @@
     ...bd.ventas.map((v) => ({
       fecha: v.fecha,
       icono: "receipt text-primary",
-      titulo: `Venta en librería · ${nombrePupilo(v.pupilo)}`,
+      titulo: `Venta en la librería escolar · ${nombrePupilo(v.pupilo)}`,
       detalle: `${v.detalle} · ${pesos(v.monto)} · ${v.hora}`,
       url: "../libreria/ventas-dia.html",
     })),

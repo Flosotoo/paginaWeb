@@ -7,7 +7,9 @@
 
   // ------------------------------------------------------------------
   // Apoderado: reservar materiales (HU23) con carrito y control de saldo.
-  // El total de la reserva no puede superar el saldo del pupilo elegido.
+  // Una reserva aparta materiales pero no mueve el saldo: el descuento ocurre
+  // como compra al entregarla. Por eso el tope es el saldo disponible menos lo
+  // ya comprometido en reservas del alumno que aún no se retiran.
   // ------------------------------------------------------------------
   const aviso = document.getElementById("reserva-aviso");
   const listaPupilos = document.getElementById("lista-pupilos");
@@ -17,6 +19,19 @@
       /[&<>"']/g,
       (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
     );
+  const normalizar = window.Edusaldo.normalizar;
+  const fechaCorta = (texto) => {
+    const [a, m, d] = String(texto).split("-").map(Number);
+    return new Date(a, m - 1, d).toLocaleDateString("es-CL");
+  };
+  const SIN_RETIRAR = ["Pendiente", "Lista para retiro"];
+
+  // Valor de una reserva. Las antiguas no guardaban el monto: se calcula.
+  function montoReserva(r) {
+    if (r.monto != null) return r.monto;
+    const producto = Datos.productos().find((p) => p.nombre === r.producto);
+    return producto ? producto.precio * r.cantidad : 0;
+  }
 
   if (listaPupilos && sesion) {
     const carrito = [];
@@ -25,6 +40,7 @@
     const elItems = document.getElementById("carrito-items");
     const elPupilo = document.getElementById("carrito-pupilo");
     const elSaldo = document.getElementById("carrito-saldo");
+    const elComprometido = document.getElementById("carrito-comprometido");
     const elTotal = document.getElementById("carrito-total");
     const elRestante = document.getElementById("carrito-restante");
     const confirmar = document.getElementById("btnConfirmarReserva");
@@ -34,13 +50,22 @@
       carrito.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
     const avisar = (mensaje, tipo) => V.mostrarAviso(aviso, mensaje, tipo);
 
-    // Paso 1: los pupilos asociados al apoderado, con su saldo.
-    const pupilos = Datos.estudiantes()
-      .filter((e) => String(e.apoderado).toLowerCase() === String(sesion.correo).toLowerCase())
-      .map((e) => {
-        const nombre = `${e.nombre} ${e.apellido}`;
-        return { id: e.id, nombre, curso: e.curso, saldo: Datos.saldoDe(nombre) };
-      });
+    // Saldo ya apartado en reservas del alumno que aún no se retiran.
+    const comprometidoDe = (nombre) =>
+      Datos.reservas()
+        .filter((r) => SIN_RETIRAR.includes(r.estado) && normalizar(r.pupilo) === normalizar(nombre))
+        .reduce((suma, r) => suma + montoReserva(r), 0);
+
+    // Paso 1: los alumnos asociados al apoderado, con su saldo disponible.
+    const pupilos = Datos.alumnosDe(sesion.correo).map((e) => ({
+      id: e.id,
+      nombre: e.nombreCompleto,
+      curso: e.curso,
+      saldo: Datos.saldoDe(e.nombreCompleto),
+      comprometido: comprometidoDe(e.nombreCompleto),
+    }));
+    // Lo que el alumno todavía puede reservar.
+    const tope = () => (pupilo ? pupilo.saldo - pupilo.comprometido : 0);
 
     listaPupilos.innerHTML = pupilos.length
       ? pupilos
@@ -56,14 +81,14 @@
         </div>`,
           )
           .join("")
-      : `<div class="col-12"><p class="alert alert-info mb-0">No tienes pupilos asociados. Pide al Centro General de Padres que los vincule a tu cuenta.</p></div>`;
+      : `<div class="col-12"><p class="alert alert-info mb-0">Aún no tienes alumnos asociados. El Centro de Padres los vincula a tu cuenta con la nómina del colegio.</p></div>`;
 
     listaPupilos.addEventListener("change", (evento) => {
       pupilo = pupilos.find((p) => p.id === evento.target.value) || null;
       aviso.hidden = true;
-      if (pupilo && totalCarrito() > pupilo.saldo) {
+      if (pupilo && totalCarrito() > tope()) {
         avisar(
-          `El carrito (${pesos(totalCarrito())}) supera el saldo de ${pupilo.nombre}. Quita materiales para continuar.`,
+          `La reserva (${pesos(totalCarrito())}) supera el saldo que ${pupilo.nombre} tiene disponible para reservar (${pesos(tope())}). Quita materiales para continuar.`,
           "error",
         );
       }
@@ -73,12 +98,17 @@
     function pintar() {
       const total = totalCarrito();
       const saldo = pupilo ? pupilo.saldo : 0;
-      const restante = saldo - total;
+      const comprometido = pupilo ? pupilo.comprometido : 0;
+      const restante = saldo - comprometido - total;
 
       elPupilo.textContent = pupilo
         ? `Para ${pupilo.nombre} · ${pupilo.curso}`
-        : "Aún no eliges un pupilo.";
+        : "Aún no eliges un alumno.";
       elSaldo.textContent = pesos(saldo);
+      elComprometido.textContent = `−${pesos(comprometido)}`;
+      document.querySelectorAll("[data-comprometido]").forEach((el) => {
+        el.hidden = comprometido === 0;
+      });
       elTotal.textContent = pesos(total);
       elRestante.textContent = pesos(restante);
       elRestante.classList.toggle("text-danger", restante < 0);
@@ -114,7 +144,7 @@
       const producto = Datos.buscarProducto(codigo);
       if (!producto) return;
       if (!pupilo) {
-        avisar("Primero elige para qué pupilo es la reserva.", "error");
+        avisar("Primero elige para qué alumno es la reserva.", "error");
         listaPupilos.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
@@ -124,9 +154,9 @@
         avisar(`Solo quedan ${producto.stock} unidad(es) de ${producto.nombre}.`, "error");
         return;
       }
-      if (totalCarrito() + producto.precio > pupilo.saldo) {
+      if (totalCarrito() + producto.precio > tope()) {
         avisar(
-          `No se puede agregar ${producto.nombre}: el total superaría el saldo de ${pupilo.nombre} (${pesos(pupilo.saldo)}).`,
+          `No se puede agregar ${producto.nombre}: la reserva superaría el saldo disponible para reservar de ${pupilo.nombre} (${pesos(tope())}).`,
           "error",
         );
         return;
@@ -178,6 +208,7 @@
         return;
       }
 
+      const valor = totalCarrito();
       const codigos = carrito.map((item) => {
         Datos.descontarStock(item.codigo, item.cantidad);
         const codigo = Datos.siguienteCodigoReserva();
@@ -196,10 +227,13 @@
       });
 
       carrito.length = 0;
+      pupilo.comprometido += valor;
       pintar();
-      aviso.innerHTML = `Reserva registrada (${codigos.join(", ")}) en estado Pendiente. Retira hasta el ${escapar(
-        fecha(limite),
-      )}. <a class="alert-link" href="mis-reservas.html">Ver mis reservas</a>.`;
+      aviso.innerHTML = `<strong>Reserva confirmada</strong> (${codigos.join(", ")}) por ${pesos(valor)}.
+        Esto todavía no es una entrega: la librería escolar preparará los materiales y
+        podrás retirarlos hasta el ${escapar(fechaCorta(fecha(limite)))}. Al retirarlos se
+        registrará la compra y se descontará el saldo.
+        <a class="alert-link" href="mis-reservas.html">Ver mis reservas</a>.`;
       aviso.className = "alert alert-success mt-3 mb-0";
       aviso.hidden = false;
     });
@@ -208,20 +242,51 @@
   }
 
   // HU24: listado de reservas del apoderado.
+  const ESTADOS = {
+    Pendiente: {
+      clase: "rounded-pill",
+      texto: "La librería escolar aún no prepara los materiales.",
+    },
+    "Lista para retiro": {
+      clase: "text-bg-success",
+      texto: "Los materiales están listos. Retíralos en la librería escolar.",
+    },
+    Entregada: {
+      clase: "text-bg-secondary",
+      texto: "Materiales retirados. La compra ya se descontó del saldo.",
+    },
+  };
+  // Nombre del alumno tal como está en la nómina (los datos antiguos lo
+  // guardaban normalizado, sin tildes ni mayúsculas).
+  const nombreAlumno = (texto) => {
+    const e = Datos.estudiantes().find(
+      (x) => normalizar(`${x.nombre} ${x.apellido}`) === normalizar(texto),
+    );
+    return e ? `${e.nombre} ${e.apellido}` : texto;
+  };
+  const tarjetaReserva = (r, extra) => {
+    const estado = ESTADOS[r.estado] || { clase: "rounded-pill", texto: "" };
+    return `
+        <article class="card card-body mb-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+            <h2 class="h3 mb-0"><span class="font-monospace">${escapar(r.codigo)}</span> · ${escapar(r.producto)}</h2>
+            <span class="badge ${estado.clase}">${escapar(r.estado)}</span>
+          </div>
+          <p class="mb-1">Alumno: ${escapar(nombreAlumno(r.pupilo))} · ${r.cantidad} unidad(es) · Valor <strong class="font-monospace">${pesos(
+            montoReserva(r),
+          )}</strong></p>
+          <p class="small text-body-secondary mb-0">Reservada el ${fechaCorta(r.fecha)} · retiro hasta el ${fechaCorta(
+            r.fechaLimite,
+          )}. ${estado.texto}</p>
+          ${extra || ""}
+        </article>`;
+  };
+
   const contenedor = document.getElementById("lista-reservas");
   if (contenedor && sesion) {
     const reservas = Datos.reservasDe(sesion.correo).slice().reverse();
     contenedor.innerHTML = reservas.length
-      ? reservas
-          .map(
-            (r) => `
-        <article class="card card-body mb-4">
-          <h2 class="h3 mb-2">${r.codigo} · ${r.estado}</h2>
-          <p>${r.producto} · ${r.cantidad} unidad(es) · Creada el ${r.fecha}</p>
-          <p>Retiro disponible hasta el ${r.fechaLimite}.</p>
-        </article>`,
-          )
-          .join("")
+      ? reservas.map((r) => tarjetaReserva(r)).join("")
       : '<p>No tienes reservas registradas. <a href="reservar-materiales.html">Reservar materiales</a>.</p>';
   }
 
@@ -231,20 +296,14 @@
   const preparar = document.getElementById("lista-preparar-reservas");
   if (preparar) {
     const pintarPreparar = () => {
-      const pendientes = Datos.reservas().filter(
-        (r) => r.estado === "Pendiente",
-      );
+      const pendientes = Datos.reservas().filter((r) => r.estado === "Pendiente");
       preparar.innerHTML = pendientes.length
         ? pendientes
-            .map(
-              (r) => `
-          <article class="card card-body mb-4">
-            <h2 class="h3 mb-2">${r.codigo}</h2>
-            <p>${r.pupilo} · ${r.producto} · ${r.cantidad} unidad(es) · Creada el ${r.fecha}</p>
-            <button class="btn btn-primary" type="button" data-preparar="${r.codigo}">
-              Marcar como lista para retirar
-            </button>
-          </article>`,
+            .map((r) =>
+              tarjetaReserva(
+                r,
+                `<button class="btn btn-primary mt-3 align-self-start" type="button" data-preparar="${escapar(r.codigo)}">Marcar como lista para retiro</button>`,
+              ),
             )
             .join("")
         : "<p>No hay reservas pendientes.</p>";
@@ -263,25 +322,24 @@
   }
 
   // ------------------------------------------------------------------
-  // Librería: entregar reservas (HU36)
+  // Librería: entregar reservas (HU36). La entrega es la COMPRA: descuenta
+  // el saldo del alumno y queda como movimiento y como venta del día.
   // ------------------------------------------------------------------
   const entregar = document.getElementById("lista-entregar-reservas");
   if (entregar) {
+    const avisoEntregas = document.getElementById("entregas-aviso");
     const pintarEntregar = () => {
-      const listas = Datos.reservas().filter(
-        (r) => r.estado === "Lista para retiro",
-      );
+      const listas = Datos.reservas().filter((r) => r.estado === "Lista para retiro");
       entregar.innerHTML = listas.length
         ? listas
-            .map(
-              (r) => `
-          <article class="card card-body mb-4">
-            <h2 class="h3 mb-2">${r.codigo}</h2>
-            <p>${r.pupilo} · ${r.producto} · ${r.cantidad} unidad(es)</p>
-            <button class="btn btn-primary" type="button" data-entregar="${r.codigo}">
-              Confirmar entrega
-            </button>
-          </article>`,
+            .map((r) =>
+              tarjetaReserva(
+                r,
+                `<p class="small mt-2 mb-0">Saldo disponible del alumno: <strong class="font-monospace">${pesos(
+                  Datos.saldoDe(r.pupilo),
+                )}</strong></p>
+                <button class="btn btn-primary mt-3 align-self-start" type="button" data-entregar="${escapar(r.codigo)}">Entregar y registrar compra</button>`,
+              ),
             )
             .join("")
         : "<p>No hay reservas listas para retirar.</p>";
@@ -289,10 +347,49 @@
     entregar.addEventListener("click", (evento) => {
       const boton = evento.target.closest("[data-entregar]");
       if (!boton) return;
-      Datos.actualizarReserva(boton.dataset.entregar, {
-        estado: "Entregada",
-        fechaEntrega: new Date().toISOString().slice(0, 10),
+      const reserva = Datos.buscarReserva(boton.dataset.entregar);
+      if (!reserva) return;
+      const monto = montoReserva(reserva);
+      const saldo = Datos.saldoDe(reserva.pupilo);
+      if (monto > saldo) {
+        V.mostrarAviso(
+          avisoEntregas,
+          `No se puede entregar ${reserva.codigo}: el valor es ${pesos(monto)} y ${nombreAlumno(reserva.pupilo)} tiene ${pesos(
+            saldo,
+          )} de saldo disponible.`,
+          "error",
+        );
+        return;
+      }
+      const ahora = new Date();
+      const fecha = ahora.toISOString().slice(0, 10);
+      Datos.ajustarSaldo(reserva.pupilo, -monto);
+      Datos.agregarMovimiento({
+        correo: reserva.correo,
+        pupilo: reserva.pupilo,
+        fecha,
+        tipo: "Compra",
+        detalle: `Retiro de reserva ${reserva.codigo} · ${reserva.producto} x${reserva.cantidad}`,
+        monto: -monto,
       });
+      Datos.agregarVenta({
+        fecha,
+        hora: ahora.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }),
+        pupilo: reserva.pupilo,
+        detalle: `Reserva ${reserva.codigo} · ${reserva.producto} x${reserva.cantidad}`,
+        monto,
+        responsable: sesion ? sesion.correo : "",
+      });
+      Datos.actualizarReserva(reserva.codigo, {
+        estado: "Entregada",
+        monto,
+        fechaEntrega: fecha,
+      });
+      V.mostrarAviso(
+        avisoEntregas,
+        `Reserva ${reserva.codigo} entregada. Se registró la compra por ${pesos(monto)}; nuevo saldo de ${nombreAlumno(reserva.pupilo)}: ${pesos(Datos.saldoDe(reserva.pupilo))}.`,
+        "ok",
+      );
       pintarEntregar();
     });
     pintarEntregar();
@@ -315,7 +412,7 @@
       }
       V.mostrarAviso(
         avisoEntrega,
-        `Reserva ${reserva.codigo} de ${reserva.pupilo} (estado: ${reserva.estado}).`,
+        `Reserva ${reserva.codigo} · alumno ${nombreAlumno(reserva.pupilo)} · ${reserva.producto} x${reserva.cantidad} · valor ${pesos(montoReserva(reserva))} · estado: ${reserva.estado}.`,
         "info",
       );
     });

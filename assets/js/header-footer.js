@@ -43,7 +43,6 @@ const footerHTML = `
 
 // Enlaces públicos siempre visibles (pages/publico).
 const ENLACES_PUBLICOS = [
-  { texto: "Blog", url: `${RAIZ}pages/publico/blog.html` },
   { texto: "Cómo funciona", url: `${RAIZ}pages/publico/como-funciona.html` },
   { texto: "Contacto", url: `${RAIZ}pages/publico/contacto.html` },
 ];
@@ -53,6 +52,10 @@ const ENLACES_PUBLICOS = [
 const AREAS = {
   Cliente: [
     { texto: "Inicio", url: `${RAIZ}pages/apoderado/inicio.html` },
+    { texto: "Mis alumnos", url: `${RAIZ}pages/apoderado/mis-alumnos.html` },
+    { texto: "Aportar saldo", url: `${RAIZ}pages/apoderado/aportar-saldo.html` },
+    { texto: "Movimientos", url: `${RAIZ}pages/apoderado/movimientos.html` },
+    { texto: "Mis aportes", url: `${RAIZ}pages/apoderado/mis-aportes.html` },
     { texto: "Catálogo", url: `${RAIZ}pages/apoderado/productos.html` },
     {
       texto: "Reservar materiales",
@@ -182,45 +185,87 @@ function crearAcceso(sesion) {
   return li;
 }
 
-// Área de librería: el vendedor (bibliotecario) solo ve sus tareas, agrupadas
-// por momento del día, sin los enlaces del sitio público.
-function esAreaLibreria() {
-  return window.location.pathname.includes("/pages/libreria/");
+// Áreas privadas (librería y apoderado): cada perfil ve solo sus tareas,
+// agrupadas por uso, sin los enlaces del sitio público. El logo lleva al
+// inicio del área y una etiqueta indica en qué área se está.
+const AREAS_PRIVADAS = {
+  libreria: {
+    carpeta: "pages/libreria/",
+    etiqueta: "Librería escolar",
+    menu(L) {
+      const reservas = window.Datos ? Datos.reservas() : [];
+      const cuenta = (estado) => reservas.filter((r) => r.estado === estado).length;
+      return [
+        { texto: "Inicio", url: `${L}inicio.html` },
+        { texto: "Registrar compra", url: `${L}registrar-compra.html` },
+        {
+          grupo: "Reservas",
+          items: [
+            { texto: "Preparar reservas", url: `${L}preparar-reservas.html`, contador: cuenta("Pendiente") },
+            { texto: "Entregar reservas", url: `${L}entregar-reservas.html`, contador: cuenta("Lista para retiro") },
+          ],
+        },
+        {
+          grupo: "Caja",
+          items: [
+            { texto: "Consultar saldo", url: `${L}consulta-saldo.html` },
+            { texto: "Ventas del día", url: `${L}ventas-dia.html` },
+          ],
+        },
+        {
+          grupo: "Inventario",
+          items: [
+            { texto: "Productos", url: `${L}productos.html` },
+            { texto: "Stock crítico", url: `${L}stock.html` },
+            { texto: "Importar nómina", url: `${L}nomina-import.html` },
+          ],
+        },
+      ];
+    },
+  },
+  apoderado: {
+    carpeta: "pages/apoderado/",
+    etiqueta: "Apoderado",
+    menu(L) {
+      return [
+        { texto: "Inicio", url: `${L}inicio.html` },
+        { texto: "Aportar saldo", url: `${L}aportar-saldo.html` },
+        {
+          grupo: "Saldo",
+          items: [
+            { texto: "Mis alumnos", url: `${L}mis-alumnos.html` },
+            { texto: "Movimientos", url: `${L}movimientos.html` },
+            { texto: "Mis aportes", url: `${L}mis-aportes.html` },
+          ],
+        },
+        {
+          grupo: "Materiales",
+          items: [
+            { texto: "Reservar materiales", url: `${L}reservar-materiales.html` },
+            { texto: "Mis reservas", url: `${L}mis-reservas.html` },
+            { texto: "Catálogo", url: `${L}productos.html` },
+          ],
+        },
+        { texto: "Perfil", url: `${L}perfil.html` },
+      ];
+    },
+  },
+};
+
+function areaPrivada() {
+  const ruta = window.location.pathname;
+  return (
+    Object.values(AREAS_PRIVADAS).find((area) => ruta.includes(`/${area.carpeta}`)) || null
+  );
 }
 
-function pintarNavegacionLibreria(lista, sesion) {
-  const L = `${RAIZ}pages/libreria/`;
-  const reservas = window.Datos ? Datos.reservas() : [];
-  const cuenta = (estado) => reservas.filter((r) => r.estado === estado).length;
-
-  lista.appendChild(crearItem("Inicio", `${L}inicio.html`));
-  lista.appendChild(crearItem("Registrar compra", `${L}registrar-compra.html`));
-  lista.appendChild(
-    crearMenuArea(
-      [
-        { texto: "Preparar reservas", url: `${L}preparar-reservas.html`, contador: cuenta("Pendiente") },
-        { texto: "Entregar reservas", url: `${L}entregar-reservas.html`, contador: cuenta("Lista para retiro") },
-      ],
-      "Reservas",
-    ),
-  );
-  lista.appendChild(
-    crearMenuArea(
-      [
-        { texto: "Consultar saldo", url: `${L}consulta-saldo.html` },
-        { texto: "Ventas del día", url: `${L}ventas-dia.html` },
-      ],
-      "Caja",
-    ),
-  );
-  lista.appendChild(
-    crearMenuArea(
-      [
-        { texto: "Productos", url: `${L}productos.html` },
-        { texto: "Stock crítico", url: `${L}stock.html` },
-        { texto: "Importar nómina", url: `${L}nomina-import.html` },
-      ],
-      "Inventario",
+function pintarNavegacionArea(lista, sesion, area) {
+  const L = `${RAIZ}${area.carpeta}`;
+  area.menu(L).forEach((entrada) =>
+    lista.appendChild(
+      entrada.grupo
+        ? crearMenuArea(entrada.items, entrada.grupo)
+        : crearItem(entrada.texto, entrada.url),
     ),
   );
   lista.appendChild(crearSeparador());
@@ -246,8 +291,9 @@ function pintarNavegacion() {
   const sesion = window.Sesion ? window.Sesion.actual() : null;
   lista.replaceChildren();
 
-  if (esAreaLibreria()) {
-    pintarNavegacionLibreria(lista, sesion);
+  const area = areaPrivada();
+  if (area) {
+    pintarNavegacionArea(lista, sesion, area);
     return;
   }
 
@@ -255,10 +301,10 @@ function pintarNavegacion() {
   lista.appendChild(crearSeparador());
   lista.appendChild(crearGrupo(ENLACES_PUBLICOS));
 
-  const area = sesion ? AREAS[sesion.rol] || [] : [];
-  if (area.length) {
+  const menuArea = sesion ? AREAS[sesion.rol] || [] : [];
+  if (menuArea.length) {
     lista.appendChild(crearSeparador());
-    lista.appendChild(crearMenuArea(area));
+    lista.appendChild(crearMenuArea(menuArea));
   }
 
   lista.appendChild(crearSeparador());
@@ -272,8 +318,9 @@ function inyectarBotonAtras() {
   if (!principal) return;
   const ruta = window.location.pathname;
   if (ruta.split("/").pop() === "index.html") return;
-  // El inicio de librería es la portada del vendedor: no hay adónde volver.
-  if (ruta.endsWith("/pages/libreria/inicio.html")) return;
+  // El inicio de cada área privada es su portada: no hay adónde volver.
+  const area = areaPrivada();
+  if (area && ruta.endsWith(`/${area.carpeta}inicio.html`)) return;
 
   const wrapper = document.createElement("div");
   wrapper.className = "container";
@@ -329,7 +376,7 @@ const MENU_ADMIN = [
     ],
   },
   {
-    grupo: "Librería",
+    grupo: "Librería escolar",
     items: [
       { texto: "Stock crítico", icono: "exclamation-triangle", url: `${LIBRERIA}stock.html` },
       { texto: "Preparar reservas", icono: "clipboard-check", url: `${LIBRERIA}preparar-reservas.html`, contador: "pendientes" },
@@ -649,19 +696,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   headerContainer.innerHTML = headerHTML;
   footerContainer.innerHTML = footerHTML;
-  if (esAreaLibreria()) {
-    // El logo lleva al inicio de la librería, no a la portada pública.
+  const area = areaPrivada();
+  if (area) {
+    // El logo lleva al inicio del área, no a la portada pública.
     const marca = headerContainer.querySelector(".navbar-brand");
-    marca.href = `${RAIZ}pages/libreria/inicio.html`;
+    marca.href = `${RAIZ}${area.carpeta}inicio.html`;
     marca.insertAdjacentHTML(
       "beforeend",
-      `<span class="badge rounded-pill ms-1">Librería</span>`,
+      `<span class="badge rounded-pill ms-1">${area.etiqueta}</span>`,
     );
   }
   pintarNavegacion();
 
   // Marca el enlace activo comparando el pathname actual.
-  const pathActual = window.location.pathname.split("/").pop() || "index.html";
+  // El detalle de un producto cuenta como parte del catálogo.
+  const EQUIVALENTES = { "producto-detalle.html": "productos.html" };
+  const archivo = window.location.pathname.split("/").pop() || "index.html";
+  const pathActual = EQUIVALENTES[archivo] || archivo;
   headerContainer.querySelectorAll(".nav-link, .dropdown-item").forEach((a) => {
     const href = a.getAttribute("href") || "";
     if (href.startsWith("#")) return;

@@ -126,7 +126,8 @@
         imagen: "../../assets/img/landing-page.jpg",
       },
     ],
-    // Saldo disponible por pupilo (clave: nombre normalizado).
+    // Saldo disponible por alumno (clave: nombre normalizado). El campo interno
+    // "pupilo" de movimientos, reservas y ventas guarda el nombre del alumno.
     saldos: {
       "martin perez": 21510,
       "sofia perez": 18000,
@@ -151,7 +152,7 @@
       {
         codigo: "ED-2026-014",
         correo: "apoderado@correo.cl",
-        pupilo: "martin perez",
+        pupilo: "Martín Pérez",
         producto: "Cuaderno universitario",
         cantidad: 1,
         fecha: "2026-09-15",
@@ -159,29 +160,59 @@
         estado: "Lista para retiro",
       },
     ],
+    // Pagos hechos en Webpay (simulado). Solo los aprobados generan un aporte.
+    pagos: [
+      {
+        orden: "EDS-000101",
+        correo: "apoderado@correo.cl",
+        pupilo: "Sofía Pérez",
+        fecha: "2026-09-10",
+        monto: 18000,
+        estado: "Aprobado",
+        autorizacion: "482915",
+      },
+      {
+        orden: "EDS-000102",
+        correo: "apoderado@correo.cl",
+        pupilo: "Martín Pérez",
+        fecha: "2026-09-15",
+        monto: 25000,
+        estado: "Aprobado",
+        autorizacion: "730144",
+      },
+    ],
+    // Todo lo que afecta el saldo de un alumno: aportes (+) y compras (-).
     movimientos: [
       {
         correo: "apoderado@correo.cl",
-        pupilo: "martin perez",
+        pupilo: "Sofía Pérez",
+        fecha: "2026-09-10",
+        tipo: "Aporte",
+        detalle: "Aporte vía Webpay · orden EDS-000101",
+        monto: 18000,
+      },
+      {
+        correo: "apoderado@correo.cl",
+        pupilo: "Martín Pérez",
         fecha: "2026-09-15",
         tipo: "Aporte",
-        detalle: "Aporte recibido",
+        detalle: "Aporte vía Webpay · orden EDS-000102",
         monto: 25000,
       },
       {
         correo: "apoderado@correo.cl",
-        pupilo: "martin perez",
-        fecha: "2026-09-12",
+        pupilo: "Martín Pérez",
+        fecha: "2026-09-16",
         tipo: "Compra",
-        detalle: "Cuaderno universitario",
+        detalle: "Compra en la librería escolar · Cuaderno universitario x1",
         monto: -3490,
       },
     ],
     ventas: [
       {
-        fecha: "2026-09-15",
+        fecha: "2026-09-16",
         hora: "10:32",
-        pupilo: "martin perez",
+        pupilo: "Martín Pérez",
         detalle: "Cuaderno universitario",
         monto: 3490,
         responsable: "vendedor@correo.cl",
@@ -416,7 +447,57 @@
       return `EST-${String(numero).padStart(3, "0")}`;
     },
 
+    // Alumnos asociados a un apoderado, con su nombre completo.
+    alumnosDe(correo) {
+      const buscado = normalizar(correo);
+      return leerBD()
+        .estudiantes.filter((e) => normalizar(e.apoderado) === buscado)
+        .map((e) => Object.assign({}, e, { nombreCompleto: `${e.nombre} ${e.apellido}` }));
+    },
+    // Correo del apoderado de un alumno (por nombre completo o identificador).
+    apoderadoDe(alumno) {
+      const buscado = normalizar(alumno);
+      const estudiante = leerBD().estudiantes.find(
+        (e) =>
+          normalizar(`${e.nombre} ${e.apellido}`) === buscado ||
+          normalizar(e.id) === buscado,
+      );
+      return estudiante ? estudiante.apoderado : "";
+    },
+
+    // Pagos Webpay (simulados) y aportes
+    pagosDe(correo) {
+      const buscado = normalizar(correo);
+      return leerBD().pagos.filter((p) => normalizar(p.correo) === buscado);
+    },
+    siguienteOrdenPago() {
+      return `EDS-${String(leerBD().pagos.length + 101).padStart(6, "0")}`;
+    },
+    registrarPago(pago) {
+      const bd = leerBD();
+      bd.pagos.push(pago);
+      guardarBD(bd);
+      return pago;
+    },
+    // Un pago aprobado se acredita al saldo del alumno y queda como movimiento.
+    acreditarAporte(pago) {
+      Datos.registrarPago(pago);
+      Datos.ajustarSaldo(pago.pupilo, pago.monto);
+      Datos.agregarMovimiento({
+        correo: pago.correo,
+        pupilo: pago.pupilo,
+        fecha: pago.fecha,
+        tipo: "Aporte",
+        detalle: `Aporte vía Webpay · orden ${pago.orden}`,
+        monto: pago.monto,
+      });
+      return Datos.saldoDe(pago.pupilo);
+    },
+
     // Movimientos y ventas
+    movimientos() {
+      return leerBD().movimientos;
+    },
     movimientosDe(correo) {
       const buscado = normalizar(correo);
       return leerBD().movimientos.filter(

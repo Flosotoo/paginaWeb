@@ -16,6 +16,10 @@
     <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
       <section class="container">
         <h1 class="h1 mb-3">Entregar reservas</h1>
+        <p class="lead mb-4">
+          Al entregar una reserva se registra la compra: el valor se descuenta
+          del saldo disponible del alumno y queda en sus movimientos.
+        </p>
         <!-- HU36: validar el código y confirmar el retiro -->
         <form class="card card-body mb-4" id="formEntrega" action="#" method="post">
           <div class="mb-3">
@@ -43,6 +47,13 @@
             </button>
           </div>
         </form>
+        <p
+          id="entregas-aviso"
+          class="alert"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
         <div id="lista-entregar-reservas"></div>
       </section>
     </main>

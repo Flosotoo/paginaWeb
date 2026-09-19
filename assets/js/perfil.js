@@ -94,7 +94,7 @@
       });
       V.mostrarAviso(
         aviso,
-        "Consentimiento revocado. Tus datos y los de tus pupilos serán anonimizados en un plazo no mayor a 30 días.",
+        "Consentimiento revocado. Tus datos y los de tus alumnos serán anonimizados en un plazo no mayor a 30 días.",
         "ok",
       );
       pintarConsentimiento();

@@ -104,13 +104,16 @@
 
           Datos.descontarStock(producto.codigo, unidades);
           Datos.ajustarSaldo(estudiante.value, -total);
+          // El movimiento es del alumno: se asocia a su apoderado para que
+          // lo vea en "Movimientos"; el vendedor queda como responsable.
           Datos.agregarMovimiento({
-            correo: sesion ? sesion.correo : "",
+            correo: Datos.apoderadoDe(estudiante.value),
             pupilo: estudiante.value,
             fecha: hoy(),
             tipo: "Compra",
-            detalle: producto.nombre,
+            detalle: `Compra en la librería escolar · ${producto.nombre} x${unidades}`,
             monto: -total,
+            responsable: sesion ? sesion.correo : "",
           });
           Datos.agregarVenta({
             fecha: hoy(),
@@ -123,7 +126,7 @@
 
           V.mostrarAviso(
             aviso,
-            `Compra confirmada por ${formato(total)}. Nuevo saldo de ${
+            `Compra registrada por ${formato(total)}. Nuevo saldo disponible de ${
               estudiante.value
             }: ${formato(Datos.saldoDe(estudiante.value))}.`,
             "ok",
