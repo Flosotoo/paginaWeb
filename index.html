@@ -10,28 +10,6 @@
     />
     <link rel="stylesheet" href="assets/css/typography.css" />
     <link rel="stylesheet" href="assets/css/style.css" />
-    <style>
-      #contenido-principal {
-        position: relative;
-        isolation: isolate;
-        overflow: hidden;
-        min-height: calc(100vh - 64px);
-        min-height: calc(100svh - 64px);
-      }
-      #contenido-principal::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: url("assets/img/landing-page.jpg") center / cover no-repeat;
-        background-size: cover;
-        opacity: 0.2;
-        z-index: -1;
-      }
-      #contenido-principal > * {
-        position: relative;
-        z-index: 1;
-      }
-    </style>
   </head>
   <body class="d-flex flex-column min-vh-100">
     <div id="header-container" class="sticky-top"></div>
