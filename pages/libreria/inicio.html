@@ -16,75 +16,135 @@
     <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
       <section class="container">
         <h1 class="h1 mb-3">Panel de la librería</h1>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <p class="lead mb-4" id="saludo-libreria">
+          Tareas del mesón ordenadas por uso durante la jornada.
+        </p>
+
+        <section class="mb-5" aria-labelledby="titulo-atencion">
+          <h2 id="titulo-atencion" class="h2 mb-3">Atención en el mesón</h2>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Reservas pendientes</h2>
-            <a class="btn btn-primary mt-auto" href="preparar-reservas.html"
-              >Preparar reservas</a
-            >
-          </article>
-</div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Registrar compra</h3>
+              </div>
+              <p class="text-body-secondary">Vende un material descontándolo del saldo del estudiante.</p>
+              <a class="btn btn-primary mt-auto" href="registrar-compra.html">Registrar compra</a>
+            </article>
+          </div>
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Entregar reservas</h2>
-            <a class="btn btn-primary mt-auto" href="entregar-reservas.html"
-              >Entregar reservas</a
-            >
-          </article>
-</div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Consultar saldo</h3>
+              </div>
+              <p class="text-body-secondary">Revisa cuánto saldo le queda a un estudiante antes de vender.</p>
+              <a class="btn btn-primary mt-auto" href="consulta-saldo.html">Consultar saldo</a>
+            </article>
+          </div>
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Productos</h2>
-            <a class="btn btn-primary mt-auto" href="productos.html"
-              >Ver productos</a
-            >
-          </article>
-</div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Entregar reservas</h3>
+                <span class="badge rounded-pill" id="cuenta-listas" hidden></span>
+              </div>
+              <p class="text-body-secondary">Entrega los materiales que ya están listos para retiro.</p>
+              <a class="btn btn-primary mt-auto" href="entregar-reservas.html">Entregar reservas</a>
+            </article>
+          </div>
+          </div>
+        </section>
+
+        <section class="mb-5" aria-labelledby="titulo-preparacion">
+          <h2 id="titulo-preparacion" class="h2 mb-3">Preparación y cierre</h2>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Stock</h2>
-            <a class="btn btn-primary mt-auto" href="stock.html">Ver stock</a>
-          </article>
-</div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Preparar reservas</h3>
+                <span class="badge rounded-pill" id="cuenta-pendientes" hidden></span>
+              </div>
+              <p class="text-body-secondary">Junta los materiales reservados por los apoderados.</p>
+              <a class="btn btn-primary mt-auto" href="preparar-reservas.html">Preparar reservas</a>
+            </article>
+          </div>
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Importar nómina</h2>
-            <a class="btn btn-primary mt-auto" href="nomina-import.html"
-              >Importar nómina</a
-            >
-          </article>
-</div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Ventas del día</h3>
+                <span class="badge rounded-pill" id="cuenta-ventas" hidden></span>
+              </div>
+              <p class="text-body-secondary">Revisa lo vendido hoy y el total recaudado.</p>
+              <a class="btn btn-primary mt-auto" href="ventas-dia.html">Ver ventas</a>
+            </article>
+          </div>
+          </div>
+        </section>
+
+        <section class="mb-5" aria-labelledby="titulo-inventario">
+          <h2 id="titulo-inventario" class="h2 mb-3">Inventario</h2>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Registrar compra</h2>
-            <a class="btn btn-primary mt-auto" href="registrar-compra.html"
-              >Registrar compra</a
-            >
-          </article>
-</div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Stock crítico</h3>
+                <span class="badge rounded-pill" id="cuenta-criticos" hidden></span>
+              </div>
+              <p class="text-body-secondary">Productos que están bajo el mínimo y hay que reponer.</p>
+              <a class="btn btn-primary mt-auto" href="stock.html">Ver stock</a>
+            </article>
+          </div>
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Ventas del día</h2>
-            <a class="btn btn-primary mt-auto" href="ventas-dia.html"
-              >Ver ventas</a
-            >
-          </article>
-</div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Productos</h3>
+              </div>
+              <p class="text-body-secondary">Catálogo completo con precios y existencias.</p>
+              <a class="btn btn-primary mt-auto" href="productos.html">Ver productos</a>
+            </article>
+          </div>
           <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Saldos</h2>
-            <a class="btn btn-primary mt-auto" href="consulta-saldo.html"
-              >Consultar saldo</a
-            >
-          </article>
-</div>
-        </div>
+            <article class="card card-body h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h3 mb-0">Importar nómina</h3>
+              </div>
+              <p class="text-body-secondary">Carga el listado de estudiantes del colegio.</p>
+              <a class="btn btn-primary mt-auto" href="nomina-import.html">Importar nómina</a>
+            </article>
+          </div>
+          </div>
+        </section>
       </section>
     </main>
     <div id="footer-container"></div>
     <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Contadores de la jornada sobre cada tarea.
+      (function () {
+        if (!window.Datos) return;
+        const hoy = new Date().toISOString().slice(0, 10);
+        const reservas = Datos.reservas();
+        const poner = (id, n, texto) => {
+          const el = document.getElementById(id);
+          if (!el || !n) return;
+          el.textContent = `${n} ${texto}`;
+          el.hidden = false;
+        };
+        poner("cuenta-pendientes", reservas.filter((r) => r.estado === "Pendiente").length, "por preparar");
+        poner("cuenta-listas", reservas.filter((r) => r.estado === "Lista para retiro").length, "por entregar");
+        poner("cuenta-ventas", Datos.ventas().filter((v) => v.fecha === hoy).length, "hoy");
+        poner(
+          "cuenta-criticos",
+          Datos.productos().filter((p) => p.stockCritico != null && p.stock <= p.stockCritico).length,
+          "por reponer",
+        );
+        const sesion = window.Sesion ? Sesion.actual() : null;
+        const saludo = document.getElementById("saludo-libreria");
+        if (sesion && saludo) {
+          saludo.textContent = `Hola, ${sesion.nombre}. Tus tareas del mesón, ordenadas por uso durante la jornada.`;
+        }
+      })();
+    </script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
 </html>

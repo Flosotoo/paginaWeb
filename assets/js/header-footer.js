@@ -121,7 +121,7 @@ function crearGrupo(items) {
 
 // Desplegable "Mi panel" (dropdown de Bootstrap): es la única entrada al área
 // del usuario.
-function crearMenuArea(items) {
+function crearMenuArea(items, titulo = "Mi panel") {
   const li = document.createElement("li");
   li.className = "nav-item dropdown";
 
@@ -130,14 +130,23 @@ function crearMenuArea(items) {
   boton.className = "nav-link dropdown-toggle";
   boton.setAttribute("data-bs-toggle", "dropdown");
   boton.setAttribute("aria-expanded", "false");
-  boton.textContent = "Mi panel";
+  boton.textContent = titulo;
   li.appendChild(boton);
 
   const submenu = document.createElement("ul");
   submenu.className = "dropdown-menu dropdown-menu-md-end";
   items.forEach((item) => {
     const entrada = document.createElement("li");
-    entrada.appendChild(crearEnlace(item.texto, item.url, "dropdown-item"));
+    const enlace = crearEnlace(item.texto, item.url, "dropdown-item");
+    if (item.contador) {
+      // Pendientes de la jornada, a la vista sin abrir la página.
+      enlace.classList.add("d-flex", "justify-content-between", "align-items-center", "gap-3");
+      enlace.insertAdjacentHTML(
+        "beforeend",
+        `<span class="badge rounded-pill">${item.contador}</span>`,
+      );
+    }
+    entrada.appendChild(enlace);
     submenu.appendChild(entrada);
   });
   li.appendChild(submenu);
@@ -173,12 +182,74 @@ function crearAcceso(sesion) {
   return li;
 }
 
+// Área de librería: el vendedor (bibliotecario) solo ve sus tareas, agrupadas
+// por momento del día, sin los enlaces del sitio público.
+function esAreaLibreria() {
+  return window.location.pathname.includes("/pages/libreria/");
+}
+
+function pintarNavegacionLibreria(lista, sesion) {
+  const L = `${RAIZ}pages/libreria/`;
+  const reservas = window.Datos ? Datos.reservas() : [];
+  const cuenta = (estado) => reservas.filter((r) => r.estado === estado).length;
+
+  lista.appendChild(crearItem("Inicio", `${L}inicio.html`));
+  lista.appendChild(crearItem("Registrar compra", `${L}registrar-compra.html`));
+  lista.appendChild(
+    crearMenuArea(
+      [
+        { texto: "Preparar reservas", url: `${L}preparar-reservas.html`, contador: cuenta("Pendiente") },
+        { texto: "Entregar reservas", url: `${L}entregar-reservas.html`, contador: cuenta("Lista para retiro") },
+      ],
+      "Reservas",
+    ),
+  );
+  lista.appendChild(
+    crearMenuArea(
+      [
+        { texto: "Consultar saldo", url: `${L}consulta-saldo.html` },
+        { texto: "Ventas del día", url: `${L}ventas-dia.html` },
+      ],
+      "Caja",
+    ),
+  );
+  lista.appendChild(
+    crearMenuArea(
+      [
+        { texto: "Productos", url: `${L}productos.html` },
+        { texto: "Stock crítico", url: `${L}stock.html` },
+        { texto: "Importar nómina", url: `${L}nomina-import.html` },
+      ],
+      "Inventario",
+    ),
+  );
+  lista.appendChild(crearSeparador());
+  lista.appendChild(crearAcceso(sesion));
+
+  // Tiene más entradas que la barra pública: colapsa en lg y, entre lg y xl,
+  // oculta el nombre del usuario para que todo quepa en una línea.
+  const barra = lista.closest(".navbar");
+  if (barra) barra.classList.replace("navbar-expand-md", "navbar-expand-lg");
+  [lista, ...lista.querySelectorAll("*")].forEach((el) =>
+    [...el.classList]
+      .filter((clase) => clase.includes("-md-"))
+      .forEach((clase) => el.classList.replace(clase, clase.replace("-md-", "-lg-"))),
+  );
+  const usuario = lista.querySelector(".navbar-text");
+  if (usuario) usuario.classList.add("d-lg-none", "d-xl-inline");
+}
+
 function pintarNavegacion() {
   const lista = document.getElementById("nav-principal");
   if (!lista) return;
 
   const sesion = window.Sesion ? window.Sesion.actual() : null;
   lista.replaceChildren();
+
+  if (esAreaLibreria()) {
+    pintarNavegacionLibreria(lista, sesion);
+    return;
+  }
 
   lista.appendChild(crearItem("Inicio", `${RAIZ}index.html`));
   lista.appendChild(crearSeparador());
@@ -199,7 +270,10 @@ function pintarNavegacion() {
 function inyectarBotonAtras() {
   const principal = document.getElementById("contenido-principal");
   if (!principal) return;
-  if (window.location.pathname.split("/").pop() === "index.html") return;
+  const ruta = window.location.pathname;
+  if (ruta.split("/").pop() === "index.html") return;
+  // El inicio de librería es la portada del vendedor: no hay adónde volver.
+  if (ruta.endsWith("/pages/libreria/inicio.html")) return;
 
   const wrapper = document.createElement("div");
   wrapper.className = "container";
@@ -575,6 +649,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   headerContainer.innerHTML = headerHTML;
   footerContainer.innerHTML = footerHTML;
+  if (esAreaLibreria()) {
+    // El logo lleva al inicio de la librería, no a la portada pública.
+    const marca = headerContainer.querySelector(".navbar-brand");
+    marca.href = `${RAIZ}pages/libreria/inicio.html`;
+    marca.insertAdjacentHTML(
+      "beforeend",
+      `<span class="badge rounded-pill ms-1">Librería</span>`,
+    );
+  }
   pintarNavegacion();
 
   // Marca el enlace activo comparando el pathname actual.
