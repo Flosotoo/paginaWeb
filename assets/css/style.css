@@ -468,3 +468,158 @@ textarea.form-control {
   font-family: var(--ce-fuente-dato);
   font-weight: 700;
 }
+
+/* --------------------------------------------------------------------------
+   Panel de administración (lo arma header-footer.js)
+   -------------------------------------------------------------------------- */
+#panel-lateral {
+  --bs-offcanvas-width: 264px;
+  --bs-offcanvas-bg: var(--ce-tierra-oscuro);
+  --bs-offcanvas-color: #fff;
+  color: #fff;
+}
+
+/* .nav declara sus propias variables: se reasignan sobre el mismo elemento */
+#panel-lateral .nav {
+  --bs-nav-pills-link-active-bg: var(--ce-papel);
+  --bs-nav-pills-link-active-color: var(--ce-tierra-oscuro);
+  --bs-nav-link-color: rgba(255, 255, 255, 0.88);
+  --bs-nav-link-hover-color: #fff;
+  --bs-nav-link-font-size: var(--ce-txt-15);
+  --bs-nav-link-padding-y: 10px;
+}
+
+@media (min-width: 992px) {
+  #panel-lateral {
+    position: sticky;
+    top: 0;
+    width: 264px;
+    height: 100vh;
+    overflow-y: auto;
+    background-color: var(--ce-tierra-oscuro) !important;
+  }
+}
+
+#panel-lateral [data-marca] {
+  font-family: var(--ce-fuente-titulo);
+  font-size: var(--ce-txt-22);
+  background-color: rgba(0, 0, 0, 0.14);
+}
+
+#panel-lateral [data-rotulo] {
+  color: rgba(255, 255, 255, 0.64);
+  letter-spacing: 0.06em;
+}
+
+#panel-lateral [data-avatar] {
+  width: 88px;
+  height: 88px;
+  font-family: var(--ce-fuente-titulo);
+  font-size: 30px;
+}
+
+#panel-lateral .nav-link {
+  border-radius: 6px;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+#panel-lateral .nav-link:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+#panel-lateral .nav-link.active {
+  font-weight: 700;
+  box-shadow: inset 4px 0 0 var(--ce-tierra);
+}
+
+#panel-lateral .nav-link:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+#panel-lateral .nav-link.active .badge.text-bg-light {
+  background-color: var(--ce-tierra-oscuro) !important;
+  color: #fff !important;
+}
+
+#panel-lateral .btn-close:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+#contenido-admin {
+  min-width: 0;
+  background-color: var(--ce-papel);
+}
+
+#barra-admin {
+  z-index: 1020;
+}
+
+#buscador-admin {
+  max-width: 460px;
+}
+
+#resultados-admin {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+#contenido-admin .container-fluid {
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+#contenido-admin .card-header {
+  --bs-card-cap-padding-y: 12px;
+  border-bottom-color: var(--ce-borde);
+}
+
+#contenido-admin .h6 {
+  font-family: var(--ce-fuente-secundaria);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Tarjetas del dashboard */
+[data-grafico] {
+  height: 220px;
+  background-image: repeating-linear-gradient(
+    to top,
+    var(--ce-borde) 0 1px,
+    transparent 1px 25%
+  );
+}
+
+[data-pie-kpi] {
+  background-color: #5f3320;
+  color: #fff;
+}
+
+[data-indicador="tierra"] {
+  background-color: #e8b59a;
+  color: var(--ce-tinta);
+}
+
+[data-indicador="arena"] {
+  background-color: #f0d6c2;
+  color: var(--ce-tinta);
+}
+
+[data-anillo] {
+  --valor: 0%;
+  width: 132px;
+  height: 132px;
+  background: conic-gradient(var(--ce-tierra-oscuro) var(--valor), rgba(255, 255, 255, 0.55) 0);
+}
+
+[data-anillo-centro] {
+  width: 96px;
+  height: 96px;
+  color: var(--ce-tinta);
+}
+
+#calendario [data-dia] {
+  width: 30px;
+  height: 30px;
+}

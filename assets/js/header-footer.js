@@ -211,21 +211,337 @@ function inyectarBotonAtras() {
     </div>
   `;
   principal.insertBefore(wrapper, principal.firstChild);
+  wrapper.querySelector("[data-volver]").addEventListener("click", volver);
+}
 
-  wrapper.querySelector("[data-volver]").addEventListener("click", () => {
-    let mismaOrigen = false;
-    try {
-      mismaOrigen =
-        Boolean(document.referrer) &&
-        new URL(document.referrer).origin === window.location.origin;
-    } catch (error) {
-      mismaOrigen = false;
+function volver() {
+  let mismaOrigen = false;
+  try {
+    mismaOrigen =
+      Boolean(document.referrer) &&
+      new URL(document.referrer).origin === window.location.origin;
+  } catch (error) {
+    mismaOrigen = false;
+  }
+
+  if (mismaOrigen) {
+    window.history.back();
+  } else {
+    window.location.href = destinoSeccion();
+  }
+}
+
+function cerrarSesion() {
+  if (window.Sesion) window.Sesion.cerrar();
+  window.location.href = `${RAIZ}pages/acceso/login.html`;
+}
+
+// --------------------------------------------------------------------------
+// Panel de administración: barra lateral + barra superior con buscador.
+// Reemplaza la cabecera pública en las páginas del administrador (y en las de
+// librería cuando entra un administrador, para no perder la navegación).
+// --------------------------------------------------------------------------
+const ADMIN = "pages/administrador/";
+const LIBRERIA = "pages/libreria/";
+
+const MENU_ADMIN = [
+  {
+    grupo: "General",
+    items: [
+      { texto: "Panel", icono: "speedometer2", url: `${ADMIN}inicio.html` },
+      { texto: "Usuarios", icono: "people", url: `${ADMIN}usuarios.html`, contador: "usuarios" },
+      { texto: "Estudiantes", icono: "mortarboard", url: `${ADMIN}estudiantes.html`, contador: "estudiantes" },
+      { texto: "Productos", icono: "box-seam", url: `${ADMIN}productos.html`, contador: "criticos" },
+    ],
+  },
+  {
+    grupo: "Librería",
+    items: [
+      { texto: "Stock crítico", icono: "exclamation-triangle", url: `${LIBRERIA}stock.html` },
+      { texto: "Preparar reservas", icono: "clipboard-check", url: `${LIBRERIA}preparar-reservas.html`, contador: "pendientes" },
+      { texto: "Entregar reservas", icono: "bag-check", url: `${LIBRERIA}entregar-reservas.html`, contador: "listas" },
+      { texto: "Registrar compra", icono: "cart-plus", url: `${LIBRERIA}registrar-compra.html` },
+      { texto: "Ventas del día", icono: "receipt", url: `${LIBRERIA}ventas-dia.html` },
+      { texto: "Importar nómina", icono: "upload", url: `${LIBRERIA}nomina-import.html` },
+    ],
+  },
+];
+
+function usaPanelAdmin() {
+  const ruta = window.location.pathname;
+  if (ruta.includes(`/${ADMIN}`)) return true;
+  const sesion = window.Sesion ? window.Sesion.actual() : null;
+  return ruta.includes(`/${LIBRERIA}`) && Boolean(sesion) && sesion.rol === "Administrador";
+}
+
+function contadoresAdmin() {
+  if (!window.Datos) return {};
+  const reservas = Datos.reservas();
+  return {
+    usuarios: Datos.usuarios().filter((u) => u.estado === "activo").length,
+    estudiantes: Datos.estudiantes().length,
+    criticos: Datos.productos().filter(
+      (p) => p.stockCritico != null && p.stock <= p.stockCritico,
+    ).length,
+    pendientes: reservas.filter((r) => r.estado === "Pendiente").length,
+    listas: reservas.filter((r) => r.estado === "Lista para retiro").length,
+  };
+}
+
+function iniciales(nombre) {
+  return String(nombre || "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0].toUpperCase())
+    .join("");
+}
+
+function escapar(texto) {
+  return String(texto == null ? "" : texto).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+
+function htmlMenuAdmin() {
+  const actual = window.location.pathname;
+  const cuentas = contadoresAdmin();
+  return MENU_ADMIN.map(
+    ({ grupo, items }) => `
+      <p class="text-uppercase small fw-bold px-3 mt-4 mb-2" data-rotulo>${grupo}</p>
+      <ul class="nav nav-pills flex-column gap-1 px-2">
+        ${items
+          .map((item) => {
+            const activo = actual.endsWith(`/${item.url}`);
+            const cuenta = item.contador ? cuentas[item.contador] : 0;
+            const alerta = item.contador === "criticos" || item.contador === "pendientes";
+            return `
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2${activo ? " active" : ""}"
+               href="${RAIZ}${item.url}"${activo ? ' aria-current="page"' : ""}>
+              <i class="bi bi-${item.icono}" aria-hidden="true"></i>
+              <span class="flex-grow-1">${item.texto}</span>
+              ${
+                cuenta
+                  ? `<span class="badge rounded-pill ${alerta ? "text-bg-danger" : "text-bg-light"}">${cuenta}</span>`
+                  : ""
+              }
+            </a>
+          </li>`;
+          })
+          .join("")}
+      </ul>`,
+  ).join("");
+}
+
+function montarPanelAdmin(headerContainer, footerContainer) {
+  // Íconos oficiales de Bootstrap, solo para el panel.
+  if (!document.querySelector('link[href*="bootstrap-icons"]')) {
+    const iconos = document.createElement("link");
+    iconos.rel = "stylesheet";
+    iconos.href =
+      "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css";
+    document.head.appendChild(iconos);
+  }
+
+  const sesion = window.Sesion ? window.Sesion.actual() : null;
+  const nombre = sesion ? sesion.nombre : "Administrador";
+  const rol = sesion && window.Sesion.etiquetaRol
+    ? window.Sesion.etiquetaRol(sesion.rol)
+    : "Administrador";
+
+  headerContainer.className = "";
+  headerContainer.innerHTML = `
+    <a class="visually-hidden-focusable position-fixed top-0 start-0 z-3 bg-primary text-white px-3 py-2 rounded-bottom" href="#contenido-principal">Saltar al contenido</a>
+  `;
+
+  const marco = document.createElement("div");
+  marco.className = "d-flex flex-grow-1";
+  marco.innerHTML = `
+    <aside class="offcanvas-lg offcanvas-start flex-shrink-0" id="panel-lateral" tabindex="-1" aria-labelledby="panel-lateral-titulo">
+      <div class="offcanvas-header">
+        <p class="offcanvas-title h5 mb-0" id="panel-lateral-titulo">Menú de administración</p>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#panel-lateral" aria-label="Cerrar menú"></button>
+      </div>
+      <div class="offcanvas-body d-flex flex-column p-0">
+        <a class="d-flex align-items-center gap-2 px-3 py-3 text-white text-decoration-none" href="${RAIZ}${ADMIN}inicio.html" data-marca>
+          <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="2" y="7" width="6" height="18" rx="2" fill="#F4EAE4" />
+            <rect x="11" y="3" width="6" height="22" rx="2" fill="#FFFFFF" />
+            <rect x="20" y="12" width="6" height="13" rx="2" fill="#C99070" />
+          </svg>
+          <span class="fw-bold">EduSaldo</span>
+        </a>
+
+        <div class="text-center px-3 pt-3 pb-4 border-bottom border-light border-opacity-25">
+          <p class="small text-uppercase fw-bold mb-3" data-rotulo>Bienvenida</p>
+          <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-primary fw-bold border border-4 border-light border-opacity-50" data-avatar aria-hidden="true">${escapar(iniciales(nombre))}</span>
+          <p class="fw-bold text-uppercase mt-3 mb-0">${escapar(nombre)}</p>
+          <p class="small mb-0" data-rotulo>${escapar(rol)}</p>
+        </div>
+
+        <nav aria-label="Administración">${htmlMenuAdmin()}</nav>
+
+        <div class="mt-auto border-top border-light border-opacity-25 p-2 pt-3">
+          <ul class="nav nav-pills flex-column gap-1">
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center gap-2" href="${RAIZ}index.html">
+                <i class="bi bi-house" aria-hidden="true"></i> Ver sitio público
+              </a>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link d-flex align-items-center gap-2 w-100 text-start" type="button" data-salir>
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <div class="d-flex flex-column flex-grow-1" id="contenido-admin">
+      <header class="navbar sticky-top bg-body border-bottom px-3 px-lg-4 gap-2 flex-nowrap" id="barra-admin">
+        <button class="btn btn-outline-primary btn-sm d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#panel-lateral" aria-controls="panel-lateral" aria-label="Abrir menú">
+          <i class="bi bi-list fs-5" aria-hidden="true"></i>
+        </button>
+
+        <form class="position-relative flex-grow-1" role="search" id="buscador-admin" action="#">
+          <label class="visually-hidden" for="buscar-admin">Buscar en el panel</label>
+          <div class="input-group">
+            <span class="input-group-text bg-body"><i class="bi bi-search" aria-hidden="true"></i></span>
+            <input class="form-control" type="search" id="buscar-admin" autocomplete="off"
+              placeholder="Buscar usuarios, productos o estudiantes"
+              aria-controls="resultados-admin" aria-expanded="false" />
+          </div>
+          <div class="dropdown-menu w-100 mt-1" id="resultados-admin"></div>
+        </form>
+
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          <button class="btn btn-outline-primary btn-sm" type="button" data-volver>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i><span class="d-none d-sm-inline">Volver</span>
+          </button>
+          <button class="btn btn-primary btn-sm" type="button" data-salir>
+            <span class="d-none d-sm-inline">Cerrar sesión</span><i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </header>
+    </div>
+  `;
+
+  headerContainer.after(marco);
+  const columna = marco.querySelector("#contenido-admin");
+  const principal = document.getElementById("contenido-principal");
+  if (principal) {
+    principal.classList.replace("pt-5", "pt-4");
+    principal.querySelectorAll(":scope > .container").forEach((contenedor) => {
+      contenedor.classList.replace("container", "container-fluid");
+      contenedor.classList.add("px-3", "px-lg-4");
+    });
+    columna.appendChild(principal);
+  }
+  footerContainer.innerHTML = `
+    <footer class="border-top py-3 px-3 px-lg-4">
+      <p class="small text-body-secondary mb-0">© 2026 EduSaldo · Panel de administración</p>
+    </footer>
+  `;
+  columna.appendChild(footerContainer);
+
+  marco.querySelectorAll("[data-salir]").forEach((boton) =>
+    boton.addEventListener("click", cerrarSesion),
+  );
+  marco.querySelector("[data-volver]").addEventListener("click", volver);
+  conectarBuscadorAdmin(marco.querySelector("#buscador-admin"));
+}
+
+// Buscador de la barra superior: busca en la base simulada y muestra los
+// resultados como un menú desplegable de Bootstrap.
+function conectarBuscadorAdmin(form) {
+  if (!form || !window.Datos) return;
+  const campo = form.querySelector("#buscar-admin");
+  const menu = form.querySelector("#resultados-admin");
+  const normal = (texto) =>
+    String(texto || "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase();
+
+  function buscar(consulta) {
+    const q = normal(consulta).trim();
+    if (q.length < 2) return [];
+    const coincide = (...campos) => campos.some((c) => normal(c).includes(q));
+    const rol = (r) => (window.Sesion && Sesion.etiquetaRol ? Sesion.etiquetaRol(r) : r);
+    return [
+      ...Datos.usuarios()
+        .filter((u) => coincide(u.nombre, u.apellidos, u.correo, u.run))
+        .map((u) => ({
+          icono: "person",
+          titulo: `${u.nombre} ${u.apellidos}`,
+          detalle: `${rol(u.rol)} · ${u.correo}`,
+          url: `${RAIZ}${ADMIN}usuario-crear.html?correo=${encodeURIComponent(u.correo)}`,
+        })),
+      ...Datos.productos()
+        .filter((p) => coincide(p.codigo, p.nombre, p.categoria))
+        .map((p) => ({
+          icono: "box-seam",
+          titulo: `${p.codigo} · ${p.nombre}`,
+          detalle: `Producto · stock ${p.stock}`,
+          url: `${RAIZ}${ADMIN}producto-editar.html?codigo=${encodeURIComponent(p.codigo)}`,
+        })),
+      ...Datos.estudiantes()
+        .filter((e) => coincide(e.id, e.nombre, e.apellido, e.curso))
+        .map((e) => ({
+          icono: "mortarboard",
+          titulo: `${e.nombre} ${e.apellido}`,
+          detalle: `Estudiante · ${e.curso}`,
+          url: `${RAIZ}${ADMIN}estudiantes.html`,
+        })),
+    ].slice(0, 8);
+  }
+
+  function mostrar(abierto) {
+    menu.classList.toggle("show", abierto);
+    campo.setAttribute("aria-expanded", abierto ? "true" : "false");
+  }
+
+  function pintar() {
+    const consulta = campo.value;
+    const resultados = buscar(consulta);
+    if (normal(consulta).trim().length < 2) {
+      mostrar(false);
+      return;
     }
+    menu.innerHTML = resultados.length
+      ? resultados
+          .map(
+            (r) => `
+        <a class="dropdown-item d-flex align-items-center gap-2" href="${r.url}">
+          <i class="bi bi-${r.icono} text-primary" aria-hidden="true"></i>
+          <span class="d-flex flex-column lh-sm">
+            <span>${escapar(r.titulo)}</span>
+            <small class="text-body-secondary">${escapar(r.detalle)}</small>
+          </span>
+        </a>`,
+          )
+          .join("")
+      : `<span class="dropdown-item-text text-body-secondary">Sin resultados para «${escapar(consulta)}».</span>`;
+    mostrar(true);
+  }
 
-    if (mismaOrigen) {
-      window.history.back();
-    } else {
-      window.location.href = destinoSeccion();
+  campo.addEventListener("input", pintar);
+  campo.addEventListener("focus", pintar);
+  form.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    const primero = menu.querySelector("a.dropdown-item");
+    if (primero) window.location.href = primero.href;
+  });
+  document.addEventListener("click", (evento) => {
+    if (!form.contains(evento.target)) mostrar(false);
+  });
+  form.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape") {
+      mostrar(false);
+      campo.focus();
     }
   });
 }
@@ -249,6 +565,11 @@ document.addEventListener("DOMContentLoaded", () => {
     console.warn(
       "[header-footer] Faltan #header-container o #footer-container.",
     );
+    return;
+  }
+
+  if (usaPanelAdmin()) {
+    montarPanelAdmin(headerContainer, footerContainer);
     return;
   }
 

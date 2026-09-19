@@ -3,9 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EduSaldo - Inicio administrador</title>
+    <title>EduSaldo - Panel de administración</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../assets/css/typography.css" />
@@ -14,67 +18,162 @@
   <body class="d-flex flex-column min-vh-100">
     <div id="header-container" class="sticky-top"></div>
     <main id="contenido-principal" class="flex-grow-1 pt-5 pb-5">
-      <section class="container">
-        <h1 class="h1 mb-3">Panel administrativo</h1>
-        <p class="lead mb-4">
-          Administra usuarios, estudiantes, productos y alertas de reposición.
-        </p>
-        <p id="admin-nombre" class="badge rounded-pill"></p>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Productos</h2>
-            <a class="btn btn-primary mt-auto" href="productos.html"
-              >Gestionar productos</a
-            >
-          </article>
-</div>
-          <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Usuarios</h2>
-            <a class="btn btn-primary mt-auto" href="usuarios.html"
-              >Gestionar usuarios</a
-            >
-          </article>
-</div>
-          <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Estudiantes</h2>
-            <a class="btn btn-primary mt-auto" href="estudiantes.html"
-              >Gestionar estudiantes</a
-            >
-          </article>
-</div>
-          <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Importar nómina</h2>
-            <a class="btn btn-primary mt-auto" href="../libreria/nomina-import.html"
-              >Importar nómina</a
-            >
-          </article>
-</div>
-          <div class="col">
-<article class="card card-body h-100">
-            <h2 class="h3 mb-2">Stock crítico</h2>
-            <!-- HU54: alerta de reposición desde el catálogo -->
-            <div id="alerta-stock"></div>
-          </article>
-</div>
+      <section class="container" aria-labelledby="titulo-panel">
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+          <div>
+            <h1 id="titulo-panel" class="h1 mb-1">Panel de control</h1>
+            <p class="text-body-secondary mb-0">
+              Resumen de la librería escolar al <span id="panel-fecha"></span>.
+            </p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary btn-sm" href="producto-editar.html?nuevo=1">
+              <i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo producto
+            </a>
+            <a class="btn btn-primary btn-sm" href="usuario-crear.html">
+              <i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo usuario
+            </a>
+          </div>
+        </div>
+
+        <!-- Fila 1: gráfico de stock + saldo de la comunidad -->
+        <div class="row g-4 mb-4">
+          <div class="col-xl-8">
+            <article class="card h-100" aria-labelledby="titulo-stock">
+              <div class="card-header bg-body d-flex align-items-center justify-content-between">
+                <h2 id="titulo-stock" class="h6 text-uppercase text-primary mb-0">Stock por producto</h2>
+                <span class="small text-body-secondary">Unidades disponibles</span>
+              </div>
+              <div class="card-body">
+                <div class="row g-4 align-items-end">
+                  <div class="col-md-8">
+                    <div id="grafico-stock" role="img" aria-label="Gráfico de barras con el stock de cada producto"></div>
+                  </div>
+                  <div class="col-md-4">
+                    <ul class="list-unstyled small mb-3" id="leyenda-stock"></ul>
+                    <a class="btn btn-primary btn-sm" href="productos.html">Ver productos</a>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-xl-4">
+            <article class="card h-100 text-bg-primary border-0 overflow-hidden" aria-labelledby="titulo-saldo">
+              <div class="card-body">
+                <h2 id="titulo-saldo" class="h6 text-uppercase text-white-50 mb-2">Saldo en cuentas escolares</h2>
+                <p class="display-6 fw-bold font-monospace mb-1" id="kpi-saldo">$0</p>
+                <p class="small text-white-50 mb-3" id="kpi-saldo-detalle"></p>
+                <svg class="w-100" height="56" viewBox="0 0 200 56" preserveAspectRatio="none" aria-hidden="true" id="kpi-tendencia"></svg>
+              </div>
+              <div class="card-footer border-0 py-3" data-pie-kpi>
+                <div class="d-flex flex-wrap justify-content-between gap-2 small text-uppercase fw-bold mb-2">
+                  <span>Meta de aportes del mes</span>
+                  <span class="font-monospace" id="kpi-meta"></span>
+                </div>
+                <div class="progress bg-white bg-opacity-25" role="progressbar" aria-label="Avance de la meta de aportes" id="kpi-meta-barra" aria-valuemin="0" aria-valuemax="100">
+                  <div class="progress-bar bg-warning" id="kpi-meta-avance"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Fila 2: reservas + indicadores -->
+        <div class="row g-4 mb-4">
+          <div class="col-xl-6">
+            <article class="card h-100" aria-labelledby="titulo-reservas">
+              <div class="card-header bg-body d-flex align-items-center justify-content-between">
+                <h2 id="titulo-reservas" class="h6 text-uppercase text-primary mb-0">Reservas por gestionar</h2>
+                <a class="small link-primary link-offset-2" href="../libreria/preparar-reservas.html">Ver todas</a>
+              </div>
+              <ul class="list-group list-group-flush" id="lista-reservas-panel"></ul>
+            </article>
+          </div>
+
+          <div class="col-sm-6 col-xl-3">
+            <article class="card h-100 border-0 text-center" data-indicador="tierra" aria-labelledby="titulo-ind-stock">
+              <div class="card-body d-flex flex-column align-items-center justify-content-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" data-anillo id="anillo-stock">
+                  <span class="rounded-circle bg-white d-flex align-items-center justify-content-center fs-4 font-monospace" data-anillo-centro id="valor-stock">0%</span>
+                </div>
+                <div>
+                  <h2 id="titulo-ind-stock" class="h6 text-uppercase fw-bold mb-1">Stock sano</h2>
+                  <p class="small mb-0" id="detalle-stock"></p>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="col-sm-6 col-xl-3">
+            <article class="card h-100 border-0 text-center" data-indicador="arena" aria-labelledby="titulo-ind-consent">
+              <div class="card-body d-flex flex-column align-items-center justify-content-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" data-anillo id="anillo-consent">
+                  <span class="rounded-circle bg-white d-flex align-items-center justify-content-center fs-4 font-monospace" data-anillo-centro id="valor-consent">0%</span>
+                </div>
+                <div>
+                  <h2 id="titulo-ind-consent" class="h6 text-uppercase fw-bold mb-1">Consentimiento</h2>
+                  <p class="small mb-0" id="detalle-consent"></p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Fila 3: actividad + calendario -->
+        <div class="row g-4">
+          <div class="col-xl-7">
+            <article class="card h-100" aria-labelledby="titulo-actividad">
+              <div class="card-header bg-body">
+                <h2 id="titulo-actividad" class="h6 text-uppercase text-primary mb-0">Alertas y actividad reciente</h2>
+              </div>
+              <div class="card-body d-flex flex-column gap-2" id="lista-actividad"></div>
+            </article>
+          </div>
+
+          <div class="col-xl-5">
+            <article class="card h-100 overflow-hidden" aria-labelledby="titulo-calendario">
+              <div class="card-header text-bg-primary d-flex align-items-center justify-content-between border-0">
+                <h2 id="titulo-calendario" class="h6 text-uppercase mb-0">Calendario de retiros</h2>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Cambiar de mes">
+                  <button class="btn btn-sm btn-primary border-light border-opacity-50" type="button" data-mes="-1" aria-label="Mes anterior">
+                    <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                  </button>
+                  <button class="btn btn-sm btn-primary border-light border-opacity-50" type="button" data-mes="1" aria-label="Mes siguiente">
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <p class="text-center fw-bold text-uppercase small mb-2" id="calendario-mes" aria-live="polite"></p>
+                <table class="table table-sm table-borderless text-center align-middle mb-2 font-monospace small" id="calendario">
+                  <thead>
+                    <tr class="text-body-secondary">
+                      <th scope="col" abbr="Lunes">L</th>
+                      <th scope="col" abbr="Martes">M</th>
+                      <th scope="col" abbr="Miércoles">M</th>
+                      <th scope="col" abbr="Jueves">J</th>
+                      <th scope="col" abbr="Viernes">V</th>
+                      <th scope="col" abbr="Sábado">S</th>
+                      <th scope="col" abbr="Domingo">D</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <p class="small text-body-secondary mb-0 d-flex flex-wrap gap-3">
+                  <span><span class="badge rounded-pill text-bg-primary">&nbsp;</span> Hoy</span>
+                  <span><span class="badge rounded-pill text-bg-danger">&nbsp;</span> Fecha límite de retiro</span>
+                </p>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
     </main>
     <div id="footer-container"></div>
     <script src="../../assets/js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../../assets/js/validaciones.js"></script>
-    <script src="../../assets/js/producto.js"></script>
-    <script>
-      (function () {
-        const sesion = window.Sesion ? Sesion.actual() : null;
-        const saludo = document.getElementById("admin-nombre");
-        if (sesion && saludo) saludo.textContent = `Administrador: ${sesion.nombre}`;
-      })();
-    </script>
+    <script src="../../assets/js/admin-panel.js"></script>
     <script src="../../assets/js/header-footer.js"></script>
   </body>
 </html>
