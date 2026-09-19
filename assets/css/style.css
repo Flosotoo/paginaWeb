@@ -623,3 +623,9 @@ textarea.form-control {
   width: 30px;
   height: 30px;
 }
+
+/* Carrito de reserva: queda fijo bajo la cabecera al desplazarse */
+#carrito {
+  top: 88px;
+  z-index: 1;
+}

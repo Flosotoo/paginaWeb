@@ -17,161 +17,189 @@
       <section class="container">
         <h1 class="h1 mb-3">Reservar materiales</h1>
         <p class="lead mb-4">
-          Selecciona un pupilo, busca los materiales disponibles y prepara una
-          reserva para retirar en la librería.
+          Elige a uno de tus pupilos, agrega los materiales que necesitas al
+          carrito y confirma la reserva para retirarla en la librería escolar.
         </p>
 
-        <!-- HU23: la reserva se asocia a un pupilo y descuenta stock -->
-        <form class="card card-body mb-4" id="formReserva" action="#" method="post">
-          <div class="row g-3 mb-3">
-            <div class="col-sm-6">
-              <label for="hijoReserva" class="form-label"
-                >Pupilo
-                <span class="text-danger" aria-hidden="true">*</span></label
+        <!-- HU23 · Paso 1: el pupilo define el saldo disponible de la reserva -->
+        <section class="card card-body mb-4" aria-labelledby="titulo-pupilo">
+          <h2 id="titulo-pupilo" class="h3 mb-1">1. ¿Para quién es la reserva?</h2>
+          <p class="text-body-secondary mb-3">
+            El total de la reserva no puede superar el saldo del pupilo.
+          </p>
+          <div
+            class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3"
+            role="radiogroup"
+            aria-labelledby="titulo-pupilo"
+            id="lista-pupilos"
+          ></div>
+        </section>
+
+        <div class="row g-4">
+          <!-- Paso 2: catálogo con búsqueda y filtros (HU55 a HU67) -->
+          <section class="col-lg-8" aria-labelledby="titulo-materiales">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+              <h2 id="titulo-materiales" class="h3 mb-0">2. Selecciona los materiales</h2>
+              <button
+                class="btn btn-outline-primary btn-sm"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#colapso-filtros"
+                aria-expanded="false"
+                aria-controls="colapso-filtros"
               >
-              <select
-                id="hijoReserva"
-                name="hijoReserva"
-                class="form-select"
-                required
-              >
-                <option value="">Selecciona un pupilo</option>
-                <option value="martin">Martín Pérez, 7° Básico</option>
-                <option value="sofia">Sofía Pérez, 3° Básico</option>
-              </select>
-              <span class="invalid-feedback" id="error-hijoReserva" role="alert"></span>
+                Buscar y filtrar
+              </button>
             </div>
-            <div class="col-sm-6">
-              <label for="cantidad" class="form-label"
-                >Cantidad
-                <span class="text-danger" aria-hidden="true">*</span></label
-              >
-              <input
-                id="cantidad"
-                name="cantidad"
-                class="form-control font-monospace"
-                type="number"
-                min="1"
-                step="1"
-                value="1"
-                required
-              />
-              <span class="invalid-feedback" id="error-cantidad" role="alert"></span>
+
+            <div class="collapse" id="colapso-filtros">
+              <form class="card card-body mb-4" id="panelFiltros" action="#">
+                <div class="mb-3">
+                  <label for="busquedaReserva" class="form-label">Buscar material</label>
+                  <input
+                    id="busquedaReserva"
+                    name="busquedaReserva"
+                    type="search"
+                    class="form-control"
+                    data-filtro="texto"
+                  />
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label for="precio-min" class="form-label">Precio mínimo</label>
+                    <input
+                      id="precio-min"
+                      name="precio-min"
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="form-control font-monospace"
+                      data-filtro="minimo"
+                    />
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="precio-max" class="form-label">Precio máximo</label>
+                    <input
+                      id="precio-max"
+                      name="precio-max"
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="form-control font-monospace"
+                      data-filtro="maximo"
+                    />
+                  </div>
+                </div>
+                <span
+                  id="error-precio"
+                  class="invalid-feedback"
+                  role="alert"
+                  data-filtro-precio-error
+                ></span>
+
+                <fieldset class="mb-3">
+                  <legend>Año escolar</legend>
+                  <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-niveles></div>
+                </fieldset>
+
+                <fieldset class="mb-3">
+                  <legend>Materia</legend>
+                  <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-materias></div>
+                </fieldset>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label for="ordenReserva" class="form-label">Ordenar</label>
+                    <select
+                      id="ordenReserva"
+                      name="ordenReserva"
+                      class="form-select"
+                      data-filtro="orden"
+                    >
+                      <option value="nombre-asc">Nombre A-Z</option>
+                      <option value="nombre-desc">Nombre Z-A</option>
+                      <option value="precio-asc">Precio menor</option>
+                      <option value="precio-desc">Precio mayor</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="form-check mt-md-4 pt-md-2">
+                      <input class="form-check-input" type="checkbox" id="disponibles" data-filtro="disponibles" />
+                      <label class="form-check-label" for="disponibles">Solo disponibles</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 mt-2">
+                  <button
+                    class="btn btn-outline-primary"
+                    type="button"
+                    data-filtro-limpiar
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </form>
             </div>
-          </div>
-          <p
-            id="reserva-aviso"
-            class="alert"
-            role="status"
-            aria-live="polite"
-            hidden
-          ></p>
-          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
-            <button class="btn btn-primary" type="submit">
-              Confirmar reserva
-            </button>
-          </div>
-        </form>
 
-        <!-- HU55 a HU67: búsqueda, filtros y orden compartidos con el catálogo -->
-        <form class="card card-body mb-4" id="panelFiltros" action="#">
-          <div class="mb-3">
-            <label for="busquedaReserva" class="form-label">Buscar material</label>
-            <input
-              id="busquedaReserva"
-              name="busquedaReserva"
-              type="search"
-              class="form-control"
-              data-filtro="texto"
-            />
-          </div>
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-3" data-filtro-tags hidden></div>
+            <p data-filtro-resultado aria-live="polite"></p>
+            <p
+              data-filtro-vacio
+              class="alert alert-info"
+              role="status"
+              hidden
+            ></p>
+            <div data-filtro-lista class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4"></div>
+          </section>
 
-          <div class="row g-3 mb-3">
-            <div class="col-sm-6">
-              <label for="precio-min" class="form-label">Precio mínimo</label>
-              <input
-                id="precio-min"
-                name="precio-min"
-                type="number"
-                min="0"
-                step="1"
-                class="form-control font-monospace"
-                data-filtro="minimo"
-              />
-            </div>
-            <div class="col-sm-6">
-              <label for="precio-max" class="form-label">Precio máximo</label>
-              <input
-                id="precio-max"
-                name="precio-max"
-                type="number"
-                min="0"
-                step="1"
-                class="form-control font-monospace"
-                data-filtro="maximo"
-              />
-            </div>
-          </div>
-          <span
-            id="error-precio"
-            class="invalid-feedback"
-            role="alert"
-            data-filtro-precio-error
-          ></span>
+          <!-- Paso 3: carrito con control de saldo -->
+          <aside class="col-lg-4" aria-labelledby="titulo-carrito">
+            <div class="card sticky-lg-top" id="carrito">
+              <div class="card-header bg-body">
+                <h2 id="titulo-carrito" class="h3 mb-0">3. Mi reserva</h2>
+                <p class="small text-body-secondary mb-0" id="carrito-pupilo">
+                  Aún no eliges un pupilo.
+                </p>
+              </div>
 
-          <fieldset class="mb-3">
-            <legend>Año escolar</legend>
-            <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-niveles></div>
-          </fieldset>
+              <ul class="list-group list-group-flush" id="carrito-items">
+                <li class="list-group-item text-body-secondary py-4 text-center">
+                  Aún no has agregado materiales.
+                </li>
+              </ul>
 
-          <fieldset class="mb-3">
-            <legend>Materia</legend>
-            <div class="d-flex flex-wrap gap-3 mt-1" data-filtro-materias></div>
-          </fieldset>
+              <div class="card-body border-top">
+                <dl class="row small mb-0">
+                  <dt class="col-7 fw-normal">Saldo disponible</dt>
+                  <dd class="col-5 text-end font-monospace mb-2" id="carrito-saldo">$0</dd>
+                  <dt class="col-7 fw-normal">Total reserva</dt>
+                  <dd class="col-5 text-end font-monospace mb-2" id="carrito-total">$0</dd>
+                  <dt class="col-7 border-top pt-2">Saldo restante</dt>
+                  <dd class="col-5 text-end font-monospace fw-bold border-top pt-2 mb-0" id="carrito-restante">$0</dd>
+                </dl>
 
-          <div class="row g-3 mb-3">
-            <div class="col-sm-6">
-              <label for="ordenReserva" class="form-label">Ordenar</label>
-              <select
-                id="ordenReserva"
-                name="ordenReserva"
-                class="form-select"
-                data-filtro="orden"
-              >
-                <option value="nombre-asc">Nombre A-Z</option>
-                <option value="nombre-desc">Nombre Z-A</option>
-                <option value="precio-asc">Precio menor</option>
-                <option value="precio-desc">Precio mayor</option>
-              </select>
-            </div>
-            <div class="col-sm-6">
-              <div class="form-check mt-md-4 pt-md-2">
-                <input class="form-check-input" type="checkbox" id="disponibles" data-filtro="disponibles" />
-                <label class="form-check-label" for="disponibles">Solo disponibles</label>
+                <p
+                  id="reserva-aviso"
+                  class="alert mt-3 mb-0"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></p>
+
+                <button
+                  class="btn btn-primary w-100 mt-3"
+                  type="button"
+                  id="btnConfirmarReserva"
+                  disabled
+                >
+                  Confirmar reserva
+                </button>
               </div>
             </div>
-          </div>
-
-          <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
-            <button
-              class="btn btn-outline-primary"
-              type="button"
-              data-filtro-limpiar
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        </form>
-
-        <div class="d-flex flex-wrap align-items-center gap-3 mt-4" data-filtro-tags hidden></div>
-        <p data-filtro-resultado aria-live="polite"></p>
-        <p
-          data-filtro-vacio
-          class="alert alert-info"
-          role="status"
-          hidden
-        ></p>
-        <div data-filtro-lista class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
+          </aside>
+        </div>
       </section>
     </main>
     <div id="footer-container"></div>
