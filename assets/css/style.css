@@ -153,7 +153,7 @@ body[data-role="libreria"] .card,body[data-role="administrador"] .card{backgroun
 .reserva-panel{margin-top:14px;padding:clamp(20px,3vw,30px);border:2px solid #a6c8a6;border-radius:24px;background:linear-gradient(120deg,#d5e8d0,#eaf0df 50%,#f2d7bf);color:#173b31}
 .reserva-panel h2,.reserva-panel .reservas-title{font:400 clamp(29px,4vw,39px) 'DM Serif Display',Georgia,serif;color:#173b31;margin:10px 0}
 .reserva-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:18px;margin-top:22px;align-items:start}
-.category-list{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:15px}.category-chip{min-height:44px;border:2px solid #abc8ac;border-radius:999px;background:#fffaf2;color:#173b31;font-weight:800;padding:9px 16px;cursor:pointer}.category-chip.active{background:#24443e;color:#fff;border-color:#24443e}.category-chip:focus-visible,.product-controls button:focus-visible,.cart-line button:focus-visible{outline:3px solid #327455;outline-offset:3px}
+.category-list{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:15px}.category-chip{min-height:44px;border:2px solid #24443e;border-radius:999px;background:#24443e;color:#fff;font-weight:800;padding:9px 16px;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}.category-chip:hover{background:#315c4e;border-color:#315c4e}.category-chip.active{background:#12342c;color:#fff;border-color:#12342c;box-shadow:0 0 0 2px #c9dfcb}.category-chip.active:hover{background:#12342c;border-color:#12342c}.category-chip:focus-visible,.product-controls button:focus-visible,.cart-line button:focus-visible{outline:3px solid #327455;outline-offset:3px}
 .product-list{display:grid;gap:11px}.product-card{background:#fffaf2;border:1px solid #bcd1b9;border-radius:17px;padding:18px;display:flex;justify-content:space-between;gap:15px;align-items:center}.product-card h3{font-size:17px;color:#173b31;margin:6px 0}.product-card small{color:#52695a;font-weight:700}.product-card strong{font-size:19px}.product-stock{font-size:12px;color:#52695a;margin:8px 0 0}.product-controls{display:flex;flex-direction:column;gap:6px;min-width:110px}.product-controls label{font-size:12px;font-weight:800}.product-controls input{width:100%;min-height:44px;border:2px solid #abc8ac;border-radius:10px;background:white;padding:8px;font-size:16px}.product-controls button{min-height:44px;background:#24443e;border:0;border-radius:10px;color:white;font-weight:800;cursor:pointer}.product-controls button:disabled{opacity:.5;cursor:not-allowed}
 .reserva-aside{background:#fffaf2;border:2px solid #bcd1b9;border-radius:19px;padding:21px;position:sticky;top:15px}.reserva-aside h3{font:400 29px 'DM Serif Display',Georgia,serif;margin:0 0 16px}.cart-line{display:grid;grid-template-columns:minmax(0,1fr) auto 28px;align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid #d5e1d1}.cart-line small{display:block;color:#52695a;margin-top:4px}.cart-line button{background:#f2d7bf;color:#173b31;border:0;border-radius:8px;min-height:30px;font-size:23px;cursor:pointer}.reserva-amount{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #d5e1d1;padding:13px 0;font-size:13px}.reserva-amount strong{white-space:nowrap}.reserva-remaining{background:#d5e9d4;padding:16px;border-radius:12px;margin-top:15px;display:flex;flex-direction:column;gap:5px}.reserva-remaining strong{font-size:26px}.reserva-aside .aporte-primary{width:100%}.reserva-aside .aporte-primary:disabled{opacity:.5;cursor:not-allowed}.reserva-note{font-size:12px;line-height:1.5;color:#365d4d}.reserva-panel .hidden{display:none!important}
 .reservation-list{display:grid;gap:14px;margin-top:20px}.reservation-card{background:#fffaf2;border:1px solid #bcd1b9;border-radius:17px;padding:20px}.reservation-heading,.reservation-item{display:flex;justify-content:space-between;gap:12px;align-items:center}.reservation-heading{font-size:18px}.reservation-status{background:#e8d3b7;padding:7px 10px;border-radius:999px;font-size:12px}.reservation-item{padding:11px 0;border-top:1px solid #d5e1d1}.reservation-total{font-size:18px}
@@ -246,3 +246,34 @@ body[data-role="libreria"] .card,body[data-role="administrador"] .card{backgroun
 .school-logo-family{width:110px;height:110px;max-width:25%;object-fit:contain;flex-shrink:0;background:transparent;border:0;border-radius:0;padding:0;box-shadow:none}
 .school-identity-card{margin-top:22px;max-width:720px}.school-identity-card h2{margin:8px 0 12px}.school-logo-preview{width:150px;height:150px;display:grid;place-items:center;background:#fffdf9;border:1px dashed #b9c6b9;border-radius:18px;margin:18px 0;padding:12px;text-align:center;color:#69736d;font-size:13px}.school-logo-preview img{width:100%;height:100%;object-fit:contain}.school-logo-help{font-size:12px;margin:8px 0 16px}.school-logo-actions{display:flex;gap:10px;flex-wrap:wrap}.school-identity-card .form-feedback{margin-top:12px;min-height:1em}
 @media(max-width:480px){.school-logo-family{width:76px;height:76px;max-width:24%;padding:0}.school-logo-actions .btn{flex:1}}
+
+/* Etapa 31: búsqueda intencional y catálogo compacto, sin alterar la identidad original. */
+.reserva-explorar{min-width:0}.reserva-search-label,.reserva-category-title{display:block;font-size:13px;font-weight:800;color:#173b31;margin:0 0 9px}.reserva-search-wrap{display:flex;align-items:center;gap:10px;background:#fffaf2;border:2px solid #a6c8a6;border-radius:13px;padding:0 14px;margin-bottom:20px}.reserva-search-wrap:focus-within{outline:3px solid #327455;outline-offset:2px}.reserva-search-wrap span{font-size:26px;color:#365d4d}.reserva-search-wrap input{min-width:0;width:100%;height:51px;background:transparent;border:0;outline:0;font:inherit;font-size:16px;color:#173b31}.reserva-category-title{margin-top:8px}.reserva-empty{padding:24px 18px;border:1px dashed #9fbea4;border-radius:14px;background:#fffaf2;color:#365d4d;line-height:1.5}.reserva-list-head,.reserva-product-row{display:grid;grid-template-columns:minmax(0,1fr) 86px 72px 104px;gap:10px;align-items:center}.reserva-list-head{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;color:#365d4d;padding:0 12px 5px}.reserva-product-row{background:#fffaf2;border:1px solid #bcd1b9;border-radius:12px;padding:12px}.reserva-product-name{min-width:0}.reserva-product-name strong{font-size:14px;line-height:1.35;display:block;overflow-wrap:anywhere}.reserva-product-name small{display:block;font-size:11px;color:#52695a;margin-top:5px}.reserva-product-price{font-weight:800;white-space:nowrap;font-size:14px}.reserva-row-qty input{box-sizing:border-box;width:100%;min-height:43px;padding:6px;border:2px solid #abc8ac;border-radius:9px;background:white;color:#173b31;font-size:16px}.reserva-row-add{min-height:43px;border:0;border-radius:9px;background:#24443e;color:white;font-weight:800;cursor:pointer}.reserva-row-add:disabled{opacity:.45;cursor:not-allowed}.reserva-row-add:focus-visible,.reserva-row-qty input:focus-visible{outline:3px solid #327455;outline-offset:2px}.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1100px) and (min-width:781px){.reserva-layout{grid-template-columns:minmax(0,1fr) minmax(255px,.75fr)}.reserva-list-head,.reserva-product-row{grid-template-columns:minmax(0,1fr) 72px 58px 82px;gap:6px}.reserva-product-row{padding:10px 8px}.reserva-row-add{font-size:12px}.reserva-product-price{font-size:12px}}
+@media(max-width:470px){.reserva-list-head{display:none}.reserva-product-row{grid-template-columns:minmax(0,1fr) 75px;gap:9px}.reserva-product-name{grid-column:1/-1}.reserva-product-price{grid-column:1/-1}.reserva-row-qty{grid-column:1}.reserva-row-add{grid-column:2}.reserva-row-qty input{max-width:100px}.reserva-product-row{padding:13px}}
+
+
+/* Etapa 31.2 · Categorías alineadas en una cuadrícula de botones rectangulares. */
+.reserva-panel .category-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.reserva-panel .category-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+@media (max-width: 420px) {
+  .reserva-panel .category-list { grid-template-columns: 1fr; }
+}

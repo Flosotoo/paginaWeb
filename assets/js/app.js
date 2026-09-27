@@ -143,7 +143,7 @@ if(reservaRoot){
   const committed=()=>pending().filter(r=>r.child===student.id).reduce((sum,r)=>sum+r.total,0);
   const available=()=>Math.max(0,db().children.find(x=>x.id===student.id).balance-committed());
   const reservedStock=id=>pending().reduce((sum,r)=>sum+(r.items.find(i=>i.id===id)?.qty||0),0);
-  let cart=[];let category='Todos';
+  let cart=[];let category=null;let searchTerm='';
   $('reserva-nombre').textContent=student.name;
   $('reserva-curso').textContent=`${student.course} · ${student.age} años`;
   $('reserva-avatar').textContent=student.name.charAt(0);
@@ -157,12 +157,14 @@ if(reservaRoot){
     $('reserva-restante').textContent=money(available()-cartTotal());
     $('reserva-confirmar').disabled=!cart.length||cartTotal()>available();
     $('reserva-categorias').innerHTML=['Todos',...new Set(products.map(p=>p.category))].map(cat=>`<button type="button" class="category-chip ${category===cat?'active':''}" data-category="${esc(cat)}" aria-pressed="${category===cat}">${esc(cat)}</button>`).join('');
-    $('reserva-productos').innerHTML=products.filter(p=>category==='Todos'||p.category===category).map(p=>{
-      const left=Math.max(0,p.stock-reservedStock(p.id)- (cart.find(i=>i.id===p.id)?.qty||0));
-      return `<article class="product-card"><div><small>${esc(p.category)}</small><h3>${esc(p.name)}</h3><strong>${money(p.price)}</strong><p class="product-stock">${left?`Disponibles para reservar: ${left}`:'Sin unidades disponibles'}</p></div><div class="product-controls"><label for="qty-${p.id}">Cantidad</label><input id="qty-${p.id}" type="number" inputmode="numeric" min="1" max="${left}" value="1" ${left?'':'disabled'}><button type="button" data-add="${p.id}" ${left?'':'disabled'}>Agregar +</button></div></article>`}).join('');
+    const visible=products.filter(p=>searchTerm?p.name.toLocaleLowerCase('es').includes(searchTerm.toLocaleLowerCase('es')):category==='Todos'||p.category===category).sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base'}));
+    $('reserva-productos').innerHTML=(!searchTerm&&!category)?'<p class="reserva-empty">Busca un material por nombre o selecciona una categoría para ver los productos. No se muestra toda la lista automáticamente.</p>':!visible.length?'<p class="reserva-empty">No encontramos materiales con ese nombre. Prueba otra búsqueda o categoría.</p>':`<div class="reserva-list-head" aria-hidden="true"><span>Material</span><span>Precio</span><span>Cantidad</span><span>Agregar</span></div>`+visible.map(p=>{
+      const left=Math.max(0,p.stock-reservedStock(p.id)-(cart.find(i=>i.id===p.id)?.qty||0));
+      return `<article class="reserva-product-row"><div class="reserva-product-name"><strong>${esc(p.name)}</strong><small>${esc(p.category)} · ${left?`Disponibles: ${left}`:'Sin unidades disponibles'}</small></div><span class="reserva-product-price">${money(p.price)}</span><div class="reserva-row-qty"><label class="sr-only" for="qty-${p.id}">Cantidad de ${esc(p.name)}</label><input id="qty-${p.id}" type="number" inputmode="numeric" min="1" max="${left}" value="1" ${left?'':'disabled'}></div><button type="button" class="reserva-row-add" data-add="${p.id}" ${left?'':'disabled'}>Agregar +</button></article>`}).join('');
     $('reserva-carrito').innerHTML=cart.length?cart.map(i=>`<div class="cart-line"><div><strong>${esc(i.name)}</strong><small>${i.qty} × ${money(i.price)}</small></div><strong>${money(i.qty*i.price)}</strong><button type="button" data-remove="${i.id}" aria-label="Quitar ${esc(i.name)}">×</button></div>`).join(''):'<p class="muted">Aún no has agregado materiales.</p>';
   }
-  $('reserva-categorias').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(b){category=b.dataset.category;render()}});
+  $('reserva-categorias').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(b){category=b.dataset.category;searchTerm='';$('reserva-buscar').value='';render()}});
+  $('reserva-buscar').addEventListener('input',e=>{searchTerm=e.target.value.trim();category=null;render()});
   $('reserva-productos').addEventListener('click',e=>{
     const b=e.target.closest('[data-add]');if(!b)return;
     const p=products.find(x=>x.id===Number(b.dataset.add));const field=$(`qty-${p.id}`),qty=Number(field.value);

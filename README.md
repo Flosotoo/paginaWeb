@@ -77,3 +77,7 @@ Se agregó «Mi cuenta» a la navegación responsive del apoderado, con formular
 - En Apoderado → Mis alumnos la insignia sustituye la ilustración del cuaderno en el saludo familiar; al quitarla vuelve el cuaderno.
 - No se modifican los colores originales ni se incorpora el sistema experimental de temas de las etapas 30/30.1/30.2.
 - La imagen se guarda solo en localStorage del navegador de demostración; no se sincroniza entre computadores.
+
+
+## Etapa 31 — Catálogo de reservas
+En Reservar materiales la lista inicia oculta. Buscar por nombre o seleccionar categoría (incluido Todos) muestra resultados A–Z en filas compactas con precio, cantidad y Agregar. Mi reserva permanece a la derecha en escritorio y debajo en móvil. No se alteraron saldo, stock ni confirmación de reservas.
