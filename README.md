@@ -66,3 +66,7 @@ Se reemplazaron los cuadros nativos alert/confirm del encargado por confirmacion
 
 ## Etapa 28 — Consulta y reimpresión de etiquetas
 En Encargado → Reservas → Reservas pendientes de entrega se muestra el código de bolsa guardado para cada reserva. Al abrir «Registrar entrega», el encargado puede reimprimir la misma etiqueta sin cambiar el estado de la reserva ni descontar saldo o stock. La entrega sigue exigiendo código de bolsa y credencial del alumno.
+
+
+## Etapa 29 — Mi cuenta y contraseñas (simulación)
+Se agregó «Mi cuenta» a la navegación responsive del apoderado, con formulario para cambiar la contraseña de demostración validando la anterior, confirmación y longitud de 8–72 caracteres con letras y números. El inicio de sesión incluye «¿Olvidaste tu contraseña?» con un código de prueba visible en la misma pantalla: NO se envía correo y NO se verifica identidad. Las credenciales ficticias modificadas se guardan en la clave localStorage `edusaldo2_demo_credenciales` del navegador actual. No se modifican saldos, reservas, inventario ni movimientos. No ingresar contraseñas reales ni presentar este mecanismo como autenticación segura: una implementación real requiere backend, hash de contraseñas y recuperación mediante enlace de un solo uso. Si se cambia la contraseña del apoderado, el acceso 1234 publicado en la pantalla de demostración deja de servir para esa cuenta hasta restablecer el almacenamiento local de credenciales.

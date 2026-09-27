@@ -3,10 +3,52 @@
 const KEY='edusaldo2_sesion',DATA='edusaldo2_demo',SELECT='edusaldo2_hijo';
 const users=[{mail:'apoderado@edusaldo.cl',pass:'1234',name:'Pamela',role:'apoderado'},{mail:'encargado@edusaldo.cl',pass:'1234',name:'Encargado',role:'libreria'},{mail:'admin@edusaldo.cl',pass:'1234',name:'Administrador',role:'administrador'}];
 const seed={children:[{id:1,name:'Sofía Pérez',age:9,course:'3° Básico',balance:18000},{id:2,name:'Tomás Pérez',age:13,course:'8° Básico',balance:12500}],movements:[{child:1,type:'Abono de saldo',date:'2026-09-20',amount:10000},{child:1,type:'Entrega de materiales',date:'2026-09-19',amount:-2500},{child:2,type:'Abono de saldo',date:'2026-09-18',amount:12500},{child:1,type:'Abono de saldo',date:'2026-09-15',amount:5000},{child:2,type:'Entrega de materiales',date:'2026-09-12',amount:-1800}],reservations:[],products:[{id:101,name:'Cuaderno universitario',category:'Cuadernos',price:1250,stock:25,barcode:'7800000000101'},{id:102,name:'Cuaderno College Matemática',category:'Cuadernos',price:900,stock:18,barcode:'7800000000102'},{id:103,name:'Cuaderno College Lineal',category:'Cuadernos',price:900,stock:20,barcode:'7800000000103'},{id:104,name:'Block de dibujo 1/4',category:'Papeles',price:1500,stock:12,barcode:'7800000000104'},{id:105,name:'Lápiz grafito HB',category:'Escritura',price:450,stock:30,barcode:'7800000000105'},{id:106,name:'Goma de borrar',category:'Escritura',price:350,stock:25,barcode:'7800000000106'},{id:107,name:'Caja lápices de colores 12',category:'Arte',price:2800,stock:10,barcode:'7800000000107'},{id:108,name:'Regla 30 cm',category:'Geometría',price:750,stock:14,barcode:'7800000000108'},{id:109,name:'Calculadora científica',category:'Ciencias y tecnología',price:11990,stock:8,barcode:'7800000000109'},{id:110,name:'Kit de circuito eléctrico básico',category:'Ciencias y tecnología',price:6990,stock:7,barcode:'7800000000110'},{id:111,name:'Pila de 9 V',category:'Ciencias y tecnología',price:1990,stock:15,barcode:'7800000000111'},{id:112,name:'Portapilas',category:'Ciencias y tecnología',price:950,stock:12,barcode:'7800000000112'},{id:113,name:'Cables con pinzas cocodrilo (set)',category:'Ciencias y tecnología',price:3490,stock:10,barcode:'7800000000113'},{id:114,name:'LED surtidos (set)',category:'Ciencias y tecnología',price:1890,stock:14,barcode:'7800000000114'},{id:115,name:'Protoboard pequeña',category:'Ciencias y tecnología',price:3990,stock:6,barcode:'7800000000115'},{id:116,name:'Transportador 180°',category:'Geometría',price:690,stock:15,barcode:'7800000000116'},{id:117,name:'Compás escolar',category:'Geometría',price:1790,stock:9,barcode:'7800000000117'},{id:118,name:'Cartulina de color',category:'Papeles',price:350,stock:40,barcode:'7800000000118'},{id:119,name:'Papel lustre (sobre)',category:'Papeles',price:790,stock:25,barcode:'7800000000119'},{id:120,name:'Témpera 12 colores',category:'Arte',price:3590,stock:12,barcode:'7800000000120'},{id:121,name:'Pinceles escolares (set)',category:'Arte',price:1690,stock:10,barcode:'7800000000121'},{id:122,name:'Pegamento en barra',category:'Otros materiales',price:990,stock:30,barcode:'7800000000122'},{id:123,name:'Tijera escolar',category:'Otros materiales',price:1490,stock:16,barcode:'7800000000123'},{id:124,name:'Cinta adhesiva',category:'Otros materiales',price:790,stock:24,barcode:'7800000000124'},{id:125,name:'Carpeta con acoclip',category:'Otros materiales',price:690,stock:20,barcode:'7800000000125'},{id:126,name:'Pendrive 32 GB',category:'Otros materiales',price:5990,stock:8,barcode:'7800000000126'},{id:127,name:'Delantal para arte',category:'Otros materiales',price:4990,stock:6,barcode:'7800000000127'}]};
+// Etapa 29: credenciales de DEMOSTRACIÓN, exclusivamente locales; no aptas para uso real.
+const ACCOUNT_KEY='edusaldo2_demo_credenciales';
+function demoAccounts(){try{const value=JSON.parse(localStorage.getItem(ACCOUNT_KEY));return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch{return {}}}
+function demoPassword(mail){const saved=demoAccounts()[mail];return typeof saved==='string'?saved:users.find(u=>u.mail===mail)?.pass}
+function storeDemoPassword(mail,pass){const all=demoAccounts();all[mail]=pass;localStorage.setItem(ACCOUNT_KEY,JSON.stringify(all))}
 const $=id=>document.getElementById(id),money=n=>'$'+Math.trunc(Number(n)||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function db(){try{const stored=JSON.parse(localStorage.getItem(DATA));if(stored?.children&&stored?.movements){const defaults=structuredClone(seed);const previous=Array.isArray(stored.products)?stored.products:[];const ids=new Set(previous.map(p=>p.id));return {...defaults,...stored,products:[...previous,...defaults.products.filter(p=>!ids.has(p.id))]}}return structuredClone(seed)}catch{return structuredClone(seed)}}function session(){try{return JSON.parse(sessionStorage.getItem(KEY))}catch{return null}}function root(){return document.body.dataset.root||'./'}function go(path){location.href=root()+path}
-const login=$('login-form');if(login){login.addEventListener('submit',e=>{e.preventDefault();const mail=$('correo').value.trim().toLowerCase(),pass=$('clave').value;const u=users.find(x=>x.mail===mail&&x.pass===pass);if(!u){$('login-error').textContent='Revisa el correo y la contraseña de demostración.';$('login-error').classList.remove('hidden');return}sessionStorage.setItem(KEY,JSON.stringify({name:u.name,role:u.role}));const routes={apoderado:'pages/apoderado/inicio.html',libreria:'pages/libreria/inicio.html',administrador:'pages/administrador/inicio.html'};go(routes[u.role])})}
+const login=$('login-form');if(login){login.addEventListener('submit',e=>{e.preventDefault();const mail=$('correo').value.trim().toLowerCase(),pass=$('clave').value;const u=users.find(x=>x.mail===mail&&demoPassword(x.mail)===pass);if(!u){$('login-error').textContent='Revisa el correo y la contraseña de demostración.';$('login-error').classList.remove('hidden');return}sessionStorage.setItem(KEY,JSON.stringify({name:u.name,role:u.role}));const routes={apoderado:'pages/apoderado/inicio.html',libreria:'pages/libreria/inicio.html',administrador:'pages/administrador/inicio.html'};go(routes[u.role])})}
 const required=document.body.dataset.role;if(required){const s=session();if(!s||s.role!==required){go('index.html');return}document.querySelectorAll('[data-user]').forEach(n=>n.textContent=s.name);document.querySelectorAll('[data-initial]').forEach(n=>n.textContent=s.name.charAt(0));const logout=$('logout');if(logout)logout.onclick=()=>{sessionStorage.removeItem(KEY);go('index.html')}}
+// Recuperación simulada: código visible EN PANTALLA, sin envío de correo ni validación de identidad.
+const recoveryForm=$('recovery-form');
+if(recoveryForm){
+  const feedback=$('recovery-feedback'),codeStep=$('recovery-code-step');
+  let pendingMail='',pendingCode='';
+  const show=(message,error=false)=>{feedback.textContent=message;feedback.className='form-feedback '+(error?'feedback-error':'feedback-success')};
+  $('recovery-open').addEventListener('click',()=>{$('recovery-panel').classList.remove('hidden');$('recovery-panel').scrollIntoView({behavior:'smooth',block:'nearest'})});
+  $('recovery-close').addEventListener('click',()=>{$('recovery-panel').classList.add('hidden');recoveryForm.reset();codeStep.classList.add('hidden');feedback.textContent='';pendingMail='';pendingCode='' });
+  $('recovery-request').addEventListener('click',()=>{
+    const mail=$('recovery-mail').value.trim().toLowerCase();
+    if(!users.some(u=>u.mail===mail&&u.role==='apoderado')){show('En esta demostración solo se puede recuperar la cuenta ficticia del apoderado.',true);return}
+    pendingMail=mail;pendingCode=String(Math.floor(100000+Math.random()*900000));
+    $('recovery-demo-code').textContent=pendingCode;codeStep.classList.remove('hidden');show('Código generado solo para esta demostración. No se ha enviado ningún correo.');
+  });
+  recoveryForm.addEventListener('submit',event=>{
+    event.preventDefault();const pass=$('recovery-new').value;
+    if(!pendingMail||$('recovery-code').value.trim()!==pendingCode){show('Revisa el código de demostración.',true);return}
+    if(pass.length<8||pass.length>72||!/[A-Za-z]/.test(pass)||!/[0-9]/.test(pass)){show('Usa entre 8 y 72 caracteres, con letras y números.',true);return}
+    if(pass!==$('recovery-confirm').value){show('Las contraseñas nuevas no coinciden.',true);return}
+    try{storeDemoPassword(pendingMail,pass)}catch{show('No fue posible guardar la contraseña en este navegador.',true);return}
+    recoveryForm.reset();codeStep.classList.add('hidden');pendingMail='';pendingCode='';show('Contraseña de demostración actualizada. Ya puedes iniciar sesión.');
+  });
+}
+const changeForm=$('change-password-form');
+if(changeForm){
+  const feedback=$('password-feedback');
+  changeForm.addEventListener('submit',event=>{
+    event.preventDefault();const mail='apoderado@edusaldo.cl',old=$('password-current').value,next=$('password-new').value;
+    const show=(message,error=false)=>{feedback.textContent=message;feedback.className='form-feedback '+(error?'feedback-error':'feedback-success')};
+    if(old!==demoPassword(mail)){show('La contraseña actual no coincide.',true);return}
+    if(next.length<8||next.length>72||!/[A-Za-z]/.test(next)||!/[0-9]/.test(next)){show('Usa entre 8 y 72 caracteres, con letras y números.',true);return}
+    if(next===old){show('La nueva contraseña debe ser diferente de la actual.',true);return}
+    if(next!==$('password-confirm').value){show('La confirmación no coincide con la nueva contraseña.',true);return}
+    try{storeDemoPassword(mail,next)}catch{show('No fue posible guardar la contraseña en este navegador.',true);return}
+    changeForm.reset();show('Contraseña de demostración actualizada correctamente.');
+  });
+}
 const children=$('children');
 const d=db();
 function fecha(m){return new Intl.DateTimeFormat('es-CL',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(m.date+'T12:00:00Z'))}
