@@ -101,3 +101,12 @@ La encargada solicita cédula o credencial y verifica visualmente identidad; bus
 
 ## Etapa 35 — Inventario físico y respaldo digital
 En Encargado → Inventario: imprimir planilla A4 horizontal de todos los productos o de una categoría, alfabética, con cuadrícula, cantidades del sistema, umbral crítico y columna en blanco para conteo real. Después de contar, seleccionar la fecha real del conteo, adjuntar hasta cinco fotos y registrar el respaldo. Administrador → Inventarios realizados permite consultar fecha del conteo, fecha/hora de carga, encargada, categoría, observaciones y fotos. El conteo no modifica stock. Las imágenes se comprimen y guardan en localStorage de este mismo navegador: no se sincronizan entre equipos, no son una copia de seguridad permanente y pueden superar su cuota de almacenamiento. Para una implementación real se requiere backend, base de datos y almacenamiento de archivos.
+
+
+## Etapa 36 · Devolución de materiales
+
+En Encargado → Devoluciones se busca por RUT, se consultan compras realmente entregadas en el navegador, se selecciona la compra y se escanea el código del material. Solo se aceptan artículos sin uso y en perfecto estado. Se limita cada devolución a las unidades aún no devueltas de la compra, y al confirmar se reintegra saldo, se repone stock y se registra el movimiento. No se inventan compras a partir de movimientos históricos sin detalle de artículos.
+
+
+### Etapa 36.1 — Devolución: primero el material
+La encargada identifica al alumno por RUT y escanea el material o lo busca por nombre cuando no tiene código de barras. EduSaldo muestra las compras entregadas que contienen ese producto, con fecha, origen, número, precio pagado y unidades pendientes. La encargada elige la compra correcta, revisa que esté sin uso y en perfecto estado y confirma. Se conservan los controles de reintegro, stock y prevención de devoluciones duplicadas.

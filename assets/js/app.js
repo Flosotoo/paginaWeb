@@ -10,6 +10,23 @@ function demoPassword(mail){const saved=demoAccounts()[mail];return typeof saved
 function storeDemoPassword(mail,pass){const all=demoAccounts();all[mail]=pass;localStorage.setItem(ACCOUNT_KEY,JSON.stringify(all))}
 const $=id=>document.getElementById(id),money=n=>'$'+Math.trunc(Number(n)||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function db(){try{const stored=JSON.parse(localStorage.getItem(DATA));if(stored?.children&&stored?.movements){const defaults=structuredClone(seed);const previous=Array.isArray(stored.products)?stored.products:[];const ids=new Set(previous.map(p=>p.id));return {...defaults,...stored,products:[...previous,...defaults.products.filter(p=>!ids.has(p.id))]}}return structuredClone(seed)}catch{return structuredClone(seed)}}function session(){try{return JSON.parse(sessionStorage.getItem(KEY))}catch{return null}}function root(){return document.body.dataset.root||'./'}function go(path){location.href=root()+path}
+// Etapa 36.3: inicializar los datos compartidos incluso cuando el primer acceso es Encargado.
+// No sobrescribir datos existentes: conservar saldos, reservas, entregas e inventarios.
+try {
+  const raw=localStorage.getItem(DATA);
+  if(raw===null){localStorage.setItem(DATA,JSON.stringify(structuredClone(seed)))}
+  else {
+    const stored=JSON.parse(raw);
+    if(stored&&typeof stored==='object'&&!Array.isArray(stored)){
+      let changed=false;
+      if(!Array.isArray(stored.children)){stored.children=structuredClone(seed.children);changed=true}
+      if(!Array.isArray(stored.movements)){stored.movements=structuredClone(seed.movements);changed=true}
+      if(!Array.isArray(stored.reservations)){stored.reservations=[];changed=true}
+      if(!Array.isArray(stored.products)){stored.products=structuredClone(seed.products);changed=true}
+      if(changed)localStorage.setItem(DATA,JSON.stringify(stored));
+    }
+  }
+} catch(e){console.warn('EduSaldo: no se pudo inicializar la información local.',e)}
 const login=$('login-form');if(login){login.addEventListener('submit',e=>{e.preventDefault();const mail=$('correo').value.trim().toLowerCase(),pass=$('clave').value;const u=users.find(x=>x.mail===mail&&demoPassword(x.mail)===pass);if(!u){$('login-error').textContent='Revisa el correo y la contraseña de demostración.';$('login-error').classList.remove('hidden');return}sessionStorage.setItem(KEY,JSON.stringify({name:u.name,role:u.role}));const routes={apoderado:'pages/apoderado/inicio.html',libreria:'pages/libreria/inicio.html',administrador:'pages/administrador/inicio.html'};go(routes[u.role])})}
 const required=document.body.dataset.role;if(required){const s=session();if(!s||s.role!==required){go('index.html');return}document.querySelectorAll('[data-user]').forEach(n=>n.textContent=s.name);document.querySelectorAll('[data-initial]').forEach(n=>n.textContent=s.name.charAt(0));const logout=$('logout');if(logout)logout.onclick=()=>{sessionStorage.removeItem(KEY);go('index.html')}}
 // Recuperación simulada: código visible EN PANTALLA, sin envío de correo ni validación de identidad.
