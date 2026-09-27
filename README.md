@@ -70,3 +70,10 @@ En Encargado → Reservas → Reservas pendientes de entrega se muestra el códi
 
 ## Etapa 29 — Mi cuenta y contraseñas (simulación)
 Se agregó «Mi cuenta» a la navegación responsive del apoderado, con formulario para cambiar la contraseña de demostración validando la anterior, confirmación y longitud de 8–72 caracteres con letras y números. El inicio de sesión incluye «¿Olvidaste tu contraseña?» con un código de prueba visible en la misma pantalla: NO se envía correo y NO se verifica identidad. Las credenciales ficticias modificadas se guardan en la clave localStorage `edusaldo2_demo_credenciales` del navegador actual. No se modifican saldos, reservas, inventario ni movimientos. No ingresar contraseñas reales ni presentar este mecanismo como autenticación segura: una implementación real requiere backend, hash de contraseñas y recuperación mediante enlace de un solo uso. Si se cambia la contraseña del apoderado, el acceso 1234 publicado en la pantalla de demostración deja de servir para esa cuenta hasta restablecer el almacenamiento local de credenciales.
+
+
+## Etapa 30 definitiva — Insignia del colegio (sin cambio de colores)
+- En Administrador → Inicio se puede cargar, guardar y quitar una insignia PNG/JPG/WebP (máximo 350 KB).
+- En Apoderado → Mis alumnos la insignia sustituye la ilustración del cuaderno en el saludo familiar; al quitarla vuelve el cuaderno.
+- No se modifican los colores originales ni se incorpora el sistema experimental de temas de las etapas 30/30.1/30.2.
+- La imagen se guarda solo en localStorage del navegador de demostración; no se sincroniza entre computadores.
