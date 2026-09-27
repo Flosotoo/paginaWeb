@@ -277,3 +277,23 @@ body[data-role="libreria"] .card,body[data-role="administrador"] .card{backgroun
 @media (max-width: 420px) {
   .reserva-panel .category-list { grid-template-columns: 1fr; }
 }
+
+/* Etapa 32: historial de reservas entregadas en filas compactas. */
+.staff-history-scroll{width:100%;overflow-x:auto;background:#fffaf2;border:1px solid #bad1b7;border-radius:16px;margin-top:4px}
+.staff-history-table{width:100%;min-width:690px;border-collapse:collapse;color:#173b31;font-size:14px;text-align:left}
+.staff-history-table th{padding:14px 12px;background:#e1efdc;color:#24443e;font-size:12px;font-weight:800;white-space:nowrap}
+.staff-history-table td{padding:11px 12px;border-top:1px solid #d5e3d2;vertical-align:middle}
+.staff-history-table .staff-history-row:hover{background:#f3f8ef}
+.staff-history-amount{font-weight:800;white-space:nowrap}
+.staff-history-toggle{background:#24443e;color:#fff;border:1px solid #24443e;border-radius:10px;padding:9px 12px;font:inherit;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer;min-height:38px}
+.staff-history-toggle:hover{background:#173b31}
+.staff-history-toggle:focus-visible{outline:3px solid #327455;outline-offset:3px}
+.staff-history-detail-row{background:#eaf3e6}
+.staff-history-detail-row[hidden]{display:none}
+.staff-history-detail-row>td{padding:0 15px 16px}
+.staff-history-detail{padding:14px 5px 3px;max-width:850px}
+.staff-history-detail h3{font-size:19px;margin:0;color:#173b31}
+.staff-history-detail p{margin:9px 0}
+.staff-history-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.staff-history-items{margin:12px 0;background:#fffaf2;border-radius:12px;padding:4px 13px}
+@media(max-width:720px){.staff-history-scroll{margin-top:12px}.staff-history-table{font-size:13px}.staff-history-table td{padding:10px}.staff-history-table th{padding:12px 10px}}

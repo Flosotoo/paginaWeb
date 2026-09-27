@@ -81,3 +81,7 @@ Se agregó «Mi cuenta» a la navegación responsive del apoderado, con formular
 
 ## Etapa 31 — Catálogo de reservas
 En Reservar materiales la lista inicia oculta. Buscar por nombre o seleccionar categoría (incluido Todos) muestra resultados A–Z en filas compactas con precio, cantidad y Agregar. Mi reserva permanece a la derecha en escritorio y debajo en móvil. No se alteraron saldo, stock ni confirmación de reservas.
+
+
+## Etapa 32 — Historial compacto de reservas entregadas
+En Encargado → Reservas → Reservas entregadas, cada reserva ocupa una fila con número, alumno, curso, fecha de entrega y valor. Ver detalle despliega debajo de la fila los materiales, cantidades, precios, código de bolsa y fecha/hora; Cerrar detalle vuelve a contraerlo. Es solo consulta, sin cambios en saldo, stock ni entrega. En pantallas pequeñas la tabla admite desplazamiento horizontal.
