@@ -85,3 +85,19 @@ En Reservar materiales la lista inicia oculta. Buscar por nombre o seleccionar c
 
 ## Etapa 32 — Historial compacto de reservas entregadas
 En Encargado → Reservas → Reservas entregadas, cada reserva ocupa una fila con número, alumno, curso, fecha de entrega y valor. Ver detalle despliega debajo de la fila los materiales, cantidades, precios, código de bolsa y fecha/hora; Cerrar detalle vuelve a contraerlo. Es solo consulta, sin cambios en saldo, stock ni entrega. En pantallas pequeñas la tabla admite desplazamiento horizontal.
+
+
+## Etapa 33 — Entrega directa por RUT
+La encargada solicita cédula o credencial y verifica visualmente identidad; busca la cuenta mediante RUT válido, consulta curso y saldo disponible (saldo menos reservas comprometidas), escanea códigos, visualiza el carrito compacto y confirma la entrega si alcanzan saldo y stock. Confirmar descuenta saldo y stock, registra entrega y movimiento en localStorage. Cambiar alumno limpia el carrito. Los RUT ficticios de prueba son Tomás Pérez 23.456.789-6 (13 años, habilitado) y Sofía Pérez 12.345.678-5 (9 años, requiere reserva del apoderado). Los datos anteriores en localStorage continúan funcionando gracias al RUT ficticio de respaldo. El RUT no verifica identidad automáticamente; no ingresar datos reales en esta demostración.
+
+
+## Etapa 34 · Inventario y aviso de stock crítico
+
+- Encargada: inventario abre mostrando únicamente productos críticos pendientes de informar; «Informar» guarda constancia con fecha/hora y retira el aviso de la vista principal. «Ver todos los productos» muestra una tabla alfabética con stock físico, comprometido en reservas, total disponible (físico menos reservado), umbral crítico individual (por defecto ≤ 5) y estado del aviso.
+- Administrador: el panel inicial incluye «Stock crítico», con los avisos enviados por la encargada y su fecha/hora. Al recuperar disponibilidad sobre el umbral, el aviso deja de figurar como activo, pero permanece en los datos locales como constancia histórica.
+- DEMOSTRACIÓN: todo se guarda en localStorage; no se envían correos ni se sincronizan computadores distintos. Para probar, en el mismo navegador y origen inicia como encargada, informa un producto crítico, cierra sesión e inicia como administrador.
+- La devolución de materiales queda para la siguiente etapa.
+
+
+## Etapa 35 — Inventario físico y respaldo digital
+En Encargado → Inventario: imprimir planilla A4 horizontal de todos los productos o de una categoría, alfabética, con cuadrícula, cantidades del sistema, umbral crítico y columna en blanco para conteo real. Después de contar, seleccionar la fecha real del conteo, adjuntar hasta cinco fotos y registrar el respaldo. Administrador → Inventarios realizados permite consultar fecha del conteo, fecha/hora de carga, encargada, categoría, observaciones y fotos. El conteo no modifica stock. Las imágenes se comprimen y guardan en localStorage de este mismo navegador: no se sincronizan entre equipos, no son una copia de seguridad permanente y pueden superar su cuota de almacenamiento. Para una implementación real se requiere backend, base de datos y almacenamiento de archivos.
