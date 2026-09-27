@@ -58,3 +58,11 @@ En Reservas existe un tercer camino, «Reservas entregadas», de consulta exclus
 
 ## Etapa 27 — Navbar responsive (carpeta oficial)
 Se aplicaron los cambios de navegación adaptable directamente sobre el ZIP Etapa 26 entregado para la evaluación. El archivo ZIP de esta entrega contiene una sola carpeta EDUSALDO_PROYECTO_OFICIAL con index.html, assets y pages directamente dentro. Antes de reemplazar la carpeta de trabajo, guardar una copia de seguridad y verificar Live Server. No copiar una carpeta completa dentro de otra ni ejecutar git init en un ZIP extraído.
+
+
+## Etapa 28 — Mensajes modernos
+Se reemplazaron los cuadros nativos alert/confirm del encargado por confirmaciones y notificaciones con el diseño de EduSaldo en entregas de reservas, entregas directas y devoluciones. Las confirmaciones permiten cancelar, cerrar con Escape y mantienen el foco de teclado. Se conserva la lógica de saldo, cartola y stock. El proyecto sigue siendo un prototipo local con datos en localStorage.
+
+
+## Etapa 28 — Consulta y reimpresión de etiquetas
+En Encargado → Reservas → Reservas pendientes de entrega se muestra el código de bolsa guardado para cada reserva. Al abrir «Registrar entrega», el encargado puede reimprimir la misma etiqueta sin cambiar el estado de la reserva ni descontar saldo o stock. La entrega sigue exigiendo código de bolsa y credencial del alumno.

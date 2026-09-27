@@ -217,3 +217,24 @@ body[data-role="libreria"] .card,body[data-role="administrador"] .card{backgroun
  .site-header .header-account{font-size:12px;gap:7px}
 }
 @media print{.mobile-nav-toggle,.admin-nav-toggle{display:none!important}}
+
+
+/* Etapa 28 · mensajes y confirmaciones con identidad EduSaldo */
+.es-toast-host{position:fixed;right:20px;bottom:22px;z-index:10050;display:grid;gap:10px;width:min(420px,calc(100vw - 32px));pointer-events:none}
+.es-toast{display:flex;align-items:flex-start;gap:12px;padding:15px 14px;background:#e5f2e8;color:#215b39;border:1px solid #9ac7a7;border-left:5px solid #327455;border-radius:15px;box-shadow:0 14px 35px #173b3129;font:600 14px/1.5 Arial,sans-serif;pointer-events:auto;animation:es-enter .2s ease-out}
+.es-toast-error{background:#fff0ed;color:#863b30;border-color:#e8b8b0;border-left-color:#b74737}.es-toast-warning{background:#fff3dd;color:#855a19;border-color:#e8cd95;border-left-color:#bd832c}
+.es-toast-symbol{flex:none;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#327455;color:#fff;font-weight:800}.es-toast-error .es-toast-symbol{background:#b74737}.es-toast-warning .es-toast-symbol{background:#bd832c}
+.es-toast>span:nth-child(2){flex:1}.es-toast-close{background:transparent;border:0;color:inherit;font:24px/1 Arial,sans-serif;cursor:pointer;padding:0 2px}.es-toast-out{opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s}
+.es-dialog-overlay{position:fixed;inset:0;z-index:10040;background:#0c2720a8;display:grid;place-items:center;padding:18px;backdrop-filter:blur(3px)}
+.es-dialog{box-sizing:border-box;width:min(450px,100%);max-height:calc(100vh - 36px);overflow:auto;background:#fffaf2;border:1px solid #c4d6bd;border-radius:23px;box-shadow:0 28px 80px #0b241e66;padding:30px;color:#173b31;font-family:Arial,sans-serif}
+.es-dialog-icon{width:47px;height:47px;border-radius:15px;background:#e0efdb;color:#24443e;display:grid;place-items:center;font-size:27px;font-weight:800;margin-bottom:16px}
+.es-dialog h2{font:400 clamp(24px,5vw,31px) Georgia,serif;margin:0 0 12px;color:#173b31}.es-dialog p{font-size:15px;line-height:1.65;color:#365d4d;margin:0 0 24px;white-space:pre-line}
+.es-dialog-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.es-dialog-actions button{min-height:44px;border-radius:12px;padding:10px 16px;font-weight:800;font-size:14px;cursor:pointer}.es-dialog-cancel{background:#fffaf2;border:2px solid #9bbca3;color:#173b31}.es-dialog-ok{background:#24443e;border:2px solid #24443e;color:#fff}.es-dialog-actions button:focus-visible,.es-toast-close:focus-visible{outline:3px solid #d6a17a;outline-offset:2px}
+@keyframes es-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){.es-toast-host{right:16px;bottom:16px}.es-dialog{padding:23px}.es-dialog-actions{flex-direction:column-reverse}.es-dialog-actions button{width:100%}}
+@media(prefers-reduced-motion:reduce){.es-toast{animation:none}.es-toast-out{transition:none}}
+@media print{.es-toast-host,.es-dialog-overlay{display:none!important}}
+
+/* Etapa 28: consulta y reimpresión de etiquetas pendientes de entrega. */
+.staff-bag-code{background:#fffaf2;border:1px solid #bad1b7;border-radius:12px;padding:12px 14px;margin:14px 0!important;color:#173b31;overflow-wrap:anywhere}
+.staff-bag-code code{font:700 15px ui-monospace,SFMono-Regular,Consolas,monospace;color:#24443e;user-select:all}
