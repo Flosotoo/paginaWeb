@@ -1,3 +1,161 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Identidad del colegio · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head>
-<body data-root="../../" data-role="administrador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><button class="mobile-nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-main-nav"><span aria-hidden="true">☰</span><span class="mobile-nav-label">Menú</span></button><nav id="mobile-main-nav" class="header-nav" aria-label="Módulo administrador"><a href="inicio.html">Inicio</a><a href="finanzas.html">Cuenta Librería</a><a href="inventario-admin.html">Inventario</a><a href="compras.html">Gestión de Compras</a><a href="pagos.html">Pagos</a><a class="active" href="configuracion.html">Configuración</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout" type="button">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><header class="top"><span class="logo">Configuración del colegio</span><div class="avatar" data-initial></div></header><span class="eyebrow">ETAPA 30 · IDENTIDAD INSTITUCIONAL</span><h1>Configuración del sistema</h1><a class="back-link" href="inicio.html">← Volver al Inicio del Administrador</a><p class="muted">Define la identidad institucional y los parámetros maestros que EduSaldo reutiliza en impresos, órdenes de compra y módulos operativos.</p><div class="module-grid"><a class="module-card" href="#identidad"><h3>Datos del establecimiento</h3><p>Nombre, logo e identidad para documentos.</p></a><a class="module-card" href="categorias.html"><h3>Categorías de productos</h3><p>Crear, activar o desactivar categorías usadas por Inventario y Productos/SKU.</p></a><a class="module-card" href="personas.html"><h3>Usuarios y alumnos</h3><p>Cuentas familiares, alumnos, nómina, estados y restablecimiento de acceso.</p></a><a class="module-card" href="control.html"><h3>Cierre mensual y auditoría</h3><p>Parámetros, cierre automático de períodos y trazabilidad sensible.</p></a></div><section id="identidad" class="card school-settings"><h2>Identidad del establecimiento</h2><form id="school-theme-form"><div class="field"><label for="school-name">Nombre del colegio</label><input id="school-name" class="input" maxlength="80" placeholder="Nombre del establecimiento" required></div><div class="field"><label for="school-logo">Insignia del colegio</label><input id="school-logo" class="input" type="file" accept="image/png,image/jpeg,image/webp"><small class="muted">PNG, JPG o WebP. Máximo 2 MB. Se reduce para guardar una copia de demostración.</small></div><div class="school-preview"><div id="school-logo-preview" class="school-preview-icon" aria-label="Vista previa de insignia">⌂</div><div><strong id="school-preview-name">Colegio de demostración</strong><small class="muted">Vista previa de identidad</small></div></div><p class="muted">Los colores se proponen al seleccionar una insignia. Puedes cambiarlos manualmente.</p><div class="school-colors"><div class="field"><label for="school-primary">Color principal</label><input type="color" id="school-primary" value="#24443e"></div><div class="field"><label for="school-accent">Color de acento</label><input type="color" id="school-accent" value="#ad654b"></div></div><div id="school-theme-preview" class="school-theme-preview"><strong>Vista previa de EduSaldo</strong><span>Encabezado y botón institucional</span></div><p id="school-theme-feedback" class="form-feedback" role="status" aria-live="polite"></p><div class="school-actions"><button type="submit" class="btn">Guardar identidad</button><button type="button" id="school-reset" class="btn secondary">Restablecer diseño EduSaldo</button></div></form></section><p class="footer-note">Prototipo académico: esta configuración no se sincroniza entre equipos o navegadores. No afecta reservas, saldos ni inventario.</p></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/colegio.js"></script><script src="../../assets/js/cierre-funcional.js"></script></body></html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Identidad del colegio · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="administrador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        ><button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobile-main-nav"
+        >
+          <span aria-hidden="true">☰</span
+          ><span class="mobile-nav-label">Menú</span>
+        </button>
+        <nav
+          id="mobile-main-nav"
+          class="header-nav"
+          aria-label="Módulo administrador"
+        >
+          <a href="inicio.html">Inicio</a
+          ><a href="finanzas.html">Cuenta Librería</a
+          ><a href="inventario-admin.html">Inventario</a
+          ><a href="compras.html">Gestión de Compras</a
+          ><a href="pagos.html">Pagos</a
+          ><a class="active" href="configuracion.html">Configuración</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout" type="button">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <header class="top">
+        <span class="logo">Configuración del colegio</span>
+        <div class="avatar" data-initial></div>
+      </header>
+      <span class="eyebrow">ETAPA 30 · IDENTIDAD INSTITUCIONAL</span>
+      <h1>Configuración del sistema</h1>
+      <a class="back-link" href="inicio.html"
+        >← Volver al Inicio del Administrador</a
+      >
+      <p class="muted">
+        Define la identidad institucional y los parámetros maestros que EduSaldo
+        reutiliza en impresos, órdenes de compra y módulos operativos.
+      </p>
+      <div class="module-grid">
+        <a class="module-card" href="#identidad"
+          ><h3>Datos del establecimiento</h3>
+          <p>Nombre, logo e identidad para documentos.</p></a
+        ><a class="module-card" href="categorias.html"
+          ><h3>Categorías de productos</h3>
+          <p>
+            Crear, activar o desactivar categorías usadas por Inventario y
+            Productos/SKU.
+          </p></a
+        ><a class="module-card" href="personas.html"
+          ><h3>Usuarios y alumnos</h3>
+          <p>
+            Cuentas familiares, alumnos, nómina, estados y restablecimiento de
+            acceso.
+          </p></a
+        ><a class="module-card" href="control.html"
+          ><h3>Cierre mensual y auditoría</h3>
+          <p>
+            Parámetros, cierre automático de períodos y trazabilidad sensible.
+          </p></a
+        >
+      </div>
+      <section id="identidad" class="card school-settings">
+        <h2>Identidad del establecimiento</h2>
+        <form id="school-theme-form">
+          <div class="field">
+            <label for="school-name">Nombre del colegio</label
+            ><input
+              id="school-name"
+              class="input"
+              maxlength="80"
+              placeholder="Nombre del establecimiento"
+              required
+            />
+          </div>
+          <div class="field">
+            <label for="school-logo">Insignia del colegio</label
+            ><input
+              id="school-logo"
+              class="input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+            /><small class="muted"
+              >PNG, JPG o WebP. Máximo 2 MB. Se reduce para guardar una copia de
+              demostración.</small
+            >
+          </div>
+          <div class="school-preview">
+            <div
+              id="school-logo-preview"
+              class="school-preview-icon"
+              aria-label="Vista previa de insignia"
+            >
+              ⌂
+            </div>
+            <div>
+              <strong id="school-preview-name">Colegio de demostración</strong
+              ><small class="muted">Vista previa de identidad</small>
+            </div>
+          </div>
+          <p class="muted">
+            Los colores se proponen al seleccionar una insignia. Puedes
+            cambiarlos manualmente.
+          </p>
+          <div class="school-colors">
+            <div class="field">
+              <label for="school-primary">Color principal</label
+              ><input type="color" id="school-primary" value="#24443e" />
+            </div>
+            <div class="field">
+              <label for="school-accent">Color de acento</label
+              ><input type="color" id="school-accent" value="#ad654b" />
+            </div>
+          </div>
+          <div id="school-theme-preview" class="school-theme-preview">
+            <strong>Vista previa de EduSaldo</strong
+            ><span>Encabezado y botón institucional</span>
+          </div>
+          <p
+            id="school-theme-feedback"
+            class="form-feedback"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <div class="school-actions">
+            <button type="submit" class="btn">Guardar identidad</button
+            ><button type="button" id="school-reset" class="btn secondary">
+              Restablecer diseño EduSaldo
+            </button>
+          </div>
+        </form>
+      </section>
+      <p class="footer-note">
+        Prototipo académico: esta configuración no se sincroniza entre equipos o
+        navegadores. No afecta reservas, saldos ni inventario.
+      </p>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/colegio.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+  </body>
+</html>

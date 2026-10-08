@@ -1,103 +1,1011 @@
 /* EduSaldo 2.0 · Etapa 18. Prototipo local del encargado; no procesa pagos. */
-(()=>{'use strict';
-const DATA='edusaldo2_demo', $=id=>document.getElementById(id);
-const money=n=>'$'+Math.trunc(Number(n)||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const active=r=>['PENDIENTE','EN_PREPARACION','ETIQUETA_PENDIENTE','LISTA_PARA_RETIRO'].includes(r.status);
-function read(){try{return JSON.parse(localStorage.getItem(DATA))}catch{return null}}
-function save(d){try{localStorage.setItem(DATA,JSON.stringify(d));return true}catch{EduSaldoUI.toast('No se pudo guardar. Comprueba el almacenamiento del navegador.','error');return false}}
-const name=(d,id)=>d.children.find(c=>c.id===id)?.name||'Alumno no encontrado';
-const committed=(d,id)=>d.reservations.filter(active).filter(r=>r.child===id).reduce((n,r)=>n+r.total,0);
-const reserved=(d,id)=>d.reservations.filter(active).reduce((n,r)=>n+r.items.filter(i=>i.id===id).reduce((v,i)=>v+i.qty,0),0);
-const available=(d,id)=>{const c=d.children.find(c=>c.id===id);return c?c.balance-committed(d,id):0};
-const stock=(d,p)=>p.stock-reserved(d,p.id);
-const now=()=>new Date().toISOString();
-const day=()=>{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Santiago',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const v=k=>parts.find(x=>x.type===k).value;return `${v('year')}-${v('month')}-${v('day')}`};
-function line(i){return `<div class="staff-line"><span>${esc(i.name)} · ${i.qty} × ${money(i.price)}</span><strong>${money(i.qty*i.price)}</strong></div>`}
-function markDelivery(d,student,items,ref,kind){const id=`ENT-${Date.now()}-${Math.floor(Math.random()*1000)}`;const total=items.reduce((n,i)=>n+i.price*i.qty,0);const delivery={id,child:student,items:items.map(i=>({...i})),total,kind,reservation:ref||null,createdAt:now(),returned:[]};d.deliveries??=[];d.deliveries.push(delivery);d.movements.push({child:student,type:kind==='RESERVA'?'Entrega de reserva':'Entrega de materiales',date:day(),createdAt:delivery.createdAt,amount:-total,reference:id});return delivery}
-const stat=$('staff-stats');if(stat){const d=read();if(d){const a=d.reservations.filter(r=>['PENDIENTE','EN_PREPARACION','ETIQUETA_PENDIENTE'].includes(r.status)).length,b=d.reservations.filter(r=>r.status==='LISTA_PARA_RETIRO').length,c=d.products.filter(p=>stock(d,p)<=5).length,e=d.reservations.filter(r=>r.status==='ENTREGADA').length;stat.innerHTML=[[a,'Reservas por preparar'],[b,'Reservas pendientes de entrega'],[c,'Productos con disponibilidad crítica (≤ 5)'],[e,'Reservas entregadas']].map(([v,t])=>`<div class="staff-stat"><strong>${v}</strong><span>${t}</span></div>`).join('')}}
-// Código 39: cada patrón contiene nueve elementos (barras/espacios alternados).
-const code39={'*':'nwnnwnwnn','0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnnw','3':'wnwwnnnnn','4':'nnnwwnnnw','5':'wnnwwnnnn','6':'nnwwwnnnn','7':'nnnwnnwnw','8':'wnnwnnwnn','9':'nnwwnnwnn','A':'wnnnnwnnw','B':'nnwnnwnnw','C':'wnwnnwnnn','D':'nnnnwwnnw','E':'wnnnwwnnn','F':'nnwnwwnnn','G':'nnnnnwwnw','H':'wnnnnwwnn','I':'nnwnnwwnn','J':'nnnnwwwnn','K':'wnnnnnnww','L':'nnwnnnnww','M':'wnwnnnnwn','N':'nnnnwnnww','O':'wnnnwnnwn','P':'nnwnwnnwn','Q':'nnnnnnwww','R':'wnnnnnwwn','S':'nnwnnnwwn','T':'nnnnwnwwn','U':'wwnnnnnnw','V':'nwwnnnnnw','W':'wwwnnnnnn','X':'nwnnwnnnw','Y':'wwnnwnnnn','Z':'nwwnwnnnn','-':'nwnnnnwnw'};
-function barcodeSvg(value){const str=`*${value.toUpperCase()}*`;let x=12,bars='';for(const c of str){const pattern=code39[c];if(!pattern)return '';for(let i=0;i<9;i++){const w=pattern[i]==='w'?5:2;if(i%2===0)bars+=`<rect x="${x}" y="5" width="${w}" height="57"/>`;x+=w}x+=2}return `<svg role="img" aria-label="Código de barras ${esc(value)}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x+12} 86" preserveAspectRatio="xMidYMid meet"><g fill="#173b31">${bars}</g><text x="${x/2+6}" y="80" text-anchor="middle" font-family="monospace" font-size="12" fill="#173b31">${esc(value)}</text></svg>`}
-const list=$('staff-reservations');if(list){let opened=null,manualMode=false,scanBusy=false,view=null;
-const paths=$('reserve-paths'),work=$('reserve-work');
-function count(i,r){return Number(r.scanned?.[i.id])||0}
-function complete(r){return r.items.length>0&&r.items.every(i=>count(i,r)===i.qty)}
-function progress(r,d){return r.items.map(i=>`<div class="staff-line"><span>${esc(i.name)} <small>· ${esc(d.products.find(p=>p.id===i.id)?.barcode||'')}</small></span><strong data-progress="${i.id}">${count(i,r)} / ${i.qty}</strong></div>`).join('')}
-function renderDelivered(group,d){
-if(!group.length){list.innerHTML='<p class="staff-note">No hay reservas entregadas.</p>';return}
-list.innerHTML=`<div class="staff-history-scroll" role="region" aria-label="Tabla de reservas entregadas" tabindex="0"><table class="staff-history-table"><thead><tr><th scope="col">N° reserva</th><th scope="col">Alumno</th><th scope="col">Curso</th><th scope="col">Fecha de entrega</th><th scope="col">Valor</th><th scope="col">Detalle</th></tr></thead><tbody>${group.map(r=>{
-const student=d.children.find(c=>c.id===r.child),expanded=opened===r.id;
-const deliveredDate=r.deliveredAt?new Date(r.deliveredAt):null;
-const dateText=deliveredDate&&!Number.isNaN(deliveredDate.getTime())?deliveredDate.toLocaleDateString('es-CL'):'No registrada';
-return `<tr class="staff-history-row"><td><strong>${esc(r.id)}</strong></td><td>${esc(student?.name||'Alumno')}</td><td>${esc(student?.course||'—')}</td><td>${dateText}</td><td class="staff-history-amount">${money(r.total)}</td><td><button type="button" class="staff-history-toggle" data-open="${esc(r.id)}" aria-expanded="${expanded}" aria-controls="staff-history-detail-${esc(r.id)}">${expanded?'Cerrar detalle ↑':'Ver detalle ↓'}</button></td></tr><tr id="staff-history-detail-${esc(r.id)}" class="staff-history-detail-row" ${expanded?'':'hidden'}><td colspan="6"><div class="staff-history-detail"><div class="staff-history-detail-head"><h3>Detalle de ${esc(r.id)}</h3><button type="button" class="staff-history-toggle" data-open="${esc(r.id)}">Cerrar detalle ↑</button></div><p><strong>Alumno:</strong> ${esc(student?.name||'Alumno')} · ${esc(student?.course||'—')}</p><p><strong>Código de bolsa:</strong> <code>${esc(r.bagCode||'Sin código registrado')}</code></p><p><strong>Fecha y hora de entrega:</strong> ${deliveredDate&&!Number.isNaN(deliveredDate.getTime())?deliveredDate.toLocaleString('es-CL'):'No registrada'}</p><div class="staff-history-items">${r.items.map(line).join('')}</div><p><strong>Total entregado: ${money(r.total)}</strong></p><p class="staff-note">Solo consulta: abrir este detalle no modifica saldos, stock ni entregas.</p></div></td></tr>`
-}).join('')}</tbody></table></div>`;
-}
-function render(){const d=read();if(!d||!view)return;const rs=d.reservations.slice().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));const prep=rs.filter(r=>['PENDIENTE','EN_PREPARACION','ETIQUETA_PENDIENTE'].includes(r.status));const deliver=rs.filter(r=>r.status==='LISTA_PARA_RETIRO');const delivered=rs.filter(r=>r.status==='ENTREGADA');const group=view==='preparar'?prep:view==='entregar'?deliver:delivered;if(view==='entregadas'){renderDelivered(group,d);return}
-list.innerHTML=group.length?group.map(r=>{const preparing=['PENDIENTE','EN_PREPARACION'].includes(r.status),label=r.status==='ETIQUETA_PENDIENTE',pickup=r.status==='LISTA_PARA_RETIRO',delivered=r.status==='ENTREGADA',active=opened===r.id;const student=d.children.find(c=>c.id===r.child);return `<article class="staff-order"><div class="staff-order-head"><strong>${esc(r.id)}</strong><span class="staff-pill">${preparing?'EN PREPARACIÓN':label?'ETIQUETA POR IMPRIMIR':delivered?'ENTREGADA':'PENDIENTE DE ENTREGA'}</span></div><h3>${esc(student?.name||'Alumno')} · ${esc(student?.course||'')}</h3><p>${new Date(r.createdAt).toLocaleDateString('es-CL')} · ${money(r.total)}</p>${r.items.map(line).join('')}${pickup?`<p class="staff-bag-code"><strong>Código de bolsa:</strong> <code>${esc(r.bagCode||`BOL-${r.id}`)}</code></p>`:''}<div class="staff-actions"><button type="button" data-open="${esc(r.id)}">${delivered?'Ver detalle':preparing?'Preparar reserva':label?'Generar etiqueta':'Registrar entrega'}</button>${(['PENDIENTE','LISTA_PARA_RETIRO'].includes(r.status))?`<button type="button" class="danger-btn" data-cancel="${esc(r.id)}">Cancelar reserva</button>`:''}</div>${active&&delivered?`<div class="staff-verify"><h4>Detalle de la reserva entregada</h4><p><strong>Alumno:</strong> ${esc(student?.name||'Alumno')} · ${esc(student?.course||'')}</p><p><strong>Reserva:</strong> ${esc(r.id)}</p><p><strong>Bolsa:</strong> ${esc(r.bagCode||'Sin código registrado')}</p><p><strong>Fecha y hora de entrega:</strong> ${r.deliveredAt?new Date(r.deliveredAt).toLocaleString('es-CL'):'No registrada'}</p>${r.items.map(line).join('')}<p><strong>Total entregado: ${money(r.total)}</strong></p><p class="staff-note">Registro de consulta: no se puede volver a entregar ni descontar esta reserva.</p></div>`:''}${active&&preparing?`<div class="staff-verify"><h4>Escanea cada artículo al colocarlo en la bolsa</h4>${progress(r,d)}${complete(r)?`<p class="staff-success">Todos los artículos están en la bolsa.</p><button type="button" class="aporte-primary" data-ready="${esc(r.id)}">Generar etiqueta</button>`:`<label class="staff-label" for="verify-code">${manualMode?'Escribe el código del artículo':'Pistolea el artículo'}</label><div class="staff-scan"><input id="verify-code" autocomplete="off" inputmode="numeric" placeholder="${manualMode?'Escribe el código':'Pistolea aquí'}"></div><label class="staff-manual-toggle"><input id="manual-mode" type="checkbox" ${manualMode?'checked':''}> Ingreso manual</label><div id="manual-actions" ${manualMode?'':'hidden'}><button type="button" class="staff-small" data-scan="${esc(r.id)}">Ingresar</button></div>`}<p id="verify-error" class="feedback-error" role="alert"></p></div>`:''}${active&&label?`<div class="staff-verify"><h4>Etiqueta de la bolsa</h4><div class="bag-label"><strong>edusaldo.</strong><p>${esc(student?.name||'')} · ${esc(student?.course||'')}</p><p>Reserva ${esc(r.id)}</p>${barcodeSvg(r.bagCode)}</div><button type="button" class="aporte-primary" data-print="${esc(r.id)}">Imprimir etiqueta</button><p>Después de imprimir y pegar la etiqueta en la bolsa:</p><button type="button" class="staff-small" data-printed="${esc(r.id)}">Confirmar etiqueta impresa</button><p id="verify-error" class="feedback-error" role="alert"></p></div>`:''}${active&&pickup?`<div class="staff-verify"><h4>Retiro de la reserva</h4><p class="staff-bag-code"><strong>Código de bolsa:</strong> <code>${esc(r.bagCode||`BOL-${r.id}`)}</code></p><button type="button" class="staff-small" data-print="${esc(r.id)}">Reimprimir etiqueta</button><p class="staff-note">Reimprimir no registra una entrega ni vuelve a descontar saldo o stock.</p><label class="staff-label" for="bag-scan">Escanear código de la bolsa</label><input id="bag-scan" class="staff-select" autocomplete="off" placeholder="BOL-RES-..."><label class="staff-label" for="student-scan">Escanear credencial del alumno</label><input id="student-scan" class="staff-select" autocomplete="off" placeholder="ALU-..."><p class="staff-note">Credencial de demostración de ${esc(student?.name||'')}: <strong>ALU-${r.child}</strong></p><button type="button" class="aporte-primary" data-pickup="${esc(r.id)}">Confirmar entrega</button><p id="verify-error" class="feedback-error" role="alert"></p></div>`:''}</article>`}).join(''):'<p class="staff-note">No hay reservas en esta sección.</p>';if(opened)$('verify-code')?.focus()}
-paths.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;view=b.dataset.view;opened=null;paths.hidden=true;work.hidden=false;$('reserve-title').textContent=view==='preparar'?'Reservas por preparar':view==='entregar'?'Reservas pendientes de entrega':'Reservas entregadas';render()});$('reserve-back').addEventListener('click',()=>{view=null;opened=null;work.hidden=true;paths.hidden=false});
-function scan(ref){if(scanBusy)return;const field=$('verify-code'),code=field?.value.trim();if(!code)return;scanBusy=true;try{const d=read(),r=d?.reservations.find(x=>x.id===ref),error=$('verify-error');if(!r||!['PENDIENTE','EN_PREPARACION'].includes(r.status))return;const i=r.items.find(i=>d.products.find(p=>p.id===i.id)?.barcode===code);if(!i){error.textContent='Este artículo no pertenece a la reserva.';field.select();return}r.scanned??={};if(count(i,r)>=i.qty){error.textContent='La cantidad de este artículo ya está completa.';field.value='';field.focus();return}r.scanned[i.id]=count(i,r)+1;r.status='EN_PREPARACION';r.preparingAt??=now();if(!save(d))return;if(complete(r)){render();return}const counter=list.querySelector(`[data-progress="${i.id}"]`);if(counter)counter.textContent=`${r.scanned[i.id]} / ${i.qty}`;field.value='';error.textContent='';field.focus()}finally{scanBusy=false}}
-function ready(ref){const d=read(),r=d?.reservations.find(x=>x.id===ref);if(!r||!['PENDIENTE','EN_PREPARACION'].includes(r.status)||!complete(r))return;r.status='ETIQUETA_PENDIENTE';r.bagCode??=`BOL-${r.id}`;r.labelGeneratedAt=now();if(save(d))render()}
-function printLabel(ref){const d=read(),r=d?.reservations.find(x=>x.id===ref);if(!r||!['ETIQUETA_PENDIENTE','LISTA_PARA_RETIRO'].includes(r.status))return;const c=d.children.find(c=>c.id===r.child);$('print-bag-label').innerHTML=`<div class="bag-label"><strong>edusaldo.</strong><h2>${esc(c?.name||'')}</h2><p>${esc(c?.course||'')} · Reserva ${esc(r.id)}</p>${barcodeSvg(r.bagCode||`BOL-${r.id}`)}</div>`;requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()))}
-function printed(ref){const d=read(),r=d?.reservations.find(x=>x.id===ref);if(!r||r.status!=='ETIQUETA_PENDIENTE')return;r.status='LISTA_PARA_RETIRO';r.preparedAt=now();r.labelPrintedAt=now();if(save(d)){opened=null;render()}}
-async function pickup(ref){const d=read(),r=d?.reservations.find(x=>x.id===ref),error=$('verify-error');if(!r||r.status!=='LISTA_PARA_RETIRO')return;const bag=$('bag-scan')?.value.trim().toUpperCase(),studentCode=$('student-scan')?.value.trim().toUpperCase();if(bag!==(r.bagCode||`BOL-${r.id}`).toUpperCase()){error.textContent='El código de la bolsa no corresponde a esta reserva.';return}if(studentCode!==`ALU-${r.child}`){error.textContent='La credencial no corresponde al alumno de esta reserva.';return}const c=d.children.find(c=>c.id===r.child);if(!c||c.balance<r.total||r.items.some(i=>{const p=d.products.find(p=>p.id===i.id);return !p||p.stock<i.qty})){error.textContent='No se puede entregar: revisa saldo o stock físico.';return}if(!await EduSaldoUI.confirm({title:'Confirmar entrega de reserva',message:`¿Confirmas la entrega a ${c.name} y el descuento de ${money(r.total)} del saldo?`,confirmText:'Confirmar entrega'}))return;c.balance-=r.total;r.items.forEach(i=>d.products.find(p=>p.id===i.id).stock-=i.qty);r.status='ENTREGADA';r.deliveredAt=now();markDelivery(d,c.id,r.items,r.id,'RESERVA');if(save(d)){window.EduSaldoFunctional?.audit('ENTREGAR_RESERVA','RESERVA',r.id,{estado:'LISTA_PARA_RETIRO'},{estado:'ENTREGADA',total:r.total});opened=null;render();EduSaldoUI.toast('Reserva entregada. Venta, saldo, cartola y stock actualizados.','success')}}
-async function cancelReservation(ref){const d=read(),r=d?.reservations.find(x=>x.id===ref);if(!r||!['PENDIENTE','LISTA_PARA_RETIRO'].includes(r.status))return;const reason=prompt('Motivo de cancelación (obligatorio):','');if(!reason||!reason.trim()){EduSaldoUI.toast('Debes indicar un motivo para cancelar.','error');return}if(!await EduSaldoUI.confirm({title:'Cancelar reserva',message:'La reserva quedará CANCELADA y se liberarán el saldo y stock comprometidos. No se generará venta ni devolución.',confirmText:'Cancelar reserva'}))return;const before=r.status;r.status='CANCELADA';r.cancelledAt=now();r.cancelReason=reason.trim();r.cancelledBy='Encargado';r.scanned={};if(save(d)){window.EduSaldoFunctional?.audit('CANCELAR_RESERVA','RESERVA',r.id,{estado:before},{estado:'CANCELADA',motivo:r.cancelReason});opened=null;render();EduSaldoUI.toast('Reserva cancelada. Saldo y stock reservado quedaron liberados.','success')}}
-list.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.open){opened=view==='entregadas'&&opened===b.dataset.open?null:b.dataset.open;render()}else if(b.dataset.scan)scan(b.dataset.scan);else if(b.dataset.ready)ready(b.dataset.ready);else if(b.dataset.print)printLabel(b.dataset.print);else if(b.dataset.printed)printed(b.dataset.printed);else if(b.dataset.pickup)pickup(b.dataset.pickup);else if(b.dataset.cancel)cancelReservation(b.dataset.cancel)});
-list.addEventListener('change',e=>{if(e.target.id!=='manual-mode')return;manualMode=e.target.checked;const actions=$('manual-actions');if(actions)actions.hidden=!manualMode;const field=$('verify-code'),label=list.querySelector('label[for="verify-code"]');if(label)label.textContent=manualMode?'Escribe el código del artículo':'Pistolea el artículo';if(field){field.placeholder=manualMode?'Escribe el código':'Pistolea aquí';field.value='';field.focus()}});
-list.addEventListener('input',e=>{if(e.target.id!=='verify-code'||manualMode||!opened||scanBusy)return;const code=e.target.value.trim();if(!code)return;const d=read(),r=d?.reservations.find(x=>x.id===opened);if(r?.items.some(i=>d.products.find(p=>p.id===i.id)?.barcode===code))scan(opened)});
-list.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='verify-code'){e.preventDefault();if(!manualMode&&e.target.value.trim())scan(opened)}else if(e.key==='Enter'&&['bag-scan','student-scan'].includes(e.target.id)){e.preventDefault();if(e.target.id==='bag-scan')$('student-scan')?.focus();else pickup(opened)}});
-}
-// Etapa 33: entrega directa por RUT, sin selector visible de alumnos.
-const directRut=$('direct-rut');if(directRut){
-let studentId=null,cart=[];
-const normalizeRut=v=>String(v||'').replace(/[^0-9kK]/g,'').toUpperCase();
-function validRut(value){const v=normalizeRut(value);if(Object.values(demoRut).some(r=>normalizeRut(r)===v))return true;if(!/^[0-9]{7,8}[0-9K]$/.test(v))return false;let sum=0,mult=2;for(let i=v.length-2;i>=0;i--){sum+=Number(v[i])*mult;mult=mult===7?2:mult+1}const dv=11-sum%11;return v.at(-1)===(dv===11?'0':dv===10?'K':String(dv))}
-// RUT ficticios para los dos alumnos de la demostración, incluso en navegadores con datos anteriores.
-const demoRut={1:'12.345.678-5',2:'23.456.789-6'};
-const rutOf=c=>c.rut||demoRut[c.id]||'';
-const error=$('direct-error'),studentError=$('direct-student-error'),result=$('direct-result');
-function render(){const d=read(),c=d?.children.find(x=>x.id===studentId),balance=c?available(d,c.id):0,total=cart.reduce((n,i)=>n+i.qty*i.price,0),enough=!!c&&total<=balance,stockOk=!!d&&cart.every(i=>{const p=d.products.find(p=>p.id===i.id);return p&&i.qty<=stock(d,p)});
-$('direct-student-info').hidden=!c;$('direct-change').hidden=!c;$('direct-materials').hidden=!c;
-$('direct-rut').readOnly=!!c;$('direct-search').disabled=!!c;
-$('direct-student-info').innerHTML=c?`<div><span class="staff-badge staff-stock-ok">Alumno identificado</span><h3>${esc(c.name)}</h3><p>${esc(c.course)} · RUT ${esc(rutOf(c))}</p></div><div><small>Saldo disponible para compras</small><strong>${money(balance)}</strong></div>`:'';
-$('direct-cart').innerHTML=cart.length?`<div class="direct-cart-scroll"><table class="direct-cart-table"><thead><tr><th>Material</th><th>Cant.</th><th>Subtotal</th><th></th></tr></thead><tbody>${cart.map(i=>`<tr><td><strong>${esc(i.name)}</strong><small>${money(i.price)} c/u</small></td><td>${i.qty}</td><td>${money(i.qty*i.price)}</td><td><button type="button" class="staff-history-toggle" data-remove="${i.id}" aria-label="Quitar una unidad de ${esc(i.name)}">− 1</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="staff-note">Aún no hay materiales escaneados.</p>';
-$('direct-balance').textContent=c?money(balance):'—';$('direct-total').textContent=money(total);$('direct-remaining').textContent=c?money(balance-total):'—';
-$('direct-remaining').classList.toggle('direct-negative',!!c&&total>balance);
-$('direct-status').textContent=!c?'Identifica al alumno para comenzar.':!cart.length?'Escanea los materiales que lleva el alumno.':!stockOk?'Stock insuficiente: revisa los materiales.':!enough?'Saldo insuficiente: no se puede confirmar la entrega.':`Saldo suficiente para entregar ${cart.reduce((n,i)=>n+i.qty,0)} unidad(es).`;
-$('direct-confirm').disabled=!c||!cart.length||!enough||!stockOk;
-}
-function searchStudent(){studentError.textContent='';error.textContent='';result.textContent='';const value=directRut.value.trim();if(!validRut(value)){studentError.textContent='Ingresa un RUT válido con su dígito verificador.';return}const d=read();if(!d){studentError.textContent='No se pudieron cargar los datos de prueba.';return}const c=(d.children||[]).find(c=>normalizeRut(rutOf(c))===normalizeRut(value));if(!c){studentError.textContent='No existe una cuenta de alumno asociada a ese RUT.';return}if(c.age<12){studentError.textContent='Este alumno es menor de 12 años: sus materiales se gestionan mediante reserva del apoderado.';return}studentId=c.id;cart=[];render();$('direct-code').focus()}
-$('direct-search').addEventListener('click',searchStudent);directRut.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchStudent()}});
-$('direct-change').addEventListener('click',()=>{studentId=null;cart=[];directRut.value='';studentError.textContent='';error.textContent='';result.textContent='';$('direct-code').value='';render();directRut.focus()});
-const productSku=p=>p.sku||`SKU-${String(p.id).padStart(6,'0')}`;const eduCode=p=>p.eduCode||`EDU-${String(p.id).padStart(6,'0')}`;
-function addProduct(p){const d=read(),c=d?.children.find(c=>c.id===studentId);error.textContent='';result.textContent='';if(!c){error.textContent='Primero identifica al alumno por su RUT.';return}if(!p){error.textContent='Material no encontrado en el catálogo.';return}const old=cart.find(i=>i.id===p.id);if((old?.qty||0)>=stock(d,p)){error.textContent='No quedan unidades disponibles para esta entrega.';return}const total=cart.reduce((n,i)=>n+i.qty*i.price,0);if(total+p.price>available(d,studentId)){error.textContent='Saldo insuficiente para agregar este material.';render();return}if(old)old.qty++;else cart.push({id:p.id,name:p.name,price:p.price,qty:1});$('direct-code').value='';const n=$('direct-name');if(n)n.value='';const r=$('direct-name-results');if(r)r.innerHTML='';render();$('direct-code').focus()}
-function add(){const d=read(),code=$('direct-code').value.trim().toUpperCase(),p=d?.products.find(p=>[p.barcode,productSku(p),eduCode(p)].filter(Boolean).some(v=>String(v).toUpperCase()===code));addProduct(p)}
-$('direct-add').addEventListener('click',add);$('direct-code').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();add()}});
-function searchByName(){const d=read(),q=($('direct-name')?.value||'').trim().toLocaleLowerCase('es');const box=$('direct-name-results');if(!box)return;if(!q){box.innerHTML='<p class="staff-note">Escribe parte del nombre del material.</p>';return}const matches=(d?.products||[]).filter(p=>p.name.toLocaleLowerCase('es').includes(q)).sort((a,b)=>a.name.localeCompare(b.name,'es')).slice(0,12);box.innerHTML=matches.length?matches.map(p=>`<button type="button" class="direct-product-choice" data-direct-product="${p.id}"><span><strong>${esc(p.name)}</strong><small>${esc(productSku(p))} · ${p.barcode?`Código ${esc(p.barcode)}`:`Código EduSaldo ${esc(eduCode(p))}`}</small></span><span>${money(p.price)} · disp. ${Math.max(0,stock(d,p))}</span></button>`).join(''):'<p class="staff-note">No encontramos materiales con ese nombre.</p>'}
-$('direct-name-search')?.addEventListener('click',searchByName);$('direct-name')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchByName()}});$('direct-name-results')?.addEventListener('click',e=>{const b=e.target.closest('[data-direct-product]');if(!b)return;const d=read(),p=d?.products.find(x=>x.id===Number(b.dataset.directProduct));addProduct(p)});
-$('direct-cart').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;const i=cart.find(x=>x.id===Number(b.dataset.remove));if(i){i.qty--;if(!i.qty)cart=cart.filter(x=>x!==i);error.textContent='';render()}});
-$('direct-confirm').addEventListener('click',async()=>{const d=read(),c=d?.children.find(c=>c.id===studentId),total=cart.reduce((n,i)=>n+i.price*i.qty,0);error.textContent='';if(!c||c.age<12||normalizeRut(rutOf(c))!==normalizeRut(directRut.value)||!cart.length||total>available(d,studentId)||cart.some(i=>{const p=d.products.find(p=>p.id===i.id);return !p||i.qty>stock(d,p)})){error.textContent='Cambió el saldo, alumno o disponibilidad. Revisa los materiales.';render();return}if(!await EduSaldoUI.confirm({title:'Confirmar entrega directa',message:`¿Confirmas la entrega a ${c.name} por ${money(total)}? Saldo restante: ${money(available(d,c.id)-total)}.`,confirmText:'Confirmar entrega'}))return;
-// Revalidar tras la confirmación, antes de guardar los cambios en una sola escritura.
-const latest=read(),child=latest?.children.find(x=>x.id===studentId);if(!child||normalizeRut(rutOf(child))!==normalizeRut(directRut.value)||total>available(latest,studentId)||cart.some(i=>{const p=latest.products.find(p=>p.id===i.id);return !p||i.qty>stock(latest,p)})){error.textContent='Los datos cambiaron. Revisa saldo y stock antes de confirmar.';render();return}
-child.balance-=total;cart.forEach(i=>latest.products.find(p=>p.id===i.id).stock-=i.qty);const delivery=markDelivery(latest,studentId,cart,null,'DIRECTA');if(save(latest)){cart=[];result.textContent=`Entrega ${delivery.id} registrada. Nuevo saldo de ${child.name}: ${money(child.balance)}.`;EduSaldoUI.toast('Entrega registrada. Saldo, cartola y stock actualizados.','success');render();$('direct-code').focus()}});
-render();
-}
-const stockList=$('stock-list');if(stockList){let full=false;
-const threshold=p=>Number.isFinite(Number(p.criticalStock))?Number(p.criticalStock):5;
-function render(){const d=read();if(!d)return;d.criticalReports??=[];
-// Un reporte permanece como constancia; cuando el producto se recupera se cierra el episodio.
-let changed=false;for(const r of d.criticalReports){const p=d.products.find(x=>x.id===r.productId);if(!r.resolvedAt&&(!p||stock(d,p)>threshold(p))){r.resolvedAt=now();changed=true}}
-if(changed&&!save(d))return;
-const q=$('stock-search').value.toLocaleLowerCase('es').trim();$('stock-search-wrap').hidden=!full;
-$('stock-view-title').textContent=full?'Todos los productos':'Productos con stock crítico';
-$('stock-view-toggle').textContent=full?'← Volver a stock crítico':'Ver todos los productos →';
-const products=d.products.filter(p=>full||stock(d,p)<=threshold(p)).filter(p=>!full||`${p.name} ${p.barcode}`.toLocaleLowerCase('es').includes(q)).sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base'}));
-$('stock-view-note').textContent=full?'Stock físico menos unidades comprometidas en reservas = total disponible. El stock crítico se calcula por producto.':'Solo se muestran alertas críticas aún no informadas. Al informar, se registra fecha y hora y se remite al sector Stock crítico del administrador (en este navegador de demostración).';
-const visible=full?products:products.filter(p=>!d.criticalReports.some(r=>r.productId===p.id&&!r.resolvedAt));
-stockList.innerHTML=visible.length?`<div class="staff-history-scroll" role="region" aria-label="${full?'Inventario completo':'Alertas de stock crítico'}" tabindex="0"><table class="staff-history-table stock-inventory-table"><thead><tr><th>Material</th><th>Stock físico</th><th>En reserva</th><th>Total disponible</th><th>Stock crítico</th>${full?'<th>Estado</th>':'<th>Acción</th>'}</tr></thead><tbody>${visible.map(p=>{const r=reserved(d,p.id),a=stock(d,p),limit=threshold(p),report=d.criticalReports.find(x=>x.productId===p.id&&!x.resolvedAt);return `<tr><td><strong>${esc(p.name)}</strong><small style="display:block">${esc(p.barcode)}</small></td><td>${p.stock}</td><td>${r}</td><td><strong>${a}</strong></td><td>≤ ${limit}</td><td>${full?`<span class="staff-badge ${a<=limit?'staff-stock-low':'staff-stock-ok'}">${a<=limit?(report?'Crítico · informado':'Crítico · pendiente'):'Normal'}</span>`:`<button type="button" class="staff-history-toggle" data-report="${p.id}">Informar</button>`}</td></tr>`}).join('')}</tbody></table></div>`:`<p class="staff-note">${full?'No se encontraron productos.':'No hay alertas críticas pendientes de informar.'}</p>`;
-}
-$('stock-view-toggle').addEventListener('click',()=>{full=!full;$('stock-search').value='';render()});$('stock-search').addEventListener('input',render);
-stockList.addEventListener('click',async e=>{const b=e.target.closest('[data-report]');if(!b)return;const id=Number(b.dataset.report),d=read(),p=d?.products.find(x=>x.id===id);if(!p||stock(d,p)>threshold(p))return render();d.criticalReports??=[];if(d.criticalReports.some(r=>r.productId===id&&!r.resolvedAt))return render();if(!await EduSaldoUI.confirm({title:'Informar stock crítico',message:`¿Registrar el aviso al administrador por ${p.name}? Disponible: ${stock(d,p)} unidad(es); umbral crítico: ${threshold(p)}.`,confirmText:'Informar'}))return;
-const latest=read(),item=latest?.products.find(x=>x.id===id);if(!item||stock(latest,item)>threshold(item))return render();latest.criticalReports??=[];if(latest.criticalReports.some(r=>r.productId===id&&!r.resolvedAt))return render();latest.criticalReports.push({id:`STC-${Date.now()}-${id}`,productId:id,productName:item.name,barcode:item.barcode,physical:item.stock,reserved:reserved(latest,id),available:stock(latest,item),criticalStock:threshold(item),reportedAt:now(),reportedBy:'Encargada de librería',resolvedAt:null});if(save(latest)){EduSaldoUI.toast('Aviso registrado para el administrador con fecha y hora.','success');render()}});render()}
-const returns=$('returns-list');if(returns){function render(){const d=read(),deliveries=(d.deliveries||[]).slice().reverse();returns.innerHTML=deliveries.length?deliveries.map(t=>`<article class="staff-order"><div class="staff-order-head"><strong>${esc(t.id)}</strong><span class="staff-pill">${esc(t.kind==='RESERVA'?'Reserva entregada':'Entrega directa')}</span></div><h2>${esc(name(d,t.child))}</h2><p>${new Date(t.createdAt).toLocaleString('es-CL')} · ${money(t.total)}</p>${t.items.map(i=>{const returned=(t.returned||[]).filter(x=>x.id===i.id).reduce((n,x)=>n+x.qty,0),left=i.qty-returned;return `<div class="staff-return-row"><div style="flex:1;min-width:150px"><strong>${esc(i.name)}</strong><p>Entregadas: ${i.qty} · Devueltas: ${returned} · Restantes: ${left}</p></div>${left?`<label>Cantidad <input type="number" id="return-qty-${esc(t.id)}-${i.id}" min="1" max="${left}" value="1"></label><label>Estado <select id="return-state-${esc(t.id)}-${i.id}"><option value="REUTILIZABLE">Reutilizable</option><option value="NO_REUTILIZABLE">No reutilizable</option></select></label><button type="button" class="staff-small" data-return="${esc(t.id)}" data-item="${i.id}">Registrar devolución</button>`:'<span class="staff-badge staff-stock-ok">Completamente devuelto</span>'}</div>`}).join('')}</article>`).join(''):'<p class="staff-note">Aún no hay entregas registradas en este navegador.</p>'}returns.addEventListener('click',async e=>{const b=e.target.closest('[data-return]');if(!b)return;const d=read(),t=(d.deliveries||[]).find(x=>x.id===b.dataset.return),id=Number(b.dataset.item),i=t?.items.find(i=>i.id===id),c=d.children.find(c=>c.id===t?.child),p=d.products.find(p=>p.id===id);if(!t||!i||!c||!p)return;const qty=Number($(`return-qty-${t.id}-${id}`).value),state=$(`return-state-${t.id}-${id}`).value,left=i.qty-(t.returned||[]).filter(x=>x.id===id).reduce((n,x)=>n+x.qty,0);if(!Number.isSafeInteger(qty)||qty<1||qty>left){EduSaldoUI.toast('Cantidad de devolución inválida.','error');return}const amount=qty*i.price;if(!await EduSaldoUI.confirm({title:'Confirmar devolución',message:`¿Reintegrar ${money(amount)} a ${c.name} por ${qty} unidad(es) de ${i.name}?`,confirmText:'Registrar devolución'}))return;c.balance+=amount;if(state==='REUTILIZABLE')p.stock+=qty;t.returned??=[];t.returned.push({id,qty,amount,state,createdAt:now()});d.movements.push({child:c.id,type:'Devolución de materiales',date:day(),createdAt:now(),amount,reference:`DEV-${t.id}-${Date.now()}`});if(save(d)){$('returns-feedback').textContent=`Devolución registrada. Saldo de ${c.name}: ${money(c.balance)}.`;EduSaldoUI.toast(`Devolución registrada. Saldo de ${c.name}: ${money(c.balance)}.`,'success');render()}});render()}
+(() => {
+  "use strict";
+  const DATA = "edusaldo2_demo",
+    $ = (id) => document.getElementById(id);
+  const money = (n) =>
+    "$" +
+    Math.trunc(Number(n) || 0)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const esc = (s) =>
+    String(s).replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
+  const active = (r) =>
+    [
+      "PENDIENTE",
+      "EN_PREPARACION",
+      "ETIQUETA_PENDIENTE",
+      "LISTA_PARA_RETIRO",
+    ].includes(r.status);
+  function read() {
+    try {
+      return JSON.parse(localStorage.getItem(DATA));
+    } catch {
+      return null;
+    }
+  }
+  function save(d) {
+    try {
+      localStorage.setItem(DATA, JSON.stringify(d));
+      return true;
+    } catch {
+      EduSaldoUI.toast(
+        "No se pudo guardar. Comprueba el almacenamiento del navegador.",
+        "error",
+      );
+      return false;
+    }
+  }
+  const name = (d, id) =>
+    d.children.find((c) => c.id === id)?.name || "Alumno no encontrado";
+  const committed = (d, id) =>
+    d.reservations
+      .filter(active)
+      .filter((r) => r.child === id)
+      .reduce((n, r) => n + r.total, 0);
+  const reserved = (d, id) =>
+    d.reservations
+      .filter(active)
+      .reduce(
+        (n, r) =>
+          n + r.items.filter((i) => i.id === id).reduce((v, i) => v + i.qty, 0),
+        0,
+      );
+  const available = (d, id) => {
+    const c = d.children.find((c) => c.id === id);
+    return c ? c.balance - committed(d, id) : 0;
+  };
+  const stock = (d, p) => p.stock - reserved(d, p.id);
+  const now = () => new Date().toISOString();
+  const day = () => {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Santiago",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const v = (k) => parts.find((x) => x.type === k).value;
+    return `${v("year")}-${v("month")}-${v("day")}`;
+  };
+  function line(i) {
+    return `<div class="staff-line"><span>${esc(i.name)} · ${i.qty} × ${money(i.price)}</span><strong>${money(i.qty * i.price)}</strong></div>`;
+  }
+  function markDelivery(d, student, items, ref, kind) {
+    const id = `ENT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const total = items.reduce((n, i) => n + i.price * i.qty, 0);
+    const delivery = {
+      id,
+      child: student,
+      items: items.map((i) => ({ ...i })),
+      total,
+      kind,
+      reservation: ref || null,
+      createdAt: now(),
+      returned: [],
+    };
+    d.deliveries ??= [];
+    d.deliveries.push(delivery);
+    d.movements.push({
+      child: student,
+      type: kind === "RESERVA" ? "Entrega de reserva" : "Entrega de materiales",
+      date: day(),
+      createdAt: delivery.createdAt,
+      amount: -total,
+      reference: id,
+    });
+    return delivery;
+  }
+  const stat = $("staff-stats");
+  if (stat) {
+    const d = read();
+    if (d) {
+      const a = d.reservations.filter((r) =>
+          ["PENDIENTE", "EN_PREPARACION", "ETIQUETA_PENDIENTE"].includes(
+            r.status,
+          ),
+        ).length,
+        b = d.reservations.filter(
+          (r) => r.status === "LISTA_PARA_RETIRO",
+        ).length,
+        c = d.products.filter((p) => stock(d, p) <= 5).length,
+        e = d.reservations.filter((r) => r.status === "ENTREGADA").length;
+      stat.innerHTML = [
+        [a, "Reservas por preparar"],
+        [b, "Reservas pendientes de entrega"],
+        [c, "Productos con disponibilidad crítica (≤ 5)"],
+        [e, "Reservas entregadas"],
+      ]
+        .map(
+          ([v, t]) =>
+            `<div class="staff-stat"><strong>${v}</strong><span>${t}</span></div>`,
+        )
+        .join("");
+    }
+  }
+  // Código 39: cada patrón contiene nueve elementos (barras/espacios alternados).
+  const code39 = {
+    "*": "nwnnwnwnn",
+    0: "nnnwwnwnn",
+    1: "wnnwnnnnw",
+    2: "nnwwnnnnw",
+    3: "wnwwnnnnn",
+    4: "nnnwwnnnw",
+    5: "wnnwwnnnn",
+    6: "nnwwwnnnn",
+    7: "nnnwnnwnw",
+    8: "wnnwnnwnn",
+    9: "nnwwnnwnn",
+    A: "wnnnnwnnw",
+    B: "nnwnnwnnw",
+    C: "wnwnnwnnn",
+    D: "nnnnwwnnw",
+    E: "wnnnwwnnn",
+    F: "nnwnwwnnn",
+    G: "nnnnnwwnw",
+    H: "wnnnnwwnn",
+    I: "nnwnnwwnn",
+    J: "nnnnwwwnn",
+    K: "wnnnnnnww",
+    L: "nnwnnnnww",
+    M: "wnwnnnnwn",
+    N: "nnnnwnnww",
+    O: "wnnnwnnwn",
+    P: "nnwnwnnwn",
+    Q: "nnnnnnwww",
+    R: "wnnnnnwwn",
+    S: "nnwnnnwwn",
+    T: "nnnnwnwwn",
+    U: "wwnnnnnnw",
+    V: "nwwnnnnnw",
+    W: "wwwnnnnnn",
+    X: "nwnnwnnnw",
+    Y: "wwnnwnnnn",
+    Z: "nwwnwnnnn",
+    "-": "nwnnnnwnw",
+  };
+  function barcodeSvg(value) {
+    const str = `*${value.toUpperCase()}*`;
+    let x = 12,
+      bars = "";
+    for (const c of str) {
+      const pattern = code39[c];
+      if (!pattern) return "";
+      for (let i = 0; i < 9; i++) {
+        const w = pattern[i] === "w" ? 5 : 2;
+        if (i % 2 === 0)
+          bars += `<rect x="${x}" y="5" width="${w}" height="57"/>`;
+        x += w;
+      }
+      x += 2;
+    }
+    return `<svg role="img" aria-label="Código de barras ${esc(value)}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x + 12} 86" preserveAspectRatio="xMidYMid meet"><g fill="#173b31">${bars}</g><text x="${x / 2 + 6}" y="80" text-anchor="middle" font-family="monospace" font-size="12" fill="#173b31">${esc(value)}</text></svg>`;
+  }
+  const list = $("staff-reservations");
+  if (list) {
+    let opened = null,
+      manualMode = false,
+      scanBusy = false,
+      view = null;
+    const paths = $("reserve-paths"),
+      work = $("reserve-work");
+    function count(i, r) {
+      return Number(r.scanned?.[i.id]) || 0;
+    }
+    function complete(r) {
+      return r.items.length > 0 && r.items.every((i) => count(i, r) === i.qty);
+    }
+    function progress(r, d) {
+      return r.items
+        .map(
+          (i) =>
+            `<div class="staff-line"><span>${esc(i.name)} <small>· ${esc(d.products.find((p) => p.id === i.id)?.barcode || "")}</small></span><strong data-progress="${i.id}">${count(i, r)} / ${i.qty}</strong></div>`,
+        )
+        .join("");
+    }
+    function renderDelivered(group, d) {
+      if (!group.length) {
+        list.innerHTML =
+          '<p class="staff-note">No hay reservas entregadas.</p>';
+        return;
+      }
+      list.innerHTML = `<div class="staff-history-scroll" role="region" aria-label="Tabla de reservas entregadas" tabindex="0"><table class="staff-history-table"><thead><tr><th scope="col">N° reserva</th><th scope="col">Alumno</th><th scope="col">Curso</th><th scope="col">Fecha de entrega</th><th scope="col">Valor</th><th scope="col">Detalle</th></tr></thead><tbody>${group
+        .map((r) => {
+          const student = d.children.find((c) => c.id === r.child),
+            expanded = opened === r.id;
+          const deliveredDate = r.deliveredAt ? new Date(r.deliveredAt) : null;
+          const dateText =
+            deliveredDate && !Number.isNaN(deliveredDate.getTime())
+              ? deliveredDate.toLocaleDateString("es-CL")
+              : "No registrada";
+          return `<tr class="staff-history-row"><td><strong>${esc(r.id)}</strong></td><td>${esc(student?.name || "Alumno")}</td><td>${esc(student?.course || "—")}</td><td>${dateText}</td><td class="staff-history-amount">${money(r.total)}</td><td><button type="button" class="staff-history-toggle" data-open="${esc(r.id)}" aria-expanded="${expanded}" aria-controls="staff-history-detail-${esc(r.id)}">${expanded ? "Cerrar detalle ↑" : "Ver detalle ↓"}</button></td></tr><tr id="staff-history-detail-${esc(r.id)}" class="staff-history-detail-row" ${expanded ? "" : "hidden"}><td colspan="6"><div class="staff-history-detail"><div class="staff-history-detail-head"><h3>Detalle de ${esc(r.id)}</h3><button type="button" class="staff-history-toggle" data-open="${esc(r.id)}">Cerrar detalle ↑</button></div><p><strong>Alumno:</strong> ${esc(student?.name || "Alumno")} · ${esc(student?.course || "—")}</p><p><strong>Código de bolsa:</strong> <code>${esc(r.bagCode || "Sin código registrado")}</code></p><p><strong>Fecha y hora de entrega:</strong> ${deliveredDate && !Number.isNaN(deliveredDate.getTime()) ? deliveredDate.toLocaleString("es-CL") : "No registrada"}</p><div class="staff-history-items">${r.items.map(line).join("")}</div><p><strong>Total entregado: ${money(r.total)}</strong></p><p class="staff-note">Solo consulta: abrir este detalle no modifica saldos, stock ni entregas.</p></div></td></tr>`;
+        })
+        .join("")}</tbody></table></div>`;
+    }
+    function render() {
+      const d = read();
+      if (!d || !view) return;
+      const rs = d.reservations
+        .slice()
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const prep = rs.filter((r) =>
+        ["PENDIENTE", "EN_PREPARACION", "ETIQUETA_PENDIENTE"].includes(
+          r.status,
+        ),
+      );
+      const deliver = rs.filter((r) => r.status === "LISTA_PARA_RETIRO");
+      const delivered = rs.filter((r) => r.status === "ENTREGADA");
+      const group =
+        view === "preparar" ? prep : view === "entregar" ? deliver : delivered;
+      if (view === "entregadas") {
+        renderDelivered(group, d);
+        return;
+      }
+      list.innerHTML = group.length
+        ? group
+            .map((r) => {
+              const preparing = ["PENDIENTE", "EN_PREPARACION"].includes(
+                  r.status,
+                ),
+                label = r.status === "ETIQUETA_PENDIENTE",
+                pickup = r.status === "LISTA_PARA_RETIRO",
+                delivered = r.status === "ENTREGADA",
+                active = opened === r.id;
+              const student = d.children.find((c) => c.id === r.child);
+              return `<article class="staff-order"><div class="staff-order-head"><strong>${esc(r.id)}</strong><span class="staff-pill">${preparing ? "EN PREPARACIÓN" : label ? "ETIQUETA POR IMPRIMIR" : delivered ? "ENTREGADA" : "PENDIENTE DE ENTREGA"}</span></div><h3>${esc(student?.name || "Alumno")} · ${esc(student?.course || "")}</h3><p>${new Date(r.createdAt).toLocaleDateString("es-CL")} · ${money(r.total)}</p>${r.items.map(line).join("")}${pickup ? `<p class="staff-bag-code"><strong>Código de bolsa:</strong> <code>${esc(r.bagCode || `BOL-${r.id}`)}</code></p>` : ""}<div class="staff-actions"><button type="button" data-open="${esc(r.id)}">${delivered ? "Ver detalle" : preparing ? "Preparar reserva" : label ? "Generar etiqueta" : "Registrar entrega"}</button>${["PENDIENTE", "LISTA_PARA_RETIRO"].includes(r.status) ? `<button type="button" class="danger-btn" data-cancel="${esc(r.id)}">Cancelar reserva</button>` : ""}</div>${active && delivered ? `<div class="staff-verify"><h4>Detalle de la reserva entregada</h4><p><strong>Alumno:</strong> ${esc(student?.name || "Alumno")} · ${esc(student?.course || "")}</p><p><strong>Reserva:</strong> ${esc(r.id)}</p><p><strong>Bolsa:</strong> ${esc(r.bagCode || "Sin código registrado")}</p><p><strong>Fecha y hora de entrega:</strong> ${r.deliveredAt ? new Date(r.deliveredAt).toLocaleString("es-CL") : "No registrada"}</p>${r.items.map(line).join("")}<p><strong>Total entregado: ${money(r.total)}</strong></p><p class="staff-note">Registro de consulta: no se puede volver a entregar ni descontar esta reserva.</p></div>` : ""}${active && preparing ? `<div class="staff-verify"><h4>Escanea cada artículo al colocarlo en la bolsa</h4>${progress(r, d)}${complete(r) ? `<p class="staff-success">Todos los artículos están en la bolsa.</p><button type="button" class="aporte-primary" data-ready="${esc(r.id)}">Generar etiqueta</button>` : `<label class="staff-label" for="verify-code">${manualMode ? "Escribe el código del artículo" : "Pistolea el artículo"}</label><div class="staff-scan"><input id="verify-code" autocomplete="off" inputmode="numeric" placeholder="${manualMode ? "Escribe el código" : "Pistolea aquí"}"></div><label class="staff-manual-toggle"><input id="manual-mode" type="checkbox" ${manualMode ? "checked" : ""}> Ingreso manual</label><div id="manual-actions" ${manualMode ? "" : "hidden"}><button type="button" class="staff-small" data-scan="${esc(r.id)}">Ingresar</button></div>`}<p id="verify-error" class="feedback-error" role="alert"></p></div>` : ""}${active && label ? `<div class="staff-verify"><h4>Etiqueta de la bolsa</h4><div class="bag-label"><strong>edusaldo.</strong><p>${esc(student?.name || "")} · ${esc(student?.course || "")}</p><p>Reserva ${esc(r.id)}</p>${barcodeSvg(r.bagCode)}</div><button type="button" class="aporte-primary" data-print="${esc(r.id)}">Imprimir etiqueta</button><p>Después de imprimir y pegar la etiqueta en la bolsa:</p><button type="button" class="staff-small" data-printed="${esc(r.id)}">Confirmar etiqueta impresa</button><p id="verify-error" class="feedback-error" role="alert"></p></div>` : ""}${active && pickup ? `<div class="staff-verify"><h4>Retiro de la reserva</h4><p class="staff-bag-code"><strong>Código de bolsa:</strong> <code>${esc(r.bagCode || `BOL-${r.id}`)}</code></p><button type="button" class="staff-small" data-print="${esc(r.id)}">Reimprimir etiqueta</button><p class="staff-note">Reimprimir no registra una entrega ni vuelve a descontar saldo o stock.</p><label class="staff-label" for="bag-scan">Escanear código de la bolsa</label><input id="bag-scan" class="staff-select" autocomplete="off" placeholder="BOL-RES-..."><label class="staff-label" for="student-scan">Escanear credencial del alumno</label><input id="student-scan" class="staff-select" autocomplete="off" placeholder="ALU-..."><p class="staff-note">Credencial de demostración de ${esc(student?.name || "")}: <strong>ALU-${r.child}</strong></p><button type="button" class="aporte-primary" data-pickup="${esc(r.id)}">Confirmar entrega</button><p id="verify-error" class="feedback-error" role="alert"></p></div>` : ""}</article>`;
+            })
+            .join("")
+        : '<p class="staff-note">No hay reservas en esta sección.</p>';
+      if (opened) $("verify-code")?.focus();
+    }
+    paths.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-view]");
+      if (!b) return;
+      view = b.dataset.view;
+      opened = null;
+      paths.hidden = true;
+      work.hidden = false;
+      $("reserve-title").textContent =
+        view === "preparar"
+          ? "Reservas por preparar"
+          : view === "entregar"
+            ? "Reservas pendientes de entrega"
+            : "Reservas entregadas";
+      render();
+    });
+    $("reserve-back").addEventListener("click", () => {
+      view = null;
+      opened = null;
+      work.hidden = true;
+      paths.hidden = false;
+    });
+    function scan(ref) {
+      if (scanBusy) return;
+      const field = $("verify-code"),
+        code = field?.value.trim();
+      if (!code) return;
+      scanBusy = true;
+      try {
+        const d = read(),
+          r = d?.reservations.find((x) => x.id === ref),
+          error = $("verify-error");
+        if (!r || !["PENDIENTE", "EN_PREPARACION"].includes(r.status)) return;
+        const i = r.items.find(
+          (i) => d.products.find((p) => p.id === i.id)?.barcode === code,
+        );
+        if (!i) {
+          error.textContent = "Este artículo no pertenece a la reserva.";
+          field.select();
+          return;
+        }
+        r.scanned ??= {};
+        if (count(i, r) >= i.qty) {
+          error.textContent = "La cantidad de este artículo ya está completa.";
+          field.value = "";
+          field.focus();
+          return;
+        }
+        r.scanned[i.id] = count(i, r) + 1;
+        r.status = "EN_PREPARACION";
+        r.preparingAt ??= now();
+        if (!save(d)) return;
+        if (complete(r)) {
+          render();
+          return;
+        }
+        const counter = list.querySelector(`[data-progress="${i.id}"]`);
+        if (counter) counter.textContent = `${r.scanned[i.id]} / ${i.qty}`;
+        field.value = "";
+        error.textContent = "";
+        field.focus();
+      } finally {
+        scanBusy = false;
+      }
+    }
+    function ready(ref) {
+      const d = read(),
+        r = d?.reservations.find((x) => x.id === ref);
+      if (
+        !r ||
+        !["PENDIENTE", "EN_PREPARACION"].includes(r.status) ||
+        !complete(r)
+      )
+        return;
+      r.status = "ETIQUETA_PENDIENTE";
+      r.bagCode ??= `BOL-${r.id}`;
+      r.labelGeneratedAt = now();
+      if (save(d)) render();
+    }
+    function printLabel(ref) {
+      const d = read(),
+        r = d?.reservations.find((x) => x.id === ref);
+      if (!r || !["ETIQUETA_PENDIENTE", "LISTA_PARA_RETIRO"].includes(r.status))
+        return;
+      const c = d.children.find((c) => c.id === r.child);
+      $("print-bag-label").innerHTML =
+        `<div class="bag-label"><strong>edusaldo.</strong><h2>${esc(c?.name || "")}</h2><p>${esc(c?.course || "")} · Reserva ${esc(r.id)}</p>${barcodeSvg(r.bagCode || `BOL-${r.id}`)}</div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+    }
+    function printed(ref) {
+      const d = read(),
+        r = d?.reservations.find((x) => x.id === ref);
+      if (!r || r.status !== "ETIQUETA_PENDIENTE") return;
+      r.status = "LISTA_PARA_RETIRO";
+      r.preparedAt = now();
+      r.labelPrintedAt = now();
+      if (save(d)) {
+        opened = null;
+        render();
+      }
+    }
+    async function pickup(ref) {
+      const d = read(),
+        r = d?.reservations.find((x) => x.id === ref),
+        error = $("verify-error");
+      if (!r || r.status !== "LISTA_PARA_RETIRO") return;
+      const bag = $("bag-scan")?.value.trim().toUpperCase(),
+        studentCode = $("student-scan")?.value.trim().toUpperCase();
+      if (bag !== (r.bagCode || `BOL-${r.id}`).toUpperCase()) {
+        error.textContent =
+          "El código de la bolsa no corresponde a esta reserva.";
+        return;
+      }
+      if (studentCode !== `ALU-${r.child}`) {
+        error.textContent =
+          "La credencial no corresponde al alumno de esta reserva.";
+        return;
+      }
+      const c = d.children.find((c) => c.id === r.child);
+      if (
+        !c ||
+        c.balance < r.total ||
+        r.items.some((i) => {
+          const p = d.products.find((p) => p.id === i.id);
+          return !p || p.stock < i.qty;
+        })
+      ) {
+        error.textContent =
+          "No se puede entregar: revisa saldo o stock físico.";
+        return;
+      }
+      if (
+        !(await EduSaldoUI.confirm({
+          title: "Confirmar entrega de reserva",
+          message: `¿Confirmas la entrega a ${c.name} y el descuento de ${money(r.total)} del saldo?`,
+          confirmText: "Confirmar entrega",
+        }))
+      )
+        return;
+      c.balance -= r.total;
+      r.items.forEach(
+        (i) => (d.products.find((p) => p.id === i.id).stock -= i.qty),
+      );
+      r.status = "ENTREGADA";
+      r.deliveredAt = now();
+      markDelivery(d, c.id, r.items, r.id, "RESERVA");
+      if (save(d)) {
+        window.EduSaldoFunctional?.audit(
+          "ENTREGAR_RESERVA",
+          "RESERVA",
+          r.id,
+          { estado: "LISTA_PARA_RETIRO" },
+          { estado: "ENTREGADA", total: r.total },
+        );
+        opened = null;
+        render();
+        EduSaldoUI.toast(
+          "Reserva entregada. Venta, saldo, cartola y stock actualizados.",
+          "success",
+        );
+      }
+    }
+    async function cancelReservation(ref) {
+      const d = read(),
+        r = d?.reservations.find((x) => x.id === ref);
+      if (!r || !["PENDIENTE", "LISTA_PARA_RETIRO"].includes(r.status)) return;
+      const reason = prompt("Motivo de cancelación (obligatorio):", "");
+      if (!reason || !reason.trim()) {
+        EduSaldoUI.toast("Debes indicar un motivo para cancelar.", "error");
+        return;
+      }
+      if (
+        !(await EduSaldoUI.confirm({
+          title: "Cancelar reserva",
+          message:
+            "La reserva quedará CANCELADA y se liberarán el saldo y stock comprometidos. No se generará venta ni devolución.",
+          confirmText: "Cancelar reserva",
+        }))
+      )
+        return;
+      const before = r.status;
+      r.status = "CANCELADA";
+      r.cancelledAt = now();
+      r.cancelReason = reason.trim();
+      r.cancelledBy = "Encargado";
+      r.scanned = {};
+      if (save(d)) {
+        window.EduSaldoFunctional?.audit(
+          "CANCELAR_RESERVA",
+          "RESERVA",
+          r.id,
+          { estado: before },
+          { estado: "CANCELADA", motivo: r.cancelReason },
+        );
+        opened = null;
+        render();
+        EduSaldoUI.toast(
+          "Reserva cancelada. Saldo y stock reservado quedaron liberados.",
+          "success",
+        );
+      }
+    }
+    list.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      if (b.dataset.open) {
+        opened =
+          view === "entregadas" && opened === b.dataset.open
+            ? null
+            : b.dataset.open;
+        render();
+      } else if (b.dataset.scan) scan(b.dataset.scan);
+      else if (b.dataset.ready) ready(b.dataset.ready);
+      else if (b.dataset.print) printLabel(b.dataset.print);
+      else if (b.dataset.printed) printed(b.dataset.printed);
+      else if (b.dataset.pickup) pickup(b.dataset.pickup);
+      else if (b.dataset.cancel) cancelReservation(b.dataset.cancel);
+    });
+    list.addEventListener("change", (e) => {
+      if (e.target.id !== "manual-mode") return;
+      manualMode = e.target.checked;
+      const actions = $("manual-actions");
+      if (actions) actions.hidden = !manualMode;
+      const field = $("verify-code"),
+        label = list.querySelector('label[for="verify-code"]');
+      if (label)
+        label.textContent = manualMode
+          ? "Escribe el código del artículo"
+          : "Pistolea el artículo";
+      if (field) {
+        field.placeholder = manualMode ? "Escribe el código" : "Pistolea aquí";
+        field.value = "";
+        field.focus();
+      }
+    });
+    list.addEventListener("input", (e) => {
+      if (e.target.id !== "verify-code" || manualMode || !opened || scanBusy)
+        return;
+      const code = e.target.value.trim();
+      if (!code) return;
+      const d = read(),
+        r = d?.reservations.find((x) => x.id === opened);
+      if (
+        r?.items.some(
+          (i) => d.products.find((p) => p.id === i.id)?.barcode === code,
+        )
+      )
+        scan(opened);
+    });
+    list.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && e.target.id === "verify-code") {
+        e.preventDefault();
+        if (!manualMode && e.target.value.trim()) scan(opened);
+      } else if (
+        e.key === "Enter" &&
+        ["bag-scan", "student-scan"].includes(e.target.id)
+      ) {
+        e.preventDefault();
+        if (e.target.id === "bag-scan") $("student-scan")?.focus();
+        else pickup(opened);
+      }
+    });
+  }
+  // Etapa 33: entrega directa por RUT, sin selector visible de alumnos.
+  const directRut = $("direct-rut");
+  if (directRut) {
+    let studentId = null,
+      cart = [];
+    const normalizeRut = (v) =>
+      String(v || "")
+        .replace(/[^0-9kK]/g, "")
+        .toUpperCase();
+    function validRut(value) {
+      const v = normalizeRut(value);
+      if (Object.values(demoRut).some((r) => normalizeRut(r) === v))
+        return true;
+      if (!/^[0-9]{7,8}[0-9K]$/.test(v)) return false;
+      let sum = 0,
+        mult = 2;
+      for (let i = v.length - 2; i >= 0; i--) {
+        sum += Number(v[i]) * mult;
+        mult = mult === 7 ? 2 : mult + 1;
+      }
+      const dv = 11 - (sum % 11);
+      return v.at(-1) === (dv === 11 ? "0" : dv === 10 ? "K" : String(dv));
+    }
+    // RUT ficticios para los dos alumnos de la demostración, incluso en navegadores con datos anteriores.
+    const demoRut = { 1: "12.345.678-5", 2: "23.456.789-6" };
+    const rutOf = (c) => c.rut || demoRut[c.id] || "";
+    const error = $("direct-error"),
+      studentError = $("direct-student-error"),
+      result = $("direct-result");
+    function render() {
+      const d = read(),
+        c = d?.children.find((x) => x.id === studentId),
+        balance = c ? available(d, c.id) : 0,
+        total = cart.reduce((n, i) => n + i.qty * i.price, 0),
+        enough = !!c && total <= balance,
+        stockOk =
+          !!d &&
+          cart.every((i) => {
+            const p = d.products.find((p) => p.id === i.id);
+            return p && i.qty <= stock(d, p);
+          });
+      $("direct-student-info").hidden = !c;
+      $("direct-change").hidden = !c;
+      $("direct-materials").hidden = !c;
+      $("direct-rut").readOnly = !!c;
+      $("direct-search").disabled = !!c;
+      $("direct-student-info").innerHTML = c
+        ? `<div><span class="staff-badge staff-stock-ok">Alumno identificado</span><h3>${esc(c.name)}</h3><p>${esc(c.course)} · RUT ${esc(rutOf(c))}</p></div><div><small>Saldo disponible para compras</small><strong>${money(balance)}</strong></div>`
+        : "";
+      $("direct-cart").innerHTML = cart.length
+        ? `<div class="direct-cart-scroll"><table class="direct-cart-table"><thead><tr><th>Material</th><th>Cant.</th><th>Subtotal</th><th></th></tr></thead><tbody>${cart.map((i) => `<tr><td><strong>${esc(i.name)}</strong><small>${money(i.price)} c/u</small></td><td>${i.qty}</td><td>${money(i.qty * i.price)}</td><td><button type="button" class="staff-history-toggle" data-remove="${i.id}" aria-label="Quitar una unidad de ${esc(i.name)}">− 1</button></td></tr>`).join("")}</tbody></table></div>`
+        : '<p class="staff-note">Aún no hay materiales escaneados.</p>';
+      $("direct-balance").textContent = c ? money(balance) : "—";
+      $("direct-total").textContent = money(total);
+      $("direct-remaining").textContent = c ? money(balance - total) : "—";
+      $("direct-remaining").classList.toggle(
+        "direct-negative",
+        !!c && total > balance,
+      );
+      $("direct-status").textContent = !c
+        ? "Identifica al alumno para comenzar."
+        : !cart.length
+          ? "Escanea los materiales que lleva el alumno."
+          : !stockOk
+            ? "Stock insuficiente: revisa los materiales."
+            : !enough
+              ? "Saldo insuficiente: no se puede confirmar la entrega."
+              : `Saldo suficiente para entregar ${cart.reduce((n, i) => n + i.qty, 0)} unidad(es).`;
+      $("direct-confirm").disabled = !c || !cart.length || !enough || !stockOk;
+    }
+    function searchStudent() {
+      studentError.textContent = "";
+      error.textContent = "";
+      result.textContent = "";
+      const value = directRut.value.trim();
+      if (!validRut(value)) {
+        studentError.textContent =
+          "Ingresa un RUT válido con su dígito verificador.";
+        return;
+      }
+      const d = read();
+      if (!d) {
+        studentError.textContent = "No se pudieron cargar los datos de prueba.";
+        return;
+      }
+      const c = (d.children || []).find(
+        (c) => normalizeRut(rutOf(c)) === normalizeRut(value),
+      );
+      if (!c) {
+        studentError.textContent =
+          "No existe una cuenta de alumno asociada a ese RUT.";
+        return;
+      }
+      if (c.age < 12) {
+        studentError.textContent =
+          "Este alumno es menor de 12 años: sus materiales se gestionan mediante reserva del apoderado.";
+        return;
+      }
+      studentId = c.id;
+      cart = [];
+      render();
+      $("direct-code").focus();
+    }
+    $("direct-search").addEventListener("click", searchStudent);
+    directRut.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        searchStudent();
+      }
+    });
+    $("direct-change").addEventListener("click", () => {
+      studentId = null;
+      cart = [];
+      directRut.value = "";
+      studentError.textContent = "";
+      error.textContent = "";
+      result.textContent = "";
+      $("direct-code").value = "";
+      render();
+      directRut.focus();
+    });
+    const productSku = (p) => p.sku || `SKU-${String(p.id).padStart(6, "0")}`;
+    const eduCode = (p) => p.eduCode || `EDU-${String(p.id).padStart(6, "0")}`;
+    function addProduct(p) {
+      const d = read(),
+        c = d?.children.find((c) => c.id === studentId);
+      error.textContent = "";
+      result.textContent = "";
+      if (!c) {
+        error.textContent = "Primero identifica al alumno por su RUT.";
+        return;
+      }
+      if (!p) {
+        error.textContent = "Material no encontrado en el catálogo.";
+        return;
+      }
+      const old = cart.find((i) => i.id === p.id);
+      if ((old?.qty || 0) >= stock(d, p)) {
+        error.textContent = "No quedan unidades disponibles para esta entrega.";
+        return;
+      }
+      const total = cart.reduce((n, i) => n + i.qty * i.price, 0);
+      if (total + p.price > available(d, studentId)) {
+        error.textContent = "Saldo insuficiente para agregar este material.";
+        render();
+        return;
+      }
+      if (old) old.qty++;
+      else cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 });
+      $("direct-code").value = "";
+      const n = $("direct-name");
+      if (n) n.value = "";
+      const r = $("direct-name-results");
+      if (r) r.innerHTML = "";
+      render();
+      $("direct-code").focus();
+    }
+    function add() {
+      const d = read(),
+        code = $("direct-code").value.trim().toUpperCase(),
+        p = d?.products.find((p) =>
+          [p.barcode, productSku(p), eduCode(p)]
+            .filter(Boolean)
+            .some((v) => String(v).toUpperCase() === code),
+        );
+      addProduct(p);
+    }
+    $("direct-add").addEventListener("click", add);
+    $("direct-code").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        add();
+      }
+    });
+    function searchByName() {
+      const d = read(),
+        q = ($("direct-name")?.value || "").trim().toLocaleLowerCase("es");
+      const box = $("direct-name-results");
+      if (!box) return;
+      if (!q) {
+        box.innerHTML =
+          '<p class="staff-note">Escribe parte del nombre del material.</p>';
+        return;
+      }
+      const matches = (d?.products || [])
+        .filter((p) => p.name.toLocaleLowerCase("es").includes(q))
+        .sort((a, b) => a.name.localeCompare(b.name, "es"))
+        .slice(0, 12);
+      box.innerHTML = matches.length
+        ? matches
+            .map(
+              (p) =>
+                `<button type="button" class="direct-product-choice" data-direct-product="${p.id}"><span><strong>${esc(p.name)}</strong><small>${esc(productSku(p))} · ${p.barcode ? `Código ${esc(p.barcode)}` : `Código EduSaldo ${esc(eduCode(p))}`}</small></span><span>${money(p.price)} · disp. ${Math.max(0, stock(d, p))}</span></button>`,
+            )
+            .join("")
+        : '<p class="staff-note">No encontramos materiales con ese nombre.</p>';
+    }
+    $("direct-name-search")?.addEventListener("click", searchByName);
+    $("direct-name")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        searchByName();
+      }
+    });
+    $("direct-name-results")?.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-direct-product]");
+      if (!b) return;
+      const d = read(),
+        p = d?.products.find((x) => x.id === Number(b.dataset.directProduct));
+      addProduct(p);
+    });
+    $("direct-cart").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-remove]");
+      if (!b) return;
+      const i = cart.find((x) => x.id === Number(b.dataset.remove));
+      if (i) {
+        i.qty--;
+        if (!i.qty) cart = cart.filter((x) => x !== i);
+        error.textContent = "";
+        render();
+      }
+    });
+    $("direct-confirm").addEventListener("click", async () => {
+      const d = read(),
+        c = d?.children.find((c) => c.id === studentId),
+        total = cart.reduce((n, i) => n + i.price * i.qty, 0);
+      error.textContent = "";
+      if (
+        !c ||
+        c.age < 12 ||
+        normalizeRut(rutOf(c)) !== normalizeRut(directRut.value) ||
+        !cart.length ||
+        total > available(d, studentId) ||
+        cart.some((i) => {
+          const p = d.products.find((p) => p.id === i.id);
+          return !p || i.qty > stock(d, p);
+        })
+      ) {
+        error.textContent =
+          "Cambió el saldo, alumno o disponibilidad. Revisa los materiales.";
+        render();
+        return;
+      }
+      if (
+        !(await EduSaldoUI.confirm({
+          title: "Confirmar entrega directa",
+          message: `¿Confirmas la entrega a ${c.name} por ${money(total)}? Saldo restante: ${money(available(d, c.id) - total)}.`,
+          confirmText: "Confirmar entrega",
+        }))
+      )
+        return;
+      // Revalidar tras la confirmación, antes de guardar los cambios en una sola escritura.
+      const latest = read(),
+        child = latest?.children.find((x) => x.id === studentId);
+      if (
+        !child ||
+        normalizeRut(rutOf(child)) !== normalizeRut(directRut.value) ||
+        total > available(latest, studentId) ||
+        cart.some((i) => {
+          const p = latest.products.find((p) => p.id === i.id);
+          return !p || i.qty > stock(latest, p);
+        })
+      ) {
+        error.textContent =
+          "Los datos cambiaron. Revisa saldo y stock antes de confirmar.";
+        render();
+        return;
+      }
+      child.balance -= total;
+      cart.forEach(
+        (i) => (latest.products.find((p) => p.id === i.id).stock -= i.qty),
+      );
+      const delivery = markDelivery(latest, studentId, cart, null, "DIRECTA");
+      if (save(latest)) {
+        cart = [];
+        result.textContent = `Entrega ${delivery.id} registrada. Nuevo saldo de ${child.name}: ${money(child.balance)}.`;
+        EduSaldoUI.toast(
+          "Entrega registrada. Saldo, cartola y stock actualizados.",
+          "success",
+        );
+        render();
+        $("direct-code").focus();
+      }
+    });
+    render();
+  }
+  const stockList = $("stock-list");
+  if (stockList) {
+    let full = false;
+    const threshold = (p) =>
+      Number.isFinite(Number(p.criticalStock)) ? Number(p.criticalStock) : 5;
+    function render() {
+      const d = read();
+      if (!d) return;
+      d.criticalReports ??= [];
+      // Un reporte permanece como constancia; cuando el producto se recupera se cierra el episodio.
+      let changed = false;
+      for (const r of d.criticalReports) {
+        const p = d.products.find((x) => x.id === r.productId);
+        if (!r.resolvedAt && (!p || stock(d, p) > threshold(p))) {
+          r.resolvedAt = now();
+          changed = true;
+        }
+      }
+      if (changed && !save(d)) return;
+      const q = $("stock-search").value.toLocaleLowerCase("es").trim();
+      $("stock-search-wrap").hidden = !full;
+      $("stock-view-title").textContent = full
+        ? "Todos los productos"
+        : "Productos con stock crítico";
+      $("stock-view-toggle").textContent = full
+        ? "← Volver a stock crítico"
+        : "Ver todos los productos →";
+      const products = d.products
+        .filter((p) => full || stock(d, p) <= threshold(p))
+        .filter(
+          (p) =>
+            !full ||
+            `${p.name} ${p.barcode}`.toLocaleLowerCase("es").includes(q),
+        )
+        .sort((a, b) =>
+          a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+        );
+      $("stock-view-note").textContent = full
+        ? "Stock físico menos unidades comprometidas en reservas = total disponible. El stock crítico se calcula por producto."
+        : "Solo se muestran alertas críticas aún no informadas. Al informar, se registra fecha y hora y se remite al sector Stock crítico del administrador (en este navegador de demostración).";
+      const visible = full
+        ? products
+        : products.filter(
+            (p) =>
+              !d.criticalReports.some(
+                (r) => r.productId === p.id && !r.resolvedAt,
+              ),
+          );
+      stockList.innerHTML = visible.length
+        ? `<div class="staff-history-scroll" role="region" aria-label="${full ? "Inventario completo" : "Alertas de stock crítico"}" tabindex="0"><table class="staff-history-table stock-inventory-table"><thead><tr><th>Material</th><th>Stock físico</th><th>En reserva</th><th>Total disponible</th><th>Stock crítico</th>${full ? "<th>Estado</th>" : "<th>Acción</th>"}</tr></thead><tbody>${visible
+            .map((p) => {
+              const r = reserved(d, p.id),
+                a = stock(d, p),
+                limit = threshold(p),
+                report = d.criticalReports.find(
+                  (x) => x.productId === p.id && !x.resolvedAt,
+                );
+              return `<tr><td><strong>${esc(p.name)}</strong><small style="display:block">${esc(p.barcode)}</small></td><td>${p.stock}</td><td>${r}</td><td><strong>${a}</strong></td><td>≤ ${limit}</td><td>${full ? `<span class="staff-badge ${a <= limit ? "staff-stock-low" : "staff-stock-ok"}">${a <= limit ? (report ? "Crítico · informado" : "Crítico · pendiente") : "Normal"}</span>` : `<button type="button" class="staff-history-toggle" data-report="${p.id}">Informar</button>`}</td></tr>`;
+            })
+            .join("")}</tbody></table></div>`
+        : `<p class="staff-note">${full ? "No se encontraron productos." : "No hay alertas críticas pendientes de informar."}</p>`;
+    }
+    $("stock-view-toggle").addEventListener("click", () => {
+      full = !full;
+      $("stock-search").value = "";
+      render();
+    });
+    $("stock-search").addEventListener("input", render);
+    stockList.addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-report]");
+      if (!b) return;
+      const id = Number(b.dataset.report),
+        d = read(),
+        p = d?.products.find((x) => x.id === id);
+      if (!p || stock(d, p) > threshold(p)) return render();
+      d.criticalReports ??= [];
+      if (d.criticalReports.some((r) => r.productId === id && !r.resolvedAt))
+        return render();
+      if (
+        !(await EduSaldoUI.confirm({
+          title: "Informar stock crítico",
+          message: `¿Registrar el aviso al administrador por ${p.name}? Disponible: ${stock(d, p)} unidad(es); umbral crítico: ${threshold(p)}.`,
+          confirmText: "Informar",
+        }))
+      )
+        return;
+      const latest = read(),
+        item = latest?.products.find((x) => x.id === id);
+      if (!item || stock(latest, item) > threshold(item)) return render();
+      latest.criticalReports ??= [];
+      if (
+        latest.criticalReports.some((r) => r.productId === id && !r.resolvedAt)
+      )
+        return render();
+      latest.criticalReports.push({
+        id: `STC-${Date.now()}-${id}`,
+        productId: id,
+        productName: item.name,
+        barcode: item.barcode,
+        physical: item.stock,
+        reserved: reserved(latest, id),
+        available: stock(latest, item),
+        criticalStock: threshold(item),
+        reportedAt: now(),
+        reportedBy: "Encargada de librería",
+        resolvedAt: null,
+      });
+      if (save(latest)) {
+        EduSaldoUI.toast(
+          "Aviso registrado para el administrador con fecha y hora.",
+          "success",
+        );
+        render();
+      }
+    });
+    render();
+  }
+  const returns = $("returns-list");
+  if (returns) {
+    function render() {
+      const d = read(),
+        deliveries = (d.deliveries || []).slice().reverse();
+      returns.innerHTML = deliveries.length
+        ? deliveries
+            .map(
+              (t) =>
+                `<article class="staff-order"><div class="staff-order-head"><strong>${esc(t.id)}</strong><span class="staff-pill">${esc(t.kind === "RESERVA" ? "Reserva entregada" : "Entrega directa")}</span></div><h2>${esc(name(d, t.child))}</h2><p>${new Date(t.createdAt).toLocaleString("es-CL")} · ${money(t.total)}</p>${t.items
+                  .map((i) => {
+                    const returned = (t.returned || [])
+                        .filter((x) => x.id === i.id)
+                        .reduce((n, x) => n + x.qty, 0),
+                      left = i.qty - returned;
+                    return `<div class="staff-return-row"><div style="flex:1;min-width:150px"><strong>${esc(i.name)}</strong><p>Entregadas: ${i.qty} · Devueltas: ${returned} · Restantes: ${left}</p></div>${left ? `<label>Cantidad <input type="number" id="return-qty-${esc(t.id)}-${i.id}" min="1" max="${left}" value="1"></label><label>Estado <select id="return-state-${esc(t.id)}-${i.id}"><option value="REUTILIZABLE">Reutilizable</option><option value="NO_REUTILIZABLE">No reutilizable</option></select></label><button type="button" class="staff-small" data-return="${esc(t.id)}" data-item="${i.id}">Registrar devolución</button>` : '<span class="staff-badge staff-stock-ok">Completamente devuelto</span>'}</div>`;
+                  })
+                  .join("")}</article>`,
+            )
+            .join("")
+        : '<p class="staff-note">Aún no hay entregas registradas en este navegador.</p>';
+    }
+    returns.addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-return]");
+      if (!b) return;
+      const d = read(),
+        t = (d.deliveries || []).find((x) => x.id === b.dataset.return),
+        id = Number(b.dataset.item),
+        i = t?.items.find((i) => i.id === id),
+        c = d.children.find((c) => c.id === t?.child),
+        p = d.products.find((p) => p.id === id);
+      if (!t || !i || !c || !p) return;
+      const qty = Number($(`return-qty-${t.id}-${id}`).value),
+        state = $(`return-state-${t.id}-${id}`).value,
+        left =
+          i.qty -
+          (t.returned || [])
+            .filter((x) => x.id === id)
+            .reduce((n, x) => n + x.qty, 0);
+      if (!Number.isSafeInteger(qty) || qty < 1 || qty > left) {
+        EduSaldoUI.toast("Cantidad de devolución inválida.", "error");
+        return;
+      }
+      const amount = qty * i.price;
+      if (
+        !(await EduSaldoUI.confirm({
+          title: "Confirmar devolución",
+          message: `¿Reintegrar ${money(amount)} a ${c.name} por ${qty} unidad(es) de ${i.name}?`,
+          confirmText: "Registrar devolución",
+        }))
+      )
+        return;
+      c.balance += amount;
+      if (state === "REUTILIZABLE") p.stock += qty;
+      t.returned ??= [];
+      t.returned.push({ id, qty, amount, state, createdAt: now() });
+      d.movements.push({
+        child: c.id,
+        type: "Devolución de materiales",
+        date: day(),
+        createdAt: now(),
+        amount,
+        reference: `DEV-${t.id}-${Date.now()}`,
+      });
+      if (save(d)) {
+        $("returns-feedback").textContent =
+          `Devolución registrada. Saldo de ${c.name}: ${money(c.balance)}.`;
+        EduSaldoUI.toast(
+          `Devolución registrada. Saldo de ${c.name}: ${money(c.balance)}.`,
+          "success",
+        );
+        render();
+      }
+    });
+    render();
+  }
 })();

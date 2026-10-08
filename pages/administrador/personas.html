@@ -1,1 +1,128 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Usuarios y alumnos · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="administrador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><nav class="header-nav"><a href="inicio.html">Inicio</a><a href="finanzas.html">Cuenta Librería</a><a href="inventario-admin.html">Inventario</a><a href="compras.html">Gestión de Compras</a><a href="pagos.html">Pagos</a><a href="configuracion.html">Configuración</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><span class="eyebrow">CIERRE FUNCIONAL 1–3 Y 8</span><h1>Usuarios, cuentas familiares y alumnos</h1><a class="back-link" href="configuracion.html">← Configuración</a><div class="functional-grid"><section class="card functional-card"><h2>Cuenta familiar</h2><form id="family-form"><div class="field"><label>RUT titular</label><input id="fam-rut" class="input" required></div><div class="field"><label>Nombre</label><input id="fam-name" class="input" required></div><div class="field"><label>Apellidos</label><input id="fam-last" class="input" required></div><div class="field"><label>Correo</label><input id="fam-mail" class="input" type="email" required></div><button class="btn">Crear cuenta</button></form><p class="muted">Sin autorregistro. Se crea en PRIMER_ACCESO con contraseña temporal.</p></section><section class="card functional-card"><h2>Alumno</h2><form id="student-form"><div class="field"><label>RUT alumno</label><input id="stu-rut" class="input" required></div><div class="field"><label>Nombre y apellidos</label><input id="stu-name" class="input" required></div><div class="field"><label>Curso</label><input id="stu-course" class="input" required></div><div class="field"><label>Edad</label><input id="stu-age" class="input" type="number" min="1" max="25" required></div><div class="field"><label>Cuenta familiar</label><select id="stu-family" class="staff-select" required></select></div><button class="btn">Agregar alumno</button></form></section></div><section class="card"><h2>Importación masiva de nómina</h2><p>CSV con columnas: <strong>rutAlumno,nombreAlumno,curso,edad,rutApoderado,nombreApoderado,apellidosApoderado,correo</strong>. Los RUT existentes no se duplican y los conflictos quedan informados.</p><input id="roster-file" type="file" accept=".csv,text/csv" class="input"><button id="roster-import" class="btn secondary" type="button">Validar e importar</button><p id="roster-feedback" class="form-feedback"></p></section><section class="card"><h2>Cuentas familiares</h2><div id="family-list"></div></section><section class="card"><h2>Alumnos</h2><div id="student-list"></div></section></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/cierre-funcional.js"></script><script src="../../assets/js/admin-personas.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Usuarios y alumnos · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="administrador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        >
+        <nav class="header-nav">
+          <a href="inicio.html">Inicio</a
+          ><a href="finanzas.html">Cuenta Librería</a
+          ><a href="inventario-admin.html">Inventario</a
+          ><a href="compras.html">Gestión de Compras</a
+          ><a href="pagos.html">Pagos</a
+          ><a href="configuracion.html">Configuración</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <span class="eyebrow">CIERRE FUNCIONAL 1–3 Y 8</span>
+      <h1>Usuarios, cuentas familiares y alumnos</h1>
+      <a class="back-link" href="configuracion.html">← Configuración</a>
+      <div class="functional-grid">
+        <section class="card functional-card">
+          <h2>Cuenta familiar</h2>
+          <form id="family-form">
+            <div class="field">
+              <label>RUT titular</label
+              ><input id="fam-rut" class="input" required />
+            </div>
+            <div class="field">
+              <label>Nombre</label
+              ><input id="fam-name" class="input" required />
+            </div>
+            <div class="field">
+              <label>Apellidos</label
+              ><input id="fam-last" class="input" required />
+            </div>
+            <div class="field">
+              <label>Correo</label
+              ><input id="fam-mail" class="input" type="email" required />
+            </div>
+            <button class="btn">Crear cuenta</button>
+          </form>
+          <p class="muted">
+            Sin autorregistro. Se crea en PRIMER_ACCESO con contraseña temporal.
+          </p>
+        </section>
+        <section class="card functional-card">
+          <h2>Alumno</h2>
+          <form id="student-form">
+            <div class="field">
+              <label>RUT alumno</label
+              ><input id="stu-rut" class="input" required />
+            </div>
+            <div class="field">
+              <label>Nombre y apellidos</label
+              ><input id="stu-name" class="input" required />
+            </div>
+            <div class="field">
+              <label>Curso</label
+              ><input id="stu-course" class="input" required />
+            </div>
+            <div class="field">
+              <label>Edad</label
+              ><input
+                id="stu-age"
+                class="input"
+                type="number"
+                min="1"
+                max="25"
+                required
+              />
+            </div>
+            <div class="field">
+              <label>Cuenta familiar</label
+              ><select id="stu-family" class="staff-select" required></select>
+            </div>
+            <button class="btn">Agregar alumno</button>
+          </form>
+        </section>
+      </div>
+      <section class="card">
+        <h2>Importación masiva de nómina</h2>
+        <p>
+          CSV con columnas:
+          <strong
+            >rutAlumno,nombreAlumno,curso,edad,rutApoderado,nombreApoderado,apellidosApoderado,correo</strong
+          >. Los RUT existentes no se duplican y los conflictos quedan
+          informados.
+        </p>
+        <input
+          id="roster-file"
+          type="file"
+          accept=".csv,text/csv"
+          class="input"
+        /><button id="roster-import" class="btn secondary" type="button">
+          Validar e importar
+        </button>
+        <p id="roster-feedback" class="form-feedback"></p>
+      </section>
+      <section class="card">
+        <h2>Cuentas familiares</h2>
+        <div id="family-list"></div>
+      </section>
+      <section class="card">
+        <h2>Alumnos</h2>
+        <div id="student-list"></div>
+      </section>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+    <script src="../../assets/js/admin-personas.js"></script>
+  </body>
+</html>

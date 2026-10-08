@@ -1,1 +1,68 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Autorizaciones pendientes · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="autorizador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><button class="mobile-nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-main-nav"><span aria-hidden="true">☰</span><span class="mobile-nav-label">Menú</span></button><nav id="mobile-main-nav" class="header-nav" aria-label="Módulo de control"><a href="inicio.html">Inicio</a><a href="gestion.html">Cuenta Librería</a><a href="autorizaciones.html">Autorizaciones pendientes</a><a href="historial.html">Historial</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout" type="button">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><header class="top"><span class="logo">EduSaldo · Control y segunda firma</span><div class="avatar" data-initial></div></header><span class="eyebrow">SEGUNDA FIRMA</span><h1>Autorizaciones pendientes</h1><a class="back-link" href="inicio.html">← Volver al Inicio</a><p class="muted">Solo se muestran gestiones que requieren tu aprobación o rechazo.</p><section class="card finance-section"><h2>Ajustes de stock pendientes</h2><div id="auth-stock"></div></section><section class="card finance-section"><h2>Pagos pendientes de segunda firma</h2><div id="auth-payments"></div></section><p id="auth-feedback" class="form-feedback"></p></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/autorizaciones.js"></script><script src="../../assets/js/cierre-funcional.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Autorizaciones pendientes · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="autorizador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        ><button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobile-main-nav"
+        >
+          <span aria-hidden="true">☰</span
+          ><span class="mobile-nav-label">Menú</span>
+        </button>
+        <nav
+          id="mobile-main-nav"
+          class="header-nav"
+          aria-label="Módulo de control"
+        >
+          <a href="inicio.html">Inicio</a
+          ><a href="gestion.html">Cuenta Librería</a
+          ><a href="autorizaciones.html">Autorizaciones pendientes</a
+          ><a href="historial.html">Historial</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout" type="button">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <header class="top">
+        <span class="logo">EduSaldo · Control y segunda firma</span>
+        <div class="avatar" data-initial></div>
+      </header>
+      <span class="eyebrow">SEGUNDA FIRMA</span>
+      <h1>Autorizaciones pendientes</h1>
+      <a class="back-link" href="inicio.html">← Volver al Inicio</a>
+      <p class="muted">
+        Solo se muestran gestiones que requieren tu aprobación o rechazo.
+      </p>
+      <section class="card finance-section">
+        <h2>Ajustes de stock pendientes</h2>
+        <div id="auth-stock"></div>
+      </section>
+      <section class="card finance-section">
+        <h2>Pagos pendientes de segunda firma</h2>
+        <div id="auth-payments"></div>
+      </section>
+      <p id="auth-feedback" class="form-feedback"></p>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/autorizaciones.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+  </body>
+</html>

@@ -1,1 +1,179 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Entrega directa · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="libreria"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><button class="mobile-nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-main-nav"><span aria-hidden="true">☰</span><span class="mobile-nav-label">Menú</span></button><nav id="mobile-main-nav" class="header-nav" aria-label="Módulo encargado"><a href="inicio.html">Inicio</a><a href="reservas.html">Reservas</a><a href="entrega-directa.html">Entrega directa</a><a href="inventario.html">Inventario</a><a href="recepcion-compras.html">Recepción compras</a><a href="devoluciones.html">Devoluciones</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout" type="button">Salir ↗</button></div></div></header><main class="dashboard staff-dashboard"><a class="back-link" href="inicio.html">← Inicio del encargado</a><section class="staff-panel"><span class="eyebrow">ENTREGA PRESENCIAL · ALUMNOS DE 12 AÑOS O MÁS</span><h1>Entrega directa de materiales</h1><p>Identifica al alumno, registra los códigos de barras y confirma los materiales entregados con cargo a su saldo. No se recibe dinero.</p><div class="direct-layout"><div class="direct-main"><section class="direct-step"><h2>1. Identificar al alumno</h2><p class="staff-note">Solicita su cédula de identidad o credencial del colegio y verifica visualmente que corresponda al alumno.</p><label class="staff-label" for="direct-rut">RUT del alumno</label><div class="staff-scan"><input id="direct-rut" class="staff-select" inputmode="text" autocomplete="off" placeholder="Ej.: 23.456.789-6"><button type="button" id="direct-search">Buscar alumno</button></div><p class="staff-note">Dato ficticio para probar: Tomás Pérez, 23.456.789-6. La credencial y el documento se revisan presencialmente.</p><p id="direct-student-error" class="form-feedback feedback-error" role="alert"></p><div id="direct-student-info" class="direct-student-info" aria-live="polite" hidden></div><button type="button" class="staff-small direct-change" id="direct-change" hidden>Cambiar alumno</button></section><section class="direct-step" id="direct-materials" hidden><h2>2. Escanear materiales</h2><label class="staff-label" for="direct-code">Código de barras</label><div class="staff-scan"><input id="direct-code" inputmode="numeric" autocomplete="off" placeholder="Escanear o escribir código"><button type="button" id="direct-add">Agregar material</button></div><p class="staff-note">Puedes escanear, escribir el código de barras/SKU/código EduSaldo o buscar el material por nombre.</p><div class="direct-manual-search"><label class="staff-label" for="direct-name">Búsqueda manual por nombre</label><div class="staff-scan"><input id="direct-name" autocomplete="off" placeholder="Ej.: cuaderno, lápiz, cartulina"><button type="button" id="direct-name-search">Buscar</button></div><div id="direct-name-results" class="direct-name-results" aria-live="polite"></div></div><p id="direct-error" class="form-feedback feedback-error" role="alert"></p><div id="direct-cart" class="direct-cart"></div></section></div><aside class="direct-summary"><h2>Resumen de entrega</h2><div class="staff-line"><span>Saldo disponible</span><strong id="direct-balance">—</strong></div><div class="staff-line"><span>Total materiales</span><strong id="direct-total">$0</strong></div><div class="staff-line"><span>Saldo después de entregar</span><strong id="direct-remaining">—</strong></div><p id="direct-status" class="staff-note" aria-live="polite">Identifica al alumno para comenzar.</p><button type="button" class="aporte-primary" id="direct-confirm" disabled>Confirmar entrega</button><p id="direct-result" class="staff-success" aria-live="polite"></p></aside></div></section></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/messages.js"></script><script src="../../assets/js/libreria.js"></script><script src="../../assets/js/cierre-funcional.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Entrega directa · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="libreria">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        ><button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobile-main-nav"
+        >
+          <span aria-hidden="true">☰</span
+          ><span class="mobile-nav-label">Menú</span>
+        </button>
+        <nav
+          id="mobile-main-nav"
+          class="header-nav"
+          aria-label="Módulo encargado"
+        >
+          <a href="inicio.html">Inicio</a><a href="reservas.html">Reservas</a
+          ><a href="entrega-directa.html">Entrega directa</a
+          ><a href="inventario.html">Inventario</a
+          ><a href="recepcion-compras.html">Recepción compras</a
+          ><a href="devoluciones.html">Devoluciones</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout" type="button">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard staff-dashboard">
+      <a class="back-link" href="inicio.html">← Inicio del encargado</a>
+      <section class="staff-panel">
+        <span class="eyebrow"
+          >ENTREGA PRESENCIAL · ALUMNOS DE 12 AÑOS O MÁS</span
+        >
+        <h1>Entrega directa de materiales</h1>
+        <p>
+          Identifica al alumno, registra los códigos de barras y confirma los
+          materiales entregados con cargo a su saldo. No se recibe dinero.
+        </p>
+        <div class="direct-layout">
+          <div class="direct-main">
+            <section class="direct-step">
+              <h2>1. Identificar al alumno</h2>
+              <p class="staff-note">
+                Solicita su cédula de identidad o credencial del colegio y
+                verifica visualmente que corresponda al alumno.
+              </p>
+              <label class="staff-label" for="direct-rut">RUT del alumno</label>
+              <div class="staff-scan">
+                <input
+                  id="direct-rut"
+                  class="staff-select"
+                  inputmode="text"
+                  autocomplete="off"
+                  placeholder="Ej.: 23.456.789-6"
+                /><button type="button" id="direct-search">
+                  Buscar alumno
+                </button>
+              </div>
+              <p class="staff-note">
+                Dato ficticio para probar: Tomás Pérez, 23.456.789-6. La
+                credencial y el documento se revisan presencialmente.
+              </p>
+              <p
+                id="direct-student-error"
+                class="form-feedback feedback-error"
+                role="alert"
+              ></p>
+              <div
+                id="direct-student-info"
+                class="direct-student-info"
+                aria-live="polite"
+                hidden
+              ></div>
+              <button
+                type="button"
+                class="staff-small direct-change"
+                id="direct-change"
+                hidden
+              >
+                Cambiar alumno
+              </button>
+            </section>
+            <section class="direct-step" id="direct-materials" hidden>
+              <h2>2. Escanear materiales</h2>
+              <label class="staff-label" for="direct-code"
+                >Código de barras</label
+              >
+              <div class="staff-scan">
+                <input
+                  id="direct-code"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  placeholder="Escanear o escribir código"
+                /><button type="button" id="direct-add">
+                  Agregar material
+                </button>
+              </div>
+              <p class="staff-note">
+                Puedes escanear, escribir el código de barras/SKU/código
+                EduSaldo o buscar el material por nombre.
+              </p>
+              <div class="direct-manual-search">
+                <label class="staff-label" for="direct-name"
+                  >Búsqueda manual por nombre</label
+                >
+                <div class="staff-scan">
+                  <input
+                    id="direct-name"
+                    autocomplete="off"
+                    placeholder="Ej.: cuaderno, lápiz, cartulina"
+                  /><button type="button" id="direct-name-search">
+                    Buscar
+                  </button>
+                </div>
+                <div
+                  id="direct-name-results"
+                  class="direct-name-results"
+                  aria-live="polite"
+                ></div>
+              </div>
+              <p
+                id="direct-error"
+                class="form-feedback feedback-error"
+                role="alert"
+              ></p>
+              <div id="direct-cart" class="direct-cart"></div>
+            </section>
+          </div>
+          <aside class="direct-summary">
+            <h2>Resumen de entrega</h2>
+            <div class="staff-line">
+              <span>Saldo disponible</span
+              ><strong id="direct-balance">—</strong>
+            </div>
+            <div class="staff-line">
+              <span>Total materiales</span><strong id="direct-total">$0</strong>
+            </div>
+            <div class="staff-line">
+              <span>Saldo después de entregar</span
+              ><strong id="direct-remaining">—</strong>
+            </div>
+            <p id="direct-status" class="staff-note" aria-live="polite">
+              Identifica al alumno para comenzar.
+            </p>
+            <button
+              type="button"
+              class="aporte-primary"
+              id="direct-confirm"
+              disabled
+            >
+              Confirmar entrega
+            </button>
+            <p id="direct-result" class="staff-success" aria-live="polite"></p>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/messages.js"></script>
+    <script src="../../assets/js/libreria.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+  </body>
+</html>

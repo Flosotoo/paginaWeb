@@ -1,1 +1,132 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Creación de Productos · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="administrador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><button class="mobile-nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-main-nav"><span aria-hidden="true">☰</span><span class="mobile-nav-label">Menú</span></button><nav id="mobile-main-nav" class="header-nav" aria-label="Módulo administrador"><a href="inicio.html">Inicio</a><a href="finanzas.html">Cuenta Librería</a><a class="active" href="inventario-admin.html">Inventario</a><a href="compras.html">Gestión de Compras</a><a href="pagos.html">Pagos</a><a href="configuracion.html">Configuración</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout" type="button">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><header class="top"><span class="logo">Panel administrativo</span><div class="avatar" data-initial></div></header><span class="eyebrow">CATÁLOGO MAESTRO</span><h1>Creación de Productos</h1><a class="back-link" href="inventario-admin.html">← Volver a Inventario y Valorización</a><p class="muted">Crea productos, define costo, utilidad sobre costo y precio de venta. EduSaldo asigna automáticamente SKU y código interno.</p><section class="card product-admin-form"><h2>Nuevo producto</h2><div class="product-form-grid"><label>Nombre<input id="prod-name" class="input" placeholder="Ej.: Cartulina española azul"></label><label>Categoría<select id="prod-category" class="input"><option value="">Selecciona una categoría</option></select><small>Las categorías se administran en Administrador → Categorías.</small></label><label>Código de barras fabricante <small>(opcional)</small><input id="prod-barcode" class="input" placeholder="Si el producto ya trae código"></label><label>Costo unitario<input id="prod-cost" class="input money-input" inputmode="numeric" placeholder="Ej.: 1.500"></label><label>Utilidad % sobre costo<input id="prod-margin" class="input" type="number" min="0" step="1" value="40" inputmode="numeric"></label><label>Precio de venta calculado<input id="prod-price" class="input" readonly></label><label>Stock inicial<input id="prod-stock" class="input" type="number" min="0" step="1" value="0"></label><label>Stock crítico<input id="prod-critical" class="input" type="number" min="0" step="1" value="5"></label></div><div class="product-code-preview"><span>SKU: <strong id="prod-next-sku">—</strong></span><span>Código EduSaldo: <strong id="prod-next-edu">—</strong></span></div><button id="prod-save" class="btn" type="button">Guardar producto</button><p id="prod-feedback" class="form-feedback" aria-live="polite"></p></section></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/admin-productos.js"></script><script src="../../assets/js/cierre-funcional.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Creación de Productos · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="administrador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        ><button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobile-main-nav"
+        >
+          <span aria-hidden="true">☰</span
+          ><span class="mobile-nav-label">Menú</span>
+        </button>
+        <nav
+          id="mobile-main-nav"
+          class="header-nav"
+          aria-label="Módulo administrador"
+        >
+          <a href="inicio.html">Inicio</a
+          ><a href="finanzas.html">Cuenta Librería</a
+          ><a class="active" href="inventario-admin.html">Inventario</a
+          ><a href="compras.html">Gestión de Compras</a
+          ><a href="pagos.html">Pagos</a
+          ><a href="configuracion.html">Configuración</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout" type="button">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <header class="top">
+        <span class="logo">Panel administrativo</span>
+        <div class="avatar" data-initial></div>
+      </header>
+      <span class="eyebrow">CATÁLOGO MAESTRO</span>
+      <h1>Creación de Productos</h1>
+      <a class="back-link" href="inventario-admin.html"
+        >← Volver a Inventario y Valorización</a
+      >
+      <p class="muted">
+        Crea productos, define costo, utilidad sobre costo y precio de venta.
+        EduSaldo asigna automáticamente SKU y código interno.
+      </p>
+      <section class="card product-admin-form">
+        <h2>Nuevo producto</h2>
+        <div class="product-form-grid">
+          <label
+            >Nombre<input
+              id="prod-name"
+              class="input"
+              placeholder="Ej.: Cartulina española azul" /></label
+          ><label
+            >Categoría<select id="prod-category" class="input">
+              <option value="">Selecciona una categoría</option></select
+            ><small
+              >Las categorías se administran en Administrador →
+              Categorías.</small
+            ></label
+          ><label
+            >Código de barras fabricante <small>(opcional)</small
+            ><input
+              id="prod-barcode"
+              class="input"
+              placeholder="Si el producto ya trae código" /></label
+          ><label
+            >Costo unitario<input
+              id="prod-cost"
+              class="input money-input"
+              inputmode="numeric"
+              placeholder="Ej.: 1.500" /></label
+          ><label
+            >Utilidad % sobre costo<input
+              id="prod-margin"
+              class="input"
+              type="number"
+              min="0"
+              step="1"
+              value="40"
+              inputmode="numeric" /></label
+          ><label
+            >Precio de venta calculado<input
+              id="prod-price"
+              class="input"
+              readonly /></label
+          ><label
+            >Stock inicial<input
+              id="prod-stock"
+              class="input"
+              type="number"
+              min="0"
+              step="1"
+              value="0" /></label
+          ><label
+            >Stock crítico<input
+              id="prod-critical"
+              class="input"
+              type="number"
+              min="0"
+              step="1"
+              value="5"
+          /></label>
+        </div>
+        <div class="product-code-preview">
+          <span>SKU: <strong id="prod-next-sku">—</strong></span
+          ><span>Código EduSaldo: <strong id="prod-next-edu">—</strong></span>
+        </div>
+        <button id="prod-save" class="btn" type="button">
+          Guardar producto
+        </button>
+        <p id="prod-feedback" class="form-feedback" aria-live="polite"></p>
+      </section>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/admin-productos.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+  </body>
+</html>

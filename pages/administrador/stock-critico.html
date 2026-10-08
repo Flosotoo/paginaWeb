@@ -1,1 +1,80 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Stock crítico · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="administrador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><button class="mobile-nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-main-nav"><span aria-hidden="true">☰</span><span class="mobile-nav-label">Menú</span></button><nav id="mobile-main-nav" class="header-nav" aria-label="Módulo administrador"><a href="inicio.html">Inicio</a><a href="finanzas.html">Cuenta Librería</a><a href="inventario-admin.html">Inventario</a><a href="compras.html">Gestión de Compras</a><a href="pagos.html">Pagos</a><a href="configuracion.html">Configuración</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout" type="button">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><header class="top"><span class="logo">EduSaldo · Administrador</span><div class="avatar" data-initial></div></header><span class="eyebrow">CONTROL DE EXISTENCIAS</span><h1>Stock crítico</h1><a class="back-link" href="stock.html">← Volver a Stock</a><p class="muted">Se muestran únicamente avisos críticos vigentes, ordenados del más antiguo al más nuevo.</p><section class="card finance-section"><div class="finance-head"><div><h2>Stock crítico vigente</h2><p class="muted">Cuando el stock vuelve a superar el umbral, el aviso deja de aparecer en esta lista.</p></div><button class="btn secondary" data-export-target="admin-critical-list" data-export-title="Stock crítico">Exportar a Excel</button></div><div id="admin-critical-list"></div></section></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/cierre-funcional.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Stock crítico · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="administrador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        ><button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobile-main-nav"
+        >
+          <span aria-hidden="true">☰</span
+          ><span class="mobile-nav-label">Menú</span>
+        </button>
+        <nav
+          id="mobile-main-nav"
+          class="header-nav"
+          aria-label="Módulo administrador"
+        >
+          <a href="inicio.html">Inicio</a
+          ><a href="finanzas.html">Cuenta Librería</a
+          ><a href="inventario-admin.html">Inventario</a
+          ><a href="compras.html">Gestión de Compras</a
+          ><a href="pagos.html">Pagos</a
+          ><a href="configuracion.html">Configuración</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout" type="button">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <header class="top">
+        <span class="logo">EduSaldo · Administrador</span>
+        <div class="avatar" data-initial></div>
+      </header>
+      <span class="eyebrow">CONTROL DE EXISTENCIAS</span>
+      <h1>Stock crítico</h1>
+      <a class="back-link" href="stock.html">← Volver a Stock</a>
+      <p class="muted">
+        Se muestran únicamente avisos críticos vigentes, ordenados del más
+        antiguo al más nuevo.
+      </p>
+      <section class="card finance-section">
+        <div class="finance-head">
+          <div>
+            <h2>Stock crítico vigente</h2>
+            <p class="muted">
+              Cuando el stock vuelve a superar el umbral, el aviso deja de
+              aparecer en esta lista.
+            </p>
+          </div>
+          <button
+            class="btn secondary"
+            data-export-target="admin-critical-list"
+            data-export-title="Stock crítico"
+          >
+            Exportar a Excel
+          </button>
+        </div>
+        <div id="admin-critical-list"></div>
+      </section>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+  </body>
+</html>

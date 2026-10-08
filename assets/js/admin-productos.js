@@ -1,18 +1,289 @@
-(()=>{'use strict';
-const DATA='edusaldo2_demo',$=id=>document.getElementById(id),money=n=>'$'+Math.round(Number(n)||0).toLocaleString('es-CL'),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(() => {
+  "use strict";
+  const DATA = "edusaldo2_demo",
+    $ = (id) => document.getElementById(id),
+    money = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("es-CL"),
+    esc = (s) =>
+      String(s ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
 
-const code39={'*':'nwnnwnwnn','0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnnw','3':'wnwwnnnnn','4':'nnnwwnnnw','5':'wnnwwnnnn','6':'nnwwwnnnn','7':'nnnwnnwnw','8':'wnnwnnwnn','9':'nnwwnnwnn','A':'wnnnnwnnw','B':'nnwnnwnnw','C':'wnwnnwnnn','D':'nnnnwwnnw','E':'wnnnwwnnn','F':'nnwnwwnnn','G':'nnnnnwwnw','H':'wnnnnwwnn','I':'nnwnnwwnn','J':'nnnnwwwnn','K':'wnnnnnnww','L':'nnwnnnnww','M':'wnwnnnnwn','N':'nnnnwnnww','O':'wnnnwnnwn','P':'nnwnwnnwn','Q':'nnnnnnwww','R':'wnnnnnwwn','S':'nnwnnnwwn','T':'nnnnwnwwn','U':'wwnnnnnnw','V':'nwwnnnnnw','W':'wwwnnnnnn','X':'nwnnwnnnw','Y':'wwnnwnnnn','Z':'nwwnwnnnn','-':'nwnnnnwnw'};
-function barcodeSvg(value){const str=`*${value.toUpperCase()}*`;let x=12,bars='';for(const c of str){const pattern=code39[c];if(!pattern)return '';for(let i=0;i<9;i++){const w=pattern[i]==='w'?5:2;if(i%2===0)bars+=`<rect x="${x}" y="5" width="${w}" height="57"/>`;x+=w}x+=2}return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x+12} 86" style="width:100%;height:90px"><g fill="#111">${bars}</g><text x="${x/2+6}" y="80" text-anchor="middle" font-family="monospace" font-size="12" fill="#111">${esc(value)}</text></svg>`}
-function read(){try{return JSON.parse(localStorage.getItem(DATA))}catch{return null}}function save(d){localStorage.setItem(DATA,JSON.stringify(d))}
-const defaultCategories=['Cuadernos','Escritura','Papeles y cartulinas','Arte y manualidades','Adhesivos','Geometría','Organización y archivo','Tecnología y accesorios','Otros'];
-function ensureCategories(d){d.categories??=[];[...defaultCategories,...(d.products||[]).map(p=>p.category).filter(Boolean)].forEach(n=>{if(!d.categories.some(c=>c.name.toLowerCase()===n.toLowerCase()))d.categories.push({id:`CAT-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name:n,active:true})});return d}
-function loadCategories(d){ensureCategories(d);const el=$('prod-category'),current=el.value;el.innerHTML='<option value="">Selecciona una categoría</option>'+d.categories.filter(c=>c.active!==false).sort((a,b)=>a.name.localeCompare(b.name,'es')).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');if([...el.options].some(o=>o.value===current))el.value=current}
-const sku=p=>p.sku||`SKU-${String(p.id).padStart(6,'0')}`,edu=p=>p.eduCode||`EDU-${String(p.id).padStart(6,'0')}`;
-function migrate(){const d=read();if(!d?.products)return null;let ch=false;const before=JSON.stringify(d.categories||[]);ensureCategories(d);if(before!==JSON.stringify(d.categories||[]))ch=true;d.products.forEach(p=>{if(!p.sku){p.sku=sku(p);ch=true}if(!p.eduCode){p.eduCode=edu(p);ch=true}if(!Number.isFinite(Number(p.cost))){p.cost=Math.round(Number(p.price||0)/1.4);ch=true}if(!Number.isFinite(Number(p.marginPct))){p.marginPct=p.cost?Math.round(((p.price-p.cost)/p.cost)*1000)/10:0;ch=true}if(!Number.isFinite(Number(p.criticalStock))){p.criticalStock=5;ch=true}});if(ch)save(d);return d}
-function nextId(d){return Math.max(0,...d.products.map(p=>Number(p.id)||0))+1}function updateNext(){const d=migrate();if(!d)return;loadCategories(d);const id=nextId(d);$('prod-next-sku').textContent=`SKU-${String(id).padStart(6,'0')}`;$('prod-next-edu').textContent=`EDU-${String(id).padStart(6,'0')}`}
-function pesosValor(v){return Number(String(v||'').replace(/[^0-9]/g,''))||0}function formateaPesosInput(el){const n=pesosValor(el.value);el.value=n?n.toLocaleString('es-CL'):''}function calc(){const c=pesosValor($('prod-cost').value),m=Math.trunc(Number($('prod-margin').value)||0);$('prod-margin').value=m<0?0:m;$('prod-price').value=c?money(Math.round(c*(1+m/100))):''} $('prod-cost').addEventListener('input',calc);$('prod-cost').addEventListener('blur',e=>{formateaPesosInput(e.target);calc()});$('prod-margin').addEventListener('input',calc);
-function render(){const d=migrate(), list=$('prod-list'), filter=$('prod-filter');if(!d||!list)return;const q=(filter?.value||'').trim().toLowerCase();const rows=d.products.filter(p=>!q||[p.name,p.category,sku(p),edu(p),p.barcode].some(v=>String(v||'').toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name,'es'));list.innerHTML=`<div class="staff-history-scroll"><table class="staff-history-table product-table"><thead><tr><th>SKU</th><th>Producto</th><th>Costo</th><th>Utilidad</th><th>Venta</th><th>Stock crítico</th><th>Código</th><th data-export-ignore>Etiqueta</th></tr></thead><tbody>${rows.map(p=>`<tr><td><strong>${esc(sku(p))}</strong></td><td>${esc(p.name)}<small>${esc(p.category)}</small></td><td>${money(p.cost)}</td><td>${Number(p.marginPct||0).toLocaleString('es-CL')}%</td><td><strong>${money(p.price)}</strong></td><td>${p.criticalStock}</td><td>${p.barcode?esc(p.barcode):esc(edu(p))}</td><td data-export-ignore>${p.barcode?'<span class="staff-note">Usa código fabricante</span>':`<button class="staff-history-toggle" data-label="${p.id}">Imprimir etiqueta</button>`}</td></tr>`).join('')}</tbody></table></div>`}
-$('prod-save').addEventListener('click',()=>{const d=migrate(),name=$('prod-name').value.trim(),category=$('prod-category').value.trim(),barcode=$('prod-barcode').value.trim(),cost=pesosValor($('prod-cost').value),margin=Math.trunc(Number($('prod-margin').value)),stock=Number($('prod-stock').value),critical=Number($('prod-critical').value),fb=$('prod-feedback');fb.textContent='';if(!name||!category||!Number.isFinite(cost)||cost<0||!Number.isFinite(margin)||margin<0||!Number.isInteger(margin)||!Number.isInteger(stock)||stock<0||!Number.isInteger(critical)||critical<0){fb.textContent='Completa nombre, categoría, costo, utilidad y stocks con valores válidos.';fb.className='form-feedback feedback-error';return}if(barcode&&d.products.some(p=>p.barcode===barcode)){fb.textContent='Ese código de barras ya está asociado a otro producto.';fb.className='form-feedback feedback-error';return}const id=nextId(d),price=Math.round(cost*(1+margin/100));d.products.push({id,name,category,price,stock,barcode:barcode||'',sku:`SKU-${String(id).padStart(6,'0')}`,eduCode:`EDU-${String(id).padStart(6,'0')}`,cost,marginPct:margin,criticalStock:critical});save(d);fb.textContent=`Producto creado. SKU-${String(id).padStart(6,'0')} · Precio de venta ${money(price)}.`;fb.className='form-feedback physical-success';['prod-name','prod-barcode','prod-cost'].forEach(x=>$(x).value='');$('prod-category').value='';$('prod-margin').value='40';$('prod-stock').value='0';$('prod-critical').value='5';calc();updateNext();render()});
-$('prod-filter')?.addEventListener('input',render);$('prod-list')?.addEventListener('click',e=>{const b=e.target.closest('[data-label]');if(!b)return;const d=migrate(),p=d.products.find(x=>x.id===Number(b.dataset.label));if(!p)return;const w=window.open('','_blank','width=520,height=420');w.document.write(`<!doctype html><html><head><title>Etiqueta ${esc(p.name)}</title><style>body{font-family:Arial;padding:24px}.label{width:360px;border:2px solid #111;padding:20px;text-align:center}.bars{margin:12px 0}h2{margin:0 0 8px}.price{font-size:26px;font-weight:bold}@media print{button{display:none}}</style></head><body><div class="label"><h2>${esc(p.name)}</h2><div>${esc(sku(p))}</div><div class="bars">${barcodeSvg(edu(p))}</div><div class="price">${money(p.price)}</div></div><p><button onclick="window.print()">Imprimir etiqueta</button></p></body></html>`);w.document.close()});
-updateNext();calc();render();
+  const code39 = {
+    "*": "nwnnwnwnn",
+    0: "nnnwwnwnn",
+    1: "wnnwnnnnw",
+    2: "nnwwnnnnw",
+    3: "wnwwnnnnn",
+    4: "nnnwwnnnw",
+    5: "wnnwwnnnn",
+    6: "nnwwwnnnn",
+    7: "nnnwnnwnw",
+    8: "wnnwnnwnn",
+    9: "nnwwnnwnn",
+    A: "wnnnnwnnw",
+    B: "nnwnnwnnw",
+    C: "wnwnnwnnn",
+    D: "nnnnwwnnw",
+    E: "wnnnwwnnn",
+    F: "nnwnwwnnn",
+    G: "nnnnnwwnw",
+    H: "wnnnnwwnn",
+    I: "nnwnnwwnn",
+    J: "nnnnwwwnn",
+    K: "wnnnnnnww",
+    L: "nnwnnnnww",
+    M: "wnwnnnnwn",
+    N: "nnnnwnnww",
+    O: "wnnnwnnwn",
+    P: "nnwnwnnwn",
+    Q: "nnnnnnwww",
+    R: "wnnnnnwwn",
+    S: "nnwnnnwwn",
+    T: "nnnnwnwwn",
+    U: "wwnnnnnnw",
+    V: "nwwnnnnnw",
+    W: "wwwnnnnnn",
+    X: "nwnnwnnnw",
+    Y: "wwnnwnnnn",
+    Z: "nwwnwnnnn",
+    "-": "nwnnnnwnw",
+  };
+  function barcodeSvg(value) {
+    const str = `*${value.toUpperCase()}*`;
+    let x = 12,
+      bars = "";
+    for (const c of str) {
+      const pattern = code39[c];
+      if (!pattern) return "";
+      for (let i = 0; i < 9; i++) {
+        const w = pattern[i] === "w" ? 5 : 2;
+        if (i % 2 === 0)
+          bars += `<rect x="${x}" y="5" width="${w}" height="57"/>`;
+        x += w;
+      }
+      x += 2;
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x + 12} 86" style="width:100%;height:90px"><g fill="#111">${bars}</g><text x="${x / 2 + 6}" y="80" text-anchor="middle" font-family="monospace" font-size="12" fill="#111">${esc(value)}</text></svg>`;
+  }
+  function read() {
+    try {
+      return JSON.parse(localStorage.getItem(DATA));
+    } catch {
+      return null;
+    }
+  }
+  function save(d) {
+    localStorage.setItem(DATA, JSON.stringify(d));
+  }
+  const defaultCategories = [
+    "Cuadernos",
+    "Escritura",
+    "Papeles y cartulinas",
+    "Arte y manualidades",
+    "Adhesivos",
+    "Geometría",
+    "Organización y archivo",
+    "Tecnología y accesorios",
+    "Otros",
+  ];
+  function ensureCategories(d) {
+    d.categories ??= [];
+    [
+      ...defaultCategories,
+      ...(d.products || []).map((p) => p.category).filter(Boolean),
+    ].forEach((n) => {
+      if (!d.categories.some((c) => c.name.toLowerCase() === n.toLowerCase()))
+        d.categories.push({
+          id: `CAT-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: n,
+          active: true,
+        });
+    });
+    return d;
+  }
+  function loadCategories(d) {
+    ensureCategories(d);
+    const el = $("prod-category"),
+      current = el.value;
+    el.innerHTML =
+      '<option value="">Selecciona una categoría</option>' +
+      d.categories
+        .filter((c) => c.active !== false)
+        .sort((a, b) => a.name.localeCompare(b.name, "es"))
+        .map((c) => `<option value="${esc(c.name)}">${esc(c.name)}</option>`)
+        .join("");
+    if ([...el.options].some((o) => o.value === current)) el.value = current;
+  }
+  const sku = (p) => p.sku || `SKU-${String(p.id).padStart(6, "0")}`,
+    edu = (p) => p.eduCode || `EDU-${String(p.id).padStart(6, "0")}`;
+  function migrate() {
+    const d = read();
+    if (!d?.products) return null;
+    let ch = false;
+    const before = JSON.stringify(d.categories || []);
+    ensureCategories(d);
+    if (before !== JSON.stringify(d.categories || [])) ch = true;
+    d.products.forEach((p) => {
+      if (!p.sku) {
+        p.sku = sku(p);
+        ch = true;
+      }
+      if (!p.eduCode) {
+        p.eduCode = edu(p);
+        ch = true;
+      }
+      if (!Number.isFinite(Number(p.cost))) {
+        p.cost = Math.round(Number(p.price || 0) / 1.4);
+        ch = true;
+      }
+      if (!Number.isFinite(Number(p.marginPct))) {
+        p.marginPct = p.cost
+          ? Math.round(((p.price - p.cost) / p.cost) * 1000) / 10
+          : 0;
+        ch = true;
+      }
+      if (!Number.isFinite(Number(p.criticalStock))) {
+        p.criticalStock = 5;
+        ch = true;
+      }
+    });
+    if (ch) save(d);
+    return d;
+  }
+  function nextId(d) {
+    return Math.max(0, ...d.products.map((p) => Number(p.id) || 0)) + 1;
+  }
+  function updateNext() {
+    const d = migrate();
+    if (!d) return;
+    loadCategories(d);
+    const id = nextId(d);
+    $("prod-next-sku").textContent = `SKU-${String(id).padStart(6, "0")}`;
+    $("prod-next-edu").textContent = `EDU-${String(id).padStart(6, "0")}`;
+  }
+  function pesosValor(v) {
+    return Number(String(v || "").replace(/[^0-9]/g, "")) || 0;
+  }
+  function formateaPesosInput(el) {
+    const n = pesosValor(el.value);
+    el.value = n ? n.toLocaleString("es-CL") : "";
+  }
+  function calc() {
+    const c = pesosValor($("prod-cost").value),
+      m = Math.trunc(Number($("prod-margin").value) || 0);
+    $("prod-margin").value = m < 0 ? 0 : m;
+    $("prod-price").value = c ? money(Math.round(c * (1 + m / 100))) : "";
+  }
+  $("prod-cost").addEventListener("input", calc);
+  $("prod-cost").addEventListener("blur", (e) => {
+    formateaPesosInput(e.target);
+    calc();
+  });
+  $("prod-margin").addEventListener("input", calc);
+  function render() {
+    const d = migrate(),
+      list = $("prod-list"),
+      filter = $("prod-filter");
+    if (!d || !list) return;
+    const q = (filter?.value || "").trim().toLowerCase();
+    const rows = d.products
+      .filter(
+        (p) =>
+          !q ||
+          [p.name, p.category, sku(p), edu(p), p.barcode].some((v) =>
+            String(v || "")
+              .toLowerCase()
+              .includes(q),
+          ),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    list.innerHTML = `<div class="staff-history-scroll"><table class="staff-history-table product-table"><thead><tr><th>SKU</th><th>Producto</th><th>Costo</th><th>Utilidad</th><th>Venta</th><th>Stock crítico</th><th>Código</th><th data-export-ignore>Etiqueta</th></tr></thead><tbody>${rows.map((p) => `<tr><td><strong>${esc(sku(p))}</strong></td><td>${esc(p.name)}<small>${esc(p.category)}</small></td><td>${money(p.cost)}</td><td>${Number(p.marginPct || 0).toLocaleString("es-CL")}%</td><td><strong>${money(p.price)}</strong></td><td>${p.criticalStock}</td><td>${p.barcode ? esc(p.barcode) : esc(edu(p))}</td><td data-export-ignore>${p.barcode ? '<span class="staff-note">Usa código fabricante</span>' : `<button class="staff-history-toggle" data-label="${p.id}">Imprimir etiqueta</button>`}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+  $("prod-save").addEventListener("click", () => {
+    const d = migrate(),
+      name = $("prod-name").value.trim(),
+      category = $("prod-category").value.trim(),
+      barcode = $("prod-barcode").value.trim(),
+      cost = pesosValor($("prod-cost").value),
+      margin = Math.trunc(Number($("prod-margin").value)),
+      stock = Number($("prod-stock").value),
+      critical = Number($("prod-critical").value),
+      fb = $("prod-feedback");
+    fb.textContent = "";
+    if (
+      !name ||
+      !category ||
+      !Number.isFinite(cost) ||
+      cost < 0 ||
+      !Number.isFinite(margin) ||
+      margin < 0 ||
+      !Number.isInteger(margin) ||
+      !Number.isInteger(stock) ||
+      stock < 0 ||
+      !Number.isInteger(critical) ||
+      critical < 0
+    ) {
+      fb.textContent =
+        "Completa nombre, categoría, costo, utilidad y stocks con valores válidos.";
+      fb.className = "form-feedback feedback-error";
+      return;
+    }
+    if (barcode && d.products.some((p) => p.barcode === barcode)) {
+      fb.textContent = "Ese código de barras ya está asociado a otro producto.";
+      fb.className = "form-feedback feedback-error";
+      return;
+    }
+    const id = nextId(d),
+      price = Math.round(cost * (1 + margin / 100));
+    d.products.push({
+      id,
+      name,
+      category,
+      price,
+      stock,
+      barcode: barcode || "",
+      sku: `SKU-${String(id).padStart(6, "0")}`,
+      eduCode: `EDU-${String(id).padStart(6, "0")}`,
+      cost,
+      marginPct: margin,
+      criticalStock: critical,
+    });
+    save(d);
+    fb.textContent = `Producto creado. SKU-${String(id).padStart(6, "0")} · Precio de venta ${money(price)}.`;
+    fb.className = "form-feedback physical-success";
+    ["prod-name", "prod-barcode", "prod-cost"].forEach(
+      (x) => ($(x).value = ""),
+    );
+    $("prod-category").value = "";
+    $("prod-margin").value = "40";
+    $("prod-stock").value = "0";
+    $("prod-critical").value = "5";
+    calc();
+    updateNext();
+    render();
+  });
+  $("prod-filter")?.addEventListener("input", render);
+  $("prod-list")?.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-label]");
+    if (!b) return;
+    const d = migrate(),
+      p = d.products.find((x) => x.id === Number(b.dataset.label));
+    if (!p) return;
+    const w = window.open("", "_blank", "width=520,height=420");
+    w.document.write(
+      `<!doctype html><html><head><title>Etiqueta ${esc(p.name)}</title><style>body{font-family:Arial;padding:24px}.label{width:360px;border:2px solid #111;padding:20px;text-align:center}.bars{margin:12px 0}h2{margin:0 0 8px}.price{font-size:26px;font-weight:bold}@media print{button{display:none}}</style></head><body><div class="label"><h2>${esc(p.name)}</h2><div>${esc(sku(p))}</div><div class="bars">${barcodeSvg(edu(p))}</div><div class="price">${money(p.price)}</div></div><p><button onclick="window.print()">Imprimir etiqueta</button></p></body></html>`,
+    );
+    w.document.close();
+  });
+  updateNext();
+  calc();
+  render();
 })();

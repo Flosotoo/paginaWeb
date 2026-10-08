@@ -1,1 +1,104 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crear Orden de Compra · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="administrador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><button class="mobile-nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-main-nav"><span aria-hidden="true">☰</span><span class="mobile-nav-label">Menú</span></button><nav id="mobile-main-nav" class="header-nav" aria-label="Módulo administrador"><a href="inicio.html">Inicio</a><a href="finanzas.html">Cuenta Librería</a><a href="inventario-admin.html">Inventario</a><a class="active" href="compras.html">Gestión de Compras</a><a href="pagos.html">Pagos</a><a href="configuracion.html">Configuración</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout" type="button">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><header class="top"><span class="logo">EduSaldo · Administrador</span><div class="avatar" data-initial></div></header><span class="eyebrow">GESTIÓN DE COMPRAS</span><h1>Crear Orden de Compra</h1><a class="back-link" href="compras.html">← Volver a Gestión de Compras</a><section id="orden" class="card"><h2>Nueva Orden de Compra</h2><p class="muted">La OC se confecciona con valores netos. EduSaldo calcula IVA 19% y total.</p><div class="field"><label for="po-supplier">Proveedor</label><select id="po-supplier" class="input"></select></div><div class="field autocomplete-box"><label for="po-product-search">Agregar producto</label><input id="po-product-search" class="input" placeholder="Comienza escribiendo nombre, SKU o código"><div id="po-product-results" class="autocomplete-results"></div></div><div class="staff-history-scroll"><table class="staff-history-table purchase-lines"><thead><tr><th>SKU</th><th>Producto</th><th>Cantidad</th><th>Neto unitario</th><th>Neto línea</th><th></th></tr></thead><tbody id="po-lines"></tbody></table></div><div class="purchase-total"><div><span>Neto</span><strong id="po-net">$0</strong></div><div><span>IVA 19%</span><strong id="po-vat">$0</strong></div><div><span>TOTAL OC</span><strong id="po-total">$0</strong></div></div><p id="po-feedback" class="form-feedback"></p><button id="po-save" class="btn">Emitir Orden de Compra</button></section><section class="card"><h2>Órdenes emitidas</h2><div id="po-list"></div></section></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/compras.js"></script><script src="../../assets/js/cierre-funcional.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Crear Orden de Compra · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="administrador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        ><button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobile-main-nav"
+        >
+          <span aria-hidden="true">☰</span
+          ><span class="mobile-nav-label">Menú</span>
+        </button>
+        <nav
+          id="mobile-main-nav"
+          class="header-nav"
+          aria-label="Módulo administrador"
+        >
+          <a href="inicio.html">Inicio</a
+          ><a href="finanzas.html">Cuenta Librería</a
+          ><a href="inventario-admin.html">Inventario</a
+          ><a class="active" href="compras.html">Gestión de Compras</a
+          ><a href="pagos.html">Pagos</a
+          ><a href="configuracion.html">Configuración</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout" type="button">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <header class="top">
+        <span class="logo">EduSaldo · Administrador</span>
+        <div class="avatar" data-initial></div>
+      </header>
+      <span class="eyebrow">GESTIÓN DE COMPRAS</span>
+      <h1>Crear Orden de Compra</h1>
+      <a class="back-link" href="compras.html">← Volver a Gestión de Compras</a>
+      <section id="orden" class="card">
+        <h2>Nueva Orden de Compra</h2>
+        <p class="muted">
+          La OC se confecciona con valores netos. EduSaldo calcula IVA 19% y
+          total.
+        </p>
+        <div class="field">
+          <label for="po-supplier">Proveedor</label
+          ><select id="po-supplier" class="input"></select>
+        </div>
+        <div class="field autocomplete-box">
+          <label for="po-product-search">Agregar producto</label
+          ><input
+            id="po-product-search"
+            class="input"
+            placeholder="Comienza escribiendo nombre, SKU o código"
+          />
+          <div id="po-product-results" class="autocomplete-results"></div>
+        </div>
+        <div class="staff-history-scroll">
+          <table class="staff-history-table purchase-lines">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Neto unitario</th>
+                <th>Neto línea</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="po-lines"></tbody>
+          </table>
+        </div>
+        <div class="purchase-total">
+          <div><span>Neto</span><strong id="po-net">$0</strong></div>
+          <div><span>IVA 19%</span><strong id="po-vat">$0</strong></div>
+          <div><span>TOTAL OC</span><strong id="po-total">$0</strong></div>
+        </div>
+        <p id="po-feedback" class="form-feedback"></p>
+        <button id="po-save" class="btn">Emitir Orden de Compra</button>
+      </section>
+      <section class="card">
+        <h2>Órdenes emitidas</h2>
+        <div id="po-list"></div>
+      </section>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/compras.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+  </body>
+</html>

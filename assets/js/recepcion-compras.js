@@ -1,5 +1,164 @@
-(()=>{'use strict';const DATA='edusaldo2_demo',$=id=>document.getElementById(id),money=n=>'$'+Math.round(Number(n)||0).toLocaleString('es-CL'),pesosValor=v=>Number(String(v||'').replace(/[^0-9]/g,''))||0,esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const read=()=>{try{return JSON.parse(localStorage.getItem(DATA))||{}}catch{return {}}},save=d=>localStorage.setItem(DATA,JSON.stringify(d));
-function init(){const d=read();const totalInput=$('recv-total');if(totalInput&&!totalInput.dataset.moneyReady){totalInput.dataset.moneyReady='1';totalInput.addEventListener('input',()=>{const n=pesosValor(totalInput.value);totalInput.value=n?n.toLocaleString('es-CL'):''})}d.purchaseOrders??=[];d.invoices??=[];const sel=$('recv-po');if(!sel)return;sel.innerHTML='<option value="">Selecciona OC emitida o incompleta</option>'+d.purchaseOrders.filter(o=>['EMITIDA','INCOMPLETA'].includes(o.status)).map(o=>`<option value="${o.id}">${o.id} · ${o.status}</option>`).join('');sel.addEventListener('change',render);$('recv-confirm').addEventListener('click',confirm);renderHistory(d)}
-function render(){const d=read(),o=d.purchaseOrders?.find(x=>x.id===$('recv-po').value),box=$('recv-detail');if(!o){box.innerHTML='<p class="muted">Selecciona una orden para comenzar.</p>';return}box.innerHTML=`<div class="purchase-order-total-banner"><span>Total Orden de Compra</span><strong>${money(o.total)}</strong></div><div class="staff-history-scroll"><table class="staff-history-table"><thead><tr><th>Producto</th><th>Pedido</th><th>Recibido antes</th><th>Pendiente</th><th>Recibo ahora</th><th>Neto unit.</th><th>Total unit. c/IVA</th><th>Estado stock</th></tr></thead><tbody>${o.lines.map((l,i)=>{const pending=l.qty-(l.receivedQty||0);return `<tr><td><strong>${esc(l.name)}</strong><small>${esc(l.sku)}</small></td><td>${l.qty}</td><td>${l.receivedQty||0}</td><td>${pending}</td><td><input class="input" type="number" min="0" max="${pending}" value="0" data-recv="${i}"></td><td>${money(l.netUnit)}</td><td>${money(l.netUnit*1.19)}</td><td>${esc(l.stockStatus||'PENDIENTE')}</td></tr>`}).join('')}</tbody></table></div>`}
-function confirm(){const d=read(),o=d.purchaseOrders?.find(x=>x.id===$('recv-po').value),fb=$('recv-feedback');if(!o)return;const invNo=$('recv-invoice').value.trim(),invDate=$('recv-date').value,declared=pesosValor($('recv-total').value),inputs=[...document.querySelectorAll('[data-recv]')],recv=inputs.map((x,i)=>({i,qty:Number(x.value)||0})).filter(x=>x.qty>0);if(!invNo||!invDate||!recv.length||!declared){fb.textContent='Ingresa factura, fecha, total factura y al menos una cantidad recibida.';return}let expected=0;for(const r of recv){const l=o.lines[r.i],pending=l.qty-(l.receivedQty||0);if(r.qty>pending){fb.textContent='No puedes recibir más unidades que las pendientes de la OC.';return}expected+=Math.round(r.qty*l.netUnit*1.19)}if(Math.abs(expected-declared)>1){fb.textContent=`RECEPCIÓN RECHAZADA: la factura (${money(declared)}) no coincide con la mercadería recibida (${money(expected)}). No se modificó el stock.`;fb.className='form-feedback feedback-error';return}for(const r of recv){const l=o.lines[r.i],p=d.products.find(x=>x.id===l.productId),oldStock=Number(p.stock||0),oldCpp=Number(p.cost||0),unitTotal=l.netUnit*1.19,newStock=oldStock+r.qty;p.cost=newStock?((oldStock*oldCpp)+(r.qty*unitTotal))/newStock:unitTotal;p.stock=newStock;l.receivedQty=(l.receivedQty||0)+r.qty;l.stockStatus=l.receivedQty>=l.qty?'RECIBIDO':'PENDIENTE'}const complete=o.lines.every(l=>(l.receivedQty||0)>=l.qty);o.status=complete?'RECIBIDA':'INCOMPLETA';const inv={id:`FAC-${Date.now()}`,number:invNo,date:invDate,orderId:o.id,supplierId:o.supplierId,total:declared,status:'PENDIENTE_PAGO',receivedAt:new Date().toISOString(),receptionStatus:complete?'COMPLETA':'INCOMPLETA',items:recv.map(r=>{const l=o.lines[r.i];return {productId:l.productId,sku:l.sku,name:l.name,qty:r.qty,netUnit:l.netUnit,totalUnit:l.netUnit*1.19,total:Math.round(r.qty*l.netUnit*1.19)}})};d.invoices??=[];d.invoices.push(inv);save(d);fb.className='form-feedback physical-success';fb.textContent=`Recepción ${inv.receptionStatus.toLowerCase()} registrada. Factura ${invNo} enviada a Pagos.`;init();$('recv-invoice').value='';$('recv-total').value=''}
-function renderHistory(d){const el=$('recv-history');if(!el)return;const inv=d.invoices||[];el.innerHTML=inv.length?`<div class="staff-history-scroll"><table class="staff-history-table"><thead><tr><th>Factura</th><th>Fecha factura</th><th>OC</th><th>Recepción</th><th>Total</th><th>Estado pago</th></tr></thead><tbody>${inv.slice().reverse().map(x=>`<tr><td><strong>${esc(x.number)}</strong></td><td>${esc(x.date)}</td><td>${esc(x.orderId)}</td><td>${esc(x.receptionStatus)}</td><td>${money(x.total)}</td><td>${esc(x.status)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">Aún no hay recepciones registradas.</p>'}init();})();
+(() => {
+  "use strict";
+  const DATA = "edusaldo2_demo",
+    $ = (id) => document.getElementById(id),
+    money = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("es-CL"),
+    pesosValor = (v) => Number(String(v || "").replace(/[^0-9]/g, "")) || 0,
+    esc = (s) =>
+      String(s ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+  const read = () => {
+      try {
+        return JSON.parse(localStorage.getItem(DATA)) || {};
+      } catch {
+        return {};
+      }
+    },
+    save = (d) => localStorage.setItem(DATA, JSON.stringify(d));
+  function init() {
+    const d = read();
+    const totalInput = $("recv-total");
+    if (totalInput && !totalInput.dataset.moneyReady) {
+      totalInput.dataset.moneyReady = "1";
+      totalInput.addEventListener("input", () => {
+        const n = pesosValor(totalInput.value);
+        totalInput.value = n ? n.toLocaleString("es-CL") : "";
+      });
+    }
+    d.purchaseOrders ??= [];
+    d.invoices ??= [];
+    const sel = $("recv-po");
+    if (!sel) return;
+    sel.innerHTML =
+      '<option value="">Selecciona OC emitida o incompleta</option>' +
+      d.purchaseOrders
+        .filter((o) => ["EMITIDA", "INCOMPLETA"].includes(o.status))
+        .map((o) => `<option value="${o.id}">${o.id} · ${o.status}</option>`)
+        .join("");
+    sel.addEventListener("change", render);
+    $("recv-confirm").addEventListener("click", confirm);
+    renderHistory(d);
+  }
+  function render() {
+    const d = read(),
+      o = d.purchaseOrders?.find((x) => x.id === $("recv-po").value),
+      box = $("recv-detail");
+    if (!o) {
+      box.innerHTML =
+        '<p class="muted">Selecciona una orden para comenzar.</p>';
+      return;
+    }
+    box.innerHTML = `<div class="purchase-order-total-banner"><span>Total Orden de Compra</span><strong>${money(o.total)}</strong></div><div class="staff-history-scroll"><table class="staff-history-table"><thead><tr><th>Producto</th><th>Pedido</th><th>Recibido antes</th><th>Pendiente</th><th>Recibo ahora</th><th>Neto unit.</th><th>Total unit. c/IVA</th><th>Estado stock</th></tr></thead><tbody>${o.lines
+      .map((l, i) => {
+        const pending = l.qty - (l.receivedQty || 0);
+        return `<tr><td><strong>${esc(l.name)}</strong><small>${esc(l.sku)}</small></td><td>${l.qty}</td><td>${l.receivedQty || 0}</td><td>${pending}</td><td><input class="input" type="number" min="0" max="${pending}" value="0" data-recv="${i}"></td><td>${money(l.netUnit)}</td><td>${money(l.netUnit * 1.19)}</td><td>${esc(l.stockStatus || "PENDIENTE")}</td></tr>`;
+      })
+      .join("")}</tbody></table></div>`;
+  }
+  function confirm() {
+    const d = read(),
+      o = d.purchaseOrders?.find((x) => x.id === $("recv-po").value),
+      fb = $("recv-feedback");
+    if (!o) return;
+    const invNo = $("recv-invoice").value.trim(),
+      invDate = $("recv-date").value,
+      declared = pesosValor($("recv-total").value),
+      inputs = [...document.querySelectorAll("[data-recv]")],
+      recv = inputs
+        .map((x, i) => ({ i, qty: Number(x.value) || 0 }))
+        .filter((x) => x.qty > 0);
+    if (!invNo || !invDate || !recv.length || !declared) {
+      fb.textContent =
+        "Ingresa factura, fecha, total factura y al menos una cantidad recibida.";
+      return;
+    }
+    let expected = 0;
+    for (const r of recv) {
+      const l = o.lines[r.i],
+        pending = l.qty - (l.receivedQty || 0);
+      if (r.qty > pending) {
+        fb.textContent =
+          "No puedes recibir más unidades que las pendientes de la OC.";
+        return;
+      }
+      expected += Math.round(r.qty * l.netUnit * 1.19);
+    }
+    if (Math.abs(expected - declared) > 1) {
+      fb.textContent = `RECEPCIÓN RECHAZADA: la factura (${money(declared)}) no coincide con la mercadería recibida (${money(expected)}). No se modificó el stock.`;
+      fb.className = "form-feedback feedback-error";
+      return;
+    }
+    for (const r of recv) {
+      const l = o.lines[r.i],
+        p = d.products.find((x) => x.id === l.productId),
+        oldStock = Number(p.stock || 0),
+        oldCpp = Number(p.cost || 0),
+        unitTotal = l.netUnit * 1.19,
+        newStock = oldStock + r.qty;
+      p.cost = newStock
+        ? (oldStock * oldCpp + r.qty * unitTotal) / newStock
+        : unitTotal;
+      p.stock = newStock;
+      l.receivedQty = (l.receivedQty || 0) + r.qty;
+      l.stockStatus = l.receivedQty >= l.qty ? "RECIBIDO" : "PENDIENTE";
+    }
+    const complete = o.lines.every((l) => (l.receivedQty || 0) >= l.qty);
+    o.status = complete ? "RECIBIDA" : "INCOMPLETA";
+    const inv = {
+      id: `FAC-${Date.now()}`,
+      number: invNo,
+      date: invDate,
+      orderId: o.id,
+      supplierId: o.supplierId,
+      total: declared,
+      status: "PENDIENTE_PAGO",
+      receivedAt: new Date().toISOString(),
+      receptionStatus: complete ? "COMPLETA" : "INCOMPLETA",
+      items: recv.map((r) => {
+        const l = o.lines[r.i];
+        return {
+          productId: l.productId,
+          sku: l.sku,
+          name: l.name,
+          qty: r.qty,
+          netUnit: l.netUnit,
+          totalUnit: l.netUnit * 1.19,
+          total: Math.round(r.qty * l.netUnit * 1.19),
+        };
+      }),
+    };
+    d.invoices ??= [];
+    d.invoices.push(inv);
+    save(d);
+    fb.className = "form-feedback physical-success";
+    fb.textContent = `Recepción ${inv.receptionStatus.toLowerCase()} registrada. Factura ${invNo} enviada a Pagos.`;
+    init();
+    $("recv-invoice").value = "";
+    $("recv-total").value = "";
+  }
+  function renderHistory(d) {
+    const el = $("recv-history");
+    if (!el) return;
+    const inv = d.invoices || [];
+    el.innerHTML = inv.length
+      ? `<div class="staff-history-scroll"><table class="staff-history-table"><thead><tr><th>Factura</th><th>Fecha factura</th><th>OC</th><th>Recepción</th><th>Total</th><th>Estado pago</th></tr></thead><tbody>${inv
+          .slice()
+          .reverse()
+          .map(
+            (x) =>
+              `<tr><td><strong>${esc(x.number)}</strong></td><td>${esc(x.date)}</td><td>${esc(x.orderId)}</td><td>${esc(x.receptionStatus)}</td><td>${money(x.total)}</td><td>${esc(x.status)}</td></tr>`,
+          )
+          .join("")}</tbody></table></div>`
+      : '<p class="muted">Aún no hay recepciones registradas.</p>';
+  }
+  init();
+})();

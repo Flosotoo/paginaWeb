@@ -1,4 +1,102 @@
-(()=>{'use strict';const DATA='edusaldo2_demo',$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const defaults=['Cuadernos','Escritura','Papeles y cartulinas','Arte y manualidades','Adhesivos','Geometría','Organización y archivo','Tecnología y accesorios','Otros'];
-function read(){try{return JSON.parse(localStorage.getItem(DATA))}catch{return null}}function save(d){localStorage.setItem(DATA,JSON.stringify(d))}function ensure(){const d=read();if(!d)return null;const names=[...defaults,...(d.products||[]).map(p=>p.category).filter(Boolean)];d.categories??=[];names.forEach(n=>{if(!d.categories.some(c=>c.name.toLowerCase()===n.toLowerCase()))d.categories.push({id:`CAT-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name:n,active:true})});save(d);return d}
-function render(){const d=ensure();if(!d)return;const rows=d.categories.slice().sort((a,b)=>a.name.localeCompare(b.name,'es'));$('category-list').innerHTML=`<div class="staff-history-scroll"><table class="staff-history-table"><thead><tr><th>Categoría</th><th>Productos asociados</th><th>Estado</th><th data-export-ignore>Acción</th></tr></thead><tbody>${rows.map(c=>{const n=(d.products||[]).filter(p=>p.category===c.name).length;return `<tr><td><strong>${esc(c.name)}</strong></td><td>${n}</td><td>${c.active!==false?'Activa':'Inactiva'}</td><td data-export-ignore><button class="staff-history-toggle" data-toggle-cat="${esc(c.id)}">${c.active!==false?'Desactivar':'Activar'}</button></td></tr>`}).join('')}</tbody></table></div>`}
-$('category-save').addEventListener('click',()=>{const d=ensure(),name=$('category-name').value.trim(),fb=$('category-feedback');if(!name){fb.textContent='Escribe el nombre de la categoría.';return}if(d.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){fb.textContent='Esa categoría ya existe.';return}d.categories.push({id:`CAT-${Date.now()}`,name,active:true});save(d);$('category-name').value='';fb.textContent=`Categoría “${name}” creada.`;render()});$('category-list').addEventListener('click',e=>{const b=e.target.closest('[data-toggle-cat]');if(!b)return;const d=ensure(),c=d.categories.find(x=>x.id===b.dataset.toggleCat);if(!c)return;c.active=c.active===false;save(d);render()});render();})();
+(() => {
+  "use strict";
+  const DATA = "edusaldo2_demo",
+    $ = (id) => document.getElementById(id),
+    esc = (s) =>
+      String(s ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+  const defaults = [
+    "Cuadernos",
+    "Escritura",
+    "Papeles y cartulinas",
+    "Arte y manualidades",
+    "Adhesivos",
+    "Geometría",
+    "Organización y archivo",
+    "Tecnología y accesorios",
+    "Otros",
+  ];
+  function read() {
+    try {
+      return JSON.parse(localStorage.getItem(DATA));
+    } catch {
+      return null;
+    }
+  }
+  function save(d) {
+    localStorage.setItem(DATA, JSON.stringify(d));
+  }
+  function ensure() {
+    const d = read();
+    if (!d) return null;
+    const names = [
+      ...defaults,
+      ...(d.products || []).map((p) => p.category).filter(Boolean),
+    ];
+    d.categories ??= [];
+    names.forEach((n) => {
+      if (!d.categories.some((c) => c.name.toLowerCase() === n.toLowerCase()))
+        d.categories.push({
+          id: `CAT-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: n,
+          active: true,
+        });
+    });
+    save(d);
+    return d;
+  }
+  function render() {
+    const d = ensure();
+    if (!d) return;
+    const rows = d.categories
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    $("category-list").innerHTML =
+      `<div class="staff-history-scroll"><table class="staff-history-table"><thead><tr><th>Categoría</th><th>Productos asociados</th><th>Estado</th><th data-export-ignore>Acción</th></tr></thead><tbody>${rows
+        .map((c) => {
+          const n = (d.products || []).filter(
+            (p) => p.category === c.name,
+          ).length;
+          return `<tr><td><strong>${esc(c.name)}</strong></td><td>${n}</td><td>${c.active !== false ? "Activa" : "Inactiva"}</td><td data-export-ignore><button class="staff-history-toggle" data-toggle-cat="${esc(c.id)}">${c.active !== false ? "Desactivar" : "Activar"}</button></td></tr>`;
+        })
+        .join("")}</tbody></table></div>`;
+  }
+  $("category-save").addEventListener("click", () => {
+    const d = ensure(),
+      name = $("category-name").value.trim(),
+      fb = $("category-feedback");
+    if (!name) {
+      fb.textContent = "Escribe el nombre de la categoría.";
+      return;
+    }
+    if (d.categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      fb.textContent = "Esa categoría ya existe.";
+      return;
+    }
+    d.categories.push({ id: `CAT-${Date.now()}`, name, active: true });
+    save(d);
+    $("category-name").value = "";
+    fb.textContent = `Categoría “${name}” creada.`;
+    render();
+  });
+  $("category-list").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-toggle-cat]");
+    if (!b) return;
+    const d = ensure(),
+      c = d.categories.find((x) => x.id === b.dataset.toggleCat);
+    if (!c) return;
+    c.active = c.active === false;
+    save(d);
+    render();
+  });
+  render();
+})();

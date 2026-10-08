@@ -1,1 +1,69 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pagos · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="administrador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><button class="mobile-nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-main-nav"><span aria-hidden="true">☰</span><span class="mobile-nav-label">Menú</span></button><nav id="mobile-main-nav" class="header-nav" aria-label="Módulo administrador"><a href="inicio.html">Inicio</a><a href="finanzas.html">Cuenta Librería</a><a href="inventario-admin.html">Inventario</a><a href="compras.html">Gestión de Compras</a><a class="active" href="pagos.html">Pagos</a><a href="configuracion.html">Configuración</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout" type="button">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><header class="top"><span class="logo">Pagos</span><div class="avatar" data-initial></div></header><span class="eyebrow">FACTURAS Y AUTORIZACIONES</span><h1>Pagos a proveedores</h1><a class="back-link" href="inicio.html">← Volver al Inicio del Administrador</a><p class="muted">No se permiten pagos parciales. Cada factura aceptada por la Encargada se paga completa y requiere segunda firma de otro administrador.</p><div id="pay-list"></div><p class="footer-note">Demo doble firma: admin@edusaldo.cl y admin2@edusaldo.cl, contraseña 1234.</p></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/pagos.js"></script><script src="../../assets/js/cierre-funcional.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pagos · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="administrador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        ><button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="mobile-main-nav"
+        >
+          <span aria-hidden="true">☰</span
+          ><span class="mobile-nav-label">Menú</span>
+        </button>
+        <nav
+          id="mobile-main-nav"
+          class="header-nav"
+          aria-label="Módulo administrador"
+        >
+          <a href="inicio.html">Inicio</a
+          ><a href="finanzas.html">Cuenta Librería</a
+          ><a href="inventario-admin.html">Inventario</a
+          ><a href="compras.html">Gestión de Compras</a
+          ><a class="active" href="pagos.html">Pagos</a
+          ><a href="configuracion.html">Configuración</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout" type="button">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <header class="top">
+        <span class="logo">Pagos</span>
+        <div class="avatar" data-initial></div>
+      </header>
+      <span class="eyebrow">FACTURAS Y AUTORIZACIONES</span>
+      <h1>Pagos a proveedores</h1>
+      <a class="back-link" href="inicio.html"
+        >← Volver al Inicio del Administrador</a
+      >
+      <p class="muted">
+        No se permiten pagos parciales. Cada factura aceptada por la Encargada
+        se paga completa y requiere segunda firma de otro administrador.
+      </p>
+      <div id="pay-list"></div>
+      <p class="footer-note">
+        Demo doble firma: admin@edusaldo.cl y admin2@edusaldo.cl, contraseña
+        1234.
+      </p>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/pagos.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+  </body>
+</html>

@@ -1,1 +1,80 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cierre y auditoría · EduSaldo</title><link rel="stylesheet" href="../../assets/css/style.css"></head><body data-root="../../" data-role="administrador"><header class="site-header"><div class="header-inner"><a href="inicio.html" class="brand brand-light"><span class="brand-mark">e<span>·</span></span><span>edu<strong>saldo</strong><i>.</i></span></a><nav class="header-nav"><a href="inicio.html">Inicio</a><a href="finanzas.html">Cuenta Librería</a><a href="inventario-admin.html">Inventario</a><a href="compras.html">Gestión de Compras</a><a href="pagos.html">Pagos</a><a href="configuracion.html">Configuración</a></nav><div class="header-account"><span class="user-bubble" data-initial></span><span class="user-name" data-user></span><button class="logout" id="logout">Salir ↗</button></div></div></header><main class="dashboard admin-dashboard"><span class="eyebrow">CIERRES FUNCIONALES 7 Y 8</span><h1>Cierre mensual y auditoría</h1><a class="back-link" href="configuracion.html">← Configuración</a><section class="card"><h2>Parámetros</h2><div class="form-grid"><div class="field"><label>Umbral alerta saldo bajo</label><input id="cfg-low" class="input money-input" type="number" min="0"></div><div class="field"><label>Días de revisión antes del cierre automático</label><input id="cfg-days" class="input" type="number" min="1" max="15"></div></div><button id="cfg-save" class="btn">Guardar parámetros</button></section><section class="card"><h2>Períodos financieros</h2><p>Al terminar el mes pasa a EN_REVISIÓN. Si el Administrador no lo cierra dentro del plazo configurado, EduSaldo lo cierra automáticamente. Las operaciones corrientes pertenecen al nuevo mes.</p><div id="period-list"></div></section><section class="card"><h2>Auditoría de acciones sensibles</h2><p class="muted">Solo lectura. No se almacenan contraseñas.</p><div id="audit-list" class="audit-scroll"></div></section></main><script src="../../assets/js/navigation.js"></script><script src="../../assets/js/app.js"></script><script src="../../assets/js/cierre-funcional.js"></script><script src="../../assets/js/admin-control.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cierre y auditoría · EduSaldo</title>
+    <link rel="stylesheet" href="../../assets/css/style.css" />
+  </head>
+  <body data-root="../../" data-role="administrador">
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="inicio.html" class="brand brand-light"
+          ><span class="brand-mark">e<span>·</span></span
+          ><span>edu<strong>saldo</strong><i>.</i></span></a
+        >
+        <nav class="header-nav">
+          <a href="inicio.html">Inicio</a
+          ><a href="finanzas.html">Cuenta Librería</a
+          ><a href="inventario-admin.html">Inventario</a
+          ><a href="compras.html">Gestión de Compras</a
+          ><a href="pagos.html">Pagos</a
+          ><a href="configuracion.html">Configuración</a>
+        </nav>
+        <div class="header-account">
+          <span class="user-bubble" data-initial></span
+          ><span class="user-name" data-user></span
+          ><button class="logout" id="logout">Salir ↗</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard admin-dashboard">
+      <span class="eyebrow">CIERRES FUNCIONALES 7 Y 8</span>
+      <h1>Cierre mensual y auditoría</h1>
+      <a class="back-link" href="configuracion.html">← Configuración</a>
+      <section class="card">
+        <h2>Parámetros</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label>Umbral alerta saldo bajo</label
+            ><input
+              id="cfg-low"
+              class="input money-input"
+              type="number"
+              min="0"
+            />
+          </div>
+          <div class="field">
+            <label>Días de revisión antes del cierre automático</label
+            ><input
+              id="cfg-days"
+              class="input"
+              type="number"
+              min="1"
+              max="15"
+            />
+          </div>
+        </div>
+        <button id="cfg-save" class="btn">Guardar parámetros</button>
+      </section>
+      <section class="card">
+        <h2>Períodos financieros</h2>
+        <p>
+          Al terminar el mes pasa a EN_REVISIÓN. Si el Administrador no lo
+          cierra dentro del plazo configurado, EduSaldo lo cierra
+          automáticamente. Las operaciones corrientes pertenecen al nuevo mes.
+        </p>
+        <div id="period-list"></div>
+      </section>
+      <section class="card">
+        <h2>Auditoría de acciones sensibles</h2>
+        <p class="muted">Solo lectura. No se almacenan contraseñas.</p>
+        <div id="audit-list" class="audit-scroll"></div>
+      </section>
+    </main>
+    <script src="../../assets/js/navigation.js"></script>
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/cierre-funcional.js"></script>
+    <script src="../../assets/js/admin-control.js"></script>
+  </body>
+</html>

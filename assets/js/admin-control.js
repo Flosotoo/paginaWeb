@@ -1,2 +1,113 @@
-(()=>{'use strict';const F=window.EduSaldoFunctional,$=id=>document.getElementById(id),P='edusaldo2_periodos';const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));function ym(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`};function periods(){let p=F.read(P,[]),today=new Date(),cur=ym(today);if(!p.some(x=>x.id===cur))p.push({id:cur,state:'ABIERTO',openedAt:new Date(today.getFullYear(),today.getMonth(),1).toISOString()});const cfg=F.cfg();for(const x of p){if(x.id===cur)continue;if(x.state==='ABIERTO'){x.state='EN_REVISION';x.reviewStartedAt=x.reviewStartedAt||new Date(Number(x.id.slice(0,4)),Number(x.id.slice(5,7)),1).toISOString()}if(x.state==='EN_REVISION'){const deadline=new Date(x.reviewStartedAt);deadline.setDate(deadline.getDate()+cfg.reviewDays);if(today>=deadline){x.state='CERRADO';x.closedAt=new Date().toISOString();x.closedBy='SISTEMA';x.closeType='AUTOMATICO';F.audit('CIERRE_MENSUAL_AUTOMATICO','PERIODO',x.id,null,{estado:'CERRADO'})}}}F.write(P,p);return p.sort((a,b)=>b.id.localeCompare(a.id))}function render(){const c=F.cfg();$('cfg-low').value=c.lowBalanceThreshold;$('cfg-days').value=c.reviewDays;const p=periods();$('period-list').innerHTML=`<table class="functional-table"><thead><tr><th>Período</th><th>Estado</th><th>Cierre</th><th>Acción</th></tr></thead><tbody>${p.map(x=>`<tr><td>${esc(x.id)}</td><td><span class="pill-state">${esc(x.state)}</span></td><td>${x.closedAt?new Date(x.closedAt).toLocaleString('es-CL')+' · '+esc(x.closeType):'—'}</td><td>${x.state==='EN_REVISION'?`<button class="btn secondary" data-close="${x.id}">Cerrar período</button>`:'—'}</td></tr>`).join('')}</tbody></table>`;const a=F.read(F.keys.AUD,[]).slice().reverse();$('audit-list').innerHTML=a.length?`<table class="functional-table"><thead><tr><th>Fecha</th><th>Usuario/Rol</th><th>Acción</th><th>Entidad</th><th>Cambio</th></tr></thead><tbody>${a.map(x=>`<tr><td>${new Date(x.at).toLocaleString('es-CL')}</td><td>${esc(x.user)}<br><small>${esc(x.role)}</small></td><td>${esc(x.action)}</td><td>${esc(x.entity)} ${esc(x.entityId)}</td><td><small>${esc(JSON.stringify(x.after??''))}</small></td></tr>`).join('')}</tbody></table>`:'<p class="muted">Aún no hay acciones sensibles registradas.</p>'}
-$('cfg-save').onclick=()=>{const v={lowBalanceThreshold:Math.max(0,Number($('cfg-low').value)||3000),reviewDays:Math.min(15,Math.max(1,Number($('cfg-days').value)||3))};F.write(F.keys.CFG,v);F.audit('CAMBIAR_CONFIGURACION','CONFIG','FUNCIONAL',null,v);render()};$('period-list').onclick=e=>{const b=e.target.closest('[data-close]');if(!b)return;const p=periods(),x=p.find(v=>v.id===b.dataset.close);if(!x||x.state!=='EN_REVISION')return;if(!confirm(`¿Cerrar definitivamente ${x.id}? Las correcciones posteriores deberán registrarse en un período abierto.`))return;x.state='CERRADO';x.closedAt=new Date().toISOString();x.closedBy='Administrador';x.closeType='MANUAL';F.write(P,p);F.audit('CIERRE_MENSUAL_MANUAL','PERIODO',x.id,{estado:'EN_REVISION'},{estado:'CERRADO'});render()};render()})();
+(() => {
+  "use strict";
+  const F = window.EduSaldoFunctional,
+    $ = (id) => document.getElementById(id),
+    P = "edusaldo2_periodos";
+  const esc = (s) =>
+    String(s ?? "").replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
+  function ym(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  function periods() {
+    let p = F.read(P, []),
+      today = new Date(),
+      cur = ym(today);
+    if (!p.some((x) => x.id === cur))
+      p.push({
+        id: cur,
+        state: "ABIERTO",
+        openedAt: new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          1,
+        ).toISOString(),
+      });
+    const cfg = F.cfg();
+    for (const x of p) {
+      if (x.id === cur) continue;
+      if (x.state === "ABIERTO") {
+        x.state = "EN_REVISION";
+        x.reviewStartedAt =
+          x.reviewStartedAt ||
+          new Date(
+            Number(x.id.slice(0, 4)),
+            Number(x.id.slice(5, 7)),
+            1,
+          ).toISOString();
+      }
+      if (x.state === "EN_REVISION") {
+        const deadline = new Date(x.reviewStartedAt);
+        deadline.setDate(deadline.getDate() + cfg.reviewDays);
+        if (today >= deadline) {
+          x.state = "CERRADO";
+          x.closedAt = new Date().toISOString();
+          x.closedBy = "SISTEMA";
+          x.closeType = "AUTOMATICO";
+          F.audit("CIERRE_MENSUAL_AUTOMATICO", "PERIODO", x.id, null, {
+            estado: "CERRADO",
+          });
+        }
+      }
+    }
+    F.write(P, p);
+    return p.sort((a, b) => b.id.localeCompare(a.id));
+  }
+  function render() {
+    const c = F.cfg();
+    $("cfg-low").value = c.lowBalanceThreshold;
+    $("cfg-days").value = c.reviewDays;
+    const p = periods();
+    $("period-list").innerHTML =
+      `<table class="functional-table"><thead><tr><th>Período</th><th>Estado</th><th>Cierre</th><th>Acción</th></tr></thead><tbody>${p.map((x) => `<tr><td>${esc(x.id)}</td><td><span class="pill-state">${esc(x.state)}</span></td><td>${x.closedAt ? new Date(x.closedAt).toLocaleString("es-CL") + " · " + esc(x.closeType) : "—"}</td><td>${x.state === "EN_REVISION" ? `<button class="btn secondary" data-close="${x.id}">Cerrar período</button>` : "—"}</td></tr>`).join("")}</tbody></table>`;
+    const a = F.read(F.keys.AUD, []).slice().reverse();
+    $("audit-list").innerHTML = a.length
+      ? `<table class="functional-table"><thead><tr><th>Fecha</th><th>Usuario/Rol</th><th>Acción</th><th>Entidad</th><th>Cambio</th></tr></thead><tbody>${a.map((x) => `<tr><td>${new Date(x.at).toLocaleString("es-CL")}</td><td>${esc(x.user)}<br><small>${esc(x.role)}</small></td><td>${esc(x.action)}</td><td>${esc(x.entity)} ${esc(x.entityId)}</td><td><small>${esc(JSON.stringify(x.after ?? ""))}</small></td></tr>`).join("")}</tbody></table>`
+      : '<p class="muted">Aún no hay acciones sensibles registradas.</p>';
+  }
+  $("cfg-save").onclick = () => {
+    const v = {
+      lowBalanceThreshold: Math.max(0, Number($("cfg-low").value) || 3000),
+      reviewDays: Math.min(15, Math.max(1, Number($("cfg-days").value) || 3)),
+    };
+    F.write(F.keys.CFG, v);
+    F.audit("CAMBIAR_CONFIGURACION", "CONFIG", "FUNCIONAL", null, v);
+    render();
+  };
+  $("period-list").onclick = (e) => {
+    const b = e.target.closest("[data-close]");
+    if (!b) return;
+    const p = periods(),
+      x = p.find((v) => v.id === b.dataset.close);
+    if (!x || x.state !== "EN_REVISION") return;
+    if (
+      !confirm(
+        `¿Cerrar definitivamente ${x.id}? Las correcciones posteriores deberán registrarse en un período abierto.`,
+      )
+    )
+      return;
+    x.state = "CERRADO";
+    x.closedAt = new Date().toISOString();
+    x.closedBy = "Administrador";
+    x.closeType = "MANUAL";
+    F.write(P, p);
+    F.audit(
+      "CIERRE_MENSUAL_MANUAL",
+      "PERIODO",
+      x.id,
+      { estado: "EN_REVISION" },
+      { estado: "CERRADO" },
+    );
+    render();
+  };
+  render();
+})();
