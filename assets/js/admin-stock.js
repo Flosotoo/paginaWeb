@@ -67,7 +67,7 @@
       .sort((a, b) => a.reportedAt.localeCompare(b.reportedAt));
     node.innerHTML = open.length
       ? `<div class="staff-history-scroll" role="region" aria-label="Avisos de stock crítico" tabindex="0"><table class="staff-history-table"><thead><tr><th>Material</th><th>Stock físico al informar</th><th>En reserva</th><th>Disponible al informar</th><th>Umbral</th><th>Fecha y hora del aviso</th><th>Informó</th></tr></thead><tbody>${open.map((r) => `<tr><td><strong>${esc(r.productName)}</strong><small style="display:block">${esc(r.barcode || "")}</small></td><td>${r.physical}</td><td>${r.reserved}</td><td>${r.available}</td><td>≤ ${r.criticalStock}</td><td>${new Date(r.reportedAt).toLocaleString("es-CL")}</td><td>${esc(r.reportedBy)}</td></tr>`).join("")}</tbody></table></div>`
-      : '<p class="muted">La encargada todavía no ha informado productos con stock crítico.</p>';
+      : '<p class="muted">El encargado todavía no ha informado productos con stock crítico.</p>';
   }
   render();
   window.addEventListener("storage", (e) => {

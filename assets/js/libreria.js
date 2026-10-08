@@ -919,7 +919,7 @@
         available: stock(latest, item),
         criticalStock: threshold(item),
         reportedAt: now(),
-        reportedBy: "Encargada de librería",
+        reportedBy: "Encargado de librería",
         resolvedAt: null,
       });
       if (save(latest)) {

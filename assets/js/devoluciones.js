@@ -356,7 +356,7 @@
       total,
       createdAt: stamp,
       condition: "Sin uso y en perfecto estado",
-      receivedBy: "Encargada de librería",
+      receivedBy: "Encargado de librería",
     });
     if (save(latest)) {
       cart = [];

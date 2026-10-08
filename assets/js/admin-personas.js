@@ -32,23 +32,23 @@
     const a = accounts(),
       d = db();
     $("stu-family").innerHTML =
-      '<option value="">Selecciona cuenta</option>' +
+      '<option value="">Selecciona apoderado</option>' +
       a
-        .filter((x) => x.type === "FAMILIA" && x.state !== "INACTIVA")
+        .filter((x) => (x.type === "FAMILIA" || x.type === "APODERADO") && x.state !== "INACTIVA")
         .map(
           (x) =>
             `<option value="${x.id}">${esc(x.name)} ${esc(x.last)} · ${esc(x.rut)}</option>`,
         )
         .join("");
-    $("family-list").innerHTML = a.filter((x) => x.type === "FAMILIA").length
-      ? `<table class="functional-table"><thead><tr><th>Familia</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${a
-          .filter((x) => x.type === "FAMILIA")
+    $("family-list").innerHTML = a.filter((x) => x.type === "FAMILIA" || x.type === "APODERADO").length
+      ? `<table class="functional-table"><thead><tr><th>Apoderado</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${a
+          .filter((x) => x.type === "FAMILIA" || x.type === "APODERADO")
           .map(
             (x) =>
               `<tr><td><strong>${esc(x.name)} ${esc(x.last)}</strong><br>${esc(x.rut)}</td><td>${esc(x.mail)}</td><td><span class="pill-state">${esc(x.state)}</span></td><td class="functional-actions"><button data-reset="${x.id}" class="btn secondary">Restablecer contraseña</button><button data-toggle="${x.id}" class="btn secondary">${x.state === "INACTIVA" ? "Activar" : "Inactivar"}</button></td></tr>`,
           )
           .join("")}</tbody></table>`
-      : '<p class="muted">Aún no hay cuentas familiares administrativas.</p>';
+      : '<p class="muted">Aún no hay cuentas de apoderados registradas.</p>';
     $("student-list").innerHTML =
       `<table class="functional-table"><thead><tr><th>Alumno</th><th>Curso</th><th>Saldo</th><th>Estado</th><th>Acción</th></tr></thead><tbody>${(d.children || []).map((c) => `<tr><td><strong>${esc(c.name)}</strong><br>${esc(c.rut || "")}</td><td>${esc(c.course)}</td><td>$${Number(c.balance || 0).toLocaleString("es-CL")}</td><td>${c.active === false ? "INACTIVO" : "ACTIVO"}</td><td><button class="btn secondary" data-student="${c.id}">${c.active === false ? "Activar" : "Inactivar"}</button></td></tr>`).join("")}</tbody></table>`;
   }
@@ -237,12 +237,12 @@
       saveAccounts(a);
       saveDb(d);
       F.audit("IMPORTAR_NOMINA", "SISTEMA", "NOMINA", null, {
-        familiasNuevas: fam,
+        apoderadosNuevos: fam,
         alumnosNuevos: stu,
         conflictos: conf,
       });
       $("roster-feedback").textContent =
-        `Importación completada: ${stu} alumnos, ${fam} cuentas nuevas, ${conf} registros omitidos/revisar.`;
+        `Importación completada: ${stu} alumnos, ${fam} apoderados nuevos, ${conf} registros omitidos/revisar.`;
       render();
     };
     rd.readAsText(file, "utf-8");
