@@ -33,12 +33,24 @@ Desarrollar una aplicación web para gestionar una librería escolar y centraliz
 ## Conceptos
 
 - **Aporte:** dinero que el apoderado incorpora, mediante Webpay, al saldo de uno de sus alumnos.
-- **Saldo disponible:** dinero que tiene el alumno para comprar materiales.
+- **Saldo disponible:** dinero que tiene el alumno para comprar materiales (`saldoDisponible = saldoActual - saldoComprometido`).
 - **Compra:** adquisición de materiales en la librería escolar; descuenta el saldo.
-- **Reserva:** selección anticipada de materiales para retirarlos después; se convierte en compra al retirarla.
+- **Reserva:** selección anticipada de materiales para retirarlos después; pasa por preparación, rotulado y se convierte en compra al retirarla.
 - **Movimiento:** registro de un aporte, compra u otra operación que afecta el saldo.
 
 Flujo del aporte: *Aportar saldo* → elegir alumno → ingresar monto → pago en Webpay → al aprobarse, el monto se acredita al saldo del alumno → queda registrado como movimiento. Webpay está **simulado**: no hay pasarela real ni se piden datos de tarjeta.
+
+## Arquitectura de Microservicios (Backend)
+
+La solución se estructura en 6 microservicios de negocio desacoplados (DDD) más un API Gateway:
+
+1. **MS Auth y Usuarios (8081 - `db_auth_usuarios`):** Login JWT, roles (`APODERADO`, `ENCARGADO`, `ADMINISTRADOR`, `AUTORIZADOR`), bloqueo tras 5 intentos fallidos y revocación de tokens.
+2. **MS Alumnos y Saldos (8082 - `db_alumnos_saldos`):** Alumnos, relación N:M con apoderados, saldo disponible, abonos Webpay simulados, finalización atómica de reservas y alertas de saldo bajo.
+3. **MS Productos e Inventario (8083 - `db_productos_inventario`):** Catálogo, stock físico/reservado/disponible, Costo Promedio Ponderado (CPP con IVA incluido), inventario físico con respaldo fotográfico y ajustes con segunda firma.
+4. **MS Ventas y Reservas (8084 - `db_ventas_reservas`):** Ciclo multietapa de reservas (`PENDIENTE` → `EN_PREPARACION` → `ETIQUETA_PENDIENTE` → `LISTA_PARA_RETIRO` → `ENTREGADA`), venta directa presencial (alumnos ≥ 12 años) y devoluciones.
+5. **MS Compras (8085 - `db_compras`):** Proveedores, órdenes de compra en neto (con tipos `Long`), recepción atómica contra facturas del SII con auditoría de artículos no ordenados y ciclo de pago.
+6. **MS Finanzas y Configuración (8086 - `db_finanzas_config`):** Cuenta Librería (caja vs. resultados sin doble contabilización), pagos con doble firma (Administrador solicita, Autorizador aprueba), cierre contable mensual y configuración institucional.
+- **API Gateway (8099):** Punto único de entrada para el frontend React.
 
 ## Planificación del semestre
 
