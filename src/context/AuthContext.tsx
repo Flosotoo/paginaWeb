@@ -55,9 +55,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
       const saved = sessionStorage.getItem(KEY);
-      return saved ? JSON.parse(saved) : DEMO_USERS['apoderado@edusaldo.cl'];
+      return saved ? JSON.parse(saved) : null;
     } catch {
-      return DEMO_USERS['apoderado@edusaldo.cl'];
+      return null;
     }
   });
 

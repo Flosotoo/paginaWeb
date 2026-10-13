@@ -1,25 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export const LoginPage: React.FC = () => {
   const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     if (!correo.trim() || !clave.trim()) {
       setError('Por favor completa todos los campos.');
       return;
     }
 
-    if (correo.includes('admin2') || correo.includes('autorizador')) {
+    const res = login(correo, clave);
+    if (!res.success) {
+      setError(res.message || 'Revisa el correo y la contraseña.');
+      return;
+    }
+
+    if (res.role === 'libreria') {
+      navigate('/libreria');
+    } else if (res.role === 'administrador') {
       navigate('/admin');
-    } else if (correo.includes('admin')) {
-      navigate('/admin');
-    } else if (correo.includes('encargado') || correo.includes('libreria')) {
-      navigate('/admin');
+    } else if (res.role === 'autorizador') {
+      navigate('/autorizador');
     } else {
       navigate('/');
     }

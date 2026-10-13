@@ -3,235 +3,305 @@ import { Navbar } from '../../components/layout/Navbar';
 import { useCart } from '../../context/CartContext';
 
 export const AdminDashboardPage: React.FC = () => {
-  const { productos, alumnos, reservas, avanzarEstadoReserva } = useCart();
-  const [tab, setTab] = useState<'inventario' | 'alumnos' | 'reservas'>('inventario');
+  const { productos, alumnos } = useCart();
+  const [subView, setSubView] = useState<'inicio' | 'finanzas' | 'inventario' | 'personas' | 'pagos' | 'compras'>('inicio');
 
   return (
     <>
       <Navbar />
       <main className="dashboard admin-dashboard">
-        <span className="eyebrow">MÓDULO ADMINISTRATIVO</span>
-        <h1>Control y Operaciones de Librería</h1>
+        <header className="top">
+          <span className="logo">EduSaldo · Administrador</span>
+        </header>
 
-        <section className="admin-welcome" style={{ marginBottom: '24px' }}>
-          <div>
-            <span className="eyebrow">CENTRO GENERAL DE PADRES</span>
-            <h2>Gestión de la librería escolar</h2>
-            <p>Supervisa el stock, la nómina de estudiantes y el empaque de reservas.</p>
-          </div>
-          <div className="admin-welcome-mark">
-            e<span>·</span>
-          </div>
-        </section>
+        <span className="eyebrow">ADMINISTRADOR</span>
+        <h1>{subView === 'inicio' ? 'Inicio' : subView.toUpperCase()}</h1>
 
-        {/* Selector de pestañas con botones al estilo EduSaldo */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <button
-            type="button"
-            className={`btn ${tab === 'inventario' ? '' : 'secondary'}`}
-            onClick={() => setTab('inventario')}
-            data-testid="tab-inventario"
-          >
-            ▦ Inventario y Stock
-          </button>
-          <button
-            type="button"
-            className={`btn ${tab === 'alumnos' ? '' : 'secondary'}`}
-            onClick={() => setTab('alumnos')}
-            data-testid="tab-alumnos"
-          >
-            👥 Alumnos y Saldos
-          </button>
-          <button
-            type="button"
-            className={`btn ${tab === 'reservas' ? '' : 'secondary'}`}
-            onClick={() => setTab('reservas')}
-            data-testid="tab-reservas"
-          >
-            📦 Preparación en Librería ({reservas.filter((r) => r.estado !== 'ENTREGADA' && r.estado !== 'CANCELADA').length})
-          </button>
-        </div>
-
-        {/* Tab Inventario */}
-        {tab === 'inventario' && (
-          <div className="card" style={{ padding: '20px' }} data-testid="panel-inventario">
-            <div className="section-heading" style={{ marginBottom: '15px' }}>
+        {subView === 'inicio' && (
+          <>
+            <section className="admin-welcome">
               <div>
-                <span className="eyebrow">BODEGA DE MATERIALES</span>
-                <h2>Stock Físico, Reservado y Disponible</h2>
+                <span className="eyebrow">CENTRO GENERAL DE PADRES</span>
+                <h2>Administración de la librería escolar</h2>
+                <p>Selecciona el área que necesitas gestionar.</p>
               </div>
-            </div>
+              <div className="admin-welcome-mark">
+                e<span>·</span>
+              </div>
+            </section>
 
-            <div className="staff-history-scroll">
-              <table className="staff-history-table">
-                <thead>
-                  <tr>
-                    <th>SKU</th>
-                    <th>Material</th>
-                    <th>Categoría</th>
-                    <th style={{ textAlign: 'right' }}>Precio</th>
-                    <th style={{ textAlign: 'center' }}>Físico</th>
-                    <th style={{ textAlign: 'center' }}>Reservado</th>
-                    <th style={{ textAlign: 'center' }}>Disponible</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productos.map((p) => {
-                    const disp = p.stockFisico - p.stockReservado;
-                    return (
-                      <tr key={p.id}>
-                        <td><code>{p.sku}</code></td>
-                        <td><strong>{p.nombre}</strong></td>
-                        <td><span className="small-tag">{p.categoria}</span></td>
-                        <td style={{ textAlign: 'right' }}>${p.precioVenta.toLocaleString('es-CL')}</td>
-                        <td style={{ textAlign: 'center', fontWeight: 800 }}>{p.stockFisico}</td>
-                        <td style={{ textAlign: 'center', color: '#b45309', fontWeight: 800 }}>{p.stockReservado}</td>
-                        <td style={{ textAlign: 'center', fontWeight: 800, color: '#173b31' }}>{disp}</td>
-                        <td>
-                          {disp <= 0 ? (
-                            <span className="staff-badge staff-stock-low">Agotado</span>
-                          ) : disp <= p.stockCritico ? (
-                            <span className="staff-badge staff-stock-warn">Crítico (≤{p.stockCritico})</span>
-                          ) : (
-                            <span className="staff-badge staff-stock-ok">Normal</span>
-                          )}
-                        </td>
+            {/* Las 6 tarjetas originales de administración */}
+            <div className="admin-home-grid">
+              <button
+                type="button"
+                className="admin-home-card"
+                onClick={() => setSubView('finanzas')}
+                style={{ textAlign: 'left', background: '#fffcf7', border: 'none', cursor: 'pointer', width: '100%' }}
+              >
+                <span className="admin-card-icon">$</span>
+                <div>
+                  <h3>Cuenta Librería</h3>
+                  <p>Cartola, movimientos y resultados.</p>
+                </div>
+                <b>→</b>
+              </button>
+
+              <button
+                type="button"
+                className="admin-home-card"
+                onClick={() => setSubView('inventario')}
+                style={{ textAlign: 'left', background: '#fffcf7', border: 'none', cursor: 'pointer', width: '100%' }}
+              >
+                <span className="admin-card-icon">▦</span>
+                <div>
+                  <h3>Inventario y Valorización</h3>
+                  <p>Stock físico, disponible y crítico.</p>
+                </div>
+                <b>→</b>
+              </button>
+
+              <button
+                type="button"
+                className="admin-home-card"
+                onClick={() => setSubView('personas')}
+                style={{ textAlign: 'left', background: '#fffcf7', border: 'none', cursor: 'pointer', width: '100%' }}
+              >
+                <span className="admin-card-icon">👥</span>
+                <div>
+                  <h3>Personas y Alumnos</h3>
+                  <p>Cuentas de apoderados y nómina de estudiantes.</p>
+                </div>
+                <b>→</b>
+              </button>
+
+              <button
+                type="button"
+                className="admin-home-card"
+                onClick={() => setSubView('compras')}
+                style={{ textAlign: 'left', background: '#fffcf7', border: 'none', cursor: 'pointer', width: '100%' }}
+              >
+                <span className="admin-card-icon">📦</span>
+                <div>
+                  <h3>Gestión de Compras</h3>
+                  <p>Órdenes de compra y proveedores.</p>
+                </div>
+                <b>→</b>
+              </button>
+
+              <button
+                type="button"
+                className="admin-home-card"
+                onClick={() => setSubView('pagos')}
+                style={{ textAlign: 'left', background: '#fffcf7', border: 'none', cursor: 'pointer', width: '100%' }}
+              >
+                <span className="admin-card-icon">💳</span>
+                <div>
+                  <h3>Pagos de Facturas</h3>
+                  <p>Solicitudes de pago y facturas recepcionadas.</p>
+                </div>
+                <b>→</b>
+              </button>
+            </div>
+          </>
+        )}
+
+        {subView !== 'inicio' && (
+          <div style={{ marginTop: '20px' }}>
+            <button
+              type="button"
+              className="staff-small"
+              onClick={() => setSubView('inicio')}
+              style={{ marginBottom: '15px' }}
+            >
+              ← Volver al inicio de administración
+            </button>
+
+            {subView === 'inventario' && (
+              <div className="card" style={{ padding: '20px' }} data-testid="panel-inventario">
+                <span className="eyebrow">INVENTARIO Y VALORIZACIÓN</span>
+                <h2 style={{ margin: '5px 0 15px' }}>Existencias y Alertas de Stock</h2>
+                <div className="staff-history-scroll">
+                  <table className="staff-history-table">
+                    <thead>
+                      <tr>
+                        <th>SKU</th>
+                        <th>Material</th>
+                        <th>Categoría</th>
+                        <th style={{ textAlign: 'right' }}>Precio</th>
+                        <th style={{ textAlign: 'center' }}>Físico</th>
+                        <th style={{ textAlign: 'center' }}>Reservado</th>
+                        <th style={{ textAlign: 'center' }}>Disponible</th>
+                        <th>Estado</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Alumnos */}
-        {tab === 'alumnos' && (
-          <div className="card" style={{ padding: '20px' }} data-testid="panel-alumnos">
-            <div className="section-heading" style={{ marginBottom: '15px' }}>
-              <div>
-                <span className="eyebrow">ESTUDIANTES</span>
-                <h2>Nómina y Estado de Cuentas</h2>
+                    </thead>
+                    <tbody>
+                      {productos.map((p) => {
+                        const disp = p.stockFisico - p.stockReservado;
+                        return (
+                          <tr key={p.id}>
+                            <td><code>{p.sku}</code></td>
+                            <td><strong>{p.nombre}</strong></td>
+                            <td><span className="small-tag">{p.categoria}</span></td>
+                            <td style={{ textAlign: 'right' }}>${p.precioVenta.toLocaleString('es-CL')}</td>
+                            <td style={{ textAlign: 'center', fontWeight: 800 }}>{p.stockFisico}</td>
+                            <td style={{ textAlign: 'center', color: '#b45309', fontWeight: 800 }}>{p.stockReservado}</td>
+                            <td style={{ textAlign: 'center', fontWeight: 800, color: '#173b31' }}>{disp}</td>
+                            <td>
+                              {disp <= 0 ? (
+                                <span className="staff-badge staff-stock-low">Agotado</span>
+                              ) : disp <= p.stockCritico ? (
+                                <span className="staff-badge staff-stock-warn">Crítico (≤{p.stockCritico})</span>
+                              ) : (
+                                <span className="staff-badge staff-stock-ok">Normal</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="staff-history-scroll">
-              <table className="staff-history-table">
-                <thead>
-                  <tr>
-                    <th>RUT</th>
-                    <th>Nombre Alumno</th>
-                    <th>Curso</th>
-                    <th style={{ textAlign: 'right' }}>Saldo Total</th>
-                    <th style={{ textAlign: 'right' }}>Comprometido</th>
-                    <th style={{ textAlign: 'right' }}>Disponible</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {alumnos.map((a) => (
-                    <tr key={a.id}>
-                      <td><code>{a.rut}</code></td>
-                      <td><strong>{a.nombre}</strong></td>
-                      <td>{a.curso}</td>
-                      <td style={{ textAlign: 'right' }}>${a.balance.toLocaleString('es-CL')}</td>
-                      <td style={{ textAlign: 'right', color: '#b45309' }}>${a.saldoComprometido.toLocaleString('es-CL')}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 800, color: '#173b31' }}>
-                        ${a.saldoDisponible.toLocaleString('es-CL')}
-                      </td>
-                      <td>
-                        <span className="staff-badge staff-stock-ok">Activo</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Preparación en Librería */}
-        {tab === 'reservas' && (
-          <div className="card" style={{ padding: '20px' }} data-testid="panel-reservas">
-            <div className="section-heading" style={{ marginBottom: '15px' }}>
-              <div>
-                <span className="eyebrow">OPERACIÓN DE MESÓN</span>
-                <h2>Preparación y Entrega de Pedidos</h2>
+            {subView === 'personas' && (
+              <div className="card" style={{ padding: '20px' }} data-testid="panel-alumnos">
+                <span className="eyebrow">PERSONAS</span>
+                <h2 style={{ margin: '5px 0 15px' }}>Nómina de Estudiantes y Saldos</h2>
+                <div className="staff-history-scroll">
+                  <table className="staff-history-table">
+                    <thead>
+                      <tr>
+                        <th>RUT</th>
+                        <th>Nombre Alumno</th>
+                        <th>Curso</th>
+                        <th style={{ textAlign: 'right' }}>Saldo Total</th>
+                        <th style={{ textAlign: 'right' }}>Comprometido</th>
+                        <th style={{ textAlign: 'right' }}>Disponible</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {alumnos.map((a) => (
+                        <tr key={a.id}>
+                          <td><code>{a.rut}</code></td>
+                          <td><strong>{a.nombre}</strong></td>
+                          <td>{a.curso}</td>
+                          <td style={{ textAlign: 'right' }}>${a.balance.toLocaleString('es-CL')}</td>
+                          <td style={{ textAlign: 'right', color: '#b45309' }}>${a.saldoComprometido.toLocaleString('es-CL')}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 800, color: '#173b31' }}>
+                            ${a.saldoDisponible.toLocaleString('es-CL')}
+                          </td>
+                          <td><span className="staff-badge staff-stock-ok">Activo</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
 
-            {reservas.length === 0 ? (
-              <p className="muted">No hay pedidos registrados.</p>
-            ) : (
-              <div className="staff-history-scroll">
-                <table className="staff-history-table">
-                  <thead>
-                    <tr>
-                      <th>Código</th>
-                      <th>Alumno</th>
-                      <th style={{ textAlign: 'right' }}>Total</th>
-                      <th>Estado Actual</th>
-                      <th>Código Bolsa</th>
-                      <th style={{ textAlign: 'center' }}>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reservas.map((r) => (
-                      <tr key={r.id}>
-                        <td><strong>{r.codigo}</strong></td>
-                        <td>{r.nombreAlumno}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700 }}>${r.total.toLocaleString('es-CL')}</td>
-                        <td><span className="staff-badge">{r.estado}</span></td>
-                        <td>{r.codigoBolsa ? <code>{r.codigoBolsa}</code> : '—'}</td>
+            {subView === 'finanzas' && (
+              <div className="card" style={{ padding: '20px' }}>
+                <span className="eyebrow">CUENTA LIBRERÍA</span>
+                <h2 style={{ margin: '5px 0 15px' }}>Cartola Financiera (HU54, HU58)</h2>
+                <div style={{ background: '#f5f7f4', padding: '16px', borderRadius: '12px', marginBottom: '15px' }}>
+                  <span>Saldo actual en Cuenta Librería: </span>
+                  <strong style={{ fontSize: '24px', color: '#173b31' }}>$530.500</strong>
+                </div>
+                <div className="staff-history-scroll">
+                  <table className="staff-history-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Naturaleza</th>
+                        <th>Concepto</th>
+                        <th>Referencia</th>
+                        <th style={{ textAlign: 'right' }}>Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>2026-10-12</td>
+                        <td><span className="staff-badge staff-stock-ok">INGRESO</span></td>
+                        <td>Aporte de saldo Webpay</td>
+                        <td>ABO-501</td>
+                        <td style={{ textAlign: 'right', color: '#15803d', fontWeight: 800 }}>+$20.000</td>
+                      </tr>
+                      <tr>
+                        <td>2026-10-01</td>
+                        <td><span className="staff-badge">APERTURA</span></td>
+                        <td>Saldo inicial de caja del período</td>
+                        <td>SALDO-INIT</td>
+                        <td style={{ textAlign: 'right', fontWeight: 800 }}>$500.000</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {subView === 'pagos' && (
+              <div className="card" style={{ padding: '20px' }}>
+                <span className="eyebrow">PAGOS A PROVEEDORES</span>
+                <h2 style={{ margin: '5px 0 15px' }}>Facturas Recepcionadas Pendientes de Pago</h2>
+                <div className="staff-history-scroll">
+                  <table className="staff-history-table">
+                    <thead>
+                      <tr>
+                        <th>Factura</th>
+                        <th>Proveedor</th>
+                        <th>OC</th>
+                        <th style={{ textAlign: 'right' }}>Total</th>
+                        <th>Estado</th>
+                        <th style={{ textAlign: 'center' }}>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>FAC-882</strong></td>
+                        <td>Distribuidora Escolar Aconcagua S.A.</td>
+                        <td><code>OC-1001</code></td>
+                        <td style={{ textAlign: 'right', fontWeight: 800 }}>$11.900</td>
+                        <td><span className="staff-badge staff-stock-warn">Pendiente Solicitud</span></td>
                         <td style={{ textAlign: 'center' }}>
-                          {r.estado === 'PENDIENTE' && (
-                            <button
-                              type="button"
-                              className="staff-history-toggle"
-                              onClick={() => avanzarEstadoReserva(r.id, 'EN_PREPARACION')}
-                            >
-                              ▶ Iniciar Preparación
-                            </button>
-                          )}
-                          {r.estado === 'EN_PREPARACION' && (
-                            <button
-                              type="button"
-                              className="staff-history-toggle"
-                              style={{ background: '#fef3c7', color: '#b45309' }}
-                              onClick={() => avanzarEstadoReserva(r.id, 'ETIQUETA_PENDIENTE')}
-                            >
-                              🏷 Generar Rótulo
-                            </button>
-                          )}
-                          {r.estado === 'ETIQUETA_PENDIENTE' && (
-                            <button
-                              type="button"
-                              className="staff-history-toggle"
-                              style={{ background: '#dbeafe', color: '#1e40af' }}
-                              onClick={() => avanzarEstadoReserva(r.id, 'LISTA_PARA_RETIRO')}
-                            >
-                              ✓ Lista para Retiro
-                            </button>
-                          )}
-                          {r.estado === 'LISTA_PARA_RETIRO' && (
-                            <button
-                              type="button"
-                              className="btn secondary"
-                              style={{ fontSize: '12px', padding: '4px 10px' }}
-                              onClick={() => avanzarEstadoReserva(r.id, 'ENTREGADA')}
-                            >
-                              📦 Entregar y Cerrar
-                            </button>
-                          )}
-                          {(r.estado === 'ENTREGADA' || r.estado === 'CANCELADA') && (
-                            <span className="muted" style={{ fontSize: '12px' }}>Finalizado</span>
-                          )}
+                          <button type="button" className="btn secondary" style={{ fontSize: '12px', padding: '4px 10px' }}>
+                            Solicitar Pago →
+                          </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {subView === 'compras' && (
+              <div className="card" style={{ padding: '20px' }}>
+                <span className="eyebrow">GESTIÓN DE COMPRAS</span>
+                <h2 style={{ margin: '5px 0 15px' }}>Órdenes de Compra Vigentes</h2>
+                <div className="staff-history-scroll">
+                  <table className="staff-history-table">
+                    <thead>
+                      <tr>
+                        <th>Número OC</th>
+                        <th>Proveedor</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th style={{ textAlign: 'right' }}>Total Neto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>OC-1001</strong></td>
+                        <td>Distribuidora Escolar Aconcagua S.A.</td>
+                        <td>2026-10-12</td>
+                        <td><span className="staff-badge staff-stock-ok">EMITIDA</span></td>
+                        <td style={{ textAlign: 'right', fontWeight: 800 }}>$10.000</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
