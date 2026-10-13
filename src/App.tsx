@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { AppRoutes } from './routes/AppRoutes';
 
@@ -9,9 +10,11 @@ import '../assets/css/style.css';
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <CartProvider>
-        <AppRoutes />
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <AppRoutes />
+        </CartProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 };
