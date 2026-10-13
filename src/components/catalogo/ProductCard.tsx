@@ -8,6 +8,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ producto }) => {
   const { agregarProducto } = useCart();
+  const [cantidad, setCantidad] = useState<number>(1);
   const [agregado, setAgregado] = useState(false);
 
   const stockDisponible = producto.stockFisico - producto.stockReservado;
@@ -15,7 +16,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto }) => {
   const sinStock = stockDisponible <= 0;
 
   const handleAgregar = () => {
-    const ok = agregarProducto(producto, 1);
+    if (sinStock || cantidad <= 0) return;
+    const ok = agregarProducto(producto, cantidad);
     if (ok) {
       setAgregado(true);
       setTimeout(() => setAgregado(false), 1500);
@@ -23,59 +25,49 @@ export const ProductCard: React.FC<ProductCardProps> = ({ producto }) => {
   };
 
   return (
-    <div className="card h-100 shadow-sm border-0 position-relative" data-testid={`product-card-${producto.id}`}>
-      <div className="p-3 text-center bg-light rounded-top">
-        <img
-          src={producto.imagenUrl || '/assets/img/materiales-escolares.svg'}
-          alt={producto.nombre}
-          className="img-fluid"
-          style={{ maxHeight: '140px', objectFit: 'contain' }}
-        />
-      </div>
-
-      <div className="card-body d-flex flex-column">
-        <div className="d-flex justify-content-between align-items-center mb-1">
-          <span className="badge bg-secondary-subtle text-secondary small text-uppercase">
-            {producto.categoria}
-          </span>
-          <small className="text-muted font-monospace">{producto.sku}</small>
-        </div>
-
-        <h5 className="card-title fs-6 fw-bold text-dark mb-1">{producto.nombre}</h5>
-        <p className="card-text text-muted small flex-grow-1 mb-2">{producto.descripcion}</p>
-
-        <div className="mb-2">
+    <article className="product-card" data-testid={`product-card-${producto.id}`}>
+      <div>
+        <small>{producto.categoria} · {producto.sku}</small>
+        <h3>{producto.nombre}</h3>
+        <strong>${producto.precioVenta.toLocaleString('es-CL')}</strong>
+        <p className="product-stock">
           {sinStock ? (
-            <span className="badge bg-danger" data-testid="badge-sinstock">
+            <span style={{ color: '#b91c1c', fontWeight: 700 }} data-testid="badge-sinstock">
               Agotado (0 disp.)
             </span>
           ) : esCritico ? (
-            <span className="badge bg-warning text-dark" data-testid="badge-critico">
-              ⚠ Últimas {stockDisponible} unid.
+            <span style={{ color: '#b45309', fontWeight: 700 }} data-testid="badge-critico">
+              ⚠ Últimas {stockDisponible} unid. en stock
             </span>
           ) : (
-            <span className="badge bg-success-subtle text-success" data-testid="badge-disponible">
-              {stockDisponible} disponibles
+            <span data-testid="badge-disponible">
+              {stockDisponible} disponibles · Barra: {producto.codigoBarras}
             </span>
           )}
-        </div>
-
-        <div className="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
-          <span className="fs-5 fw-bold text-primary">
-            ${producto.precioVenta.toLocaleString('es-CL')}
-          </span>
-
-          <button
-            type="button"
-            className={`btn btn-sm ${agregado ? 'btn-success' : 'btn-primary'}`}
-            disabled={sinStock}
-            onClick={handleAgregar}
-            data-testid={`add-btn-${producto.id}`}
-          >
-            {agregado ? '✓ Agregado' : '🛒 Agregar'}
-          </button>
-        </div>
+        </p>
       </div>
-    </div>
+
+      <div className="product-controls">
+        <label htmlFor={`cant-${producto.id}`}>Cantidad</label>
+        <input
+          id={`cant-${producto.id}`}
+          type="number"
+          min="1"
+          max={Math.max(1, stockDisponible)}
+          value={cantidad}
+          disabled={sinStock}
+          onChange={(e) => setCantidad(Math.max(1, Number(e.target.value) || 1))}
+          data-testid={`cant-input-${producto.id}`}
+        />
+        <button
+          type="button"
+          disabled={sinStock}
+          onClick={handleAgregar}
+          data-testid={`add-btn-${producto.id}`}
+        >
+          {agregado ? '✓ Agregado' : 'Agregar'}
+        </button>
+      </div>
+    </article>
   );
 };

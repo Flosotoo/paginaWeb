@@ -1,19 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Navbar } from '../components/layout/Navbar';
 
 export const NotFoundPage: React.FC = () => {
   return (
-    <div className="container py-5 text-center">
-      <div className="py-5">
-        <h1 className="display-1 fw-bold text-primary">404</h1>
-        <h2 className="h4 fw-bold text-dark mb-3">Página no encontrada</h2>
-        <p className="text-muted mb-4">
-          La ruta solicitada no existe o fue movida en la plataforma EduSaldo.
-        </p>
-        <Link to="/" className="btn btn-primary px-4">
-          Volver al Inicio
-        </Link>
-      </div>
-    </div>
+    <>
+      <Navbar />
+      <main className="dashboard" style={{ textAlign: 'center', padding: '60px 20px' }}>
+        <div className="card" style={{ maxWidth: '450px', margin: '0 auto', padding: '40px 20px' }}>
+          <span className="eyebrow" style={{ color: '#b91c1c' }}>ERROR 404</span>
+          <h1 style={{ fontSize: '32px', margin: '10px 0' }}>Página no encontrada</h1>
+          <p className="muted" style={{ margin: '0 0 25px' }}>
+            La ruta solicitada no existe o fue movida en la plataforma EduSaldo.
+          </p>
+          <Link to="/" className="btn btn-wide" style={{ margin: '0 auto' }}>
+            Volver a Mis Alumnos
+          </Link>
+        </div>
+      </main>
+    </>
   );
 };

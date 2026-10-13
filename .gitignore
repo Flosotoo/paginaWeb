@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-ssr/
+.vite/
 docs/screenshots/
 *.local
 .vscode/*

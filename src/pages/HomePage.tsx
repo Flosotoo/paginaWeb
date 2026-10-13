@@ -1,87 +1,108 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Navbar } from '../components/layout/Navbar';
 import { useCart } from '../context/CartContext';
 
 export const HomePage: React.FC = () => {
   const { alumnos } = useCart();
+  const [selectedAlumnoId, setSelectedAlumnoId] = useState<number>(alumnos[0]?.id || 1);
+
+  const selectedAlumno = alumnos.find((a) => a.id === selectedAlumnoId) || alumnos[0];
 
   return (
-    <div>
-      {/* Hero Banner */}
-      <section className="bg-primary text-white py-5 mb-5 rounded-bottom shadow">
-        <div className="container py-3">
-          <div className="row align-items-center">
-            <div className="col-lg-7">
-              <span className="badge bg-warning text-dark text-uppercase px-3 py-2 mb-3 fw-bold">
-                Plataforma Oficial
-              </span>
-              <h1 className="display-4 fw-bold mb-3">Librería Escolar EduSaldo</h1>
-              <p className="lead text-white-50 mb-4">
-                Administra los saldos de tus alumnos, consulta compras y reserva materiales escolares
-                sin filas de forma rápida, transparente y digital.
-              </p>
-              <div className="d-flex flex-wrap gap-3">
-                <Link to="/catalogo" className="btn btn-warning btn-lg fw-bold text-dark px-4 shadow-sm">
-                  🛍 Ver Catálogo y Reservar
-                </Link>
-                <Link to="/reservas" className="btn btn-outline-light btn-lg px-4">
-                  Mis Reservas
-                </Link>
-              </div>
-            </div>
-            <div className="col-lg-5 text-center mt-4 mt-lg-0">
-              <img
-                src="/assets/img/landing-page.jpg"
-                alt="Librería Escolar"
-                className="img-fluid rounded-4 shadow-lg border border-3 border-white"
-                style={{ maxHeight: '320px', objectFit: 'cover' }}
-              />
-            </div>
+    <>
+      <Navbar />
+      <main className="dashboard family-dashboard">
+        <section className="family-intro">
+          <div>
+            <span className="eyebrow">TU ESPACIO FAMILIAR</span>
+            <h1>Hola, <span>Carlos Pérez</span>.</h1>
+            <p>Selecciona un alumno para consultar su cuenta o reservar útiles escolares.</p>
           </div>
-        </div>
-      </section>
+          <img
+            id="family-original-art"
+            src="/assets/img/materiales-escolares.svg"
+            alt="Cuadernos y lápices"
+          />
+        </section>
 
-      {/* Tarjetas de Alumnos Asociados */}
-      <div className="container mb-5">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="fs-4 fw-bold text-dark mb-0">Mis Alumnos Registrados</h2>
-          <small className="text-muted">Cuentas vinculadas a tu perfil de apoderado</small>
-        </div>
+        <section className="family-section">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">MIS ALUMNOS</span>
+              <h2>Sus cuentas, en un solo lugar</h2>
+            </div>
+            <span className="count-pill">{alumnos.length} estudiantes</span>
+          </div>
 
-        <div className="row g-3">
-          {alumnos.map((a) => (
-            <div key={a.id} className="col-md-6" data-testid={`student-card-${a.id}`}>
-              <div className="card shadow-sm border-0 h-100 p-3 bg-white">
-                <div className="d-flex justify-content-between align-items-start">
+          <div id="children" className="child-grid" aria-label="Seleccionar alumno">
+            {alumnos.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                className={`child-choice ${selectedAlumnoId === a.id ? 'is-selected' : ''}`}
+                onClick={() => setSelectedAlumnoId(a.id)}
+                data-testid={`student-card-${a.id}`}
+              >
+                <div className="child-top">
+                  <span className="child-avatar">{a.nombre.charAt(0)}</span>
+                  <span className="choice-state">{a.activo ? 'Cuenta activa' : 'Inactivo'}</span>
+                </div>
+                <strong>{a.nombre}</strong>
+                <small>{a.curso} · RUT {a.rut}</small>
+                <div className="choice-bottom">
                   <div>
-                    <h3 className="fs-5 fw-bold text-dark mb-1">{a.nombre}</h3>
-                    <p className="text-muted small mb-2">
-                      RUT: {a.rut} · Curso: <span className="fw-semibold text-dark">{a.curso}</span> ({a.edad} años)
-                    </p>
+                    <small>Saldo disponible</small>
+                    <br />
+                    <b>${a.saldoDisponible.toLocaleString('es-CL')}</b>
                   </div>
-                  <span className="badge bg-success-subtle text-success fs-6">
-                    ${a.balance.toLocaleString('es-CL')}
-                  </span>
+                  <span className="link-like">Seleccionar →</span>
                 </div>
+              </button>
+            ))}
+          </div>
+        </section>
 
-                <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                  <span className="small text-muted">
-                    Disponible: <strong className="text-primary">${a.saldoDisponible.toLocaleString('es-CL')}</strong>
-                    {a.saldoComprometido > 0 && (
-                      <span className="text-warning ms-1">
-                        (Retenido: ${a.saldoComprometido.toLocaleString('es-CL')})
-                      </span>
-                    )}
-                  </span>
-                  <Link to="/catalogo" className="btn btn-sm btn-outline-primary">
-                    Reservar útiles
-                  </Link>
-                </div>
+        {selectedAlumno && (
+          <section className="account-section">
+            <div className="account-top">
+              <div>
+                <span className="eyebrow">CUENTA SELECCIONADA</span>
+                <h2>{selectedAlumno.nombre}</h2>
+                <p className="muted">{selectedAlumno.curso} · RUT {selectedAlumno.rut}</p>
+              </div>
+              <span className="selected-tag">{selectedAlumno.curso}</span>
+            </div>
+
+            <div className="account-grid">
+              <div className="balance-panel">
+                <span>SALDO DISPONIBLE</span>
+                <strong>${selectedAlumno.saldoDisponible.toLocaleString('es-CL')}</strong>
+                <p>
+                  Saldo total en cuenta: ${selectedAlumno.balance.toLocaleString('es-CL')}
+                  {selectedAlumno.saldoComprometido > 0 && (
+                    <> (Comprometido en reservas: ${selectedAlumno.saldoComprometido.toLocaleString('es-CL')})</>
+                  )}
+                </p>
+                <span className="balance-decoration">$</span>
+              </div>
+
+              <div className="d-flex flex-column justify-content-center gap-3 p-3">
+                <Link to="/catalogo" className="btn btn-wide text-center">
+                  🛍 Reservar Materiales para {selectedAlumno.nombre.split(' ')[0]}
+                </Link>
+                <Link to="/reservas" className="btn secondary text-center">
+                  📋 Ver Historial de Reservas
+                </Link>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
+          </section>
+        )}
+
+        <p className="footer-note">
+          EduSaldo 2.0 · Sistema integral de saldos y librería escolar digital.
+        </p>
+      </main>
+    </>
   );
 };

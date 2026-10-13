@@ -1,134 +1,136 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Navbar } from '../components/layout/Navbar';
 import { useCart } from '../context/CartContext';
 import { EstadoReserva } from '../types';
 
 export const ReservasPage: React.FC = () => {
   const { reservas, cancelarReserva } = useCart();
 
-  const getBadgeClass = (estado: EstadoReserva) => {
+  const getEstadoBadge = (estado: EstadoReserva) => {
     switch (estado) {
       case 'PENDIENTE':
-        return 'bg-secondary';
+        return <span className="staff-badge staff-stock-warn">Pendiente</span>;
       case 'EN_PREPARACION':
-        return 'bg-info text-dark';
+        return <span className="staff-badge" style={{ background: '#e0f2fe', color: '#0369a1' }}>En preparación</span>;
       case 'ETIQUETA_PENDIENTE':
-        return 'bg-warning text-dark';
+        return <span className="staff-badge" style={{ background: '#fef3c7', color: '#b45309' }}>Etiqueta generada</span>;
       case 'LISTA_PARA_RETIRO':
-        return 'bg-primary';
+        return <span className="staff-badge staff-stock-ok">Lista para retiro</span>;
       case 'ENTREGADA':
-        return 'bg-success';
+        return <span className="staff-badge" style={{ background: '#dcfce7', color: '#15803d' }}>Entregada</span>;
       case 'CANCELADA':
-        return 'bg-danger';
+        return <span className="staff-badge staff-stock-low">Cancelada</span>;
       default:
-        return 'bg-secondary';
-    }
-  };
-
-  const getEstadoTexto = (estado: EstadoReserva) => {
-    switch (estado) {
-      case 'PENDIENTE':
-        return 'Pendiente de preparación';
-      case 'EN_PREPARACION':
-        return 'En preparación en librería';
-      case 'ETIQUETA_PENDIENTE':
-        return 'Etiqueta de bolsa generada';
-      case 'LISTA_PARA_RETIRO':
-        return 'Lista para retiro';
-      case 'ENTREGADA':
-        return 'Entregada en librería';
-      case 'CANCELADA':
-        return 'Cancelada';
-      default:
-        return estado;
+        return <span className="staff-badge">{estado}</span>;
     }
   };
 
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 className="h3 fw-bold text-dark mb-1">Mis Reservas de Materiales</h1>
-          <p className="text-muted small mb-0">
-            Sigue el estado de preparación y retiro de tus pedidos de útiles escolares.
-          </p>
-        </div>
-        <Link to="/catalogo" className="btn btn-outline-primary btn-sm">
-          + Nueva Reserva
+    <>
+      <Navbar />
+      <main className="dashboard detail-dashboard">
+        <Link to="/" className="back-link">
+          ← Volver a la cuenta
         </Link>
-      </div>
 
-      {reservas.length === 0 ? (
-        <div className="card shadow-sm border-0 p-5 text-center">
-          <p className="text-muted fs-5 mb-3">No registras reservas activas ni históricas.</p>
-          <div>
-            <Link to="/catalogo" className="btn btn-primary">
-              Ir al Catálogo
+        <section className="family-section">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">SEGUIMIENTO DE PEDIDOS</span>
+              <h2>Mis Reservas de Materiales</h2>
+              <p className="muted">
+                Consulta el estado de empaque y retiro de los útiles reservados para tus alumnos.
+              </p>
+            </div>
+            <Link to="/catalogo" className="btn secondary">
+              + Nueva Reserva
             </Link>
           </div>
-        </div>
-      ) : (
-        <div className="row g-4" data-testid="reservations-list">
-          {reservas.map((r) => (
-            <div key={r.id} className="col-12" data-testid={`reservation-card-${r.id}`}>
-              <div className="card shadow-sm border-0 p-3 bg-white">
-                <div className="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-2 mb-3">
-                  <div>
-                    <span className={`badge ${getBadgeClass(r.estado)} me-2`}>
-                      {getEstadoTexto(r.estado)}
-                    </span>
-                    <strong className="text-dark fs-5">{r.codigo}</strong>
-                    {r.codigoBolsa && (
-                      <span className="badge bg-light text-dark border ms-2 font-monospace">
-                        🏷 Bolsa: {r.codigoBolsa}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-end">
-                    <span className="fs-5 fw-bold text-primary">
-                      ${r.total.toLocaleString('es-CL')}
-                    </span>
-                    <small className="text-muted d-block" style={{ fontSize: '0.75rem' }}>
-                      {new Date(r.fechaCreacion).toLocaleDateString('es-CL')}
-                    </small>
-                  </div>
-                </div>
 
-                <div className="row align-items-center">
-                  <div className="col-md-8">
-                    <p className="small mb-1 text-muted">
-                      Alumno beneficiario: <strong className="text-dark">{r.nombreAlumno}</strong>
-                    </p>
-                    <ul className="list-inline mb-0 small text-secondary">
-                      {r.items.map((it, idx) => (
-                        <li key={idx} className="list-inline-item">
-                          • {it.name} <span className="text-muted">({it.qty} × ${it.price.toLocaleString('es-CL')})</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="col-md-4 text-md-end mt-3 mt-md-0">
-                    {r.estado !== 'ENTREGADA' && r.estado !== 'CANCELADA' && (
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => {
-                          if (confirm('¿Confirmas la cancelación de esta reserva? El saldo y stock serán liberados.')) {
-                            cancelarReserva(r.id, 'Cancelada por el apoderado');
-                          }
-                        }}
-                        data-testid={`cancel-reserva-${r.id}`}
-                      >
-                        Cancelar Reserva
-                      </button>
-                    )}
-                  </div>
-                </div>
+          {reservas.length === 0 ? (
+            <div className="card text-center" style={{ padding: '40px 20px', textAlign: 'center' }}>
+              <p className="muted" style={{ fontSize: '18px', margin: '0 0 20px' }}>
+                No registras pedidos ni reservas activas.
+              </p>
+              <Link to="/catalogo" className="btn btn-wide" style={{ maxWidth: '250px', margin: '0 auto' }}>
+                Ir al Catálogo
+              </Link>
+            </div>
+          ) : (
+            <div className="card" style={{ padding: '20px' }} data-testid="reservations-list">
+              <div className="staff-history-scroll">
+                <table className="staff-history-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Fecha</th>
+                      <th>Alumno</th>
+                      <th>Detalle de Materiales</th>
+                      <th style={{ textAlign: 'right' }}>Total</th>
+                      <th>Estado</th>
+                      <th>Bolsa / Rótulo</th>
+                      <th style={{ textAlign: 'center' }}>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reservas.map((r) => (
+                      <tr key={r.id} data-testid={`reservation-card-${r.id}`}>
+                        <td>
+                          <strong>{r.codigo}</strong>
+                        </td>
+                        <td>{new Date(r.fechaCreacion).toLocaleDateString('es-CL')}</td>
+                        <td>
+                          <strong>{r.nombreAlumno}</strong>
+                        </td>
+                        <td>
+                          <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '13px' }}>
+                            {r.items.map((it, idx) => (
+                              <li key={idx}>
+                                {it.name} ({it.qty} × ${it.price.toLocaleString('es-CL')})
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 800, color: '#173b31' }}>
+                          ${r.total.toLocaleString('es-CL')}
+                        </td>
+                        <td>{getEstadoBadge(r.estado)}</td>
+                        <td>
+                          {r.codigoBolsa ? (
+                            <code style={{ background: '#f5f7f4', padding: '3px 7px', borderRadius: '4px', fontWeight: 700 }}>
+                              {r.codigoBolsa}
+                            </code>
+                          ) : (
+                            <span className="muted">—</span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {r.estado !== 'ENTREGADA' && r.estado !== 'CANCELADA' && (
+                            <button
+                              type="button"
+                              className="staff-history-toggle"
+                              style={{ color: '#b91c1c' }}
+                              onClick={() => {
+                                if (confirm('¿Confirmas cancelar la reserva? El saldo y stock serán liberados.')) {
+                                  cancelarReserva(r.id, 'Cancelada por apoderado');
+                                }
+                              }}
+                              data-testid={`cancel-reserva-${r.id}`}
+                            >
+                              Cancelar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          )}
+        </section>
+      </main>
+    </>
   );
 };

@@ -1,84 +1,58 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  currentRole?: string;
+}
+
+export const Navbar: React.FC<NavbarProps> = () => {
   const { totalItems } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const isActive = (path: string) => (location.pathname === path ? 'active fw-bold' : '');
+  const isActive = (path: string) => (location.pathname === path ? 'active' : '');
+
+  const handleLogout = () => {
+    navigate('/login');
+  };
 
   return (
-    <header className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
-      <div className="container">
-        <Link to="/" className="navbar-brand d-flex align-items-center gap-2">
-          <img
-            src="/assets/img/materiales-escolares.svg"
-            alt="EduSaldo"
-            height="36"
-            className="d-inline-block"
-          />
-          <div className="lh-1 text-start">
-            <span className="fw-bold fs-5 d-block text-white">EduSaldo</span>
-            <small className="text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>
-              Librería Escolar Digital
-            </small>
-          </div>
+    <header className="site-header">
+      <div className="header-inner">
+        <Link to="/" className="brand brand-light" aria-label="EduSaldo inicio">
+          <span className="brand-mark">
+            e<span>·</span>
+          </span>
+          <span>
+            edu<strong>saldo</strong><i>.</i>
+          </span>
         </Link>
 
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarEduSaldo"
-          aria-controls="navbarEduSaldo"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
+        <nav id="mobile-main-nav" className="header-nav" aria-label="Navegación principal">
+          <Link to="/" className={isActive('/')}>
+            Mis alumnos
+          </Link>
+          <Link to="/catalogo" className={isActive('/catalogo')}>
+            Catálogo y Reservas
+          </Link>
+          <Link to="/reservas" className={isActive('/reservas')}>
+            Mis pedidos
+          </Link>
+          <Link to="/admin" className={isActive('/admin')}>
+            Administración
+          </Link>
+          <Link to="/carrito" className={`cart-link ${isActive('/carrito')}`} data-testid="cart-btn">
+            Carrito {totalItems > 0 && <span className="cart-badge-pill" data-testid="cart-badge">{totalItems}</span>}
+          </Link>
+        </nav>
 
-        <div className="collapse navbar-collapse" id="navbarEduSaldo">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
-            <li className="nav-item">
-              <Link to="/" className={`nav-link ${isActive('/')}`}>
-                Inicio
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/catalogo" className={`nav-link ${isActive('/catalogo')}`}>
-                Catálogo
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/reservas" className={`nav-link ${isActive('/reservas')}`}>
-                Mis Reservas
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/admin" className={`nav-link ${isActive('/admin')}`}>
-                Administración
-              </Link>
-            </li>
-          </ul>
-
-          <div className="d-flex align-items-center gap-3">
-            <Link to="/carrito" className="btn btn-outline-light position-relative" data-testid="cart-btn">
-              🛒 Carrito
-              {totalItems > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                  data-testid="cart-badge"
-                >
-                  {totalItems}
-                </span>
-              )}
-            </Link>
-
-            <Link to="/login" className="btn btn-success btn-sm">
-              Mi Cuenta
-            </Link>
-          </div>
+        <div className="header-account">
+          <span className="user-bubble">CP</span>
+          <span className="user-name">Carlos Pérez</span>
+          <button className="logout" id="logout" type="button" onClick={handleLogout}>
+            Salir ↗
+          </button>
         </div>
       </div>
     </header>

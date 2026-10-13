@@ -1,102 +1,149 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { INITIAL_USERS } from '../data/mockData';
-import { Usuario } from '../types';
+import { useNavigate, Link } from 'react-router-dom';
 
 export const LoginPage: React.FC = () => {
-  const [rut, setRut] = useState('');
-  const [pass, setPass] = useState('');
-  const [usuarioActivo, setUsuarioActivo] = useState<Usuario>(INITIAL_USERS[0]);
-  const [msg, setMsg] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [clave, setClave] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const u = INITIAL_USERS.find((usr) => usr.rut === rut.trim());
-    if (u) {
-      setUsuarioActivo(u);
-      setMsg(`Sesión iniciada como ${u.name} ${u.last} (${u.type})`);
-      setTimeout(() => {
-        if (u.type === 'ADMINISTRADOR' || u.type === 'ENCARGADO' || u.type === 'AUTORIZADOR') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
-      }, 1000);
+    if (!correo.trim() || !clave.trim()) {
+      setError('Por favor completa todos los campos.');
+      return;
+    }
+
+    if (correo.includes('admin2') || correo.includes('autorizador')) {
+      navigate('/admin');
+    } else if (correo.includes('admin')) {
+      navigate('/admin');
+    } else if (correo.includes('encargado') || correo.includes('libreria')) {
+      navigate('/admin');
     } else {
-      setMsg('RUT no encontrado en la base de datos de demostración.');
+      navigate('/');
     }
   };
 
-  const handleSelectSimulado = (u: Usuario) => {
-    setUsuarioActivo(u);
-    setRut(u.rut);
-    setPass('********');
-    setMsg(`Perfil seleccionado: ${u.name} ${u.last} (${u.type})`);
+  const handleSelectDemo = (email: string, pass: string) => {
+    setCorreo(email);
+    setClave(pass);
+    setError('');
   };
 
   return (
-    <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-md-6 col-lg-5">
-          <div className="card shadow-sm border-0 p-4 bg-white">
-            <h1 className="h4 fw-bold text-dark text-center mb-1">Acceso EduSaldo</h1>
-            <p className="text-muted text-center small mb-4">
-              Ingresa tus credenciales o selecciona un perfil de demostración
-            </p>
+    <main className="login">
+      <section className="login-visual">
+        <Link to="/login" className="brand brand-light" aria-label="EduSaldo inicio">
+          <span className="brand-mark">
+            e<span>·</span>
+          </span>
+          <span>
+            edu<strong>saldo</strong><i>.</i>
+          </span>
+        </Link>
 
-            {msg && <div className="alert alert-info py-2 small">{msg}</div>}
-
-            <form onSubmit={handleLogin}>
-              <div className="mb-3">
-                <label className="form-label small fw-semibold">RUT de Usuario</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Ej: 9.876.543-2"
-                  value={rut}
-                  onChange={(e) => setRut(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label small fw-semibold">Contraseña</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  placeholder="Tu contraseña"
-                  value={pass}
-                  onChange={(e) => setPass(e.target.value)}
-                  required
-                />
-              </div>
-
-              <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold">
-                Iniciar Sesión
-              </button>
-            </form>
-
-            <hr className="my-4" />
-
-            <h3 className="fs-6 fw-bold text-muted mb-2 text-center text-uppercase" style={{ fontSize: '0.75rem' }}>
-              Cuentas de Demostración
-            </h3>
-            <div className="d-grid gap-2">
-              {INITIAL_USERS.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  className={`btn btn-sm text-start ${usuarioActivo.id === u.id ? 'btn-dark' : 'btn-outline-secondary'}`}
-                  onClick={() => handleSelectSimulado(u)}
-                >
-                  <strong>{u.name} {u.last}</strong> · <span className="small">{u.type}</span> ({u.rut})
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="visual-copy">
+          <span className="eyebrow pale">EDUSALDO · TU ESPACIO FAMILIAR</span>
+          <h1>
+            Todo lo que acompaña<br />
+            su aprendizaje,<br />
+            <em>más cerca de ti.</em>
+          </h1>
         </div>
-      </div>
-    </div>
+
+        <span className="visual-foot">EduSaldo · Proyecto académico</span>
+      </section>
+
+      <section className="login-form-wrap">
+        <div className="login-form">
+          <span className="eyebrow">ACCESO A TU CUENTA</span>
+          <h2>
+            Ingresa para apoyar<br />
+            <em>su día escolar.</em>
+          </h2>
+          <p className="muted">
+            Consulta los saldos y movimientos de los estudiantes a tu cargo desde un solo lugar.
+          </p>
+
+          <form id="login-form" onSubmit={handleLogin}>
+            <div className="field">
+              <label htmlFor="correo">Correo electrónico</label>
+              <input
+                id="correo"
+                className="input"
+                type="email"
+                placeholder="nombre@correo.cl"
+                autoComplete="username"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="clave">Contraseña</label>
+              <input
+                id="clave"
+                className="input"
+                type="password"
+                placeholder="Tu contraseña"
+                autoComplete="current-password"
+                value={clave}
+                onChange={(e) => setClave(e.target.value)}
+                required
+              />
+            </div>
+
+            {error && <div className="alert" role="alert">{error}</div>}
+
+            <button className="btn btn-wide" type="submit">
+              Ingresar a mi cuenta <span aria-hidden="true">→</span>
+            </button>
+          </form>
+
+          <button id="recovery-open" className="account-text-button" type="button">
+            ¿Olvidaste tu contraseña?
+          </button>
+
+          <details className="demo">
+            <summary>Ver accesos de demostración</summary>
+            <div>
+              <code
+                style={{ cursor: 'pointer', display: 'block', margin: '4px 0' }}
+                onClick={() => handleSelectDemo('apoderado@edusaldo.cl', '1234')}
+                title="Hacer clic para autocompletar"
+              >
+                apoderado@edusaldo.cl / 1234
+              </code>
+              <code
+                style={{ cursor: 'pointer', display: 'block', margin: '4px 0' }}
+                onClick={() => handleSelectDemo('encargado@edusaldo.cl', '1234')}
+                title="Hacer clic para autocompletar"
+              >
+                encargado@edusaldo.cl / 1234
+              </code>
+              <code
+                style={{ cursor: 'pointer', display: 'block', margin: '4px 0' }}
+                onClick={() => handleSelectDemo('admin@edusaldo.cl', '1234')}
+                title="Hacer clic para autocompletar"
+              >
+                admin@edusaldo.cl / 1234
+              </code>
+              <code
+                style={{ cursor: 'pointer', display: 'block', margin: '4px 0' }}
+                onClick={() => handleSelectDemo('admin2@edusaldo.cl', '1234')}
+                title="Hacer clic para autocompletar"
+              >
+                admin2@edusaldo.cl / 1234
+              </code>
+              <p>
+                Datos ficticios. Si cambias la contraseña del apoderado, el acceso 1234 dejará de funcionar para esa cuenta en este navegador. No utilices contraseñas reales: este prototipo no tiene autenticación de servidor.
+              </p>
+            </div>
+          </details>
+        </div>
+      </section>
+    </main>
   );
 };
