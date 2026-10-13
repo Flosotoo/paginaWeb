@@ -57,11 +57,13 @@ export interface Reserva {
   total: number;
   estado: EstadoReserva;
   fechaCreacion: string;
+  scanned?: Record<number, number>;
   items: Array<{
     id: number;
     name: string;
     qty: number;
     price: number;
+    barcode?: string;
   }>;
 }
 

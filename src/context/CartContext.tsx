@@ -18,6 +18,10 @@ interface CartContextType {
   confirmarReserva: (alumnoId: number) => { success: boolean; message: string; reserva?: Reserva };
   cancelarReserva: (reservaId: string, motivo: string) => boolean;
   avanzarEstadoReserva: (reservaId: string, nuevoEstado: EstadoReserva) => boolean;
+  escanearArticuloReserva: (reservaId: string, barcode: string) => { success: boolean; message: string; complete?: boolean };
+  generarEtiquetaReserva: (reservaId: string) => string;
+  marcarListaRetiro: (reservaId: string) => void;
+  entregarReservaConValidacion: (reservaId: string, bagCode: string, studentCode: string) => { success: boolean; message: string };
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -250,6 +254,143 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  const escanearArticuloReserva = (
+    reservaId: string,
+    barcode: string
+  ): { success: boolean; message: string; complete?: boolean } => {
+    let result = { success: false, message: 'Reserva no encontrada', complete: false };
+
+    setReservas((prev) =>
+      prev.map((r) => {
+        if (r.id !== reservaId) return r;
+
+        const prod = productos.find((p) => p.codigoBarras === barcode.trim());
+        if (!prod) {
+          result = { success: false, message: 'Código de barra no encontrado en el catálogo escolar.', complete: false };
+          return r;
+        }
+
+        const itemReserva = r.items.find((i) => i.id === prod.id);
+        if (!itemReserva) {
+          result = { success: false, message: `El artículo "${prod.nombre}" no pertenece a esta reserva.`, complete: false };
+          return r;
+        }
+
+        const currentScanned = r.scanned || {};
+        const count = currentScanned[prod.id] || 0;
+
+        if (count >= itemReserva.qty) {
+          result = { success: false, message: `La cantidad de "${prod.nombre}" ya está completa en la bolsa (${count}/${itemReserva.qty}).`, complete: false };
+          return r;
+        }
+
+        const updatedScanned = { ...currentScanned, [prod.id]: count + 1 };
+        const isComplete = r.items.every((it) => (updatedScanned[it.id] || 0) >= it.qty);
+
+        result = {
+          success: true,
+          message: `✓ Pistoleado: ${prod.nombre} (${count + 1}/${itemReserva.qty})`,
+          complete: isComplete,
+        };
+
+        return {
+          ...r,
+          scanned: updatedScanned,
+          estado: 'EN_PREPARACION',
+        };
+      })
+    );
+
+    return result;
+  };
+
+  const generarEtiquetaReserva = (reservaId: string): string => {
+    let bagCode = '';
+    setReservas((prev) =>
+      prev.map((r) => {
+        if (r.id !== reservaId) return r;
+        bagCode = r.codigoBolsa || `BOL-${r.codigo.replace('RES-', '')}`;
+        return {
+          ...r,
+          codigoBolsa: bagCode,
+          estado: 'ETIQUETA_PENDIENTE',
+        };
+      })
+    );
+    return bagCode;
+  };
+
+  const marcarListaRetiro = (reservaId: string) => {
+    setReservas((prev) =>
+      prev.map((r) => (r.id === reservaId ? { ...r, estado: 'LISTA_PARA_RETIRO' } : r))
+    );
+  };
+
+  const entregarReservaConValidacion = (
+    reservaId: string,
+    bagCode: string,
+    studentCode: string
+  ): { success: boolean; message: string } => {
+    const r = reservas.find((res) => res.id === reservaId);
+    if (!r) return { success: false, message: 'Reserva no encontrada.' };
+
+    const expectedBag = (r.codigoBolsa || '').trim().toUpperCase();
+    if (bagCode.trim().toUpperCase() !== expectedBag) {
+      return {
+        success: false,
+        message: `El código de bolsa pistoleado (${bagCode}) no coincide con la reserva (${expectedBag}).`,
+      };
+    }
+
+    const alumno = alumnos.find((a) => a.id === r.alumnoId);
+    const cleanStudentCode = studentCode.trim().toUpperCase();
+    const expectedRut = alumno ? alumno.rut.toUpperCase().replace(/\./g, '') : '';
+    const givenRut = cleanStudentCode.replace(/\./g, '');
+
+    if (cleanStudentCode !== `ALU-${r.alumnoId}` && givenRut !== expectedRut) {
+      return {
+        success: false,
+        message: `La credencial pistoleada (${studentCode}) no coincide con el alumno ${r.nombreAlumno}.`,
+      };
+    }
+
+    setAlumnos((prev) =>
+      prev.map((a) =>
+        a.id === r.alumnoId
+          ? {
+              ...a,
+              saldoComprometido: Math.max(0, a.saldoComprometido - r.total),
+              balance: Math.max(0, a.balance - r.total),
+              saldoDisponible: Math.max(0, a.balance - r.total) - Math.max(0, a.saldoComprometido - r.total),
+            }
+          : a
+      )
+    );
+
+    setProductos((prev) =>
+      prev.map((p) => {
+        const itemRes = r.items.find((it) => it.id === p.id);
+        if (itemRes) {
+          return {
+            ...p,
+            stockReservado: Math.max(0, p.stockReservado - itemRes.qty),
+            stockFisico: Math.max(0, p.stockFisico - itemRes.qty),
+          };
+        }
+        return p;
+      })
+    );
+
+    setReservas((prev) =>
+      prev.map((res) => (res.id === reservaId ? { ...res, estado: 'ENTREGADA' } : res))
+    );
+
+    return {
+      success: true,
+      message: `✓ Entrega completada con éxito. Venta generada y bolsa ${expectedBag} retirada.`,
+    };
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -268,6 +409,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         confirmarReserva,
         cancelarReserva,
         avanzarEstadoReserva,
+        escanearArticuloReserva,
+        generarEtiquetaReserva,
+        marcarListaRetiro,
+        entregarReservaConValidacion,
       }}
     >
       {children}
