@@ -10,54 +10,53 @@ Proyecto semestral para la asignatura **Desarrollo Fullstack II (DSY1104)**.
 
 ## Problema
 
-Cuando los aportes, compras y saldos se gestionan mediante registros manuales o planillas independientes, los apoderados no siempre pueden consultar de manera inmediata los movimientos asociados a sus alumnos. Falta un sistema centralizado que permita consultar oportunamente los aportes, compras, saldos y movimientos de cada alumno, y que facilite el control administrativo de la librería escolar.
+Cuando los abonos, entregas y saldos se gestionan mediante registros manuales o planillas independientes, los apoderados no siempre pueden consultar de manera inmediata los movimientos asociados a sus alumnos. Falta un sistema centralizado que permita consultar oportunamente los abonos, entregas, saldos y movimientos de cada alumno, y que facilite el control administrativo y operativo de la librería escolar.
 
 ## Solución propuesta
 
-**EduSaldo** es una aplicación web que gestiona una librería escolar, sus productos y usuarios, junto con la administración de estudiantes, aportes de saldo mediante Webpay (simulado), compras, reservas, movimientos e inventario.
+**EduSaldo** es una aplicación web que gestiona una librería escolar, su catálogo de productos y usuarios, junto con la administración de estudiantes, abonos de saldo mediante pasarela Webpay (simulada), reservas, entregas de materiales, movimientos e inventario.
 
 ## Objetivo general
 
-Desarrollar una aplicación web para gestionar una librería escolar y centralizar el registro de productos, usuarios, compras y saldos asociados a estudiantes, utilizando HTML, CSS y JavaScript, con el propósito de mejorar la trazabilidad, transparencia y control de las operaciones.
+Desarrollar una aplicación web para gestionar una librería escolar y centralizar el registro de productos, usuarios, entregas de materiales y saldos asociados a estudiantes, utilizando HTML, CSS, JavaScript y React en el frontend, y Spring Boot bajo arquitectura de microservicios en el backend, con el propósito de mejorar la trazabilidad, transparencia y control de las operaciones.
 
 ## Organización y roles
 
-- **Organización:** Centro General de Padres y Apoderados (Centro de Padres), que administra los fondos y es responsable de la librería escolar, donde se realizan las compras y entregas de materiales.
+- **Organización:** Centro General de Padres y Apoderados (Centro de Padres), que administra los fondos y es responsable de la librería escolar, donde se gestionan los materiales.
 - **Sistema:** EduSaldo.
-- **Apoderado:** aporta saldo a sus alumnos con Webpay, consulta sus movimientos y reserva materiales.
-- **Encargado de Librería:** gestiona stock, prepara reservas y entrega materiales.
-- **Administrador:** administra usuarios, estudiantes, productos y la configuración del sistema.
-- **Administrador 2 (autorizador):** perfil de control y segunda firma; consulta la Cuenta Librería en modo solo lectura y autoriza ajustes de stock y pagos.
-- **Alumno (estudiante):** entidad del dominio; tiene saldo disponible y no requiere inicio de sesión.
+- **Apoderado:** abona saldo a sus alumnos con Webpay (simulado), consulta sus movimientos y reserva materiales para cualquiera de sus pupilos.
+- **Encargado de Librería:** gestiona stock físico, registra ingresos manuales de mercadería, prepara reservas rotuladas (`preparadaPorId`, `fechaPreparacion`), entrega materiales en mesón y solicita ajustes de inventario.
+- **Administrador:** gestiona usuarios, alumnos, asociaciones familiares, catálogo de productos, aprueba o rechaza solicitudes de ajuste de stock y administra los parámetros y configuración institucional del sistema.
+- **Alumno (estudiante):** entidad del dominio con saldo individual (`alumnoId`). Si tiene 12 años o más, cuenta con inicio de sesión propio (correo institucional), puede consultar su saldo y gestionar reservas para sí mismo. Si es menor de 12 años, no inicia sesión y opera mediante sus apoderados o identificación presencial en el mesón.
 
 ## Conceptos
 
-- **Aporte:** dinero que el apoderado incorpora, mediante Webpay, al saldo de uno de sus alumnos.
-- **Saldo disponible:** dinero que tiene el alumno para comprar materiales (`saldoDisponible = saldoActual - saldoComprometido`).
-- **Compra:** adquisición de materiales en la librería escolar; descuenta el saldo.
-- **Reserva:** selección anticipada de materiales para retirarlos después; pasa por preparación, rotulado y se convierte en compra al retirarla.
-- **Movimiento:** registro de un aporte, compra u otra operación que afecta el saldo.
+- **Abono:** dinero que el apoderado incorpora, mediante pasarela Webpay simulada, al saldo de uno de sus alumnos.
+- **Saldo disponible:** fondos reales que tiene el alumno para retirar materiales (`saldoDisponible = saldoActual - saldoComprometido`).
+- **Reserva:** selección anticipada de materiales para retirarlos posteriormente; compromete saldo y stock físico, es preparada y rotulada por el encargado, y se concreta en una entrega al momento del retiro.
+- **Entrega de materiales:** acto de despacho presencial de artículos (por retiro de reserva o atención en mesón) que descuenta formalmente el saldo y el stock físico.
+- **Movimiento de saldo / inventario:** registro inmutable de auditoría para cada operación que afecta el saldo o el stock.
 
-Flujo del aporte: *Aportar saldo* → elegir alumno → ingresar monto → pago en Webpay → al aprobarse, el monto se acredita al saldo del alumno → queda registrado como movimiento. Webpay está **simulado**: no hay pasarela real ni se piden datos de tarjeta.
+Flujo del abono: *Abonar saldo* → elegir alumno → ingresar monto → pasarela simulada con token → cuenta temporalmente bloqueada → al aprobarse, se acredita en `CuentaSaldo` y se genera `MovimientoSaldo` → desbloqueo de cuenta. Webpay está **simulado**: no hay pasarela real ni se solicitan datos bancarios reales.
 
-## Arquitectura de Microservicios (Backend)
+## Arquitectura de Microservicios (Backend EduSaldo 2.0)
 
-La solución se estructura en 6 microservicios de negocio desacoplados (DDD) más un API Gateway:
+La solución se estructura bajo el patrón Domain-Driven Design (DDD) en **4 microservicios de negocio desacoplados** más un **API Gateway** central en topología de estrella (Hub & Spoke):
 
-1. **MS Auth y Usuarios (8081 - `db_auth_usuarios`):** Login JWT, roles (`APODERADO`, `ENCARGADO`, `ADMINISTRADOR`, `AUTORIZADOR`), bloqueo tras 5 intentos fallidos y revocación de tokens.
-2. **MS Alumnos y Saldos (8082 - `db_alumnos_saldos`):** Alumnos, relación N:M con apoderados, saldo disponible, abonos Webpay simulados, finalización atómica de reservas y alertas de saldo bajo.
-3. **MS Productos e Inventario (8083 - `db_productos_inventario`):** Catálogo, stock físico/reservado/disponible, Costo Promedio Ponderado (CPP con IVA incluido), inventario físico con respaldo fotográfico y ajustes con segunda firma.
-4. **MS Ventas y Reservas (8084 - `db_ventas_reservas`):** Ciclo multietapa de reservas (`PENDIENTE` → `EN_PREPARACION` → `ETIQUETA_PENDIENTE` → `LISTA_PARA_RETIRO` → `ENTREGADA`), venta directa presencial (alumnos ≥ 12 años) y devoluciones.
-5. **MS Compras (8085 - `db_compras`):** Proveedores, órdenes de compra en neto (con tipos `Long`), recepción atómica contra facturas del SII con auditoría de artículos no ordenados y ciclo de pago.
-6. **MS Finanzas y Configuración (8086 - `db_finanzas_config`):** Cuenta Librería (caja vs. resultados sin doble contabilización), pagos con doble firma (Administrador solicita, Autorizador aprueba), cierre contable mensual y configuración institucional.
-- **API Gateway (8099):** Punto único de entrada para el frontend React.
+1. **MS Auth y Usuarios (8081 · `db_usuarios`):** Autenticación JWT, jerarquía polimórfica de usuarios (`Administrador`, `Encargado`, `Apoderado`, `Alumno`), clase de asociación pura `ApoderadoAlumno`, política de acceso con bloqueo dinámico tras intentos fallidos, configuración institucional, parámetros del sistema y registro centralizado de auditoría.
+2. **MS Saldos y Abonos (8082 · `db_saldos`):** Cuentas de saldo por alumno (`alumnoId`), invariante financiera (`saldoDisponible >= 0`), abonos Webpay simulados con bloqueo temporal, liquidación por retiro del alumno y bitácora inmutable de `MovimientoSaldo`.
+3. **MS Productos e Inventario (8083 · `db_inventario`):** Catálogo de productos, categorías, stock físico, reservado y disponible, módulo de ingreso manual de stock y solicitudes de ajuste de stock solicitadas por el Encargado y aprobadas por el Administrador.
+4. **MS Reservas y Entregas (8084 · `db_reservas`):** Ciclo de reservas multilínea con trazabilidad de preparación (HU31 CA2: `preparadaPorId`, `fechaPreparacion`), cancelaciones permitidas para staff, apoderados y alumnos $\ge$ 12 años, entregas en mesón, devoluciones de materiales y notificación interna por correo a apoderados.
+- **API Gateway (8099):** Punto único de entrada para el frontend React, encargado del enrutamiento perimetral y la seguridad sin lógica de negocio propia.
+
+*(Nota: Los anteriores módulos de Compras 8085 y Finanzas 8086 fueron desestimados para evitar sobreingeniería y ajustar el alcance a los requerimientos evaluativos del curso).*
 
 ## Planificación del semestre
 
-El prototipo actual cubre la estructura navegable y las reglas de negocio demostrables (Sprints 1–4); los Sprints 5–12 corresponden a la migración a React + TypeScript, el testing y la integración con Spring Boot.
+El prototipo inicial cubrió la estructura navegable y las reglas de negocio demostrables (Sprints 1–4); los Sprints 5–12 corresponden a la migración a React + TypeScript, el testing y la integración con Spring Boot.
 
 | Sprint | Experiencia | Sprint Goal | PBIs / entregables lógicos mínimos | Tecnología / aprendizaje | Trabajo paralelo | Definition of Done mínima / criterio de cierre | Sprint Review: evidencia a demostrar |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | E1 | Definir el producto y organizar el desarrollo | Actores Cliente/Admin; alcance; Product Backlog; HU o casos de uso; criterios de aceptación; ERS inicial; repositorio Git; estimación inicial con SP. | Scrum, Git/GitHub, análisis de requerimientos | Definición preliminar de entidades, roles y funcionalidades futuras. | Backlog priorizado; criterios de aceptación verificables; repositorio operativo; trabajo distribuido y visible en Git. | Presentar problema, alcance, backlog, criterios de aceptación, estimaciones relativas, organización del equipo y commits iniciales. |
 | 2 | E1 | Construir la estructura navegable de la tienda | Home; catálogo; detalle de producto; formularios; navegación; imágenes/multimedia; footer; estructura inicial cliente/admin. | HTML5 semántico | Refinamiento del Product Backlog y de criterios de aceptación. | Navegación funcional y estructura semántica coherente con los requerimientos. | Recorrer el sitio; justificar etiquetas semánticas; mostrar navegación, formularios, recursos y commits del sprint. |
 | 3 | E1 | Diseñar la interfaz de cliente y administración | Diseño visual; catálogo; formularios; vistas cliente/admin; adaptación móvil/escritorio. | CSS externo + Bootstrap | Refinamiento de interfaz y backlog. | CSS personalizado externo; Bootstrap integrado; interfaz usable y responsive. | Mostrar escritorio/móvil; distinguir Bootstrap de CSS propio; justificar decisiones visuales y evidenciar trabajo en Git. |
@@ -69,4 +68,4 @@ El prototipo actual cubre la estructura navegable y las reglas de negocio demost
 | 9 | E2 | Verificar los comportamientos críticos del frontend | Primer conjunto de pruebas derivadas de HU y criterios de aceptación: carrito, formularios y componentes. | Vitest + React Testing Library | Spring Boot: completar CRUD. | Pruebas ejecutables y trazables a criterios de aceptación; casos positivos y negativos. | Ejecutar tests; explicar CA -> test; mostrar casos exitosos y un fallo controlado. |
 | 10 | E2 | Consolidar el proceso de testing | 10 pruebas relevantes; mocks; coverage; análisis de resultados; documento de cobertura. | Vitest + RTL + mocks + coverage | Spring Boot: CRUD completo, Swagger y API estable. | 10 pruebas significativas ejecutables; mocks cuando corresponda; cobertura disponible y analizada. | Ejecutar suite completa; demostrar 10 tests, mocks, coverage y explicar alcance y resultados. |
 | 11 | E3 | Integrar la SPA con el backend real | Sustituir datos locales/mocks; catálogo real; CRUD admin; pedidos/checkout; endpoints; Swagger. | Axios + REST + Spring Boot + Base de Datos | Implementación de Spring Security y JWT. | Flujos GET/POST/PUT/DELETE integrados; Swagger disponible; frontend consume API real mediante Axios. | Demostrar React -> Axios -> REST -> Spring -> BD -> respuesta; CRUD completo; Swagger; lógica y modelo backend. |
-| 12 | E3 | Proteger y cerrar la solución Full Stack | Login; JWT; roles CLIENTE/ADMIN; persistencia de sesión; rutas/acciones restringidas; pago simulado; cierre funcional. | Spring Security + JWT + React + Axios | Integración final y estabilización. | Autenticación y autorización operativas; sesión persiste tras recarga; frontend y backend restringen según rol. | Demostrar login, token, persistencia de sesión, acceso Cliente/Admin, rechazo de accesos indebidos y solución final integrada. |
+| 12 | E3 | Proteger y cerrar la solución Full Stack | Login; JWT; roles CLIENTE/ADMIN; persistencia de sesión; rutas/acciones restringidas; pago simulado; cierre funcional. | Spring Boot + Spring Security + JWT + React + Axios | Integración final y estabilización. | Autenticación y autorización operativas; sesión persiste tras recarga; frontend y backend restringen según rol. | Demostrar login, token, persistencia de sesión, acceso Cliente/Admin, rechazo de accesos indebidos y solución final integrada. |
