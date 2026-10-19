@@ -1,0 +1,47 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:4173"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        # MS 01: Usuarios y Auth (8091)
+        - id: ms-auth-usuarios
+          uri: http://localhost:8091
+          predicates:
+            - Path=/api/auth/**, /api/usuarios/**, /api/configuracion/**, /api/auditoria/**, /api/contacto/**
+
+        # MS 02: Saldos y Abonos (8092)
+        - id: ms-alumnos-saldos
+          uri: http://localhost:8092
+          predicates:
+            - Path=/api/saldos/**
+
+        # MS 03: Productos e Inventario (8093)
+        - id: ms-productos-inventario
+          uri: http://localhost:8093
+          predicates:
+            - Path=/api/productos/**, /api/categorias/**, /api/inventario/**
+
+        # MS 04: Reservas y Entregas (8094)
+        - id: ms-ventas-reservas
+          uri: http://localhost:8094
+          predicates:
+            - Path=/api/reservas/**, /api/entregas/**, /api/devoluciones/**
