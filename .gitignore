@@ -1,13 +1,82 @@
+# =============================================================================
+# EduSaldo Monorepo · Git Ignore Configuration
+# =============================================================================
+
+# === Reglas de Agentes e IA ===
+AGENTS.md
+.opencode/
+.gemini/
+.claude/
+.cursor/
+.cursorrules
+
+# === Archivos Temporales de Microsoft Office (Word / Excel) ===
+~$*
+.~lock.*
+
+# === Variables de Entorno y Secretos ===
+.env
+*.env
+.env.*
+!.env.example
+
+# === Backend / Java & Maven ===
+target/
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.ear
+logs/
+**/logs/
+*.log
+services_pids.json
+
+# === Frontend / Node & React ===
 node_modules/
+**/node_modules/
 dist/
+**/dist/
 dist-ssr/
 .vite/
-docs/screenshots/
 *.local
-.vscode/*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === IDEs y Editores de Código ===
+# VS Code
+.vscode/
 !.vscode/extensions.json
-.idea
+
+# IntelliJ / JetBrains
+.idea/
+**/.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse / STS
+.project
+.classpath
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+.sts4-cache/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+
+# === Sistema Operativo ===
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
