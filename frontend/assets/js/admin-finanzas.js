@@ -1,4 +1,4 @@
-/* EduSaldo 2.0 · Etapa 37.1 · Cuenta Librería por período, gráficos y stock separado. */
+/* EduSaldo · Etapa 37.1 · Cuenta Librería por período, gráficos y stock separado. */
 (() => {
   "use strict";
   const DATA = "edusaldo2_demo",

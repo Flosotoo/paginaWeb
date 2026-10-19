@@ -1,4 +1,4 @@
-/* EduSaldo 2.0 · Etapa 18. Prototipo local del encargado; no procesa pagos. */
+/* EduSaldo · Etapa 18. Prototipo local del encargado; no procesa pagos. */
 (() => {
   "use strict";
   const DATA = "edusaldo2_demo",

@@ -1,4 +1,4 @@
-/* EduSaldo 2.0 · Exportación Excel compatible (.xls) con título, fecha, hora y filtros. */
+/* EduSaldo · Exportación Excel compatible (.xls) con título, fecha, hora y filtros. */
 (() => {
   "use strict";
   const esc = (s) =>

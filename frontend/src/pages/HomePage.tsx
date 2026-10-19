@@ -100,7 +100,7 @@ export const HomePage: React.FC = () => {
         )}
 
         <p className="footer-note">
-          EduSaldo 2.0 · Sistema integral de saldos y librería escolar digital.
+          EduSaldo · Sistema integral de saldos y librería escolar digital.
         </p>
       </main>
     </>

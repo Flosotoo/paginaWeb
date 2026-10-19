@@ -1,4 +1,4 @@
-/* EduSaldo 2.0 · Etapa 36 · Devolución contra compra registrada. */
+/* EduSaldo · Etapa 36 · Devolución contra compra registrada. */
 (() => {
   "use strict";
   const KEY = "edusaldo2_demo",

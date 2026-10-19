@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
       <div className="container">
         <div className="row gy-3">
           <div className="col-md-6 text-center text-md-start">
-            <h5 className="fw-bold mb-1">EduSaldo 2.0 · Librería Escolar</h5>
+            <h5 className="fw-bold mb-1">EduSaldo · Librería Escolar</h5>
             <p className="small text-muted mb-0">
               Centro General de Padres y Apoderados. Sistema integral de saldos, compras y reservas de útiles escolares.
             </p>

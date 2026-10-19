@@ -1,4 +1,4 @@
-/* EduSaldo 2.0 · Etapa 2. Interfaz y selección de alumno con datos ficticios. */
+/* EduSaldo · Etapa 2. Interfaz y selección de alumno con datos ficticios. */
 (() => {
   "use strict";
   const KEY = "edusaldo2_sesion",

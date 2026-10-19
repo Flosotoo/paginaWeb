@@ -1,4 +1,4 @@
-/* EduSaldo 2.0 · Etapa 38 · Cierre funcional del prototipo previo a microservicios. */
+/* EduSaldo · Etapa 38 · Cierre funcional del prototipo previo a microservicios. */
 (() => {
   "use strict";
   const DATA = "edusaldo2_demo",
