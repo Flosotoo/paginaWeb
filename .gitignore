@@ -4,6 +4,7 @@
 
 # === Reglas de Agentes e IA ===
 AGENTS.md
+.agents/
 .opencode/
 .gemini/
 .claude/
