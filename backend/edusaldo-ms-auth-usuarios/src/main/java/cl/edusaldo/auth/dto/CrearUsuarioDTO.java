@@ -8,6 +8,8 @@ import java.time.LocalDate;
 
 public class CrearUsuarioDTO {
 
+    private Long idEstablecimiento = 1L;
+
     @NotBlank(message = "El RUT es obligatorio")
     private String rut;
 
@@ -27,6 +29,8 @@ public class CrearUsuarioDTO {
 
     private String telefono;
 
+    private Boolean autorizadoCentroPadres = false;
+
     @NotNull(message = "El rol es obligatorio")
     private Rol rol;
 
@@ -35,6 +39,8 @@ public class CrearUsuarioDTO {
 
     public CrearUsuarioDTO() {}
 
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento; }
     public String getRut() { return rut; }
     public void setRut(String rut) { this.rut = rut; }
     public String getPrimerNombre() { return primerNombre; }
@@ -49,6 +55,8 @@ public class CrearUsuarioDTO {
     public void setCorreo(String correo) { this.correo = correo; }
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
+    public Boolean getAutorizadoCentroPadres() { return autorizadoCentroPadres; }
+    public void setAutorizadoCentroPadres(Boolean autorizadoCentroPadres) { this.autorizadoCentroPadres = autorizadoCentroPadres; }
     public Rol getRol() { return rol; }
     public void setRol(Rol rol) { this.rol = rol; }
     public String getCurso() { return curso; }

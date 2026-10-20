@@ -13,11 +13,14 @@ public class DetalleIngresoStock {
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ingreso_stock_id", nullable = false)
+    @JoinColumn(name = "ingreso_stock_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_detalle_ingreso"))
     private IngresoStock ingresoStock;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id", nullable = false)
+    @JoinColumn(name = "producto_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_detalle_ingreso_producto"))
     private Producto producto;
 
     @Column(name = "cantidad", nullable = false)

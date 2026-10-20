@@ -1,5 +1,6 @@
 package cl.edusaldo.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,6 +14,12 @@ public class ConsentimientoPrivacidad {
 
     @Column(name = "usuario_id", nullable = false)
     private Long usuarioId;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_consentimiento_usuario"))
+    private Usuario usuario;
 
     @Column(name = "version_aviso", nullable = false, length = 50)
     private String versionAviso;
@@ -47,11 +54,25 @@ public class ConsentimientoPrivacidad {
     }
 
     public Long getUsuarioId() {
+        if (usuario != null && usuario.getId() != null) {
+            return usuario.getId();
+        }
         return usuarioId;
     }
 
     public void setUsuarioId(Long usuarioId) {
         this.usuarioId = usuarioId;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+        if (usuario != null && usuario.getId() != null) {
+            this.usuarioId = usuario.getId();
+        }
     }
 
     public String getVersionAviso() {

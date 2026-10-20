@@ -1,8 +1,12 @@
 package cl.edusaldo.auth.controller;
 
 import cl.edusaldo.auth.dto.*;
+import cl.edusaldo.auth.model.Apoderado;
+import cl.edusaldo.auth.model.Parentesco;
+import cl.edusaldo.auth.model.SolicitudCorreccionDatos;
 import cl.edusaldo.auth.model.Usuario;
 import cl.edusaldo.auth.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -16,7 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@Tag(name = "Usuarios", description = "Gestión de cuentas, roles polimórficos y relaciones apoderado-alumno")
+@Tag(name = "Usuarios", description = "Gestión de cuentas, roles polimórficos, apoderado-alumno y operaciones S01/S02/S11/S12 (HU06 a HU17, HU54)")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -26,40 +30,78 @@ public class UsuarioController {
     }
 
     @PostMapping
-    @Operation(summary = "Crear nuevo usuario de staff o apoderado con clave temporal (HU04/HU05)")
+    @Operation(summary = "HU07 - Crear nuevo usuario de staff o apoderado con clave temporal")
     public ResponseEntity<UsuarioResponseDTO> crear(@Valid @RequestBody CrearUsuarioDTO dto) {
         Usuario u = usuarioService.crearUsuario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UsuarioResponseDTO(u));
     }
 
     @PostMapping("/alumnos")
-    @Operation(summary = "Alta atómica transaccional de Alumno y Apoderado (HU15)")
+    @Operation(summary = "HU09 / HU15 - Alta atómica transaccional de Alumno y Apoderado")
     public ResponseEntity<AltaAlumnoApoderadoResponseDTO> registrarAlumnoConApoderado(
             @Valid @RequestBody AltaAlumnoApoderadoDTO dto) {
         AltaAlumnoApoderadoResponseDTO resp = usuarioService.registrarAlumnoConApoderado(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
+    @PostMapping("/alumnos/importacion-masiva")
+    @Operation(summary = "HU10 - Importar nómina masiva de alumnos con apoderado")
+    public ResponseEntity<List<AltaAlumnoApoderadoResponseDTO>> importarNominaMasiva(
+            @Valid @RequestBody List<AltaAlumnoApoderadoDTO> nomina) {
+        List<AltaAlumnoApoderadoResponseDTO> res = usuarioService.importarNominaMasiva(nomina);
+        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+    }
+
+    @GetMapping("/alumnos/{id}/puede-reservar")
+    @Operation(summary = "S02 / HU24 / HU25 - Validar si el alumno tiene edad suficiente (>= 12 años) para reservar en línea por sí mismo")
+    public ResponseEntity<Map<String, Object>> puedeReservar(@PathVariable Long id) {
+        boolean puede = usuarioService.alumnoPuedeReservar(id);
+        return ResponseEntity.ok(Map.of("alumnoId", id, "puedeReservar", puede));
+    }
+
+    @PostMapping("/alumnos/{alumnoId}/apoderados/{apoderadoId}")
+    @Operation(summary = "HU11 - Vincular apoderado existente a un alumno indicando parentesco")
+    public ResponseEntity<Map<String, String>> vincularApoderado(
+            @PathVariable Long alumnoId,
+            @PathVariable Long apoderadoId,
+            @RequestParam(required = false, defaultValue = "PADRE") Parentesco parentesco,
+            @RequestParam(required = false, defaultValue = "1") Long adminId) {
+        usuarioService.vincularApoderadoExistente(alumnoId, apoderadoId, parentesco, adminId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Apoderado vinculado exitosamente al alumno"));
+    }
+
     @GetMapping("/apoderados/{id}/alumnos")
-    @Operation(summary = "Consultar pupilos asociados a un apoderado (HU17)")
+    @Operation(summary = "HU15 / S02 / S11 - Consultar pupilos activos asociados a un apoderado")
     public ResponseEntity<List<AlumnoResponseDTO>> obtenerAlumnosDeApoderado(@PathVariable Long id) {
         List<AlumnoResponseDTO> list = usuarioService.obtenerAlumnosDeApoderado(id);
         return ResponseEntity.ok(list);
     }
 
+    @PutMapping("/apoderados/{id}/autorizacion-centro-padres")
+    @Operation(summary = "HU08 / S12 - Habilitar o revocar autorización del Centro de Padres para validar transferencias")
+    public ResponseEntity<UsuarioResponseDTO> cambiarAutorizacionCentroPadres(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            @RequestParam(required = false, defaultValue = "1") Long adminId) {
+        boolean autorizado = payload != null && Boolean.parseBoolean(String.valueOf(payload.getOrDefault("autorizado", "false")));
+        Apoderado ap = usuarioService.cambiarAutorizacionCentroPadres(id, autorizado, adminId);
+        return ResponseEntity.ok(new UsuarioResponseDTO(ap));
+    }
+
     @DeleteMapping("/alumnos/{alumnoId}/apoderados/{apoderadoId}")
-    @Operation(summary = "Desvincular físicamente apoderado y alumno con auditoría obligatoria (HU16)")
+    @Operation(summary = "HU12 - Desvincular apoderado y alumno con auditoría obligatoria y resguardo de mínimo un apoderado")
     public ResponseEntity<Map<String, String>> desvincularApoderado(
             @PathVariable Long alumnoId,
             @PathVariable Long apoderadoId,
             @RequestParam(required = false, defaultValue = "Desvinculación solicitada por administración") String motivo,
             @RequestParam(required = false, defaultValue = "1") Long usuarioAdminId) {
         usuarioService.desvincularApoderado(alumnoId, apoderadoId, motivo, usuarioAdminId);
-        return ResponseEntity.ok(Map.of("message", "Asociación eliminada físicamente y registrada en auditoría"));
+        return ResponseEntity.ok(Map.of("message", "Asociación desvinculada y registrada en auditoría"));
     }
 
     @PutMapping("/alumnos/{id}/curso")
-    @Operation(summary = "Actualizar curso de un alumno (HU19)")
+    @Operation(summary = "HU17 - Actualizar curso de un alumno")
     public ResponseEntity<Map<String, String>> actualizarCurso(
             @PathVariable Long id,
             @RequestBody Map<String, String> payload,
@@ -72,15 +114,41 @@ public class UsuarioController {
         return ResponseEntity.ok(Map.of("message", "Curso actualizado correctamente"));
     }
 
+    @PostMapping("/solicitudes-correccion")
+    @Operation(summary = "HU16 / HU54 - Solicitar corrección de datos personales (derecho de rectificación ARCO)")
+    public ResponseEntity<SolicitudCorreccionDatos> solicitarCorreccion(
+            @Valid @RequestBody SolicitudCorreccionDTO dto) {
+        SolicitudCorreccionDatos res = usuarioService.registrarSolicitudCorreccion(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+    }
+
+    @GetMapping("/solicitudes-correccion")
+    @Operation(summary = "HU16 / HU54 - Listar solicitudes de corrección de datos personales")
+    public ResponseEntity<List<SolicitudCorreccionDatos>> listarSolicitudesCorreccion() {
+        return ResponseEntity.ok(usuarioService.listarSolicitudesCorreccion());
+    }
+
+    @PutMapping("/solicitudes-correccion/{id}/resolver")
+    @Operation(summary = "HU16 / HU54 - Aprobar o rechazar solicitud de corrección de datos personales")
+    public ResponseEntity<SolicitudCorreccionDatos> resolverSolicitudCorreccion(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload,
+            @RequestParam(required = false, defaultValue = "1") Long adminId) {
+        boolean aprobar = payload != null && Boolean.parseBoolean(String.valueOf(payload.getOrDefault("aprobar", "true")));
+        String observacion = payload != null && payload.get("observacion") != null
+                ? payload.get("observacion").toString() : "Resuelta por administración";
+        return ResponseEntity.ok(usuarioService.resolverSolicitudCorreccion(id, aprobar, adminId, observacion));
+    }
+
     @GetMapping("/{id}")
-    @Operation(summary = "Consultar usuario por ID")
+    @Operation(summary = "S01 / S12 - Consultar usuario por ID, estado, edad y permisos")
     public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Long id) {
         Usuario u = usuarioService.obtenerPorId(id);
         return ResponseEntity.ok(new UsuarioResponseDTO(u));
     }
 
     @GetMapping
-    @Operation(summary = "Listar todos los usuarios registrados")
+    @Operation(summary = "HU07 - Listar todos los usuarios registrados del establecimiento")
     public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
         List<UsuarioResponseDTO> list = usuarioService.listarTodos().stream()
                 .map(UsuarioResponseDTO::new)
@@ -88,8 +156,9 @@ public class UsuarioController {
         return ResponseEntity.ok(list);
     }
 
+    @Hidden
     @PutMapping("/{id}/password")
-    @Operation(summary = "Cambiar voluntariamente la contraseña")
+    @Operation(summary = "Cambiar voluntariamente la contraseña (alias interno)")
     public ResponseEntity<Map<String, String>> cambiarPassword(
             @PathVariable Long id,
             @Valid @RequestBody CambiarPasswordDTO dto) {
@@ -98,7 +167,7 @@ public class UsuarioController {
     }
 
     @PostMapping("/{id}/reset-password")
-    @Operation(summary = "Restablecer contraseña temporal por administrador (HU11)")
+    @Operation(summary = "HU06 - Restablecer contraseña temporal por administrador")
     public ResponseEntity<Map<String, String>> resetPassword(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {
@@ -107,7 +176,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}/inactivar")
-    @Operation(summary = "Inactivar cuenta de usuario (HU13)")
+    @Operation(summary = "HU13 - Inactivar cuenta de usuario")
     public ResponseEntity<Map<String, String>> inactivar(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {
@@ -116,7 +185,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}/reactivar")
-    @Operation(summary = "Reactivar cuenta de usuario (HU14)")
+    @Operation(summary = "HU13 - Reactivar cuenta de usuario")
     public ResponseEntity<Map<String, String>> reactivar(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {

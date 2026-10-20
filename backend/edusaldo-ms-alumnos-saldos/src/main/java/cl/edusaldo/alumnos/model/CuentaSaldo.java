@@ -1,17 +1,23 @@
 package cl.edusaldo.alumnos.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "cuentas_saldo")
+@Table(name = "cuentas_saldo", indexes = {
+        @Index(name = "idx_cuentas_establecimiento", columnList = "id_establecimiento")
+})
 public class CuentaSaldo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "id_establecimiento", nullable = false)
+    private Long idEstablecimiento = 1L;
 
     @Column(name = "alumno_id", nullable = false, unique = true)
     private Long alumnoId;
@@ -25,18 +31,31 @@ public class CuentaSaldo {
     @Column(name = "bloqueada_hasta")
     private LocalDateTime bloqueadaHasta;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "cuentaSaldo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Abono> abonos = new ArrayList<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "cuentaSaldo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<MovimientoSaldo> movimientos = new ArrayList<>();
 
-    public CuentaSaldo() {}
+    public CuentaSaldo() {
+        this.idEstablecimiento = 1L;
+    }
 
     public CuentaSaldo(Long alumnoId, int saldoInicial) {
+        this.idEstablecimiento = 1L;
         this.alumnoId = alumnoId;
         this.saldoActual = Math.max(0, saldoInicial);
         this.saldoComprometido = 0;
     }
 
     public CuentaSaldo(Long alumnoId, int saldoActual, int saldoComprometido) {
+        this.idEstablecimiento = 1L;
         this.alumnoId = alumnoId;
         this.saldoActual = Math.max(0, saldoActual);
         this.saldoComprometido = Math.max(0, saldoComprometido);
@@ -71,14 +90,19 @@ public class CuentaSaldo {
             throw new IllegalArgumentException("El abono debe contener un monto positivo.");
         }
         this.saldoActual += abono.getMonto();
+        String ref = abono.getTokenTransaccion() != null ? abono.getTokenTransaccion() : abono.getClaveOperacion();
+        String desc = abono.getMedioPago() == MedioPagoAbono.TRANSFERENCIA_BANCARIA
+                ? "Abono por transferencia bancaria validada # " + ref
+                : "Abono de saldo vía pasarela simulada # " + ref;
         MovimientoSaldo mov = new MovimientoSaldo(
                 this,
                 TipoMovimientoSaldo.ABONO,
                 abono.getMonto(),
                 this.saldoActual,
                 abono.getId(),
-                "Abono de saldo vía pasarela simulada # " + abono.getTokenTransaccion()
+                desc
         );
+        mov.setAbono(abono);
         this.movimientos.add(mov);
         return mov;
     }
@@ -208,6 +232,9 @@ public class CuentaSaldo {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
+
     public Long getAlumnoId() { return alumnoId; }
     public void setAlumnoId(Long alumnoId) { this.alumnoId = alumnoId; }
 
@@ -219,6 +246,12 @@ public class CuentaSaldo {
 
     public LocalDateTime getBloqueadaHasta() { return bloqueadaHasta; }
     public void setBloqueadaHasta(LocalDateTime bloqueadaHasta) { this.bloqueadaHasta = bloqueadaHasta; }
+
+    public Long getVersion() { return version != null ? version : 0L; }
+    public void setVersion(Long version) { this.version = version != null ? version : 0L; }
+
+    public List<Abono> getAbonos() { return abonos; }
+    public void setAbonos(List<Abono> abonos) { this.abonos = abonos; }
 
     public List<MovimientoSaldo> getMovimientos() { return movimientos; }
     public void setMovimientos(List<MovimientoSaldo> movimientos) { this.movimientos = movimientos; }

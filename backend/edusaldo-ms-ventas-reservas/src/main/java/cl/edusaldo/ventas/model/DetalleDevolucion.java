@@ -12,12 +12,19 @@ public class DetalleDevolucion {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "devolucion_id", nullable = false)
+    @JoinColumn(name = "devolucion_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_detalle_devolucion_devolucion"))
     @JsonIgnore
     private Devolucion devolucion;
 
     @Column(name = "detalle_entrega_id", nullable = false)
     private Long detalleEntregaId; // Ref a la línea de entrega revertida
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "detalle_entrega_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_det_dev_det_entrega"))
+    private DetalleEntrega detalleEntrega;
 
     @Column(name = "producto_id", nullable = false)
     private Long productoId; // Ref escalar a MS Productos
@@ -53,8 +60,23 @@ public class DetalleDevolucion {
     public Devolucion getDevolucion() { return devolucion; }
     public void setDevolucion(Devolucion devolucion) { this.devolucion = devolucion; }
 
-    public Long getDetalleEntregaId() { return detalleEntregaId; }
+    public Long getDevolucionId() { return devolucion != null ? devolucion.getId() : null; }
+
+    public Long getDetalleEntregaId() {
+        if (detalleEntrega != null && detalleEntrega.getId() != null) {
+            return detalleEntrega.getId();
+        }
+        return detalleEntregaId;
+    }
     public void setDetalleEntregaId(Long detalleEntregaId) { this.detalleEntregaId = detalleEntregaId; }
+
+    public DetalleEntrega getDetalleEntrega() { return detalleEntrega; }
+    public void setDetalleEntrega(DetalleEntrega detalleEntrega) {
+        this.detalleEntrega = detalleEntrega;
+        if (detalleEntrega != null && detalleEntrega.getId() != null) {
+            this.detalleEntregaId = detalleEntrega.getId();
+        }
+    }
 
     public Long getProductoId() { return productoId; }
     public void setProductoId(Long productoId) { this.productoId = productoId; }

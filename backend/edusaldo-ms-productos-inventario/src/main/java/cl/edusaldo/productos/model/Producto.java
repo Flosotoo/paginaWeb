@@ -4,15 +4,21 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "productos")
+@Table(name = "productos", indexes = {
+        @Index(name = "idx_productos_establecimiento", columnList = "id_establecimiento")
+})
 public class Producto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "id_establecimiento", nullable = false)
+    private Long idEstablecimiento = 1L;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id", nullable = false)
+    @JoinColumn(name = "categoria_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_producto_categoria"))
     private Categoria categoria;
 
     @Column(name = "sku", nullable = false, unique = true, length = 50)
@@ -24,7 +30,7 @@ public class Producto {
     @Column(name = "descripcion")
     private String descripcion;
 
-    @Column(name = "imagen_url")
+    @Transient
     private String imagenUrl;
 
     @Column(name = "curso_nivel", nullable = false, length = 100)
@@ -42,14 +48,21 @@ public class Producto {
     @Column(name = "stock_critico", nullable = false)
     private int stockCritico = 5;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 30)
     private EstadoRegistro estado = EstadoRegistro.ACTIVO;
 
-    public Producto() {}
+    public Producto() {
+        this.idEstablecimiento = 1L;
+    }
 
     public Producto(Categoria categoria, String sku, String nombre, String descripcion,
                     String imagenUrl, String cursoNivel, int precio, int stockFisico, int stockCritico) {
+        this.idEstablecimiento = categoria != null ? categoria.getIdEstablecimiento() : 1L;
         this.categoria = categoria;
         this.sku = sku;
         this.nombre = nombre;
@@ -60,6 +73,7 @@ public class Producto {
         this.stockFisico = stockFisico;
         this.stockReservado = 0;
         this.stockCritico = stockCritico;
+        this.version = 0L;
         this.estado = EstadoRegistro.ACTIVO;
     }
 
@@ -175,7 +189,7 @@ public class Producto {
             throw new IllegalStateException("El ajuste dejaría el stock disponible en negativo.");
         }
         this.stockFisico = nuevoFisico;
-        return new MovimientoInventario(
+        MovimientoInventario mov = new MovimientoInventario(
                 this,
                 TipoMovimientoInventario.AJUSTE,
                 Math.abs(cant),
@@ -184,6 +198,8 @@ public class Producto {
                 solicitudId,
                 adminId
         );
+        mov.setVariacionFisica(cant);
+        return mov;
     }
 
     public void editar(String nombre, String descripcion, String imagenUrl, String cursoNivel, int precio, int stockCritico, Categoria categoria) {
@@ -208,6 +224,8 @@ public class Producto {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
     public Categoria getCategoria() { return categoria; }
     public void setCategoria(Categoria categoria) { this.categoria = categoria; }
     public String getSku() { return sku; }
@@ -228,6 +246,8 @@ public class Producto {
     public void setStockReservado(int stockReservado) { this.stockReservado = stockReservado; }
     public int getStockCritico() { return stockCritico; }
     public void setStockCritico(int stockCritico) { this.stockCritico = stockCritico; }
+    public Long getVersion() { return version != null ? version : 0L; }
+    public void setVersion(Long version) { this.version = version != null ? version : 0L; }
     public EstadoRegistro getEstado() { return estado; }
     public void setEstado(EstadoRegistro estado) { this.estado = estado; }
 }

@@ -26,7 +26,7 @@ spring:
         - id: ms-auth-usuarios
           uri: http://localhost:8091
           predicates:
-            - Path=/api/auth/**, /api/usuarios/**, /api/configuracion/**, /api/auditoria/**, /api/contacto/**
+            - Path=/api/auth/**, /api/usuarios/**, /api/configuracion/**, /api/auditoria/**, /api/parametros/**, /api/politicas-acceso/**, /api/consentimientos/**
 
         # MS 02: Saldos y Abonos (8092)
         - id: ms-alumnos-saldos

@@ -335,10 +335,5 @@ if failed == 0:
 else:
     print("ALERTA: Se detectaron fallos en la batería de pruebas.")
 
-print("\nPresiona Enter para cerrar esta ventana...")
-try:
-    input()
-except Exception:
-    pass
 
 sys.exit(0 if failed == 0 else 1)

@@ -1,7 +1,10 @@
 package cl.edusaldo.alumnos.controller;
 
 import cl.edusaldo.alumnos.dto.*;
+import cl.edusaldo.alumnos.model.Abono;
+import cl.edusaldo.alumnos.model.EstadoAbono;
 import cl.edusaldo.alumnos.service.SaldoService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -10,10 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/saldos")
-@Tag(name = "Saldos y Abonos", description = "Operaciones de saldo, pasarela simulada, retenciones, cobros y movimientos")
+@Tag(name = "Saldos y Abonos", description = "Operaciones de saldo, pasarela Webpay simulada, transferencias bancarias (Centro de Padres) y operaciones S03/S05/S07/S09/S12 (HU18 a HU23, HU46 a HU48)")
 public class SaldoController {
 
     private final SaldoService saldoService;
@@ -23,63 +27,101 @@ public class SaldoController {
     }
 
     @GetMapping("/cuenta/{alumnoId}")
-    @Operation(summary = "Consultar cuenta de saldo de un alumno (saldo actual, comprometido y disponible)")
+    @Operation(summary = "HU18 / HU21 - Consultar cuenta de saldo de un alumno (saldo actual, comprometido y disponible)")
     public ResponseEntity<CuentaSaldoResponseDTO> consultarCuenta(@PathVariable Long alumnoId) {
         CuentaSaldoResponseDTO res = saldoService.consultarCuenta(alumnoId);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping("/abonos/iniciar")
-    @Operation(summary = "Iniciar abono simulado Webpay generando token UUID con expiración en 15 minutos")
+    @Operation(summary = "HU18 - Iniciar abono simulado Webpay generando token UUID con expiración en 15 minutos")
     public ResponseEntity<IniciarAbonoResponseDTO> iniciarAbono(@Valid @RequestBody IniciarAbonoDTO dto) {
         IniciarAbonoResponseDTO res = saldoService.iniciarAbono(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
     @PostMapping("/abonos/confirmar")
-    @Operation(summary = "Confirmar abono: valida token, bloquea temporalmente, acredita en CuentaSaldo y emite movimiento")
+    @Operation(summary = "HU18 - Confirmar abono Webpay: valida token, bloquea temporalmente y acredita en CuentaSaldo")
     public ResponseEntity<ConfirmarAbonoResponseDTO> confirmarAbono(@Valid @RequestBody ConfirmarAbonoDTO dto) {
         ConfirmarAbonoResponseDTO res = saldoService.confirmarAbono(dto);
         return ResponseEntity.ok(res);
     }
 
+    @PostMapping("/abonos/transferencia")
+    @Operation(summary = "HU19 - Registrar abono por transferencia bancaria con comprobante adjunto (PENDIENTE_VALIDACION)")
+    public ResponseEntity<Abono> registrarTransferencia(@Valid @RequestBody RegistrarTransferenciaDTO dto) {
+        Abono res = saldoService.registrarTransferencia(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+    }
+
+    @PutMapping("/abonos/{abonoId}/resolver-transferencia")
+    @Operation(summary = "HU20 / S12 - Aprobar o rechazar transferencia bancaria por Apoderado autorizado del Centro de Padres")
+    public ResponseEntity<ConfirmarAbonoResponseDTO> resolverTransferencia(
+            @PathVariable Long abonoId,
+            @Valid @RequestBody ResolverTransferenciaDTO dto) {
+        ConfirmarAbonoResponseDTO res = saldoService.resolverTransferencia(abonoId, dto);
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/abonos")
+    @Operation(summary = "HU21 / HU46 - Listar abonos registrados con filtro opcional por alumno o estado")
+    public ResponseEntity<List<Abono>> listarAbonos(
+            @RequestParam(required = false) Long alumnoId,
+            @RequestParam(required = false) EstadoAbono estado) {
+        return ResponseEntity.ok(saldoService.listarAbonos(alumnoId, estado));
+    }
+
     @PostMapping("/retener")
-    @Operation(summary = "Comprometer/retener saldo por confirmación de reserva")
+    @Operation(summary = "S03 / HU25 - Comprometer/retener saldo disponible por confirmación de reserva")
     public ResponseEntity<MovimientoSaldoDTO> retener(@Valid @RequestBody RetenerSaldoDTO dto) {
         MovimientoSaldoDTO res = saldoService.retenerSaldo(dto);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping("/liberar")
-    @Operation(summary = "Liberar saldo retenido por cancelación de reserva")
+    @Operation(summary = "S05 / HU28 / HU32 - Liberar saldo retenido por cancelación de reserva")
     public ResponseEntity<MovimientoSaldoDTO> liberar(@Valid @RequestBody LiberarSaldoDTO dto) {
         MovimientoSaldoDTO res = saldoService.liberarSaldo(dto);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping("/cobrar")
-    @Operation(summary = "Cobrar entrega de materiales y evaluar si cruza umbral de saldo bajo (<= $3.000)")
+    @Operation(summary = "S07 / HU33 / HU34 - Cobrar entrega de materiales y evaluar alerta de saldo bajo (<= $3.000)")
     public ResponseEntity<CobrarSaldoResponseDTO> cobrar(@Valid @RequestBody CobrarSaldoDTO dto) {
         CobrarSaldoResponseDTO res = saldoService.cobrarEntrega(dto);
         return ResponseEntity.ok(res);
     }
 
-    @PostMapping("/liquidar-retiro")
-    @Operation(summary = "Liquidar saldo a $0 al retirarse el alumno de la institución")
+    @PostMapping("/reintegrar")
+    @Operation(summary = "S09 / HU36 - Reintegrar saldo a la cuenta del alumno por devolución de materiales")
+    public ResponseEntity<MovimientoSaldoDTO> reintegrar(@Valid @RequestBody ReintegrarSaldoDTO dto) {
+        MovimientoSaldoDTO res = saldoService.reintegrarPorDevolucion(dto);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping({"/liquidar-retiro", "/cuenta/liquidar"})
+    @Operation(summary = "HU23 - Liquidar saldo a $0 al retirarse el alumno con registro de comprobante manual")
     public ResponseEntity<LiquidarSaldoResponseDTO> liquidarPorRetiro(@Valid @RequestBody LiquidarSaldoDTO dto) {
         LiquidarSaldoResponseDTO res = saldoService.liquidarSaldoPorRetiro(dto);
         return ResponseEntity.ok(res);
     }
 
     @GetMapping("/cuenta/{alumnoId}/movimientos")
-    @Operation(summary = "Consultar historial inmutable de movimientos de saldo del alumno")
+    @Operation(summary = "HU21 / HU46 - Consultar historial inmutable de movimientos de saldo del alumno")
     public ResponseEntity<List<MovimientoSaldoDTO>> listarMovimientos(@PathVariable Long alumnoId) {
         List<MovimientoSaldoDTO> list = saldoService.listarMovimientos(alumnoId);
         return ResponseEntity.ok(list);
     }
 
-    // --- Endpoints de compatibilidad legacy ---
+    @GetMapping("/reportes/resumen-periodo")
+    @Operation(summary = "HU47 / HU48 - Obtener reporte consolidado de abonos, entregas y saldos del período")
+    public ResponseEntity<Map<String, Object>> obtenerResumenPeriodo() {
+        return ResponseEntity.ok(saldoService.obtenerResumenPeriodo());
+    }
 
+    // --- Endpoints de compatibilidad legacy ocultos en Swagger ---
+
+    @Hidden
     @PostMapping("/{alumnoId}/comprometer")
     @Operation(summary = "[Legacy] Comprometer saldo por reserva")
     public ResponseEntity<MovimientoSaldoDTO> comprometerLegacy(
@@ -89,6 +131,7 @@ public class SaldoController {
         return ResponseEntity.ok(res);
     }
 
+    @Hidden
     @PostMapping("/{alumnoId}/finalizar-reserva")
     @Operation(summary = "[Legacy] Finalizar reserva y descontar saldo atómicamente")
     public ResponseEntity<MovimientoSaldoDTO> finalizarReservaLegacy(
@@ -98,6 +141,7 @@ public class SaldoController {
         return ResponseEntity.ok(res);
     }
 
+    @Hidden
     @PostMapping("/{alumnoId}/abonar")
     @Operation(summary = "[Legacy] Aporte directo de saldo vía Webpay simulado")
     public ResponseEntity<MovimientoSaldoDTO> abonarLegacy(
@@ -107,6 +151,7 @@ public class SaldoController {
         return ResponseEntity.ok(res);
     }
 
+    @Hidden
     @GetMapping("/{alumnoId}/movimientos")
     @Operation(summary = "[Legacy] Consultar historial de movimientos")
     public ResponseEntity<List<MovimientoSaldoDTO>> listarMovimientosLegacy(@PathVariable Long alumnoId) {

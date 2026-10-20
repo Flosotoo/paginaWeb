@@ -1,10 +1,16 @@
 package cl.edusaldo.ventas.service;
 
+import cl.edusaldo.ventas.client.InventarioClient;
+import cl.edusaldo.ventas.client.SaldosClient;
+import cl.edusaldo.ventas.client.UsuariosClient;
 import cl.edusaldo.ventas.dto.EntregaMesonDTO;
 import cl.edusaldo.ventas.dto.ItemEntregaDTO;
 import cl.edusaldo.ventas.model.DetalleEntrega;
 import cl.edusaldo.ventas.model.Entrega;
+import cl.edusaldo.ventas.model.OperacionDistribuida;
 import cl.edusaldo.ventas.repository.EntregaRepository;
+import cl.edusaldo.ventas.repository.OperacionDistribuidaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,17 +25,33 @@ public class EntregaService {
 
     private final EntregaRepository entregaRepository;
 
+    @Autowired(required = false)
+    private OperacionDistribuidaRepository operacionDistribuidaRepository;
+
+    @Autowired(required = false)
+    private UsuariosClient usuariosClient;
+
+    @Autowired(required = false)
+    private SaldosClient saldosClient;
+
+    @Autowired(required = false)
+    private InventarioClient inventarioClient;
+
     public EntregaService(EntregaRepository entregaRepository) {
         this.entregaRepository = entregaRepository;
     }
 
     /**
-     * HU34: Registro de entrega directa presencial en mesón a alumno.
+     * HU34: Registro de entrega directa presencial en mesón a alumno (cualquier edad con saldo disponible, S01, S07, S08).
      */
     @Transactional
     public Entrega registrarEntregaMeson(EntregaMesonDTO dto) {
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
             throw new IllegalArgumentException("La entrega debe contener al menos un material.");
+        }
+
+        if (usuariosClient != null) {
+            usuariosClient.validarAlumnoYVinculo(dto.getAlumnoId(), dto.getEncargadoId());
         }
 
         List<DetalleEntrega> detalles = new ArrayList<>();
@@ -39,7 +61,27 @@ public class EntregaService {
         }
 
         Entrega entrega = Entrega.registrarEnMeson(dto.getAlumnoId(), dto.getEncargadoId(), detalles);
-        return entregaRepository.save(entrega);
+
+        if (saldosClient != null) {
+            saldosClient.descontarSaldo(dto.getAlumnoId(), entrega.getTotal(), false, entrega.getNumero());
+        }
+        if (inventarioClient != null) {
+            for (ItemEntregaDTO item : dto.getItems()) {
+                inventarioClient.descontarStock(item.getProductoId(), item.getCantidad(), false, dto.getEncargadoId());
+            }
+        }
+
+        Entrega guardada = entregaRepository.save(entrega);
+
+        if (operacionDistribuidaRepository != null && guardada.getId() != null) {
+            OperacionDistribuida op = new OperacionDistribuida(
+                    "OP-MES-" + guardada.getNumero(),
+                    "ENTREGA_MESON", null, guardada.getId(), null);
+            op.marcarCompletada();
+            operacionDistribuidaRepository.save(op);
+        }
+
+        return guardada;
     }
 
     @Transactional(readOnly = true)
@@ -54,7 +96,7 @@ public class EntregaService {
     }
 
     /**
-     * HU36: Consulta de historial de entregas operativas.
+     * HU35: Consulta de historial de entregas operativas.
      */
     @Transactional(readOnly = true)
     public List<Entrega> listarHistorial() {
@@ -62,7 +104,7 @@ public class EntregaService {
     }
 
     /**
-     * HU36: Entregas realizadas durante el día en curso.
+     * HU35: Entregas realizadas durante el día en curso.
      */
     @Transactional(readOnly = true)
     public List<Entrega> listarDelDia() {

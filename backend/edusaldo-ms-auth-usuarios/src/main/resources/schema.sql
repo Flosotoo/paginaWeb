@@ -1,161 +1,265 @@
 -- =============================================================================
--- EduSaldo · MS Auth y Usuarios (Puerto 8091)
--- Base de Datos: db_usuarios
+-- ESQUEMA 1: db_usuarios (edusaldo-ms-auth-usuarios - Puerto 8091)
+-- 100% Conectado en Diseñador de phpMyAdmin (12 Tablas Espejo Exacto del Mermaid)
 -- =============================================================================
 
-CREATE DATABASE IF NOT EXISTS db_usuarios 
-  DEFAULT CHARACTER SET utf8mb4 
-  DEFAULT COLLATE utf8mb4_unicode_ci;
-
+CREATE DATABASE IF NOT EXISTS db_usuarios CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE db_usuarios;
 
--- Tabla: usuarios (Herencia Single Table: Administrador, Encargado, Apoderado, Alumno)
-CREATE TABLE IF NOT EXISTS usuarios (
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS consultas_contacto;
+DROP TABLE IF EXISTS tokens_revocados;
+DROP TABLE IF EXISTS intentos_acceso;
+DROP TABLE IF EXISTS parametros_sistema;
+DROP TABLE IF EXISTS filas_nomina;
+DROP TABLE IF EXISTS importaciones_nomina;
+DROP TABLE IF EXISTS autorizaciones_centro_padres;
+DROP TABLE IF EXISTS adscripciones;
+DROP TABLE IF EXISTS solicitudes_correccion_datos;
+DROP TABLE IF EXISTS tokens_recuperacion;
+DROP TABLE IF EXISTS consentimientos_privacidad;
+DROP TABLE IF EXISTS registro_auditoria;
+DROP TABLE IF EXISTS politica_acceso;
+DROP TABLE IF EXISTS apoderado_alumnos;
+DROP TABLE IF EXISTS usuarios;
+DROP TABLE IF EXISTS configuracion_institucional;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 1. Raíz de Multiestablecimiento (HU50)
+CREATE TABLE configuracion_institucional (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    rut_establecimiento VARCHAR(15) NOT NULL DEFAULT '65.111.222-3',
+    nombre_establecimiento VARCHAR(150) NOT NULL,
+    nombre_libreria VARCHAR(150) NOT NULL,
+    correo_contacto VARCHAR(150) NOT NULL,
+    logo_url VARCHAR(255),
+    activo BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Usuarios Polimórficos (SINGLE_TABLE: ADMINISTRADOR, ENCARGADO, APODERADO, ALUMNO)
+CREATE TABLE usuarios (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    tipo_usuario VARCHAR(31) NOT NULL,
     rut VARCHAR(12) NOT NULL UNIQUE,
     primer_nombre VARCHAR(100) NOT NULL,
-    segundo_nombre VARCHAR(100) NULL,
+    segundo_nombre VARCHAR(100),
     primer_apellido VARCHAR(100) NOT NULL,
-    segundo_apellido VARCHAR(100) NULL,
+    segundo_apellido VARCHAR(100),
     correo VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NULL,
-    tipo_usuario VARCHAR(30) NOT NULL,
-    estado VARCHAR(30) NOT NULL DEFAULT 'PRIMER_ACCESO',
+    password_hash VARCHAR(255),
+    estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVA',
+    intentos_fallidos INT NOT NULL DEFAULT 0,
+    bloqueo_hasta DATETIME NULL,
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ultimo_acceso DATETIME NULL,
     telefono VARCHAR(30) NULL,
     fecha_nacimiento DATE NULL,
     curso VARCHAR(50) NULL,
-    INDEX idx_usuarios_tipo (tipo_usuario),
-    INDEX idx_usuarios_estado (estado)
+    INDEX idx_usuarios_establecimiento (id_establecimiento),
+    CONSTRAINT fk_usuario_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla: apoderado_alumnos (Clase de asociación pura N:M)
-CREATE TABLE IF NOT EXISTS apoderado_alumnos (
+-- 3. Adscripciones de Usuario a Establecimiento
+CREATE TABLE adscripciones (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    usuario_id BIGINT NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVA',
+    fecha_adscripcion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_adscripcion_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
+    CONSTRAINT fk_adscripcion_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. Asociación Apoderado - Alumno (HU11, HU12, HU15)
+CREATE TABLE apoderado_alumnos (
     apoderado_id BIGINT NOT NULL,
     alumno_id BIGINT NOT NULL,
     parentesco VARCHAR(30) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_asociacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_desvinculacion DATETIME NULL,
+    motivo_desvinculacion VARCHAR(255) NULL,
     PRIMARY KEY (apoderado_id, alumno_id),
-    CONSTRAINT fk_apoderado_rel FOREIGN KEY (apoderado_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    CONSTRAINT fk_alumno_rel FOREIGN KEY (alumno_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    INDEX idx_apoderado_alumnos_alumno (alumno_id)
+    CONSTRAINT fk_apoderado_alumno_apo FOREIGN KEY (apoderado_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_apoderado_alumno_alu FOREIGN KEY (alumno_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla: politica_acceso (HU10 y HU53)
-CREATE TABLE IF NOT EXISTS politica_acceso (
+-- 5. Autorización Centro de Padres (HU08)
+CREATE TABLE autorizaciones_centro_padres (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    apoderado_id BIGINT NOT NULL,
+    otorgada_por_admin_id BIGINT NOT NULL DEFAULT 1,
+    vigente TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_autorizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_revocacion DATETIME NULL,
+    CONSTRAINT fk_aut_cp_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
+    CONSTRAINT fk_aut_cp_apoderado FOREIGN KEY (apoderado_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_aut_cp_admin FOREIGN KEY (otorgada_por_admin_id)
+        REFERENCES usuarios(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Política Institucional y Parámetros por Establecimiento (HU02, HU51, HU53)
+CREATE TABLE politica_acceso (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1 UNIQUE,
     max_intentos_fallidos INT NOT NULL DEFAULT 5,
     minutos_bloqueo INT NOT NULL DEFAULT 15,
-    minutos_vigencia_sesion INT NOT NULL DEFAULT 120
+    edad_minima_alumno INT NOT NULL DEFAULT 12,
+    umbral_saldo_bajo_clp INT NOT NULL DEFAULT 3000,
+    CONSTRAINT fk_politica_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla: intentos_acceso (HU10)
-CREATE TABLE IF NOT EXISTS intentos_acceso (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    correo VARCHAR(150) NOT NULL,
-    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    exitoso BOOLEAN NOT NULL DEFAULT FALSE,
-    INDEX idx_intento_correo_fecha (correo, fecha)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabla: configuracion_institucional (HU50)
-CREATE TABLE IF NOT EXISTS configuracion_institucional (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    nombre_establecimiento VARCHAR(150) NOT NULL,
-    nombre_libreria VARCHAR(150) NOT NULL,
-    correo_contacto VARCHAR(150) NOT NULL,
-    logo_url VARCHAR(255) NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabla: parametros_sistema (HU51)
-CREATE TABLE IF NOT EXISTS parametros_sistema (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    clave VARCHAR(100) NOT NULL UNIQUE,
-    valor VARCHAR(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabla: registro_auditoria (HU52)
-CREATE TABLE IF NOT EXISTS registro_auditoria (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    usuario_id BIGINT NOT NULL,
-    accion VARCHAR(100) NOT NULL,
-    entidad VARCHAR(100) NOT NULL,
-    entidad_id VARCHAR(100) NOT NULL,
-    detalle VARCHAR(1000) NULL,
-    INDEX idx_auditoria_usuario (usuario_id),
-    INDEX idx_auditoria_fecha (fecha_hora)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabla: consultas_contacto (HU03)
-CREATE TABLE IF NOT EXISTS consultas_contacto (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    primer_nombre VARCHAR(100) NOT NULL,
-    primer_apellido VARCHAR(100) NOT NULL,
-    correo VARCHAR(150) NOT NULL,
-    mensaje TEXT NOT NULL,
-    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabla: consentimientos_privacidad (HU56)
-CREATE TABLE IF NOT EXISTS consentimientos_privacidad (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    usuario_id BIGINT NOT NULL,
-    version_aviso VARCHAR(50) NOT NULL,
-    fecha_aceptacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ip_origen VARCHAR(45) NULL,
-    CONSTRAINT fk_consentimiento_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabla: tokens_recuperacion (HU09)
-CREATE TABLE IF NOT EXISTS tokens_recuperacion (
+-- 7. Tokens de Recuperación de Contraseña (HU05)
+CREATE TABLE tokens_recuperacion (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL,
     token VARCHAR(255) NOT NULL UNIQUE,
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_expiracion DATETIME NOT NULL,
     usado BOOLEAN NOT NULL DEFAULT FALSE,
-    CONSTRAINT fk_token_recuperacion_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    INDEX idx_token_vigencia (token, usado, fecha_expiracion)
+    INDEX idx_token_recuperacion_token (token),
+    CONSTRAINT fk_token_recup_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla: tokens_revocados (JWT Blacklist)
-CREATE TABLE IF NOT EXISTS tokens_revocados (
-    jti VARCHAR(100) PRIMARY KEY,
+-- 8. Consentimientos de Privacidad (HU56)
+CREATE TABLE consentimientos_privacidad (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL,
-    fecha_revocacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    fecha_expiracion DATETIME NOT NULL,
-    INDEX idx_tokens_revocados_exp (fecha_expiracion)
+    version_aviso VARCHAR(50) NOT NULL,
+    fecha_aceptacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_origen VARCHAR(45),
+    CONSTRAINT fk_consentimiento_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. Importaciones de Nómina Masiva (HU10)
+CREATE TABLE importaciones_nomina (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    administrador_id BIGINT NOT NULL DEFAULT 1,
+    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(30) NOT NULL DEFAULT 'COMPLETADA',
+    total_filas INT NOT NULL DEFAULT 0,
+    filas_validas INT NOT NULL DEFAULT 0,
+    filas_con_error INT NOT NULL DEFAULT 0,
+    CONSTRAINT fk_imp_nomina_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
+    CONSTRAINT fk_imp_nomina_admin FOREIGN KEY (administrador_id)
+        REFERENCES usuarios(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Filas de Nómina Masiva (HU10)
+CREATE TABLE filas_nomina (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    importacion_id BIGINT NOT NULL,
+    numero_fila INT NOT NULL,
+    rut_alumno VARCHAR(20) NULL,
+    rut_apoderado VARCHAR(20) NULL,
+    resultado VARCHAR(30) NOT NULL DEFAULT 'VALIDA',
+    observacion VARCHAR(255) NULL,
+    CONSTRAINT fk_fila_importacion FOREIGN KEY (importacion_id)
+        REFERENCES importaciones_nomina(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Solicitudes de Corrección de Datos Personales (HU16 / HU54)
+CREATE TABLE solicitudes_correccion_datos (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    usuario_id BIGINT NOT NULL,
+    campo_solicitado VARCHAR(80) NOT NULL,
+    valor_actual VARCHAR(255) NULL,
+    valor_propuesto VARCHAR(255) NOT NULL,
+    motivo VARCHAR(500) NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
+    resuelta_por_id BIGINT NULL,
+    observacion_resolucion VARCHAR(500) NULL,
+    fecha_solicitud DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion DATETIME NULL,
+    CONSTRAINT fk_solicitud_correccion_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
+    CONSTRAINT fk_solicitud_correccion_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_solicitud_correccion_admin FOREIGN KEY (resuelta_por_id)
+        REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. Registro de Auditoría (HU52)
+CREATE TABLE registro_auditoria (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    usuario_id BIGINT NULL,
+    accion VARCHAR(100) NOT NULL,
+    entidad VARCHAR(100) NOT NULL,
+    entidad_id VARCHAR(100) NOT NULL,
+    detalle VARCHAR(1000),
+    INDEX idx_auditoria_usuario (usuario_id),
+    INDEX idx_auditoria_fecha (fecha_hora),
+    CONSTRAINT fk_auditoria_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
+    CONSTRAINT fk_auditoria_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
--- SEED DATA DE DEMOSTRACIÓN (EduSaldo)
+-- SEMILLAS INICIALES (db_usuarios)
 -- =============================================================================
-INSERT INTO usuarios (id, rut, primer_nombre, primer_apellido, correo, password_hash, tipo_usuario, estado, telefono, fecha_nacimiento, curso)
-VALUES 
-  (1, '15.666.777-8', 'Antonio', 'Jara', 'admin@colegio.cl', '$2a$10$wE9o2aVzJ8ZzM/3k0Fz3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe', 'ADMINISTRADOR', 'ACTIVA', NULL, NULL, NULL),
-  (2, '11.222.333-4', 'Marta', 'Gómez', 'libreria@colegio.cl', '$2a$10$wE9o2aVzJ8ZzM/3k0Fz3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe', 'ENCARGADO', 'ACTIVA', NULL, NULL, NULL),
-  (3, '9.876.543-2', 'Carlos', 'Pérez', 'apoderado@colegio.cl', '$2a$10$wE9o2aVzJ8ZzM/3k0Fz3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe', 'APODERADO', 'ACTIVA', '+56912345678', NULL, NULL),
-  (4, '23.456.789-0', 'Tomás', 'Pérez', 'tomas.perez@alumnos.colegio.cl', '$2a$10$wE9o2aVzJ8ZzM/3k0Fz3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe8Z3Oe', 'ALUMNO', 'ACTIVA', NULL, '2012-05-15', '8° Básico')
-ON DUPLICATE KEY UPDATE correo=VALUES(correo);
 
-INSERT INTO apoderado_alumnos (apoderado_id, alumno_id, parentesco, fecha_asociacion)
-VALUES (3, 4, 'PADRE', CURRENT_TIMESTAMP)
-ON DUPLICATE KEY UPDATE parentesco=VALUES(parentesco);
+INSERT INTO configuracion_institucional (id, rut_establecimiento, nombre_establecimiento, nombre_libreria, correo_contacto, logo_url, activo) VALUES
+(1, '65.111.222-3', 'Colegio San José', 'Librería Escolar EduSaldo', 'libreria@colegiosanjose.cl', '/assets/logo-colegio.png', TRUE),
+(2, '65.999.888-7', 'Colegio San Agustín', 'Librería San Agustín', 'contacto@sanagustin.cl', '/assets/logo-sanagustin.png', TRUE);
 
-INSERT INTO politica_acceso (id, max_intentos_fallidos, minutos_bloqueo, minutos_vigencia_sesion)
-VALUES (1, 5, 15, 120)
-ON DUPLICATE KEY UPDATE max_intentos_fallidos=VALUES(max_intentos_fallidos);
+INSERT INTO politica_acceso (id, id_establecimiento, max_intentos_fallidos, minutos_bloqueo, edad_minima_alumno, umbral_saldo_bajo_clp) VALUES
+(1, 1, 5, 15, 12, 3000),
+(2, 2, 5, 15, 12, 3000);
 
-INSERT INTO configuracion_institucional (id, nombre_establecimiento, nombre_libreria, correo_contacto, logo_url)
-VALUES (1, 'Colegio San José', 'Librería EduSaldo', 'contacto@edusaldo.cl', '/assets/logo.png')
-ON DUPLICATE KEY UPDATE nombre_establecimiento=VALUES(nombre_establecimiento);
+-- Usuarios semilla Colegio 1 (1=Admin, 2=Encargado, 3=Apoderado CP, 4=Alumno >=12, 5=Alumno <12)
+-- Usuarios semilla Colegio 2 (6=Admin, 7=Encargado, 8=Apoderado, 9=Alumno >=12)
+INSERT INTO usuarios (id, id_establecimiento, tipo_usuario, rut, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, correo, password_hash, estado, intentos_fallidos, bloqueo_hasta, telefono, fecha_nacimiento, curso) VALUES
+(1, 1, 'ADMINISTRADOR', '15.666.777-8', 'Antonio', 'Andrés', 'Jara', 'Soto', 'admin@colegio.cl', 'admin123', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(2, 1, 'ENCARGADO', '11.222.333-4', 'Marta', 'Lucía', 'Gómez', 'Pérez', 'libreria@colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(3, 1, 'APODERADO', '12.345.678-9', 'Carlos', 'Eduardo', 'Pérez', 'Muñoz', 'carlos.perez@gmail.com', 'Edu123456', 'ACTIVA', 0, NULL, '+56987654321', NULL, NULL),
+(4, 1, 'ALUMNO', '23.456.789-0', 'Tomás', 'Ignacio', 'Pérez', 'Gómez', 'tomas.perez@alumnos.colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2011-04-15', '8° Básico A'),
+(5, 1, 'ALUMNO', '25.111.222-3', 'Sofía', 'Belén', 'Pérez', 'Gómez', 'sofia.perez@alumnos.colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2017-08-20', '2° Básico B'),
+(6, 2, 'ADMINISTRADOR', '16.111.222-3', 'Rodrigo', 'Esteban', 'Pino', 'Vera', 'admin@sanagustin.cl', 'admin123', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(7, 2, 'ENCARGADO', '14.222.333-4', 'Patricia', 'Elena', 'Morales', 'Rios', 'libreria@sanagustin.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(8, 2, 'APODERADO', '13.456.789-1', 'Ignacio', 'Andrés', 'Salas', 'Castro', 'ignacio.salas@gmail.com', 'Edu123456', 'ACTIVA', 0, NULL, '+56977788899', NULL, NULL),
+(9, 2, 'ALUMNO', '24.789.012-3', 'Matías', 'Alonso', 'Salas', 'Rojas', 'matias.salas@alumnos.sanagustin.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2010-09-10', '1° Medio B');
 
-INSERT INTO parametros_sistema (id, clave, valor)
-VALUES 
-  (1, 'UMBRAL_SALDO_BAJO', '3000'),
-  (2, 'MAX_INTENTOS_LOGIN', '5'),
-  (3, 'MINUTOS_BLOQUEO', '15'),
-  (4, 'TIEMPO_LIMITE_ABONO_SEG', '900')
-ON DUPLICATE KEY UPDATE valor=VALUES(valor);
+INSERT INTO adscripciones (id, id_establecimiento, usuario_id, estado, fecha_adscripcion) VALUES
+(1, 1, 1, 'ACTIVA', NOW()),
+(2, 1, 2, 'ACTIVA', NOW()),
+(3, 1, 3, 'ACTIVA', NOW()),
+(4, 1, 4, 'ACTIVA', NOW()),
+(5, 1, 5, 'ACTIVA', NOW()),
+(6, 2, 6, 'ACTIVA', NOW()),
+(7, 2, 7, 'ACTIVA', NOW()),
+(8, 2, 8, 'ACTIVA', NOW()),
+(9, 2, 9, 'ACTIVA', NOW());
+
+INSERT INTO autorizaciones_centro_padres (id, id_establecimiento, apoderado_id, otorgada_por_admin_id, vigente, fecha_autorizacion, fecha_revocacion) VALUES
+(1, 1, 3, 1, 1, NOW(), NULL);
+
+INSERT INTO apoderado_alumnos (apoderado_id, alumno_id, parentesco, activo, fecha_asociacion) VALUES
+(3, 4, 'PADRE', TRUE, NOW()),
+(3, 5, 'PADRE', TRUE, NOW()),
+(8, 9, 'PADRE', TRUE, NOW());
+
+INSERT INTO consentimientos_privacidad (usuario_id, version_aviso, fecha_aceptacion, ip_origen) VALUES
+(3, 'v1.0-2026', NOW(), '127.0.0.1'),
+(8, 'v1.0-2026', NOW(), '127.0.0.1');
+
+INSERT INTO registro_auditoria (id_establecimiento, fecha_hora, usuario_id, accion, entidad, entidad_id, detalle) VALUES
+(1, NOW(), 1, 'INICIALIZACION_SISTEMA', 'ConfiguracionInstitucional', '1', 'Carga inicial de datos semilla del establecimiento 1'),
+(2, NOW(), 6, 'INICIALIZACION_SISTEMA', 'ConfiguracionInstitucional', '2', 'Carga inicial de datos semilla del establecimiento 2');

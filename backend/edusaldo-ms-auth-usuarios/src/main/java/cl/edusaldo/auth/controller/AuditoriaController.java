@@ -21,7 +21,7 @@ public class AuditoriaController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar todos los registros de auditoría en orden descendente")
+    @Operation(summary = "HU52 - Listar registros de auditoría del establecimiento con filtros por usuario o entidad")
     public ResponseEntity<List<RegistroAuditoria>> listar(
             @RequestParam(required = false) Long usuarioId,
             @RequestParam(required = false) String entidad) {

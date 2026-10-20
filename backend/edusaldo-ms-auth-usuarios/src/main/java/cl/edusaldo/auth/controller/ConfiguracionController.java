@@ -20,13 +20,13 @@ public class ConfiguracionController {
     }
 
     @GetMapping
-    @Operation(summary = "Consultar datos institucionales del colegio y la librería")
+    @Operation(summary = "HU50 - Consultar datos institucionales del establecimiento y la librería")
     public ResponseEntity<ConfiguracionInstitucional> obtener() {
         return ResponseEntity.ok(configuracionService.obtenerConfiguracion());
     }
 
     @PutMapping
-    @Operation(summary = "Actualizar datos institucionales (solo Administrador)")
+    @Operation(summary = "HU50 - Actualizar datos institucionales del establecimiento (solo Administrador)")
     public ResponseEntity<ConfiguracionInstitucional> actualizar(
             @RequestBody ConfiguracionDTO dto,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {

@@ -1,5 +1,6 @@
 package cl.edusaldo.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -15,6 +16,12 @@ public class TokenRecuperacion {
 
     @Column(name = "usuario_id", nullable = false)
     private Long usuarioId;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_token_recup_usuario"))
+    private Usuario usuario;
 
     @Column(name = "token", nullable = false, unique = true)
     private String token;
@@ -49,8 +56,20 @@ public class TokenRecuperacion {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public Long getUsuarioId() { return usuarioId; }
+    public Long getUsuarioId() {
+        if (usuario != null && usuario.getId() != null) {
+            return usuario.getId();
+        }
+        return usuarioId;
+    }
     public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+        if (usuario != null && usuario.getId() != null) {
+            this.usuarioId = usuario.getId();
+        }
+    }
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public class CuentaSaldoResponseDTO {
     private Long id;
+    private Long idEstablecimiento;
     private Long alumnoId;
     private int saldoActual;
     private int saldoComprometido;
@@ -16,6 +17,7 @@ public class CuentaSaldoResponseDTO {
 
     public CuentaSaldoResponseDTO(CuentaSaldo c) {
         this.id = c.getId();
+        this.idEstablecimiento = c.getIdEstablecimiento();
         this.alumnoId = c.getAlumnoId();
         this.saldoActual = c.getSaldoActual();
         this.saldoComprometido = c.getSaldoComprometido();
@@ -26,6 +28,9 @@ public class CuentaSaldoResponseDTO {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento; }
 
     public Long getAlumnoId() { return alumnoId; }
     public void setAlumnoId(Long alumnoId) { this.alumnoId = alumnoId; }

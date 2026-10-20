@@ -12,7 +12,8 @@ public class DetalleEntrega {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "entrega_id", nullable = false)
+    @JoinColumn(name = "entrega_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_detalle_entrega_entrega"))
     @JsonIgnore
     private Entrega entrega;
 
@@ -66,6 +67,8 @@ public class DetalleEntrega {
 
     public Entrega getEntrega() { return entrega; }
     public void setEntrega(Entrega entrega) { this.entrega = entrega; }
+
+    public Long getEntregaId() { return entrega != null ? entrega.getId() : null; }
 
     public Long getProductoId() { return productoId; }
     public void setProductoId(Long productoId) { this.productoId = productoId; }

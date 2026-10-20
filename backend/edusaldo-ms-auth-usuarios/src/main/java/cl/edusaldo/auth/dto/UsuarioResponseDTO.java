@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 public class UsuarioResponseDTO {
     private Long id;
+    private Long idEstablecimiento;
     private String rut;
     private String primerNombre;
     private String segundoNombre;
@@ -17,6 +18,7 @@ public class UsuarioResponseDTO {
     private String nombreCompleto;
     private String correo;
     private String telefono;
+    private Boolean autorizadoCentroPadres;
     private String rol;
     private EstadoCuenta estado;
     private LocalDateTime fechaCreacion;
@@ -28,11 +30,13 @@ public class UsuarioResponseDTO {
     private Integer edad;
     private Boolean puedeIniciarSesion;
     private Boolean puedeReservar;
+    private Boolean puedeRetirarPresencialmente;
 
     public UsuarioResponseDTO() {}
 
     public UsuarioResponseDTO(Usuario u) {
         this.id = u.getId();
+        this.idEstablecimiento = u.getIdEstablecimiento();
         this.rut = u.getRut();
         this.primerNombre = u.getPrimerNombre();
         this.segundoNombre = u.getSegundoNombre();
@@ -47,16 +51,19 @@ public class UsuarioResponseDTO {
 
         if (u instanceof Apoderado apoderado) {
             this.telefono = apoderado.getTelefono();
+            this.autorizadoCentroPadres = apoderado.isAutorizadoCentroPadres();
         } else if (u instanceof Alumno alumno) {
             this.curso = alumno.getCurso();
             this.fechaNacimiento = alumno.getFechaNacimiento();
             this.edad = alumno.calcularEdad();
             this.puedeIniciarSesion = alumno.puedeIniciarSesion();
             this.puedeReservar = alumno.puedeReservar();
+            this.puedeRetirarPresencialmente = alumno.puedeRetirarPresencialmente();
         }
     }
 
     public Long getId() { return id; }
+    public Long getIdEstablecimiento() { return idEstablecimiento; }
     public String getRut() { return rut; }
     public String getPrimerNombre() { return primerNombre; }
     public String getSegundoNombre() { return segundoNombre; }
@@ -65,6 +72,7 @@ public class UsuarioResponseDTO {
     public String getNombreCompleto() { return nombreCompleto; }
     public String getCorreo() { return correo; }
     public String getTelefono() { return telefono; }
+    public Boolean getAutorizadoCentroPadres() { return autorizadoCentroPadres; }
     public String getRol() { return rol; }
     public EstadoCuenta getEstado() { return estado; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
@@ -74,4 +82,5 @@ public class UsuarioResponseDTO {
     public Integer getEdad() { return edad; }
     public Boolean getPuedeIniciarSesion() { return puedeIniciarSesion; }
     public Boolean getPuedeReservar() { return puedeReservar; }
+    public Boolean getPuedeRetirarPresencialmente() { return puedeRetirarPresencialmente; }
 }

@@ -7,6 +7,8 @@ import java.time.LocalDate;
 
 public class AltaAlumnoApoderadoDTO {
 
+    private Long idEstablecimiento = 1L;
+
     @NotBlank(message = "El RUT del alumno es obligatorio")
     private String rutAlumno;
 
@@ -52,6 +54,8 @@ public class AltaAlumnoApoderadoDTO {
     public AltaAlumnoApoderadoDTO() {
     }
 
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento; }
     public String getRutAlumno() { return rutAlumno; }
     public void setRutAlumno(String rutAlumno) { this.rutAlumno = rutAlumno; }
     public String getPrimerNombreAlumno() { return primerNombreAlumno; }

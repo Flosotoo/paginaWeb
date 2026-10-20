@@ -3,12 +3,17 @@ package cl.edusaldo.productos.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "categorias")
+@Table(name = "categorias", indexes = {
+        @Index(name = "idx_categorias_establecimiento", columnList = "id_establecimiento")
+})
 public class Categoria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "id_establecimiento", nullable = false)
+    private Long idEstablecimiento = 1L;
 
     @Column(name = "nombre", nullable = false, unique = true, length = 100)
     private String nombre;
@@ -20,9 +25,12 @@ public class Categoria {
     @Column(name = "estado", nullable = false, length = 30)
     private EstadoRegistro estado = EstadoRegistro.ACTIVO;
 
-    public Categoria() {}
+    public Categoria() {
+        this.idEstablecimiento = 1L;
+    }
 
     public Categoria(String nombre, String descripcion) {
+        this.idEstablecimiento = 1L;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.estado = EstadoRegistro.ACTIVO;
@@ -43,6 +51,8 @@ public class Categoria {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getDescripcion() { return descripcion; }

@@ -121,6 +121,20 @@ class FilaNomina {
   +marcarError(motivo)
 }
 
+class SolicitudCorreccionDatos {
+  +Long idSolicitud
+  +Long usuarioId
+  +String campoSolicitado
+  +String valorActual
+  +String valorPropuesto
+  +String motivo
+  +String estado
+  +Long resueltaPorId
+  +DateTime fechaSolicitud
+  +DateTime fechaResolucion
+  +resolver(aprobar,adminId,observacion)
+}
+
 class RegistroAuditoria {
   +Long idRegistro
   +Long actorId
@@ -150,6 +164,11 @@ Usuario "1" *-- "0..*" ConsentimientoPrivacidad : acepta
 
 Establecimiento "1" -- "0..*" ImportacionNomina : registra
 ImportacionNomina "1" *-- "1..*" FilaNomina : contiene
+
+Apoderado "1" -- "0..*" SolicitudCorreccionDatos : solicita
+Administrador ..> SolicitudCorreccionDatos : resuelve
+Establecimiento "1" -- "0..*" SolicitudCorreccionDatos : gestiona
+
 Establecimiento "1" -- "0..*" RegistroAuditoria : conserva
 
 note for Usuario "Los administradores son creados por EduSaldo. Acceso automático según rol y permisos."

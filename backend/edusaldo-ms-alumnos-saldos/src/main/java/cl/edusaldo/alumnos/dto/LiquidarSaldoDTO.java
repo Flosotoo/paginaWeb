@@ -19,6 +19,10 @@ public class LiquidarSaldoDTO {
     @NotBlank(message = "El comprobante es obligatorio")
     private String comprobante;
 
+    private String comprobanteDevolucionUrl;
+
+    private Long administradorId = 1L;
+
     @NotBlank(message = "El motivo es obligatorio")
     private String motivo;
 
@@ -43,6 +47,12 @@ public class LiquidarSaldoDTO {
 
     public String getComprobante() { return comprobante; }
     public void setComprobante(String comprobante) { this.comprobante = comprobante; }
+
+    public String getComprobanteDevolucionUrl() { return comprobanteDevolucionUrl; }
+    public void setComprobanteDevolucionUrl(String comprobanteDevolucionUrl) { this.comprobanteDevolucionUrl = comprobanteDevolucionUrl; }
+
+    public Long getAdministradorId() { return administradorId != null ? administradorId : 1L; }
+    public void setAdministradorId(Long administradorId) { this.administradorId = administradorId; }
 
     public String getMotivo() { return motivo; }
     public void setMotivo(String motivo) { this.motivo = motivo; }

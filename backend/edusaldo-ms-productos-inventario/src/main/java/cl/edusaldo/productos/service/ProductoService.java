@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductoService {
@@ -63,6 +64,13 @@ public class ProductoService {
             return productoRepository.findByEstado(EstadoRegistro.ACTIVO);
         }
         return productoRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> listarCriticos() {
+        return productoRepository.findAll().stream()
+                .filter(p -> p.getEstado() == EstadoRegistro.ACTIVO && p.esCritico())
+                .collect(Collectors.toList());
     }
 
     @Transactional

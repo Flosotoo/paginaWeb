@@ -1,5 +1,6 @@
 package cl.edusaldo.productos.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -9,6 +10,7 @@ public class SolicitarAjusteDTO {
     private Long productoId;
 
     @NotNull(message = "La cantidad del ajuste es obligatoria")
+    @JsonAlias({"diferencia"})
     private Integer cantidad; // positivo o negativo
 
     @NotBlank(message = "El motivo del ajuste es obligatorio")

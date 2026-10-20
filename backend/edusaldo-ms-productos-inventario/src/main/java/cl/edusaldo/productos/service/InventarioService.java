@@ -3,6 +3,7 @@ package cl.edusaldo.productos.service;
 import cl.edusaldo.productos.dto.*;
 import cl.edusaldo.productos.model.*;
 import cl.edusaldo.productos.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,12 @@ public class InventarioService {
     private final MovimientoInventarioRepository movimientoInventarioRepository;
     private final SolicitudAjusteStockRepository solicitudAjusteStockRepository;
     private final IngresoStockRepository ingresoStockRepository;
+
+    @Autowired(required = false)
+    private ConteoFisicoRepository conteoFisicoRepository;
+
+    @Autowired(required = false)
+    private ReservaStockRepository reservaStockRepository;
 
     public InventarioService(ProductoRepository productoRepository,
                              MovimientoInventarioRepository movimientoInventarioRepository,
@@ -31,12 +38,10 @@ public class InventarioService {
     public IngresoStock registrarIngresoManual(IngresoManualDTO dto) {
         IngresoStock ingreso = new IngresoStock(
                 dto.getEncargadoId(),
-                dto.getProveedor(),
-                dto.getDocumentoReferencia(),
+                dto.getReferenciaUnica(),
                 dto.getObservacion()
         );
 
-        // Guardamos el ingreso primero para obtener su ID
         ingreso = ingresoStockRepository.save(ingreso);
 
         for (DetalleIngresoDTO det : dto.getDetalles()) {
@@ -51,6 +56,26 @@ public class InventarioService {
         }
 
         return ingresoStockRepository.save(ingreso);
+    }
+
+    @Transactional
+    public ConteoFisico registrarConteoFisico(ConteoFisicoDTO dto) {
+        ConteoFisico conteo = new ConteoFisico(dto.getEncargadoId(), dto.getObservaciones());
+        conteo.setIdEstablecimiento(dto.getIdEstablecimiento());
+
+        for (DetalleConteoDTO det : dto.getDetalles()) {
+            Producto p = productoRepository.findById(det.getProductoId())
+                    .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + det.getProductoId()));
+            // HU43: Calcula diferencia = stockContado - stockSistema sin alterar stockFisico del producto
+            conteo.agregarDetalle(p, det.getStockContado());
+        }
+
+        return conteoFisicoRepository != null ? conteoFisicoRepository.save(conteo) : conteo;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConteoFisico> listarConteosFisicos() {
+        return conteoFisicoRepository != null ? conteoFisicoRepository.findAllByOrderByFechaConteoDesc() : List.of();
     }
 
     @Transactional
@@ -72,6 +97,11 @@ public class InventarioService {
         return solicitudAjusteStockRepository.save(sol);
     }
 
+    @Transactional(readOnly = true)
+    public List<SolicitudAjusteStock> listarSolicitudesAjuste() {
+        return solicitudAjusteStockRepository.findAll();
+    }
+
     @Transactional
     public SolicitudAjusteStock aprobarAjuste(Long solicitudId, AprobarAjusteDTO dto) {
         SolicitudAjusteStock sol = solicitudAjusteStockRepository.findById(solicitudId)
@@ -86,6 +116,7 @@ public class InventarioService {
 
         Producto p = sol.getProducto();
         MovimientoInventario mov = p.aplicarAjusteAprobado(sol.getCantidad(), sol.getId(), adminId);
+        mov.setSolicitudAjuste(sol);
         productoRepository.save(p);
         movimientoInventarioRepository.save(mov);
 
@@ -122,6 +153,14 @@ public class InventarioService {
 
         productoRepository.save(p);
         movimientoInventarioRepository.save(mov);
+
+        if (reservaStockRepository != null && dto.getReservaId() != null) {
+            ReservaStock rs = reservaStockRepository.findByReservaId(dto.getReservaId())
+                    .orElseGet(() -> new ReservaStock(dto.getReservaId()));
+            rs.comprometer();
+            rs.agregarDetalle(p, dto.getCantidad());
+            reservaStockRepository.save(rs);
+        }
     }
 
     @Transactional
@@ -140,6 +179,13 @@ public class InventarioService {
 
         productoRepository.save(p);
         movimientoInventarioRepository.save(mov);
+
+        if (reservaStockRepository != null && dto.getReservaId() != null) {
+            reservaStockRepository.findByReservaId(dto.getReservaId()).ifPresent(rs -> {
+                rs.liberar();
+                reservaStockRepository.save(rs);
+            });
+        }
     }
 
     @Transactional
@@ -152,6 +198,31 @@ public class InventarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + dto.getProductoId()));
 
         MovimientoInventario mov = p.descontarStockPorEntrega(dto.getCantidad(), dto.getEntregaId(), dto.isVieneDeReserva(), dto.getUsuarioId());
+        if (dto.getIdempotencyKey() != null) {
+            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        }
+
+        productoRepository.save(p);
+        movimientoInventarioRepository.save(mov);
+
+        if (reservaStockRepository != null && dto.isVieneDeReserva() && dto.getReferenciaId() != null) {
+            reservaStockRepository.findByReservaId(dto.getReferenciaId()).ifPresent(rs -> {
+                rs.consumir();
+                reservaStockRepository.save(rs);
+            });
+        }
+    }
+
+    @Transactional
+    public void reingresarStockPorDevolucion(ReingresarStockDTO dto) {
+        if (dto.getIdempotencyKey() != null && movimientoInventarioRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
+            return;
+        }
+
+        Producto p = productoRepository.findById(dto.getProductoId())
+                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + dto.getProductoId()));
+
+        MovimientoInventario mov = p.reponerStockPorDevolucion(dto.getCantidad(), dto.getDevolucionId(), dto.getUsuarioId());
         if (dto.getIdempotencyKey() != null) {
             mov.setIdempotencyKey(dto.getIdempotencyKey());
         }

@@ -52,6 +52,10 @@ public class Alumno extends Usuario {
         return calcularEdad() >= 12;
     }
 
+    public boolean puedeRetirarPresencialmente() {
+        return getEstado() == EstadoCuenta.ACTIVA || getEstado() == EstadoCuenta.PRIMER_ACCESO;
+    }
+
     public ApoderadoAlumno asociarApoderado(Apoderado apoderado, Parentesco parentesco) {
         ApoderadoAlumno rel = new ApoderadoAlumno(apoderado, this, parentesco);
         this.apoderadosAsociados.add(rel);

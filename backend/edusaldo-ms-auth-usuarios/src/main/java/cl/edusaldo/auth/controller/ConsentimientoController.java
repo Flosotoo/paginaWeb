@@ -24,14 +24,14 @@ public class ConsentimientoController {
     }
 
     @PostMapping
-    @Operation(summary = "Registrar aceptación de aviso de privacidad")
+    @Operation(summary = "HU56 - Registrar aceptación de aviso de privacidad y términos de uso")
     public ResponseEntity<ConsentimientoPrivacidad> registrar(@Valid @RequestBody ConsentimientoDTO dto) {
         ConsentimientoPrivacidad res = consentimientoService.registrarConsentimiento(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    @Operation(summary = "Consultar historial de consentimientos por usuario")
+    @Operation(summary = "HU56 - Consultar historial de consentimientos de privacidad por usuario")
     public ResponseEntity<List<ConsentimientoPrivacidad>> listarPorUsuario(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(consentimientoService.listarPorUsuario(usuarioId));
     }

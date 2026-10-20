@@ -1,12 +1,17 @@
 package cl.edusaldo.ventas.service;
 
+import cl.edusaldo.ventas.client.InventarioClient;
+import cl.edusaldo.ventas.client.SaldosClient;
 import cl.edusaldo.ventas.dto.CrearDevolucionDTO;
 import cl.edusaldo.ventas.dto.ItemDevolucionDTO;
 import cl.edusaldo.ventas.model.DetalleEntrega;
 import cl.edusaldo.ventas.model.Devolucion;
 import cl.edusaldo.ventas.model.Entrega;
+import cl.edusaldo.ventas.model.OperacionDistribuida;
 import cl.edusaldo.ventas.repository.DevolucionRepository;
 import cl.edusaldo.ventas.repository.EntregaRepository;
+import cl.edusaldo.ventas.repository.OperacionDistribuidaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,13 +26,23 @@ public class DevolucionService {
     private final DevolucionRepository devolucionRepository;
     private final EntregaRepository entregaRepository;
 
+    @Autowired(required = false)
+    private OperacionDistribuidaRepository operacionDistribuidaRepository;
+
+    @Autowired(required = false)
+    private SaldosClient saldosClient;
+
+    @Autowired(required = false)
+    private InventarioClient inventarioClient;
+
     public DevolucionService(DevolucionRepository devolucionRepository, EntregaRepository entregaRepository) {
         this.devolucionRepository = devolucionRepository;
         this.entregaRepository = entregaRepository;
     }
 
     /**
-     * HU37: Registro de devoluciones de materiales con actualización de líneas de entrega.
+     * HU36: Registro de devoluciones de materiales con actualización de líneas de entrega,
+     * reintegro automático de saldo (S09), reingreso de stock físico (S10) y trazabilidad OperacionDistribuida.
      */
     @Transactional
     public Devolucion registrarDevolucion(CrearDevolucionDTO dto) {
@@ -56,8 +71,33 @@ public class DevolucionService {
         }
 
         devolucion.registrar();
+
+        if (saldosClient != null) {
+            saldosClient.reintegrarSaldo(entrega.getAlumnoId(), devolucion.getTotalReintegro(),
+                    codigoDevolucion, dto.getEncargadoId());
+        }
+        if (inventarioClient != null) {
+            for (ItemDevolucionDTO itemDev : dto.getItems()) {
+                DetalleEntrega det = detallesMap.get(itemDev.getDetalleEntregaId());
+                if (det != null) {
+                    inventarioClient.reingresarStock(det.getProductoId(), itemDev.getCantidad(),
+                            dto.getEncargadoId(), "Devolución " + codigoDevolucion);
+                }
+            }
+        }
+
         entregaRepository.save(entrega);
-        return devolucionRepository.save(devolucion);
+        Devolucion guardada = devolucionRepository.save(devolucion);
+
+        if (operacionDistribuidaRepository != null && guardada.getId() != null) {
+            OperacionDistribuida op = new OperacionDistribuida(
+                    "OP-DEV-" + guardada.getCodigoDevolucion(),
+                    "DEVOLUCION", entrega.getReservaId(), entrega.getId(), guardada.getId());
+            op.marcarCompletada();
+            operacionDistribuidaRepository.save(op);
+        }
+
+        return guardada;
     }
 
     @Transactional(readOnly = true)

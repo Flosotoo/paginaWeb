@@ -1,5 +1,6 @@
 package cl.edusaldo.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -14,11 +15,26 @@ public class RegistroAuditoria {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "id_establecimiento", nullable = false)
+    private Long idEstablecimiento = 1L;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_establecimiento", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_auditoria_establecimiento"))
+    private ConfiguracionInstitucional establecimiento;
+
     @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora = LocalDateTime.now();
 
-    @Column(name = "usuario_id", nullable = false)
-    private Long usuarioId;
+    @Column(name = "usuario_id")
+    private Long usuarioId = 1L;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_auditoria_usuario"))
+    private Usuario usuario;
 
     @Column(name = "accion", nullable = false, length = 100)
     private String accion;
@@ -33,10 +49,12 @@ public class RegistroAuditoria {
     private String detalle;
 
     public RegistroAuditoria() {
+        this.idEstablecimiento = 1L;
     }
 
     public RegistroAuditoria(Long usuarioId, String accion, String entidad, String entidadId, String detalle) {
-        this.usuarioId = usuarioId != null ? usuarioId : 0L;
+        this.idEstablecimiento = 1L;
+        this.usuarioId = (usuarioId != null && usuarioId > 0L) ? usuarioId : 1L;
         this.accion = accion;
         this.entidad = entidad;
         this.entidadId = entidadId != null ? entidadId : "-";
@@ -50,6 +68,28 @@ public class RegistroAuditoria {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getIdEstablecimiento() {
+        if (establecimiento != null && establecimiento.getId() != null) {
+            return establecimiento.getId();
+        }
+        return idEstablecimiento != null ? idEstablecimiento : 1L;
+    }
+
+    public void setIdEstablecimiento(Long idEstablecimiento) {
+        this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L;
+    }
+
+    public ConfiguracionInstitucional getEstablecimiento() {
+        return establecimiento;
+    }
+
+    public void setEstablecimiento(ConfiguracionInstitucional establecimiento) {
+        this.establecimiento = establecimiento;
+        if (establecimiento != null && establecimiento.getId() != null) {
+            this.idEstablecimiento = establecimiento.getId();
+        }
     }
 
     public LocalDateTime getFechaHora() {
@@ -66,6 +106,17 @@ public class RegistroAuditoria {
 
     public void setUsuarioId(Long usuarioId) {
         this.usuarioId = usuarioId;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+        if (usuario != null && usuario.getId() != null) {
+            this.usuarioId = usuario.getId();
+        }
     }
 
     public String getAccion() {

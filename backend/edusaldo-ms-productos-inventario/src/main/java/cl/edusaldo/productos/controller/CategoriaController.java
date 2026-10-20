@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/categorias")
-@Tag(name = "Categorías", description = "Gestión de categorías del catálogo escolar")
+@Tag(name = "Categorías", description = "Gestión de categorías del catálogo escolar por establecimiento (HU37)")
 public class CategoriaController {
 
     private final ProductoService productoService;
@@ -26,7 +26,7 @@ public class CategoriaController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar todas las categorías")
+    @Operation(summary = "HU37 - Listar todas las categorías del catálogo escolar")
     public ResponseEntity<List<CategoriaResponseDTO>> listarCategorias() {
         List<CategoriaResponseDTO> list = productoService.listarCategorias().stream()
                 .map(CategoriaResponseDTO::new)
@@ -35,14 +35,14 @@ public class CategoriaController {
     }
 
     @PostMapping
-    @Operation(summary = "Crear nueva categoría")
+    @Operation(summary = "HU37 - Crear nueva categoría en el catálogo escolar")
     public ResponseEntity<CategoriaResponseDTO> crearCategoria(@Valid @RequestBody CategoriaDTO dto) {
         Categoria c = productoService.crearCategoria(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new CategoriaResponseDTO(c));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar categoría")
+    @Operation(summary = "HU37 - Actualizar nombre o descripción de categoría")
     public ResponseEntity<CategoriaResponseDTO> actualizarCategoria(
             @PathVariable Long id,
             @Valid @RequestBody CategoriaDTO dto) {
@@ -51,7 +51,7 @@ public class CategoriaController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Inactivar categoría")
+    @Operation(summary = "HU37 - Inactivar categoría del catálogo escolar")
     public ResponseEntity<Void> inactivarCategoria(@PathVariable Long id) {
         productoService.inactivarCategoria(id);
         return ResponseEntity.noContent().build();

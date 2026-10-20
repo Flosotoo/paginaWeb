@@ -1,5 +1,6 @@
 package cl.edusaldo.productos.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -11,8 +12,13 @@ public class SolicitudAjusteStock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "id_establecimiento", nullable = false)
+    private Long idEstablecimiento = 1L;
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id", nullable = false)
+    @JoinColumn(name = "producto_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_solicitud_producto"))
     private Producto producto;
 
     @Column(name = "cantidad", nullable = false)
@@ -40,9 +46,12 @@ public class SolicitudAjusteStock {
     @Column(name = "motivo_rechazo", length = 500)
     private String motivoRechazo;
 
-    public SolicitudAjusteStock() {}
+    public SolicitudAjusteStock() {
+        this.idEstablecimiento = 1L;
+    }
 
     public SolicitudAjusteStock(Producto producto, int cantidad, String motivo, Long encargadoId) {
+        this.idEstablecimiento = producto != null ? producto.getIdEstablecimiento() : 1L;
         this.producto = producto;
         this.cantidad = cantidad;
         this.motivo = motivo;
@@ -72,6 +81,8 @@ public class SolicitudAjusteStock {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
     public Producto getProducto() { return producto; }
     public void setProducto(Producto producto) { this.producto = producto; }
     public int getCantidad() { return cantidad; }

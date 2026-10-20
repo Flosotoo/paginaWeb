@@ -1,7 +1,6 @@
 package cl.edusaldo.auth.controller;
 
 import cl.edusaldo.auth.dto.ParametroDTO;
-import cl.edusaldo.auth.model.ParametroSistema;
 import cl.edusaldo.auth.service.ConfiguracionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/parametros")
-@Tag(name = "Parámetros del Sistema", description = "Parámetros operativos y umbrales configurables (HU51)")
+@Tag(name = "Parámetros del Sistema", description = "Parámetros operativos y umbrales configurables en Política Institucional (HU51)")
 public class ParametroController {
 
     private final ConfiguracionService configuracionService;
@@ -23,20 +22,20 @@ public class ParametroController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar todos los parámetros operativos del sistema")
-    public ResponseEntity<List<ParametroSistema>> listar() {
+    @Operation(summary = "HU51 - Listar todos los parámetros operativos del establecimiento")
+    public ResponseEntity<List<ParametroDTO>> listar() {
         return ResponseEntity.ok(configuracionService.listarParametros());
     }
 
     @GetMapping("/{clave}")
-    @Operation(summary = "Consultar valor de un parámetro por su clave")
-    public ResponseEntity<ParametroSistema> obtener(@PathVariable String clave) {
+    @Operation(summary = "HU51 - Consultar valor de un parámetro por su clave")
+    public ResponseEntity<ParametroDTO> obtener(@PathVariable String clave) {
         return ResponseEntity.ok(configuracionService.obtenerParametro(clave));
     }
 
     @PutMapping("/{clave}")
-    @Operation(summary = "Modificar el valor de un parámetro del sistema")
-    public ResponseEntity<ParametroSistema> modificar(
+    @Operation(summary = "HU51 - Modificar el valor de un parámetro operativo del sistema")
+    public ResponseEntity<ParametroDTO> modificar(
             @PathVariable String clave,
             @RequestBody Map<String, String> payload,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {

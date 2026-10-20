@@ -4,9 +4,6 @@ import cl.edusaldo.auth.dto.LoginRequestDTO;
 import cl.edusaldo.auth.dto.LoginResponseDTO;
 import cl.edusaldo.auth.model.Administrador;
 import cl.edusaldo.auth.model.EstadoCuenta;
-import cl.edusaldo.auth.model.PoliticaAcceso;
-import cl.edusaldo.auth.repository.IntentoAccesoRepository;
-import cl.edusaldo.auth.repository.PoliticaAccesoRepository;
 import cl.edusaldo.auth.repository.UsuarioRepository;
 import cl.edusaldo.auth.service.PoliticaAccesoService;
 import cl.edusaldo.auth.service.UsuarioService;
@@ -21,8 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

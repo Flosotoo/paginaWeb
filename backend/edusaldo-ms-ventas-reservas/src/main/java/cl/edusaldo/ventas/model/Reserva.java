@@ -1,5 +1,6 @@
 package cl.edusaldo.ventas.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "reservas")
+@Table(name = "reservas", indexes = {
+        @Index(name = "idx_reservas_establecimiento", columnList = "id_establecimiento"),
+        @Index(name = "idx_reservas_alumno", columnList = "alumno_id")
+})
 public class Reserva {
 
     private static final Logger log = LoggerFactory.getLogger(Reserva.class);
@@ -17,6 +21,9 @@ public class Reserva {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "id_establecimiento", nullable = false)
+    private Long idEstablecimiento = 1L;
 
     @Column(name = "codigo", nullable = false, unique = true, length = 50)
     private String codigo;
@@ -52,9 +59,20 @@ public class Reserva {
     @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleReserva> detalles = new ArrayList<>();
 
-    public Reserva() {}
+    @JsonIgnore
+    @OneToMany(mappedBy = "reserva", fetch = FetchType.LAZY)
+    private List<Entrega> entregas = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "reserva", fetch = FetchType.LAZY)
+    private List<NotificacionPendiente> notificaciones = new ArrayList<>();
+
+    public Reserva() {
+        this.idEstablecimiento = 1L;
+    }
 
     public Reserva(String codigo, Long alumnoId, Long creadaPorId, int total) {
+        this.idEstablecimiento = 1L;
         this.codigo = codigo;
         this.alumnoId = alumnoId;
         this.creadaPorId = creadaPorId;
@@ -97,7 +115,9 @@ public class Reserva {
     }
 
     /**
-     * HU35 y HU48: Cancelación permitida para Encargado, Apoderado o Alumno.
+     * HU28 y HU32: Regla diferenciada de cancelación por rol:
+     * - APO y ALU (>= 12 años) solo pueden cancelar en estado PENDIENTE (HU28).
+     * - ENC y ADMIN pueden cancelar en PENDIENTE o LISTA_PARA_RETIRO (HU32).
      */
     public void cancelar(String motivo, Long usuarioId, String rol) {
         if (this.estado == EstadoReserva.ENTREGADA) {
@@ -107,9 +127,15 @@ public class Reserva {
             throw new IllegalStateException("La reserva ya se encuentra cancelada.");
         }
         if (rol != null && !rol.isBlank()) {
-            String r = rol.trim().toUpperCase();
-            if (!r.equals("ENC") && !r.equals("APO") && !r.equals("ALU") && !r.equals("ADMIN")) {
+            String r = rol.trim().toUpperCase().replace("ROLE_", "");
+            boolean esStaff = r.equals("ENC") || r.equals("ENCARGADO") || r.equals("ADMIN") || r.equals("ADMINISTRADOR");
+            boolean esFamilia = r.equals("APO") || r.equals("APODERADO") || r.equals("ALU") || r.equals("ALUMNO");
+
+            if (!esStaff && !esFamilia) {
                 throw new IllegalArgumentException("Rol no autorizado para cancelar la reserva: " + rol);
+            }
+            if (esFamilia && this.estado != EstadoReserva.PENDIENTE) {
+                throw new IllegalStateException("El apoderado o alumno solo puede cancelar reservas en estado PENDIENTE (HU28). Para pedidos ya preparados debe solicitarlo al encargado (HU32).");
             }
         }
         this.estado = EstadoReserva.CANCELADA;
@@ -127,6 +153,7 @@ public class Reserva {
         this.estado = EstadoReserva.ENTREGADA;
         String numero = "ENT-RES-" + System.currentTimeMillis();
         Entrega entrega = new Entrega(numero, this.id, this.alumnoId, OrigenEntrega.RESERVA, this.total, encargadoId);
+        entrega.setIdEstablecimiento(this.getIdEstablecimiento());
         for (DetalleReserva det : this.detalles) {
             entrega.agregarDetalle(det.getProductoId(), det.getNombreProducto(), det.getCantidad(), det.getPrecioUnitario());
         }
@@ -143,6 +170,9 @@ public class Reserva {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
+    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
 
     public String getCodigo() { return codigo; }
     public void setCodigo(String codigo) { this.codigo = codigo; }
@@ -176,4 +206,10 @@ public class Reserva {
 
     public List<DetalleReserva> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleReserva> detalles) { this.detalles = detalles; }
+
+    public List<Entrega> getEntregas() { return entregas; }
+    public void setEntregas(List<Entrega> entregas) { this.entregas = entregas; }
+
+    public List<NotificacionPendiente> getNotificaciones() { return notificaciones; }
+    public void setNotificaciones(List<NotificacionPendiente> notificaciones) { this.notificaciones = notificaciones; }
 }

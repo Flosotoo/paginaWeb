@@ -13,9 +13,16 @@ public class MovimientoSaldo {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cuenta_saldo_id", nullable = false)
+    @JoinColumn(name = "cuenta_saldo_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_movimiento_cuenta"))
     @JsonIgnore
     private CuentaSaldo cuentaSaldo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "abono_id",
+            foreignKey = @ForeignKey(name = "fk_movimiento_abono"))
+    @JsonIgnore
+    private Abono abono;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo", nullable = false, length = 50)
@@ -63,6 +70,13 @@ public class MovimientoSaldo {
 
     public CuentaSaldo getCuentaSaldo() { return cuentaSaldo; }
     public void setCuentaSaldo(CuentaSaldo cuentaSaldo) { this.cuentaSaldo = cuentaSaldo; }
+
+    public Long getCuentaSaldoId() { return cuentaSaldo != null ? cuentaSaldo.getId() : null; }
+
+    public Abono getAbono() { return abono; }
+    public void setAbono(Abono abono) { this.abono = abono; }
+
+    public Long getAbonoId() { return abono != null ? abono.getId() : null; }
 
     public TipoMovimientoSaldo getTipo() { return tipo; }
     public void setTipo(TipoMovimientoSaldo tipo) { this.tipo = tipo; }

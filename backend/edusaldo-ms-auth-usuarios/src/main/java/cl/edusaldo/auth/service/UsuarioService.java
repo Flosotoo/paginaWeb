@@ -3,6 +3,7 @@ package cl.edusaldo.auth.service;
 import cl.edusaldo.auth.dto.*;
 import cl.edusaldo.auth.model.*;
 import cl.edusaldo.auth.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class UsuarioService {
@@ -22,6 +22,18 @@ public class UsuarioService {
     private final PoliticaAccesoService politicaAccesoService;
     private final AuditoriaService auditoriaService;
     private final TokenRecuperacionRepository tokenRecuperacionRepository;
+
+    @Autowired(required = false)
+    private SolicitudCorreccionDatosRepository solicitudCorreccionRepository;
+
+    @Autowired(required = false)
+    private AdscripcionRepository adscripcionRepository;
+
+    @Autowired(required = false)
+    private AutorizacionCentroPadresRepository autorizacionCentroPadresRepository;
+
+    @Autowired(required = false)
+    private ImportacionNominaRepository importacionNominaRepository;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           AlumnoRepository alumnoRepository,
@@ -66,12 +78,7 @@ public class UsuarioService {
 
         if (!passwordValida) {
             politicaAccesoService.registrarIntento(usuario.getCorreo(), false);
-            // Reevaluar si este fallo excedió el límite para lanzar IllegalStateException de bloqueo
-            try {
-                politicaAccesoService.evaluarBloqueo(usuario.getCorreo());
-            } catch (IllegalStateException ex) {
-                throw ex;
-            }
+            politicaAccesoService.evaluarBloqueo(usuario.getCorreo());
             throw new IllegalArgumentException("Contraseña incorrecta.");
         }
 
@@ -86,12 +93,20 @@ public class UsuarioService {
         return new LoginResponseDTO(
                 simulatedJwt,
                 usuario.getId(),
+                usuario.getIdEstablecimiento(),
                 usuario.getRut(),
                 usuario.getNombreCompleto(),
                 usuario.getCorreo(),
                 usuario.getRol(),
                 usuario.getEstado()
         );
+    }
+
+    @Transactional
+    public void logout(String jti, Long usuarioId) {
+        String tokenJti = (jti != null && !jti.isBlank()) ? jti : UUID.randomUUID().toString();
+        Long uid = (usuarioId != null && usuarioId > 0) ? usuarioId : 1L;
+        auditoriaService.registrar(uid, "LOGOUT", "Usuario", tokenJti, "Cierre de sesión registrado");
     }
 
     @Transactional
@@ -110,7 +125,13 @@ public class UsuarioService {
         switch (rol) {
             case ADMINISTRADOR -> u = new Administrador(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal);
             case ENCARGADO -> u = new Encargado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal);
-            case APODERADO -> u = new Apoderado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getTelefono());
+            case APODERADO -> {
+                Apoderado ap = new Apoderado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getTelefono());
+                if (Boolean.TRUE.equals(dto.getAutorizadoCentroPadres())) {
+                    ap.setAutorizadoCentroPadres(true);
+                }
+                u = ap;
+            }
             case ALUMNO -> {
                 Alumno al = new Alumno(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getFechaNacimiento(), dto.getCurso());
                 al.setEstado(al.calcularEdad() >= 12 ? EstadoCuenta.PRIMER_ACCESO : EstadoCuenta.ACTIVA);
@@ -119,10 +140,19 @@ public class UsuarioService {
             default -> u = new Apoderado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getTelefono());
         }
 
+        u.setIdEstablecimiento(dto.getIdEstablecimiento());
         u.setSegundoNombre(dto.getSegundoNombre());
         u.setSegundoApellido(dto.getSegundoApellido());
 
         Usuario guardado = usuarioRepository.save(u);
+        if (adscripcionRepository != null && guardado.getId() != null) {
+            adscripcionRepository.save(new Adscripcion(guardado.getIdEstablecimiento(), guardado.getId()));
+        }
+        if (guardado instanceof Apoderado ap && Boolean.TRUE.equals(dto.getAutorizadoCentroPadres())
+                && autorizacionCentroPadresRepository != null && ap.getId() != null) {
+            autorizacionCentroPadresRepository.save(new AutorizacionCentroPadres(
+                    ap.getIdEstablecimiento(), ap.getId(), 1L, true));
+        }
         auditoriaService.registrar(null, "CREAR_USUARIO", u.getClass().getSimpleName(), guardado.getId().toString(),
                 "Usuario creado: " + guardado.getRut() + " (" + guardado.getRol() + ")");
         return guardado;
@@ -146,6 +176,7 @@ public class UsuarioService {
                             passTempApoderado,
                             dto.getTelefonoApoderado()
                     );
+                    nuevoApoderado.setIdEstablecimiento(dto.getIdEstablecimiento());
                     nuevoApoderado.setSegundoNombre(dto.getSegundoNombreApoderado());
                     nuevoApoderado.setSegundoApellido(dto.getSegundoApellidoApoderado());
                     nuevoApoderado.setEstado(EstadoCuenta.PRIMER_ACCESO);
@@ -178,13 +209,14 @@ public class UsuarioService {
                 dto.getFechaNacimiento(),
                 dto.getCurso()
         );
+        alumno.setIdEstablecimiento(dto.getIdEstablecimiento());
         alumno.setSegundoNombre(dto.getSegundoNombreAlumno());
         alumno.setSegundoApellido(dto.getSegundoApellidoAlumno());
         alumno.setEstado(alumno.calcularEdad() >= 12 ? EstadoCuenta.PRIMER_ACCESO : EstadoCuenta.ACTIVA);
 
         Alumno alumnoGuardado = alumnoRepository.save(alumno);
 
-        // 4. Crear relación pura en ApoderadoAlumno
+        // 4. Crear relación en ApoderadoAlumno
         Parentesco parentesco = dto.getParentesco() != null ? dto.getParentesco() : Parentesco.PADRE;
         ApoderadoAlumno rel = new ApoderadoAlumno(apoderado, alumnoGuardado, parentesco);
         apoderadoAlumnoRepository.save(rel);
@@ -205,6 +237,43 @@ public class UsuarioService {
     }
 
     @Transactional
+    public List<AltaAlumnoApoderadoResponseDTO> importarNominaMasiva(List<AltaAlumnoApoderadoDTO> nomina) {
+        if (nomina == null || nomina.isEmpty()) {
+            throw new IllegalArgumentException("La nómina de alumnos a importar no puede estar vacía.");
+        }
+        List<AltaAlumnoApoderadoResponseDTO> resultados = new ArrayList<>();
+        ImportacionNomina imp = new ImportacionNomina(1L, 1L, nomina.size(), nomina.size(), 0);
+        int filaNum = 1;
+        for (AltaAlumnoApoderadoDTO dto : nomina) {
+            AltaAlumnoApoderadoResponseDTO res = registrarAlumnoConApoderado(dto);
+            resultados.add(res);
+            imp.agregarFila(new FilaNomina(imp, filaNum++, dto.getRutAlumno(), dto.getRutApoderado(), "VALIDA", "Importado exitosamente"));
+        }
+        if (importacionNominaRepository != null) {
+            importacionNominaRepository.save(imp);
+        }
+        auditoriaService.registrar(1L, "IMPORTACION_NOMINA_MASIVA", "Alumno", String.valueOf(resultados.size()),
+                "Importación masiva de " + resultados.size() + " alumnos con apoderado (HU10)");
+        return resultados;
+    }
+
+    @Transactional
+    public ApoderadoAlumno vincularApoderadoExistente(Long alumnoId, Long apoderadoId, Parentesco parentesco, Long adminId) {
+        Alumno alumno = alumnoRepository.findById(alumnoId)
+                .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado con ID: " + alumnoId));
+        Apoderado apoderado = apoderadoRepository.findById(apoderadoId)
+                .orElseThrow(() -> new IllegalArgumentException("Apoderado no encontrado con ID: " + apoderadoId));
+
+        Parentesco p = parentesco != null ? parentesco : Parentesco.PADRE;
+        ApoderadoAlumno rel = new ApoderadoAlumno(apoderado, alumno, p);
+        ApoderadoAlumno guardada = apoderadoAlumnoRepository.save(rel);
+
+        auditoriaService.registrar(adminId != null ? adminId : 1L, "VINCULAR_APODERADO", "ApoderadoAlumno",
+                apoderadoId + "-" + alumnoId, "Asociación creada con parentesco " + p.name());
+        return guardada;
+    }
+
+    @Transactional
     public void desvincularApoderado(Long alumnoId, Long apoderadoId, String motivo, Long usuarioAdminId) {
         Alumno alumno = alumnoRepository.findById(alumnoId)
                 .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado con ID: " + alumnoId));
@@ -219,7 +288,7 @@ public class UsuarioService {
             throw new IllegalStateException("No es posible desvincular al único apoderado de un alumno activo.");
         }
 
-        // Eliminación física pura de la relación en base de datos
+        rel.desvincular(motivo);
         apoderadoAlumnoRepository.delete(rel);
         alumno.desvincularApoderado(apoderado);
 
@@ -232,12 +301,108 @@ public class UsuarioService {
         );
     }
 
+    @Transactional
+    public Apoderado cambiarAutorizacionCentroPadres(Long apoderadoId, boolean autorizado, Long adminId) {
+        Apoderado apoderado = apoderadoRepository.findById(apoderadoId)
+                .orElseThrow(() -> new IllegalArgumentException("Apoderado no encontrado con ID: " + apoderadoId));
+
+        apoderado.cambiarAutorizacionCentroPadres(autorizado);
+        Apoderado guardado = apoderadoRepository.save(apoderado);
+        if (autorizacionCentroPadresRepository != null && guardado.getId() != null) {
+            Long admId = adminId != null ? adminId : 1L;
+            AutorizacionCentroPadres aut = autorizacionCentroPadresRepository.findByApoderadoId(guardado.getId())
+                    .orElseGet(() -> new AutorizacionCentroPadres(guardado.getIdEstablecimiento(), guardado.getId(), admId, autorizado));
+            if (autorizado) {
+                aut.otorgar(admId);
+            } else {
+                aut.revocar();
+            }
+            autorizacionCentroPadresRepository.save(aut);
+        }
+
+        auditoriaService.registrar(adminId != null ? adminId : 1L,
+                autorizado ? "HABILITAR_CENTRO_PADRES" : "REVOCAR_CENTRO_PADRES",
+                "Apoderado", apoderadoId.toString(),
+                "Autorización Centro de Padres cambiada a: " + autorizado);
+        return guardado;
+    }
+
+    @Transactional
+    public SolicitudCorreccionDatos registrarSolicitudCorreccion(SolicitudCorreccionDTO dto) {
+        Usuario u = usuarioRepository.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
+
+        SolicitudCorreccionDatos sol = new SolicitudCorreccionDatos(
+                u.getIdEstablecimiento(),
+                u.getId(),
+                dto.getCampoSolicitado(),
+                dto.getValorActual(),
+                dto.getValorPropuesto(),
+                dto.getMotivo()
+        );
+        SolicitudCorreccionDatos guardada = solicitudCorreccionRepository != null
+                ? solicitudCorreccionRepository.save(sol) : sol;
+
+        auditoriaService.registrar(u.getId(), "SOLICITAR_CORRECCION_DATOS", "SolicitudCorreccionDatos",
+                guardada.getId() != null ? guardada.getId().toString() : "0",
+                "Campo: " + dto.getCampoSolicitado() + " -> " + dto.getValorPropuesto());
+        return guardada;
+    }
+
+    @Transactional(readOnly = true)
+    public List<SolicitudCorreccionDatos> listarSolicitudesCorreccion() {
+        if (solicitudCorreccionRepository == null) {
+            return List.of();
+        }
+        return solicitudCorreccionRepository.findAllByOrderByFechaSolicitudDesc();
+    }
+
+    @Transactional
+    public SolicitudCorreccionDatos resolverSolicitudCorreccion(Long solicitudId, boolean aprobar, Long adminId, String observacion) {
+        if (solicitudCorreccionRepository == null) {
+            throw new IllegalStateException("Repositorio de solicitudes de corrección no disponible");
+        }
+        SolicitudCorreccionDatos sol = solicitudCorreccionRepository.findById(solicitudId)
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud de corrección no encontrada: " + solicitudId));
+
+        sol.resolver(aprobar, adminId != null ? adminId : 1L, observacion);
+
+        if (aprobar) {
+            Usuario u = usuarioRepository.findById(sol.getUsuarioId())
+                    .orElseThrow(() -> new IllegalArgumentException("Usuario asociado no encontrado"));
+            String campo = sol.getCampoSolicitado() != null ? sol.getCampoSolicitado().trim().toLowerCase() : "";
+            switch (campo) {
+                case "correo" -> u.setCorreo(sol.getValorPropuesto());
+                case "primernombre", "primer_nombre" -> u.setPrimerNombre(sol.getValorPropuesto());
+                case "primerapellido", "primer_apellido" -> u.setPrimerApellido(sol.getValorPropuesto());
+                case "telefono" -> {
+                    if (u instanceof Apoderado ap) {
+                        ap.setTelefono(sol.getValorPropuesto());
+                    }
+                }
+                case "curso" -> {
+                    if (u instanceof Alumno al) {
+                        al.setCurso(sol.getValorPropuesto());
+                    }
+                }
+            }
+            usuarioRepository.save(u);
+        }
+
+        SolicitudCorreccionDatos guardada = solicitudCorreccionRepository.save(sol);
+        auditoriaService.registrar(adminId != null ? adminId : 1L,
+                aprobar ? "APROBAR_CORRECCION_DATOS" : "RECHAZAR_CORRECCION_DATOS",
+                "SolicitudCorreccionDatos", solicitudId.toString(),
+                "Observación: " + (observacion != null ? observacion : ""));
+        return guardada;
+    }
+
     @Transactional(readOnly = true)
     public List<AlumnoResponseDTO> obtenerAlumnosDeApoderado(Long apoderadoId) {
         List<ApoderadoAlumno> asociaciones = apoderadoAlumnoRepository.findByIdApoderadoId(apoderadoId);
         List<AlumnoResponseDTO> result = new ArrayList<>();
         for (ApoderadoAlumno rel : asociaciones) {
-            if (rel.getAlumno() != null) {
+            if (rel.isActivo() && rel.getAlumno() != null) {
                 result.add(new AlumnoResponseDTO(rel.getAlumno(), rel.getParentesco()));
             }
         }
@@ -314,7 +479,6 @@ public class UsuarioService {
         u.restablecerPassword(tempPass);
         usuarioRepository.save(u);
 
-        // Desbloquear si tenía bloqueo dinámico
         politicaAccesoService.liberarBloqueo(u.getCorreo());
 
         auditoriaService.registrar(adminId != null ? adminId : 0L, "RESTABLECER_PASSWORD_ADMIN", "Usuario", id.toString(), "Clave temporal asignada por administrador");
@@ -351,13 +515,37 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
+    public boolean alumnoPuedeReservar(Long alumnoId) {
+        if (alumnoId == null) return false;
+        Usuario u = usuarioRepository.findById(alumnoId).orElse(null);
+        if (u instanceof Alumno alumno) {
+            return alumno.calcularEdad() >= 12;
+        }
+        return false;
+    }
+
+    @Transactional(readOnly = true)
     public Usuario obtenerPorId(Long id) {
-        return usuarioRepository.findById(id)
+        Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
+        if (u instanceof Apoderado ap && autorizacionCentroPadresRepository != null && ap.getId() != null) {
+            autorizacionCentroPadresRepository.findByApoderadoId(ap.getId())
+                    .ifPresent(aut -> ap.setAutorizadoCentroPadres(aut.isVigente()));
+        }
+        return u;
     }
 
     @Transactional(readOnly = true)
     public List<Usuario> listarTodos() {
-        return usuarioRepository.findAll();
+        List<Usuario> list = usuarioRepository.findAll();
+        if (autorizacionCentroPadresRepository != null) {
+            for (Usuario u : list) {
+                if (u instanceof Apoderado ap && ap.getId() != null) {
+                    autorizacionCentroPadresRepository.findByApoderadoId(ap.getId())
+                            .ifPresent(aut -> ap.setAutorizadoCentroPadres(aut.isVigente()));
+                }
+            }
+        }
+        return list;
     }
 }

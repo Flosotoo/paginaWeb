@@ -10,6 +10,9 @@ public class ConfiguracionInstitucional {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "rut_establecimiento", length = 15)
+    private String rutEstablecimiento = "65.111.222-3";
+
     @Column(name = "nombre_establecimiento", nullable = false, length = 150)
     private String nombreEstablecimiento;
 
@@ -22,6 +25,9 @@ public class ConfiguracionInstitucional {
     @Column(name = "logo_url", length = 255)
     private String logoUrl;
 
+    @Column(name = "activo", nullable = false)
+    private boolean activo = true;
+
     public ConfiguracionInstitucional() {
     }
 
@@ -30,6 +36,7 @@ public class ConfiguracionInstitucional {
         this.nombreLibreria = nombreLibreria;
         this.correoContacto = correoContacto;
         this.logoUrl = logoUrl;
+        this.activo = true;
     }
 
     public void actualizar(String nombreEstablecimiento, String nombreLibreria, String correoContacto, String logoUrl) {
@@ -53,6 +60,14 @@ public class ConfiguracionInstitucional {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getRutEstablecimiento() {
+        return rutEstablecimiento;
+    }
+
+    public void setRutEstablecimiento(String rutEstablecimiento) {
+        this.rutEstablecimiento = rutEstablecimiento;
     }
 
     public String getNombreEstablecimiento() {
@@ -85,5 +100,13 @@ public class ConfiguracionInstitucional {
 
     public void setLogoUrl(String logoUrl) {
         this.logoUrl = logoUrl;
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
 }

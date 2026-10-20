@@ -1,10 +1,13 @@
 package cl.edusaldo.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "usuarios")
+@Table(name = "usuarios", indexes = {
+        @Index(name = "idx_usuarios_establecimiento", columnList = "id_establecimiento")
+})
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "tipo_usuario", discriminatorType = DiscriminatorType.STRING)
 public abstract class Usuario {
@@ -12,6 +15,15 @@ public abstract class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "id_establecimiento", nullable = false)
+    private Long idEstablecimiento = 1L;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_establecimiento", insertable = false, updatable = false,
+            foreignKey = @ForeignKey(name = "fk_usuario_establecimiento"))
+    private ConfiguracionInstitucional establecimiento;
 
     @Column(name = "rut", nullable = false, unique = true, length = 12)
     private String rut;
@@ -44,10 +56,18 @@ public abstract class Usuario {
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;
 
+    @Column(name = "intentos_fallidos", nullable = false)
+    private int intentosFallidos = 0;
+
+    @Column(name = "bloqueo_hasta")
+    private LocalDateTime bloqueoHasta;
+
     public Usuario() {
+        this.idEstablecimiento = 1L;
     }
 
     public Usuario(String rut, String primerNombre, String primerApellido, String correo, String passwordHash) {
+        this.idEstablecimiento = 1L;
         this.rut = rut;
         this.primerNombre = primerNombre;
         this.primerApellido = primerApellido;
@@ -97,11 +117,40 @@ public abstract class Usuario {
 
     public void registrarAccesoExitoso() {
         this.ultimoAcceso = LocalDateTime.now();
+        reiniciarIntentos();
+    }
+
+    public void registrarIntentoFallido(int maxIntentos, int minutosBloqueo) {
+        this.intentosFallidos++;
+        if (this.intentosFallidos >= maxIntentos) {
+            this.bloqueoHasta = LocalDateTime.now().plusMinutes(minutosBloqueo);
+        }
+    }
+
+    public void reiniciarIntentos() {
+        this.intentosFallidos = 0;
+        this.bloqueoHasta = null;
     }
 
     // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getIdEstablecimiento() {
+        if (establecimiento != null && establecimiento.getId() != null) {
+            return establecimiento.getId();
+        }
+        return idEstablecimiento != null ? idEstablecimiento : 1L;
+    }
+    public void setIdEstablecimiento(Long idEstablecimiento) {
+        this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L;
+    }
+    public ConfiguracionInstitucional getEstablecimiento() { return establecimiento; }
+    public void setEstablecimiento(ConfiguracionInstitucional establecimiento) {
+        this.establecimiento = establecimiento;
+        if (establecimiento != null && establecimiento.getId() != null) {
+            this.idEstablecimiento = establecimiento.getId();
+        }
+    }
     public String getRut() { return rut; }
     public void setRut(String rut) { this.rut = rut; }
     public String getPrimerNombre() { return primerNombre; }
@@ -122,4 +171,8 @@ public abstract class Usuario {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public LocalDateTime getUltimoAcceso() { return ultimoAcceso; }
     public void setUltimoAcceso(LocalDateTime ultimoAcceso) { this.ultimoAcceso = ultimoAcceso; }
+    public int getIntentosFallidos() { return intentosFallidos; }
+    public void setIntentosFallidos(int intentosFallidos) { this.intentosFallidos = intentosFallidos; }
+    public LocalDateTime getBloqueoHasta() { return bloqueoHasta; }
+    public void setBloqueoHasta(LocalDateTime bloqueoHasta) { this.bloqueoHasta = bloqueoHasta; }
 }
