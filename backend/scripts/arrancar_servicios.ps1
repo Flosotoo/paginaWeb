@@ -8,7 +8,18 @@
 #   powershell -ExecutionPolicy Bypass -File .\backend\scripts\arrancar_servicios.ps1
 # =============================================================================
 
+param(
+    [switch]$Detached
+)
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+if (!(Get-Command mvn -ErrorAction SilentlyContinue)) {
+    $ideaMvn = "C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.2.6.2\plugins\maven\lib\maven3\bin"
+    if (Test-Path $ideaMvn) {
+        $env:Path = "$ideaMvn;$env:Path"
+    }
+}
 
 # Resolucion dinamica de la carpeta raiz
 $Candidates = @(
@@ -132,6 +143,20 @@ Write-Host "  * MS Productos Inventario:  http://localhost:8093/swagger-ui.html"
 Write-Host "  * MS Reservas Entregas:     http://localhost:8094/swagger-ui.html" -ForegroundColor White
 Write-Host "=============================================================================" -ForegroundColor Cyan
 Write-Host "Ventana de monitoreo activa. Presiona Ctrl+C para detener todos los servicios.`n" -ForegroundColor Yellow
+
+# Guardar PIDs de los servicios activos
+$pidsData = @{}
+foreach ($rp in $RunningProcesses) {
+    if ($rp.Process) {
+        $pidsData[$rp.Name] = @{
+            pid = $rp.Process.Id
+            port = $rp.Port
+        }
+    }
+}
+$pidsData | ConvertTo-Json | Set-Content "$RootDir\services_pids.json" -Encoding UTF8
+
+
 
 # Monitoreo continuo de procesos
 try {
