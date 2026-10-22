@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/productos")
-@Tag(name = "Productos", description = "Catálogo escolar, existencias, alertas de stock crítico y maestros de artículos (HU38 a HU41)")
+@Tag(name = "Productos", description = "Catálogo escolar, existencias, alertas de stock crítico y maestros de artículos")
 public class ProductoController {
 
     private final ProductoService productoService;
@@ -27,14 +27,14 @@ public class ProductoController {
     }
 
     @PostMapping
-    @Operation(summary = "HU38 - Crear nuevo producto en el catálogo escolar")
+    @Operation(summary = "Crear nuevo producto en el catálogo escolar")
     public ResponseEntity<ProductoResponseDTO> crear(@Valid @RequestBody CrearProductoDTO dto) {
         Producto p = productoService.crearProducto(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ProductoResponseDTO(p));
     }
 
     @GetMapping("/criticos")
-    @Operation(summary = "HU41 - Listar productos activos que se encuentran bajo o igual a su stock crítico")
+    @Operation(summary = "Listar productos activos que se encuentran bajo o igual a su stock crítico")
     public ResponseEntity<List<ProductoResponseDTO>> listarCriticos() {
         List<ProductoResponseDTO> list = productoService.listarCriticos().stream()
                 .map(ProductoResponseDTO::new)
@@ -43,14 +43,14 @@ public class ProductoController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "HU24 / HU38 - Consultar producto y stock disponible por ID")
+    @Operation(summary = "Consultar producto y stock disponible por ID")
     public ResponseEntity<ProductoResponseDTO> obtenerPorId(@PathVariable Long id) {
         Producto p = productoService.obtenerPorId(id);
         return ResponseEntity.ok(new ProductoResponseDTO(p));
     }
 
     @GetMapping
-    @Operation(summary = "HU24 / HU38 - Listar catálogo de productos con filtros por categoría o estado")
+    @Operation(summary = "Listar catálogo de productos con filtros por categoría o estado")
     public ResponseEntity<List<ProductoResponseDTO>> listarTodos(
             @RequestParam(required = false) Long categoriaId,
             @RequestParam(required = false) Boolean soloActivos) {
@@ -61,7 +61,7 @@ public class ProductoController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "HU39 - Actualizar datos, precio o umbral crítico de un producto")
+    @Operation(summary = "Actualizar datos, precio o umbral crítico de un producto")
     public ResponseEntity<ProductoResponseDTO> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarProductoDTO dto) {
@@ -70,7 +70,7 @@ public class ProductoController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "HU40 - Inactivar producto del catálogo escolar")
+    @Operation(summary = "Inactivar producto del catálogo escolar")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         productoService.inactivarProducto(id);
         return ResponseEntity.noContent().build();

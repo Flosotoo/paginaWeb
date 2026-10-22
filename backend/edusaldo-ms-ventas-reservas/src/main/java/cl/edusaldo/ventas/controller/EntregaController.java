@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/entregas")
-@Tag(name = "Entregas", description = "Entregas de materiales por concepto en mesón y por reserva previa (HU33-HU35, HU49)")
+@Tag(name = "Entregas", description = "Entregas de materiales por concepto en mesón y por reserva previa")
 public class EntregaController {
 
     private final EntregaService entregaService;
@@ -30,7 +30,7 @@ public class EntregaController {
     }
 
     @PostMapping("/reserva/{reservaId}")
-    @Operation(summary = "HU33 - Confirmar retiro de reserva generando Entrega formal y cobro definitivo")
+    @Operation(summary = "Confirmar retiro de reserva generando entrega formal y cobro definitivo")
     public ResponseEntity<EntregaResponseDTO> entregaReserva(
             @PathVariable Long reservaId,
             @RequestParam(required = false, defaultValue = "1") Long encargadoId) {
@@ -42,21 +42,21 @@ public class EntregaController {
     }
 
     @PostMapping("/meson")
-    @Operation(summary = "HU34 - Registrar entrega directa presencial en mesón a alumno con saldo disponible")
+    @Operation(summary = "Registrar entrega directa presencial en mesón a alumno con saldo disponible")
     public ResponseEntity<EntregaResponseDTO> entregaMeson(@Valid @RequestBody EntregaMesonDTO dto) {
         Entrega entrega = entregaService.registrarEntregaMeson(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new EntregaResponseDTO(entrega));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "HU35 - Consultar entrega por ID")
+    @Operation(summary = "Consultar entrega por ID")
     public ResponseEntity<EntregaResponseDTO> obtenerPorId(@PathVariable Long id) {
         Entrega entrega = entregaService.obtenerPorId(id);
         return ResponseEntity.ok(new EntregaResponseDTO(entrega));
     }
 
     @GetMapping("/alumno/{alumnoId}")
-    @Operation(summary = "HU35 - Listar entregas realizadas a un alumno")
+    @Operation(summary = "Listar entregas realizadas a un alumno")
     public ResponseEntity<List<EntregaResponseDTO>> listarPorAlumno(@PathVariable Long alumnoId) {
         List<EntregaResponseDTO> list = entregaService.listarPorAlumno(alumnoId).stream()
                 .map(EntregaResponseDTO::new)
@@ -65,7 +65,7 @@ public class EntregaController {
     }
 
     @GetMapping("/historial")
-    @Operation(summary = "HU35 / HU49 - Historial de todas las entregas operativas realizadas")
+    @Operation(summary = "Consultar historial de todas las entregas operativas realizadas")
     public ResponseEntity<List<EntregaResponseDTO>> listarHistorial() {
         List<EntregaResponseDTO> list = entregaService.listarHistorial().stream()
                 .map(EntregaResponseDTO::new)
@@ -74,7 +74,7 @@ public class EntregaController {
     }
 
     @GetMapping("/dia")
-    @Operation(summary = "HU35 - Entregas realizadas durante el día en curso")
+    @Operation(summary = "Consultar entregas realizadas durante el día en curso")
     public ResponseEntity<List<EntregaResponseDTO>> listarDelDia() {
         List<EntregaResponseDTO> list = entregaService.listarDelDia().stream()
                 .map(EntregaResponseDTO::new)

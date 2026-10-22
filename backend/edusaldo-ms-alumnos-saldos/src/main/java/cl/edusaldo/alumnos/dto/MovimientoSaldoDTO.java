@@ -2,6 +2,11 @@ package cl.edusaldo.alumnos.dto;
 
 import cl.edusaldo.alumnos.model.MovimientoSaldo;
 import cl.edusaldo.alumnos.model.TipoMovimientoSaldo;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
@@ -14,7 +19,11 @@ public class MovimientoSaldoDTO {
     private LocalDateTime fecha;
     private Long referenciaId;
     private String descripcion;
-    private String idempotencyKey;
+
+    @JsonProperty("referenciaUnica")
+    @JsonAlias({"idempotencyKey", "claveOperacion", "referencia"})
+    @Schema(description = "Referencia o código único de la operación para evitar registros duplicados")
+    private String referenciaUnica;
 
     public MovimientoSaldoDTO() {}
 
@@ -29,7 +38,7 @@ public class MovimientoSaldoDTO {
         this.fecha = m.getFecha();
         this.referenciaId = m.getReferenciaId();
         this.descripcion = m.getDescripcion();
-        this.idempotencyKey = m.getIdempotencyKey();
+        this.referenciaUnica = m.getReferenciaUnica();
     }
 
     public Long getId() { return id; }
@@ -56,6 +65,11 @@ public class MovimientoSaldoDTO {
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public String getIdempotencyKey() { return idempotencyKey; }
-    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+    public String getReferenciaUnica() { return referenciaUnica; }
+    public void setReferenciaUnica(String referenciaUnica) { this.referenciaUnica = referenciaUnica; }
+
+    @JsonIgnore
+    @Hidden
+    public String getIdempotencyKey() { return referenciaUnica; }
+    public void setIdempotencyKey(String idempotencyKey) { this.referenciaUnica = idempotencyKey; }
 }

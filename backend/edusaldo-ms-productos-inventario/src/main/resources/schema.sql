@@ -54,7 +54,7 @@ CREATE TABLE productos (
     INDEX idx_productos_establecimiento (id_establecimiento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Tabla: ingresos_stock (HU42 CA3: sin proveedor ni documento_referencia; con referencia_unica)
+-- 3. Tabla: ingresos_stock
 CREATE TABLE ingresos_stock (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -101,7 +101,7 @@ CREATE TABLE detalles_reserva_stock (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Tabla: conteos_fisicos (HU43 - InventarioFisico)
+-- 7. Tabla: conteos_fisicos (InventarioFisico)
 CREATE TABLE conteos_fisicos (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -110,7 +110,7 @@ CREATE TABLE conteos_fisicos (
     observaciones VARCHAR(500) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Tabla: detalles_conteo_fisico (HU43 - DetalleConteo)
+-- 8. Tabla: detalles_conteo_fisico (DetalleConteo)
 CREATE TABLE detalles_conteo_fisico (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     conteo_fisico_id BIGINT NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE detalles_conteo_fisico (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. Tabla: solicitudes_ajuste_stock (HU44, HU45)
+-- 9. Tabla: solicitudes_ajuste_stock
 CREATE TABLE solicitudes_ajuste_stock (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -144,21 +144,19 @@ CREATE TABLE solicitudes_ajuste_stock (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 10. Tabla: movimientos_inventario (HU49)
+-- 10. Tabla: movimientos_inventario (Espejo Mermaid: MovimientoInventario)
 CREATE TABLE movimientos_inventario (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
     producto_id BIGINT NOT NULL,
     solicitud_ajuste_id BIGINT NULL,
     tipo VARCHAR(50) NOT NULL,
-    cantidad INT NOT NULL,
     variacion_fisica INT NOT NULL DEFAULT 0,
     variacion_reservada INT NOT NULL DEFAULT 0,
     stock_resultante INT NOT NULL,
+    responsable_id BIGINT NOT NULL,
+    referencia_unica VARCHAR(100) NULL UNIQUE,
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    referencia_id BIGINT NULL,
-    usuario_id BIGINT NOT NULL,
-    idempotency_key VARCHAR(100) NULL UNIQUE,
     CONSTRAINT fk_movimiento_producto
         FOREIGN KEY (producto_id) REFERENCES productos(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -204,8 +202,8 @@ INSERT INTO conteos_fisicos (id, id_establecimiento, encargado_id, fecha_conteo,
 INSERT INTO detalles_conteo_fisico (id, conteo_fisico_id, producto_id, stock_sistema, stock_contado, diferencia) VALUES
 (1, 1, 1, 50, 50, 0);
 
-INSERT INTO movimientos_inventario (id, id_establecimiento, producto_id, solicitud_ajuste_id, tipo, cantidad, variacion_fisica, variacion_reservada, stock_resultante, fecha, referencia_id, usuario_id, idempotency_key) VALUES
-(1, 1, 1, NULL, 'INGRESO', 50, 50, 0, 50, NOW(), 1, 2, 'SEED-ING-1'),
-(2, 1, 2, NULL, 'INGRESO', 100, 100, 0, 100, NOW(), 1, 2, 'SEED-ING-2'),
-(3, 1, 3, NULL, 'INGRESO', 40, 40, 0, 40, NOW(), 1, 2, 'SEED-ING-3'),
-(4, 2, 4, NULL, 'INGRESO', 30, 30, 0, 30, NOW(), 2, 7, 'SEED-ING-4');
+INSERT INTO movimientos_inventario (id, id_establecimiento, producto_id, solicitud_ajuste_id, tipo, variacion_fisica, variacion_reservada, stock_resultante, responsable_id, referencia_unica, fecha) VALUES
+(1, 1, 1, NULL, 'INGRESO', 50, 0, 50, 2, 'SEED-ING-1', NOW()),
+(2, 1, 2, NULL, 'INGRESO', 100, 0, 100, 2, 'SEED-ING-2', NOW()),
+(3, 1, 3, NULL, 'INGRESO', 40, 0, 40, 2, 'SEED-ING-3', NOW()),
+(4, 2, 4, NULL, 'INGRESO', 30, 0, 30, 7, 'SEED-ING-4', NOW());

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/politica-acceso")
-@Tag(name = "Política de Acceso", description = "Reglas de bloqueo dinámico y tiempos de vigencia (HU02 y HU53)")
+@Tag(name = "Política de Acceso", description = "Reglas de bloqueo temporal y tiempos de vigencia del establecimiento")
 public class PoliticaAccesoController {
 
     private final PoliticaAccesoService politicaAccesoService;
@@ -20,13 +20,13 @@ public class PoliticaAccesoController {
     }
 
     @GetMapping
-    @Operation(summary = "HU53 - Consultar política de acceso y bloqueo vigente del establecimiento")
+    @Operation(summary = "Consultar política de acceso y bloqueo vigente del establecimiento")
     public ResponseEntity<PoliticaAcceso> obtener() {
         return ResponseEntity.ok(politicaAccesoService.obtenerPolitica());
     }
 
     @PutMapping
-    @Operation(summary = "HU53 - Modificar parámetros de la política de acceso (solo Administrador)")
+    @Operation(summary = "Modificar parámetros de la política de acceso del establecimiento")
     public ResponseEntity<PoliticaAcceso> modificar(
             @RequestBody PoliticaAccesoDTO dto,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {

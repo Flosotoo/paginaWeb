@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@Tag(name = "Usuarios", description = "Gestión de cuentas, roles polimórficos, apoderado-alumno y operaciones S01/S02/S11/S12 (HU06 a HU17, HU54)")
+@Tag(name = "Usuarios", description = "Gestión de cuentas, roles polimórficos, asociación apoderado-alumno y autorizaciones institucionales")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -30,14 +30,14 @@ public class UsuarioController {
     }
 
     @PostMapping
-    @Operation(summary = "HU07 - Crear nuevo usuario de staff o apoderado con clave temporal")
+    @Operation(summary = "Crear nuevo usuario de personal o apoderado con clave temporal")
     public ResponseEntity<UsuarioResponseDTO> crear(@Valid @RequestBody CrearUsuarioDTO dto) {
         Usuario u = usuarioService.crearUsuario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UsuarioResponseDTO(u));
     }
 
     @PostMapping("/alumnos")
-    @Operation(summary = "HU09 / HU15 - Alta atómica transaccional de Alumno y Apoderado")
+    @Operation(summary = "Registrar alumno y vincular apoderado")
     public ResponseEntity<AltaAlumnoApoderadoResponseDTO> registrarAlumnoConApoderado(
             @Valid @RequestBody AltaAlumnoApoderadoDTO dto) {
         AltaAlumnoApoderadoResponseDTO resp = usuarioService.registrarAlumnoConApoderado(dto);
@@ -45,7 +45,7 @@ public class UsuarioController {
     }
 
     @PostMapping("/alumnos/importacion-masiva")
-    @Operation(summary = "HU10 - Importar nómina masiva de alumnos con apoderado")
+    @Operation(summary = "Importar nómina masiva de alumnos con apoderado")
     public ResponseEntity<List<AltaAlumnoApoderadoResponseDTO>> importarNominaMasiva(
             @Valid @RequestBody List<AltaAlumnoApoderadoDTO> nomina) {
         List<AltaAlumnoApoderadoResponseDTO> res = usuarioService.importarNominaMasiva(nomina);
@@ -53,14 +53,14 @@ public class UsuarioController {
     }
 
     @GetMapping("/alumnos/{id}/puede-reservar")
-    @Operation(summary = "S02 / HU24 / HU25 - Validar si el alumno tiene edad suficiente (>= 12 años) para reservar en línea por sí mismo")
+    @Operation(summary = "Validar si el alumno cumple la edad mínima para reservar en línea por sí mismo")
     public ResponseEntity<Map<String, Object>> puedeReservar(@PathVariable Long id) {
         boolean puede = usuarioService.alumnoPuedeReservar(id);
         return ResponseEntity.ok(Map.of("alumnoId", id, "puedeReservar", puede));
     }
 
     @PostMapping("/alumnos/{alumnoId}/apoderados/{apoderadoId}")
-    @Operation(summary = "HU11 - Vincular apoderado existente a un alumno indicando parentesco")
+    @Operation(summary = "Vincular apoderado existente a un alumno indicando parentesco")
     public ResponseEntity<Map<String, String>> vincularApoderado(
             @PathVariable Long alumnoId,
             @PathVariable Long apoderadoId,
@@ -72,14 +72,14 @@ public class UsuarioController {
     }
 
     @GetMapping("/apoderados/{id}/alumnos")
-    @Operation(summary = "HU15 / S02 / S11 - Consultar pupilos activos asociados a un apoderado")
+    @Operation(summary = "Consultar alumnos asociados a un apoderado")
     public ResponseEntity<List<AlumnoResponseDTO>> obtenerAlumnosDeApoderado(@PathVariable Long id) {
         List<AlumnoResponseDTO> list = usuarioService.obtenerAlumnosDeApoderado(id);
         return ResponseEntity.ok(list);
     }
 
     @PutMapping("/apoderados/{id}/autorizacion-centro-padres")
-    @Operation(summary = "HU08 / S12 - Habilitar o revocar autorización del Centro de Padres para validar transferencias")
+    @Operation(summary = "Habilitar o revocar autorización del Centro de Padres para validar transferencias")
     public ResponseEntity<UsuarioResponseDTO> cambiarAutorizacionCentroPadres(
             @PathVariable Long id,
             @RequestBody Map<String, Object> payload,
@@ -90,7 +90,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/alumnos/{alumnoId}/apoderados/{apoderadoId}")
-    @Operation(summary = "HU12 - Desvincular apoderado y alumno con auditoría obligatoria y resguardo de mínimo un apoderado")
+    @Operation(summary = "Desvincular apoderado de un alumno conservando historial")
     public ResponseEntity<Map<String, String>> desvincularApoderado(
             @PathVariable Long alumnoId,
             @PathVariable Long apoderadoId,
@@ -101,7 +101,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/alumnos/{id}/curso")
-    @Operation(summary = "HU17 - Actualizar curso de un alumno")
+    @Operation(summary = "Actualizar datos y curso de un alumno")
     public ResponseEntity<Map<String, String>> actualizarCurso(
             @PathVariable Long id,
             @RequestBody Map<String, String> payload,
@@ -115,7 +115,7 @@ public class UsuarioController {
     }
 
     @PostMapping("/solicitudes-correccion")
-    @Operation(summary = "HU16 / HU54 - Solicitar corrección de datos personales (derecho de rectificación ARCO)")
+    @Operation(summary = "Solicitar corrección de datos personales")
     public ResponseEntity<SolicitudCorreccionDatos> solicitarCorreccion(
             @Valid @RequestBody SolicitudCorreccionDTO dto) {
         SolicitudCorreccionDatos res = usuarioService.registrarSolicitudCorreccion(dto);
@@ -123,13 +123,13 @@ public class UsuarioController {
     }
 
     @GetMapping("/solicitudes-correccion")
-    @Operation(summary = "HU16 / HU54 - Listar solicitudes de corrección de datos personales")
+    @Operation(summary = "Listar solicitudes de corrección de datos personales")
     public ResponseEntity<List<SolicitudCorreccionDatos>> listarSolicitudesCorreccion() {
         return ResponseEntity.ok(usuarioService.listarSolicitudesCorreccion());
     }
 
     @PutMapping("/solicitudes-correccion/{id}/resolver")
-    @Operation(summary = "HU16 / HU54 - Aprobar o rechazar solicitud de corrección de datos personales")
+    @Operation(summary = "Aprobar o rechazar solicitud de corrección de datos personales")
     public ResponseEntity<SolicitudCorreccionDatos> resolverSolicitudCorreccion(
             @PathVariable Long id,
             @RequestBody Map<String, Object> payload,
@@ -141,14 +141,14 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "S01 / S12 - Consultar usuario por ID, estado, edad y permisos")
+    @Operation(summary = "Consultar usuario por ID, estado, edad y permisos")
     public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Long id) {
         Usuario u = usuarioService.obtenerPorId(id);
         return ResponseEntity.ok(new UsuarioResponseDTO(u));
     }
 
     @GetMapping
-    @Operation(summary = "HU07 - Listar todos los usuarios registrados del establecimiento")
+    @Operation(summary = "Listar todos los usuarios registrados del establecimiento")
     public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
         List<UsuarioResponseDTO> list = usuarioService.listarTodos().stream()
                 .map(UsuarioResponseDTO::new)
@@ -158,7 +158,7 @@ public class UsuarioController {
 
     @Hidden
     @PutMapping("/{id}/password")
-    @Operation(summary = "Cambiar voluntariamente la contraseña (alias interno)")
+    @Operation(summary = "Cambiar voluntariamente la contraseña")
     public ResponseEntity<Map<String, String>> cambiarPassword(
             @PathVariable Long id,
             @Valid @RequestBody CambiarPasswordDTO dto) {
@@ -167,7 +167,7 @@ public class UsuarioController {
     }
 
     @PostMapping("/{id}/reset-password")
-    @Operation(summary = "HU06 - Restablecer contraseña temporal por administrador")
+    @Operation(summary = "Restablecer contraseña temporal por administrador")
     public ResponseEntity<Map<String, String>> resetPassword(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {
@@ -176,7 +176,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}/inactivar")
-    @Operation(summary = "HU13 - Inactivar cuenta de usuario")
+    @Operation(summary = "Inactivar cuenta de usuario o alumno del establecimiento conservando historial")
     public ResponseEntity<Map<String, String>> inactivar(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {
@@ -185,7 +185,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}/reactivar")
-    @Operation(summary = "HU13 - Reactivar cuenta de usuario")
+    @Operation(summary = "Reactivar cuenta de usuario del establecimiento")
     public ResponseEntity<Map<String, String>> reactivar(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {

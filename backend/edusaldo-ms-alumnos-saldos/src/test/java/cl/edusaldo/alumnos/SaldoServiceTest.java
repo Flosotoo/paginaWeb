@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,13 +45,13 @@ class SaldoServiceTest {
     }
 
     @Test
-    @DisplayName("1. Rechazo de retención si el saldo disponible es insuficiente (Invariante HU35)")
+    @DisplayName("1. Rechazo de retención si el saldo disponible es insuficiente")
     void testRechazoCompromisoSaldoInsuficiente() {
         when(cuentaSaldoRepository.findByAlumnoId(1L)).thenReturn(Optional.of(cuentaPrueba));
-        when(movimientoSaldoRepository.existsByIdempotencyKey("KEY-01")).thenReturn(false);
+        when(movimientoSaldoRepository.existsByReferenciaUnica("KEY-01")).thenReturn(false);
 
         RetenerSaldoDTO dto = new RetenerSaldoDTO(1L, 15000, 101L);
-        dto.setIdempotencyKey("KEY-01");
+        dto.setReferenciaUnica("KEY-01");
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> saldoService.retenerSaldo(dto));
         assertTrue(ex.getMessage().contains("Saldo insuficiente"));
@@ -62,10 +61,10 @@ class SaldoServiceTest {
     }
 
     @Test
-    @DisplayName("2. Retención de saldo incrementa saldo comprometido y reduce disponible (HU28)")
+    @DisplayName("2. Retención de saldo incrementa saldo comprometido y reduce disponible")
     void testRetencionSaldoIncrementaComprometidoYReduceDisponible() {
         when(cuentaSaldoRepository.findByAlumnoId(1L)).thenReturn(Optional.of(cuentaPrueba));
-        when(movimientoSaldoRepository.existsByIdempotencyKey("KEY-02")).thenReturn(false);
+        when(movimientoSaldoRepository.existsByReferenciaUnica("KEY-02")).thenReturn(false);
         when(cuentaSaldoRepository.save(any(CuentaSaldo.class))).thenAnswer(i -> i.getArgument(0));
         when(movimientoSaldoRepository.save(any(MovimientoSaldo.class))).thenAnswer(i -> {
             MovimientoSaldo m = i.getArgument(0);
@@ -74,7 +73,7 @@ class SaldoServiceTest {
         });
 
         RetenerSaldoDTO dto = new RetenerSaldoDTO(1L, 4000, 102L);
-        dto.setIdempotencyKey("KEY-02");
+        dto.setReferenciaUnica("KEY-02");
 
         MovimientoSaldoDTO res = saldoService.retenerSaldo(dto);
 
@@ -87,13 +86,13 @@ class SaldoServiceTest {
     }
 
     @Test
-    @DisplayName("3. Cobro de entrega de reserva reduce comprometido y actual sin duplicidad (HU33)")
+    @DisplayName("3. Cobro de entrega de reserva reduce comprometido y actual sin duplicidad")
     void testCobrarEntregaReservaReduceComprometidoYActualSinDuplicidad() {
         cuentaPrueba.retenerSaldoPorReserva(4000, 103L);
         assertEquals(6000, cuentaPrueba.getSaldoDisponible());
 
         when(cuentaSaldoRepository.findByAlumnoId(1L)).thenReturn(Optional.of(cuentaPrueba));
-        when(movimientoSaldoRepository.existsByIdempotencyKey("KEY-03")).thenReturn(false);
+        when(movimientoSaldoRepository.existsByReferenciaUnica("KEY-03")).thenReturn(false);
         when(cuentaSaldoRepository.save(any(CuentaSaldo.class))).thenAnswer(i -> i.getArgument(0));
         when(movimientoSaldoRepository.save(any(MovimientoSaldo.class))).thenAnswer(i -> {
             MovimientoSaldo m = i.getArgument(0);
@@ -102,7 +101,7 @@ class SaldoServiceTest {
         });
 
         CobrarSaldoDTO dto = new CobrarSaldoDTO(1L, 4000, 501L, true);
-        dto.setIdempotencyKey("KEY-03");
+        dto.setReferenciaUnica("KEY-03");
 
         CobrarSaldoResponseDTO res = saldoService.cobrarEntrega(dto);
 
@@ -115,9 +114,8 @@ class SaldoServiceTest {
     }
 
     @Test
-    @DisplayName("4. Cobro que cruza umbral bajo (<= 3000 CLP) activa alertaSaldoBajo (HU23)")
+    @DisplayName("4. Cobro que cruza umbral bajo (<= 3000 CLP) activa alertaSaldoBajo")
     void testCobroActivaAlertaSaldoBajo() {
-        // Saldo actual 10.000. Cobro de 7.500 -> saldo resultante 2.500 (cruza umbral de 3.000)
         when(cuentaSaldoRepository.findByAlumnoId(1L)).thenReturn(Optional.of(cuentaPrueba));
         when(cuentaSaldoRepository.save(any(CuentaSaldo.class))).thenAnswer(i -> i.getArgument(0));
         when(movimientoSaldoRepository.save(any(MovimientoSaldo.class))).thenAnswer(i -> {
@@ -136,7 +134,7 @@ class SaldoServiceTest {
     }
 
     @Test
-    @DisplayName("5. Ciclo de Abono: iniciar genera token y confirmar bloquea temporalmente y acredita (HU21)")
+    @DisplayName("5. Ciclo de Abono: iniciar genera referencia y confirmar acredita")
     void testCicloAbonoIniciarYConfirmar() {
         when(cuentaSaldoRepository.findByAlumnoId(1L)).thenReturn(Optional.of(cuentaPrueba));
         when(abonoRepository.save(any(Abono.class))).thenAnswer(i -> {
@@ -173,11 +171,11 @@ class SaldoServiceTest {
         assertEquals(EstadoAbono.APROBADO, confRes.getEstado());
         assertEquals(25000, cuentaPrueba.getSaldoActual());
         assertEquals(25000, cuentaPrueba.getSaldoDisponible());
-        assertFalse(cuentaPrueba.estaBloqueada()); // Desbloqueada tras la transacción
+        assertFalse(cuentaPrueba.estaBloqueada());
     }
 
     @Test
-    @DisplayName("6. Control de idempotencia previene doble retención o abono ante reintentos de red")
+    @DisplayName("6. Control de referencia única previene doble retención o abono ante reintentos de red")
     void testIdempotenciaEvitaDuplicidad() {
         MovimientoSaldo movPrevio = new MovimientoSaldo(
                 cuentaPrueba, TipoMovimientoSaldo.RESERVA, 5000, 10000,
@@ -185,11 +183,11 @@ class SaldoServiceTest {
         );
         movPrevio.setId(88L);
 
-        when(movimientoSaldoRepository.existsByIdempotencyKey("KEY-IDEM-01")).thenReturn(true);
-        when(movimientoSaldoRepository.findByIdempotencyKey("KEY-IDEM-01")).thenReturn(Optional.of(movPrevio));
+        when(movimientoSaldoRepository.existsByReferenciaUnica("KEY-IDEM-01")).thenReturn(true);
+        when(movimientoSaldoRepository.findByReferenciaUnica("KEY-IDEM-01")).thenReturn(Optional.of(movPrevio));
 
         RetenerSaldoDTO dto = new RetenerSaldoDTO(1L, 5000, 101L);
-        dto.setIdempotencyKey("KEY-IDEM-01");
+        dto.setReferenciaUnica("KEY-IDEM-01");
 
         MovimientoSaldoDTO res = saldoService.retenerSaldo(dto);
 

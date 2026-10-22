@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tokens_recuperacion", indexes = {
-        @Index(name = "idx_token_recuperacion_token", columnList = "token")
+        @Index(name = "idx_token_recuperacion_hash", columnList = "hash_token")
 })
 public class TokenRecuperacion {
 
@@ -23,39 +23,40 @@ public class TokenRecuperacion {
             foreignKey = @ForeignKey(name = "fk_token_recup_usuario"))
     private Usuario usuario;
 
-    @Column(name = "token", nullable = false, unique = true)
-    private String token;
+    @Column(name = "hash_token", nullable = false, unique = true)
+    private String hashToken;
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
-    @Column(name = "fecha_expiracion", nullable = false)
-    private LocalDateTime fechaExpiracion;
+    @Column(name = "vence_en", nullable = false)
+    private LocalDateTime venceEn;
 
-    @Column(name = "usado", nullable = false)
-    private boolean usado = false;
+    @Column(name = "utilizado", nullable = false)
+    private boolean utilizado = false;
 
     public TokenRecuperacion() {
     }
 
-    public TokenRecuperacion(Long usuarioId, String token, LocalDateTime fechaExpiracion) {
+    public TokenRecuperacion(Long usuarioId, String hashToken, LocalDateTime venceEn) {
         this.usuarioId = usuarioId;
-        this.token = token;
-        this.fechaExpiracion = fechaExpiracion;
+        this.hashToken = hashToken;
+        this.venceEn = venceEn;
         this.fechaCreacion = LocalDateTime.now();
-        this.usado = false;
+        this.utilizado = false;
     }
 
     public boolean estaVigente() {
-        return !usado && LocalDateTime.now().isBefore(fechaExpiracion);
+        return !utilizado && LocalDateTime.now().isBefore(venceEn);
     }
 
     public void marcarUsado() {
-        this.usado = true;
+        this.utilizado = true;
     }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
     public Long getUsuarioId() {
         if (usuario != null && usuario.getId() != null) {
             return usuario.getId();
@@ -63,6 +64,7 @@ public class TokenRecuperacion {
         return usuarioId;
     }
     public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
+
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
@@ -70,12 +72,25 @@ public class TokenRecuperacion {
             this.usuarioId = usuario.getId();
         }
     }
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
+
+    public String getHashToken() { return hashToken; }
+    public void setHashToken(String hashToken) { this.hashToken = hashToken; }
+
+    public String getToken() { return hashToken; }
+    public void setToken(String token) { this.hashToken = token; }
+
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
-    public LocalDateTime getFechaExpiracion() { return fechaExpiracion; }
-    public void setFechaExpiracion(LocalDateTime fechaExpiracion) { this.fechaExpiracion = fechaExpiracion; }
-    public boolean isUsado() { return usado; }
-    public void setUsado(boolean usado) { this.usado = usado; }
+
+    public LocalDateTime getVenceEn() { return venceEn; }
+    public void setVenceEn(LocalDateTime venceEn) { this.venceEn = venceEn; }
+
+    public LocalDateTime getFechaExpiracion() { return venceEn; }
+    public void setFechaExpiracion(LocalDateTime fechaExpiracion) { this.venceEn = fechaExpiracion; }
+
+    public boolean isUtilizado() { return utilizado; }
+    public void setUtilizado(boolean utilizado) { this.utilizado = utilizado; }
+
+    public boolean isUsado() { return utilizado; }
+    public void setUsado(boolean usado) { this.utilizado = usado; }
 }

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reservas")
-@Tag(name = "Reservas", description = "Ciclo de reserva con trazabilidad HU31 CA2, preparación, retiro y notificaciones (HU25-HU33)")
+@Tag(name = "Reservas", description = "Ciclo de reserva de materiales con trazabilidad de preparación, retiro y notificaciones persistentes")
 public class ReservaController {
 
     private final ReservaService reservaService;
@@ -29,21 +29,21 @@ public class ReservaController {
     }
 
     @PostMapping
-    @Operation(summary = "HU27 - Crear nueva reserva de materiales con validación S01-S04 (Apoderado o Alumno >= 12 años)")
+    @Operation(summary = "Crear nueva reserva de materiales con retención de saldo y stock")
     public ResponseEntity<ReservaResponseDTO> crear(@Valid @RequestBody CrearReservaDTO dto) {
         Reserva r = reservaService.crearReserva(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReservaResponseDTO(r));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "HU29 - Consultar reserva por ID")
+    @Operation(summary = "Consultar reserva por ID")
     public ResponseEntity<ReservaResponseDTO> obtenerPorId(@PathVariable Long id) {
         Reserva r = reservaService.obtenerPorId(id);
         return ResponseEntity.ok(new ReservaResponseDTO(r));
     }
 
     @GetMapping("/alumno/{alumnoId}")
-    @Operation(summary = "HU29 - Listar reservas de un alumno")
+    @Operation(summary = "Listar reservas de un alumno")
     public ResponseEntity<List<ReservaResponseDTO>> listarPorAlumno(@PathVariable Long alumnoId) {
         List<ReservaResponseDTO> list = reservaService.listarPorAlumno(alumnoId).stream()
                 .map(ReservaResponseDTO::new)
@@ -52,7 +52,7 @@ public class ReservaController {
     }
 
     @GetMapping
-    @Operation(summary = "HU30 - Listar reservas operativas con filtro opcional de estado")
+    @Operation(summary = "Listar reservas operativas con filtro opcional de estado")
     public ResponseEntity<List<ReservaResponseDTO>> listarTodas(@RequestParam(required = false) EstadoReserva estado) {
         List<Reserva> reservas = (estado != null) ? reservaService.listarPorEstado(estado) : reservaService.listarTodas();
         List<ReservaResponseDTO> list = reservas.stream()
@@ -62,7 +62,7 @@ public class ReservaController {
     }
 
     @PostMapping({"/{id}/marcar-lista", "/{id}/preparar"})
-    @Operation(summary = "HU31 CA2 / A01 - Marcar pedido como listo para retiro (registra preparadaPorId, fecha y notificación)")
+    @Operation(summary = "Marcar pedido como listo para retiro registrando responsable de preparación y notificación")
     public ResponseEntity<ReservaResponseDTO> marcarLista(
             @PathVariable Long id,
             @RequestBody(required = false) MarcarListaDTO body,
@@ -87,7 +87,7 @@ public class ReservaController {
     }
 
     @PostMapping("/{id}/cancelar")
-    @Operation(summary = "HU28 / HU32 / A02 - Cancelar reserva (APO/ALU solo en PENDIENTE; ENC/ADMIN en PENDIENTE o LISTA_PARA_RETIRO)")
+    @Operation(summary = "Cancelar reserva liberando saldo comprometido y stock reservado según rol y estado")
     public ResponseEntity<ReservaResponseDTO> cancelar(
             @PathVariable Long id,
             @RequestBody(required = false) CancelarReservaDTO body,
@@ -124,7 +124,7 @@ public class ReservaController {
     }
 
     @PostMapping("/{id}/entregar")
-    @Operation(summary = "HU33 - Retiro de materiales y confirmación de Entrega formal con descuento S07 y S08")
+    @Operation(summary = "Confirmar retiro de materiales y registrar entrega formal con descuento definitivo")
     public ResponseEntity<EntregaResponseDTO> entregar(
             @PathVariable Long id,
             @RequestBody(required = false) ConfirmarEntregaDTO body,
@@ -140,7 +140,7 @@ public class ReservaController {
     }
 
     @GetMapping("/notificaciones")
-    @Operation(summary = "A01 / A02 / F5 - Consultar bandeja de notificaciones persistentes de reservas")
+    @Operation(summary = "Consultar bandeja de notificaciones persistentes de reservas")
     public ResponseEntity<List<NotificacionPendiente>> listarNotificaciones() {
         return ResponseEntity.ok(reservaService.listarNotificaciones());
     }

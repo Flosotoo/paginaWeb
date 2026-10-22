@@ -14,6 +14,6 @@ public interface MovimientoInventarioRepository extends JpaRepository<Movimiento
     @Query("SELECT m FROM MovimientoInventario m WHERE m.producto.id = :productoId ORDER BY m.fecha DESC")
     List<MovimientoInventario> findByProductoIdOrderByFechaDesc(@Param("productoId") Long productoId);
 
-    Optional<MovimientoInventario> findByIdempotencyKey(String idempotencyKey);
-    boolean existsByIdempotencyKey(String idempotencyKey);
+    Optional<MovimientoInventario> findByReferenciaUnica(String referenciaUnica);
+    boolean existsByReferenciaUnica(String referenciaUnica);
 }

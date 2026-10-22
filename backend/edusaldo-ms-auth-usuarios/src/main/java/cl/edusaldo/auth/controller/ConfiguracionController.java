@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/configuracion")
-@Tag(name = "Configuración Institucional", description = "Datos institucionales del establecimiento y librería (HU50)")
+@Tag(name = "Configuración Institucional", description = "Datos institucionales del establecimiento y librería escolar")
 public class ConfiguracionController {
 
     private final ConfiguracionService configuracionService;
@@ -20,13 +20,13 @@ public class ConfiguracionController {
     }
 
     @GetMapping
-    @Operation(summary = "HU50 - Consultar datos institucionales del establecimiento y la librería")
+    @Operation(summary = "Consultar datos institucionales del establecimiento y la librería")
     public ResponseEntity<ConfiguracionInstitucional> obtener() {
         return ResponseEntity.ok(configuracionService.obtenerConfiguracion());
     }
 
     @PutMapping
-    @Operation(summary = "HU50 - Actualizar datos institucionales del establecimiento (solo Administrador)")
+    @Operation(summary = "Actualizar datos institucionales del establecimiento")
     public ResponseEntity<ConfiguracionInstitucional> actualizar(
             @RequestBody ConfiguracionDTO dto,
             @RequestParam(required = false, defaultValue = "1") Long adminId) {

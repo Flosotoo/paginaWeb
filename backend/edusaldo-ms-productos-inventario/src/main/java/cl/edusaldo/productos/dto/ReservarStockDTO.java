@@ -1,5 +1,8 @@
 package cl.edusaldo.productos.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
@@ -11,7 +14,11 @@ public class ReservarStockDTO {
     private int cantidad;
 
     private Long referenciaId;
-    private String idempotencyKey;
+
+    @Schema(description = "Referencia o código único de la operación para evitar registros duplicados")
+    @JsonProperty("referenciaUnica")
+    @JsonAlias({"idempotencyKey", "claveOperacion", "referencia"})
+    private String referenciaUnica;
 
     @NotNull(message = "El ID de usuario es obligatorio")
     private Long usuarioId;
@@ -24,8 +31,8 @@ public class ReservarStockDTO {
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
     public Long getReferenciaId() { return referenciaId; }
     public void setReferenciaId(Long referenciaId) { this.referenciaId = referenciaId; }
-    public String getIdempotencyKey() { return idempotencyKey; }
-    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+    public String getReferenciaUnica() { return referenciaUnica; }
+    public void setReferenciaUnica(String referenciaUnica) { this.referenciaUnica = referenciaUnica; }
     public Long getUsuarioId() { return usuarioId; }
     public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
 }

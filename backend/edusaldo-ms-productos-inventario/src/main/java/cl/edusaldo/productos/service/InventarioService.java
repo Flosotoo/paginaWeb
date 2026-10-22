@@ -66,7 +66,6 @@ public class InventarioService {
         for (DetalleConteoDTO det : dto.getDetalles()) {
             Producto p = productoRepository.findById(det.getProductoId())
                     .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + det.getProductoId()));
-            // HU43: Calcula diferencia = stockContado - stockSistema sin alterar stockFisico del producto
             conteo.agregarDetalle(p, det.getStockContado());
         }
 
@@ -139,7 +138,7 @@ public class InventarioService {
 
     @Transactional
     public void retenerStock(RetenerStockDTO dto) {
-        if (dto.getIdempotencyKey() != null && movimientoInventarioRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
+        if (dto.getReferenciaUnica() != null && movimientoInventarioRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
             return;
         }
 
@@ -147,8 +146,8 @@ public class InventarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + dto.getProductoId()));
 
         MovimientoInventario mov = p.retenerStockPorReserva(dto.getCantidad(), dto.getReservaId(), dto.getUsuarioId());
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         productoRepository.save(p);
@@ -165,7 +164,7 @@ public class InventarioService {
 
     @Transactional
     public void liberarStock(LiberarStockDTO dto) {
-        if (dto.getIdempotencyKey() != null && movimientoInventarioRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
+        if (dto.getReferenciaUnica() != null && movimientoInventarioRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
             return;
         }
 
@@ -173,8 +172,8 @@ public class InventarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + dto.getProductoId()));
 
         MovimientoInventario mov = p.liberarStockRetenido(dto.getCantidad(), dto.getReservaId(), dto.getUsuarioId());
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         productoRepository.save(p);
@@ -190,7 +189,7 @@ public class InventarioService {
 
     @Transactional
     public void descontarStock(DescontarStockDTO dto) {
-        if (dto.getIdempotencyKey() != null && movimientoInventarioRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
+        if (dto.getReferenciaUnica() != null && movimientoInventarioRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
             return;
         }
 
@@ -198,8 +197,8 @@ public class InventarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + dto.getProductoId()));
 
         MovimientoInventario mov = p.descontarStockPorEntrega(dto.getCantidad(), dto.getEntregaId(), dto.isVieneDeReserva(), dto.getUsuarioId());
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         productoRepository.save(p);
@@ -215,7 +214,7 @@ public class InventarioService {
 
     @Transactional
     public void reingresarStockPorDevolucion(ReingresarStockDTO dto) {
-        if (dto.getIdempotencyKey() != null && movimientoInventarioRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
+        if (dto.getReferenciaUnica() != null && movimientoInventarioRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
             return;
         }
 
@@ -223,8 +222,8 @@ public class InventarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + dto.getProductoId()));
 
         MovimientoInventario mov = p.reponerStockPorDevolucion(dto.getCantidad(), dto.getDevolucionId(), dto.getUsuarioId());
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         productoRepository.save(p);

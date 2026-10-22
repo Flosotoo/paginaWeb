@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/consentimiento")
-@Tag(name = "Consentimiento de Privacidad", description = "Aceptación de términos y aviso de privacidad (HU56)")
+@Tag(name = "Consentimiento de Privacidad", description = "Aceptación de términos de uso y aviso de privacidad")
 public class ConsentimientoController {
 
     private final ConsentimientoService consentimientoService;
@@ -24,14 +24,14 @@ public class ConsentimientoController {
     }
 
     @PostMapping
-    @Operation(summary = "HU56 - Registrar aceptación de aviso de privacidad y términos de uso")
+    @Operation(summary = "Registrar aceptación de aviso de privacidad y términos de uso")
     public ResponseEntity<ConsentimientoPrivacidad> registrar(@Valid @RequestBody ConsentimientoDTO dto) {
         ConsentimientoPrivacidad res = consentimientoService.registrarConsentimiento(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    @Operation(summary = "HU56 - Consultar historial de consentimientos de privacidad por usuario")
+    @Operation(summary = "Consultar historial de consentimientos de privacidad por usuario")
     public ResponseEntity<List<ConsentimientoPrivacidad>> listarPorUsuario(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(consentimientoService.listarPorUsuario(usuarioId));
     }

@@ -43,8 +43,8 @@ public class MovimientoSaldo {
     @Column(name = "descripcion", nullable = false)
     private String descripcion;
 
-    @Column(name = "idempotency_key", length = 100)
-    private String idempotencyKey;
+    @Column(name = "referencia_unica", length = 100, unique = true)
+    private String referenciaUnica;
 
     public MovimientoSaldo() {}
 
@@ -54,14 +54,14 @@ public class MovimientoSaldo {
     }
 
     public MovimientoSaldo(CuentaSaldo cuentaSaldo, TipoMovimientoSaldo tipo, int monto, int saldoResultante,
-                           Long referenciaId, String descripcion, String idempotencyKey) {
+                           Long referenciaId, String descripcion, String referenciaUnica) {
         this.cuentaSaldo = cuentaSaldo;
         this.tipo = tipo;
         this.monto = monto;
         this.saldoResultante = saldoResultante;
         this.referenciaId = referenciaId;
         this.descripcion = descripcion;
-        this.idempotencyKey = idempotencyKey;
+        this.referenciaUnica = referenciaUnica;
         this.fecha = LocalDateTime.now();
     }
 
@@ -96,6 +96,6 @@ public class MovimientoSaldo {
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public String getIdempotencyKey() { return idempotencyKey; }
-    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+    public String getReferenciaUnica() { return referenciaUnica; }
+    public void setReferenciaUnica(String referenciaUnica) { this.referenciaUnica = referenciaUnica; }
 }

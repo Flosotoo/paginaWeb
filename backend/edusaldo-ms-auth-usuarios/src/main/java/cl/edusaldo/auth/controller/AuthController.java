@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Autenticación", description = "Endpoints de login, cierre de sesión y control de credenciales (HU01 a HU06)")
+@Tag(name = "Autenticación", description = "Endpoints de inicio de sesión, cierre de sesión y gestión de credenciales")
 public class AuthController {
 
     private final UsuarioService usuarioService;
@@ -22,14 +22,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "HU01 / HU02 - Iniciar sesión y obtener token de acceso con evaluación dinámica de bloqueo")
+    @Operation(summary = "Iniciar sesión con correo y contraseña reconociendo rol, establecimiento y permisos vigentes")
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
         LoginResponseDTO res = usuarioService.login(dto);
         return ResponseEntity.ok(res);
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "HU03 - Cerrar sesión y revocar token de acceso en lista negra")
+    @Operation(summary = "Cerrar sesión activa del usuario")
     public ResponseEntity<Map<String, String>> logout(
             @RequestBody(required = false) Map<String, Object> payload) {
         String jti = payload != null && payload.get("jti") != null ? payload.get("jti").toString() : null;
@@ -40,14 +40,14 @@ public class AuthController {
     }
 
     @PostMapping("/cambiar-password")
-    @Operation(summary = "HU04 - Cambiar contraseña informando credencial actual y nueva")
+    @Operation(summary = "Cambiar contraseña informando credencial actual y nueva")
     public ResponseEntity<Map<String, String>> cambiarPassword(@Valid @RequestBody CambiarPasswordAuthDTO dto) {
         usuarioService.cambiarPasswordAuth(dto);
         return ResponseEntity.ok(Map.of("message", "Contraseña actualizada exitosamente"));
     }
 
     @PostMapping("/recuperar-password")
-    @Operation(summary = "HU05 - Solicitar token temporal para recuperación de contraseña")
+    @Operation(summary = "Solicitar código temporal para recuperación de contraseña")
     public ResponseEntity<Map<String, String>> recuperarPassword(@Valid @RequestBody RecuperarPasswordDTO dto) {
         String token = usuarioService.solicitarRecuperacionPassword(dto.getCorreo());
         return ResponseEntity.ok(Map.of(
@@ -57,7 +57,7 @@ public class AuthController {
     }
 
     @PostMapping("/confirmar-recuperacion")
-    @Operation(summary = "HU05 - Reestablecer contraseña mediante token de recuperación de un solo uso")
+    @Operation(summary = "Restablecer contraseña mediante código de recuperación de un solo uso")
     public ResponseEntity<Map<String, String>> confirmarRecuperacion(@Valid @RequestBody ConfirmarRecuperacionDTO dto) {
         usuarioService.confirmarRecuperacionPassword(dto);
         return ResponseEntity.ok(Map.of("message", "Contraseña restablecida exitosamente"));

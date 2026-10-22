@@ -205,16 +205,16 @@ public class SaldoService {
 
     @Transactional
     public MovimientoSaldoDTO retenerSaldo(RetenerSaldoDTO dto) {
-        if (dto.getIdempotencyKey() != null && !dto.getIdempotencyKey().isBlank()
-                && movimientoSaldoRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
-            MovimientoSaldo prev = movimientoSaldoRepository.findByIdempotencyKey(dto.getIdempotencyKey()).get();
+        if (dto.getReferenciaUnica() != null && !dto.getReferenciaUnica().isBlank()
+                && movimientoSaldoRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
+            MovimientoSaldo prev = movimientoSaldoRepository.findByReferenciaUnica(dto.getReferenciaUnica()).get();
             return new MovimientoSaldoDTO(prev);
         }
 
         CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
         MovimientoSaldo mov = cuenta.retenerSaldoPorReserva(dto.getMonto(), dto.getReservaId());
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         cuenta = cuentaSaldoRepository.save(cuenta);
@@ -227,16 +227,16 @@ public class SaldoService {
 
     @Transactional
     public MovimientoSaldoDTO liberarSaldo(LiberarSaldoDTO dto) {
-        if (dto.getIdempotencyKey() != null && !dto.getIdempotencyKey().isBlank()
-                && movimientoSaldoRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
-            MovimientoSaldo prev = movimientoSaldoRepository.findByIdempotencyKey(dto.getIdempotencyKey()).get();
+        if (dto.getReferenciaUnica() != null && !dto.getReferenciaUnica().isBlank()
+                && movimientoSaldoRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
+            MovimientoSaldo prev = movimientoSaldoRepository.findByReferenciaUnica(dto.getReferenciaUnica()).get();
             return new MovimientoSaldoDTO(prev);
         }
 
         CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
         MovimientoSaldo mov = cuenta.liberarSaldoRetenido(dto.getMonto(), dto.getReservaId());
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         cuenta = cuentaSaldoRepository.save(cuenta);
@@ -253,9 +253,9 @@ public class SaldoService {
 
     @Transactional
     public CobrarSaldoResponseDTO cobrarEntrega(CobrarSaldoDTO dto) {
-        if (dto.getIdempotencyKey() != null && !dto.getIdempotencyKey().isBlank()
-                && movimientoSaldoRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
-            MovimientoSaldo prev = movimientoSaldoRepository.findByIdempotencyKey(dto.getIdempotencyKey()).get();
+        if (dto.getReferenciaUnica() != null && !dto.getReferenciaUnica().isBlank()
+                && movimientoSaldoRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
+            MovimientoSaldo prev = movimientoSaldoRepository.findByReferenciaUnica(dto.getReferenciaUnica()).get();
             CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
             return new CobrarSaldoResponseDTO(cuenta, dto.getMonto(), false, prev);
         }
@@ -266,8 +266,8 @@ public class SaldoService {
         MovimientoSaldo mov = cuenta.cobrarEntregaMateriales(dto.getMonto(), dto.getEntregaId(), dto.isVieneDeReserva());
         boolean alertaSaldoBajo = cuenta.cruzoUmbralSaldoBajo(saldoAnterior, 3000);
 
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         cuenta = cuentaSaldoRepository.save(cuenta);
@@ -288,16 +288,16 @@ public class SaldoService {
 
     @Transactional
     public MovimientoSaldoDTO reintegrarPorDevolucion(ReintegrarSaldoDTO dto) {
-        if (dto.getIdempotencyKey() != null && !dto.getIdempotencyKey().isBlank()
-                && movimientoSaldoRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
-            MovimientoSaldo prev = movimientoSaldoRepository.findByIdempotencyKey(dto.getIdempotencyKey()).get();
+        if (dto.getReferenciaUnica() != null && !dto.getReferenciaUnica().isBlank()
+                && movimientoSaldoRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
+            MovimientoSaldo prev = movimientoSaldoRepository.findByReferenciaUnica(dto.getReferenciaUnica()).get();
             return new MovimientoSaldoDTO(prev);
         }
 
         CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
         MovimientoSaldo mov = cuenta.reembolsarPorDevolucion(dto.getMonto(), dto.getDevolucionId());
-        if (dto.getIdempotencyKey() != null) {
-            mov.setIdempotencyKey(dto.getIdempotencyKey());
+        if (dto.getReferenciaUnica() != null) {
+            mov.setReferenciaUnica(dto.getReferenciaUnica());
         }
 
         cuenta = cuentaSaldoRepository.save(cuenta);
@@ -371,37 +371,35 @@ public class SaldoService {
         return resumen;
     }
 
-    // --- Métodos de compatibilidad legacy ---
-
     @Transactional
     public MovimientoSaldoDTO comprometer(Long alumnoId, ComprometerSaldoDTO dto) {
         RetenerSaldoDTO ret = new RetenerSaldoDTO(alumnoId, dto.getMonto(), dto.getReservaId());
         ret.setUsuarioId(dto.getUsuarioId());
-        ret.setIdempotencyKey(dto.getIdempotencyKey());
+        ret.setReferenciaUnica(dto.getReferenciaUnica());
         return retenerSaldo(ret);
     }
 
     @Transactional
     public MovimientoSaldoDTO finalizarReserva(Long alumnoId, FinalizarReservaDTO dto) {
         CobrarSaldoDTO cob = new CobrarSaldoDTO(alumnoId, dto.getMonto(), dto.getVentaId(), true);
-        cob.setIdempotencyKey(dto.getIdempotencyKey());
+        cob.setReferenciaUnica(dto.getReferenciaUnica());
         CobrarSaldoResponseDTO res = cobrarEntrega(cob);
         MovimientoSaldo mov = movimientoSaldoRepository.findById(res.getMovimientoId()).orElse(null);
         return mov != null ? new MovimientoSaldoDTO(mov) : null;
     }
 
     @Transactional
-    public MovimientoSaldoDTO liberar(Long alumnoId, int monto, Long reservaId, Long usuarioId, String idempotencyKey) {
+    public MovimientoSaldoDTO liberar(Long alumnoId, int monto, Long reservaId, Long usuarioId, String referenciaUnica) {
         LiberarSaldoDTO lib = new LiberarSaldoDTO(alumnoId, monto, reservaId);
         lib.setUsuarioId(usuarioId);
-        lib.setIdempotencyKey(idempotencyKey);
+        lib.setReferenciaUnica(referenciaUnica);
         return liberarSaldo(lib);
     }
 
     @Transactional
     public MovimientoSaldoDTO abonar(Long alumnoId, AbonarSaldoDTO dto) {
-        if (dto.getIdempotencyKey() != null && movimientoSaldoRepository.existsByIdempotencyKey(dto.getIdempotencyKey())) {
-            MovimientoSaldo prev = movimientoSaldoRepository.findByIdempotencyKey(dto.getIdempotencyKey()).get();
+        if (dto.getReferenciaUnica() != null && movimientoSaldoRepository.existsByReferenciaUnica(dto.getReferenciaUnica())) {
+            MovimientoSaldo prev = movimientoSaldoRepository.findByReferenciaUnica(dto.getReferenciaUnica()).get();
             return new MovimientoSaldoDTO(prev);
         }
 
@@ -411,7 +409,7 @@ public class SaldoService {
 
         MovimientoSaldo mov = new MovimientoSaldo(
                 cuenta, TipoMovimientoSaldo.ABONO, dto.getMonto(), cuenta.getSaldoActual(),
-                dto.getApoderadoId(), "Aporte de saldo vía Webpay simulado", dto.getIdempotencyKey()
+                dto.getApoderadoId(), "Aporte de saldo vía Webpay simulado", dto.getReferenciaUnica()
         );
         mov = movimientoSaldoRepository.save(mov);
         return new MovimientoSaldoDTO(mov);

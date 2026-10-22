@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/auditoria")
-@Tag(name = "Auditoría", description = "Libro de registro y trazabilidad de eventos sensibles (HU52)")
+@Tag(name = "Auditoría", description = "Libro de registro y trazabilidad de eventos sensibles del establecimiento")
 public class AuditoriaController {
 
     private final AuditoriaService auditoriaService;
@@ -21,7 +21,7 @@ public class AuditoriaController {
     }
 
     @GetMapping
-    @Operation(summary = "HU52 - Listar registros de auditoría del establecimiento con filtros por usuario o entidad")
+    @Operation(summary = "Listar registros de auditoría del establecimiento con filtros por usuario o entidad")
     public ResponseEntity<List<RegistroAuditoria>> listar(
             @RequestParam(required = false) Long usuarioId,
             @RequestParam(required = false) String entidad) {

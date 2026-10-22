@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/devoluciones")
-@Tag(name = "Devoluciones", description = "Registro de devoluciones de materiales con reintegro automático S09 y S10 (HU36)")
+@Tag(name = "Devoluciones", description = "Registro de devoluciones de materiales con reintegro automático de saldo y stock")
 public class DevolucionController {
 
     private final DevolucionService devolucionService;
@@ -26,21 +26,21 @@ public class DevolucionController {
     }
 
     @PostMapping
-    @Operation(summary = "HU36 - Registrar devolución de materiales con reintegro de saldo (S09) y stock (S10)")
+    @Operation(summary = "Registrar devolución de materiales con reintegro de saldo y stock")
     public ResponseEntity<DevolucionResponseDTO> registrarDevolucion(@Valid @RequestBody CrearDevolucionDTO dto) {
         Devolucion devolucion = devolucionService.registrarDevolucion(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new DevolucionResponseDTO(devolucion));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "HU36 - Consultar devolución por ID")
+    @Operation(summary = "Consultar devolución por ID")
     public ResponseEntity<DevolucionResponseDTO> obtenerPorId(@PathVariable Long id) {
         Devolucion devolucion = devolucionService.obtenerPorId(id);
         return ResponseEntity.ok(new DevolucionResponseDTO(devolucion));
     }
 
     @GetMapping("/entrega/{entregaId}")
-    @Operation(summary = "HU36 - Listar devoluciones correspondientes a una entrega")
+    @Operation(summary = "Listar devoluciones correspondientes a una entrega")
     public ResponseEntity<List<DevolucionResponseDTO>> listarPorEntrega(@PathVariable Long entregaId) {
         List<DevolucionResponseDTO> list = devolucionService.listarPorEntrega(entregaId).stream()
                 .map(DevolucionResponseDTO::new)
@@ -49,7 +49,7 @@ public class DevolucionController {
     }
 
     @GetMapping("/alumno/{alumnoId}")
-    @Operation(summary = "HU36 - Listar devoluciones de un alumno")
+    @Operation(summary = "Listar devoluciones de un alumno")
     public ResponseEntity<List<DevolucionResponseDTO>> listarPorAlumno(@PathVariable Long alumnoId) {
         List<DevolucionResponseDTO> list = devolucionService.listarPorAlumno(alumnoId).stream()
                 .map(DevolucionResponseDTO::new)
@@ -58,7 +58,7 @@ public class DevolucionController {
     }
 
     @GetMapping
-    @Operation(summary = "HU36 - Listar todas las devoluciones registradas")
+    @Operation(summary = "Listar todas las devoluciones registradas")
     public ResponseEntity<List<DevolucionResponseDTO>> listarTodas() {
         List<DevolucionResponseDTO> list = devolucionService.listarTodas().stream()
                 .map(DevolucionResponseDTO::new)

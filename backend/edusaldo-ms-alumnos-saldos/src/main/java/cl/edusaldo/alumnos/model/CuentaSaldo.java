@@ -28,7 +28,8 @@ public class CuentaSaldo {
     @Column(name = "saldo_comprometido", nullable = false)
     private int saldoComprometido = 0;
 
-    @Column(name = "bloqueada_hasta")
+    @Transient
+    @JsonIgnore
     private LocalDateTime bloqueadaHasta;
 
     @Version
@@ -69,6 +70,7 @@ public class CuentaSaldo {
         return getSaldoDisponible() >= monto;
     }
 
+    @JsonIgnore
     public boolean estaBloqueada() {
         return this.bloqueadaHasta != null && LocalDateTime.now().isBefore(this.bloqueadaHasta);
     }
@@ -211,7 +213,6 @@ public class CuentaSaldo {
         return saldoAnterior > umbral && this.saldoActual <= umbral;
     }
 
-    // Métodos legacy/compatibilidad
     public void comprometer(int monto) {
         retenerSaldoPorReserva(monto, null);
     }
@@ -228,7 +229,6 @@ public class CuentaSaldo {
         this.saldoActual += monto;
     }
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -244,6 +244,7 @@ public class CuentaSaldo {
     public int getSaldoComprometido() { return saldoComprometido; }
     public void setSaldoComprometido(int saldoComprometido) { this.saldoComprometido = saldoComprometido; }
 
+    @JsonIgnore
     public LocalDateTime getBloqueadaHasta() { return bloqueadaHasta; }
     public void setBloqueadaHasta(LocalDateTime bloqueadaHasta) { this.bloqueadaHasta = bloqueadaHasta; }
 

@@ -14,6 +14,6 @@ public interface MovimientoSaldoRepository extends JpaRepository<MovimientoSaldo
     @Query("SELECT m FROM MovimientoSaldo m WHERE m.cuentaSaldo.id = :cuentaSaldoId ORDER BY m.fecha DESC")
     List<MovimientoSaldo> findByCuentaSaldoIdOrderByFechaDesc(@Param("cuentaSaldoId") Long cuentaSaldoId);
 
-    Optional<MovimientoSaldo> findByIdempotencyKey(String idempotencyKey);
-    boolean existsByIdempotencyKey(String idempotencyKey);
+    Optional<MovimientoSaldo> findByReferenciaUnica(String referenciaUnica);
+    boolean existsByReferenciaUnica(String referenciaUnica);
 }

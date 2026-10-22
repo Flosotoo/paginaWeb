@@ -1,6 +1,8 @@
 package cl.edusaldo.alumnos.dto;
 
 import cl.edusaldo.alumnos.model.CuentaSaldo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 import java.time.LocalDateTime;
 
 public class CuentaSaldoResponseDTO {
@@ -10,7 +12,13 @@ public class CuentaSaldoResponseDTO {
     private int saldoActual;
     private int saldoComprometido;
     private int saldoDisponible;
+
+    @JsonIgnore
+    @Hidden
     private LocalDateTime bloqueadaHasta;
+
+    @JsonIgnore
+    @Hidden
     private boolean estaBloqueada;
 
     public CuentaSaldoResponseDTO() {}
@@ -44,9 +52,13 @@ public class CuentaSaldoResponseDTO {
     public int getSaldoDisponible() { return saldoDisponible; }
     public void setSaldoDisponible(int saldoDisponible) { this.saldoDisponible = saldoDisponible; }
 
+    @JsonIgnore
+    @Hidden
     public LocalDateTime getBloqueadaHasta() { return bloqueadaHasta; }
     public void setBloqueadaHasta(LocalDateTime bloqueadaHasta) { this.bloqueadaHasta = bloqueadaHasta; }
 
+    @JsonIgnore
+    @Hidden
     public boolean isEstaBloqueada() { return estaBloqueada; }
     public void setEstaBloqueada(boolean estaBloqueada) { this.estaBloqueada = estaBloqueada; }
 }

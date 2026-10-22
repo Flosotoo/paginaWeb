@@ -10,10 +10,12 @@ public class MovimientoInventarioResponseDTO {
     private String nombreProducto;
     private TipoMovimientoInventario tipo;
     private int cantidad;
+    private int variacionFisica;
+    private int variacionReservada;
     private int stockResultante;
     private LocalDateTime fecha;
-    private Long referenciaId;
-    private Long usuarioId;
+    private Long responsableId;
+    private String referenciaUnica;
 
     public MovimientoInventarioResponseDTO() {}
 
@@ -25,10 +27,12 @@ public class MovimientoInventarioResponseDTO {
         }
         this.tipo = m.getTipo();
         this.cantidad = m.getCantidad();
+        this.variacionFisica = m.getVariacionFisica();
+        this.variacionReservada = m.getVariacionReservada();
         this.stockResultante = m.getStockResultante();
         this.fecha = m.getFecha();
-        this.referenciaId = m.getReferenciaId();
-        this.usuarioId = m.getUsuarioId();
+        this.responsableId = m.getResponsableId();
+        this.referenciaUnica = m.getReferenciaUnica();
     }
 
     public Long getId() { return id; }
@@ -36,8 +40,10 @@ public class MovimientoInventarioResponseDTO {
     public String getNombreProducto() { return nombreProducto; }
     public TipoMovimientoInventario getTipo() { return tipo; }
     public int getCantidad() { return cantidad; }
+    public int getVariacionFisica() { return variacionFisica; }
+    public int getVariacionReservada() { return variacionReservada; }
     public int getStockResultante() { return stockResultante; }
     public LocalDateTime getFecha() { return fecha; }
-    public Long getReferenciaId() { return referenciaId; }
-    public Long getUsuarioId() { return usuarioId; }
+    public Long getResponsableId() { return responsableId; }
+    public String getReferenciaUnica() { return referenciaUnica; }
 }
