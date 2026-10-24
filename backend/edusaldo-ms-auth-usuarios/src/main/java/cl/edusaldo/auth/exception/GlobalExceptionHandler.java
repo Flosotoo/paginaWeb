@@ -28,10 +28,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex, WebRequest req) {
         Map<String, Object> err = new HashMap<>();
         err.put("timestamp", LocalDateTime.now());
-        err.put("status", HttpStatus.CONFLICT.value());
-        err.put("error", "Conflict");
+        err.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        err.put("error", "Unprocessable Entity");
         err.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(err);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
