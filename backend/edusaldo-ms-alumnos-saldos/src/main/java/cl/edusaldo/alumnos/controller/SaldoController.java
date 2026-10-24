@@ -99,11 +99,17 @@ public class SaldoController {
         return ResponseEntity.ok(res);
     }
 
-    @PostMapping({"/liquidar-retiro", "/cuenta/liquidar"})
+    @PostMapping("/liquidar-retiro")
     @Operation(summary = "Liquidar saldo a cero por retiro definitivo del alumno del establecimiento")
     public ResponseEntity<LiquidarSaldoResponseDTO> liquidarPorRetiro(@Valid @RequestBody LiquidarSaldoDTO dto) {
         LiquidarSaldoResponseDTO res = saldoService.liquidarSaldoPorRetiro(dto);
         return ResponseEntity.ok(res);
+    }
+
+    @Hidden
+    @PostMapping("/cuenta/liquidar")
+    public ResponseEntity<LiquidarSaldoResponseDTO> liquidarPorRetiroLegacy(@Valid @RequestBody LiquidarSaldoDTO dto) {
+        return liquidarPorRetiro(dto);
     }
 
     @GetMapping("/cuenta/{alumnoId}/movimientos")

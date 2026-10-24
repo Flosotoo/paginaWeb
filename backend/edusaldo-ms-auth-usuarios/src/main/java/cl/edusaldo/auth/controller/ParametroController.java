@@ -2,6 +2,7 @@ package cl.edusaldo.auth.controller;
 
 import cl.edusaldo.auth.dto.ParametroDTO;
 import cl.edusaldo.auth.service.ConfiguracionService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Hidden
 @RestController
 @RequestMapping("/api/parametros")
 @Tag(name = "Parámetros del Sistema", description = "Parámetros operativos y umbrales configurables en la política institucional")

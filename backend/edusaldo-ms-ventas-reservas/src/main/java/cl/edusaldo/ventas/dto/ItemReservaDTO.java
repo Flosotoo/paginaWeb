@@ -22,6 +22,13 @@ public class ItemReservaDTO {
 
     public ItemReservaDTO() {}
 
+    public ItemReservaDTO(Long productoId, String nombreProducto, int cantidad, Integer precioUnitario) {
+        this.productoId = productoId;
+        this.nombreProducto = nombreProducto;
+        this.cantidad = cantidad;
+        this.precioUnitario = precioUnitario;
+    }
+
     public Long getProductoId() { return productoId; }
     public void setProductoId(Long productoId) { this.productoId = productoId; }
 

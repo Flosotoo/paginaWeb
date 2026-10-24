@@ -1,6 +1,8 @@
 package cl.edusaldo.alumnos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,21 +62,33 @@ public class Abono {
     @OneToOne(mappedBy = "abono", fetch = FetchType.LAZY)
     private TransferenciaBancaria transferencia;
 
+    @JsonIgnore
+    @Hidden
     @Transient
     private String tokenTransaccion;
 
+    @JsonIgnore
+    @Hidden
     @Transient
     private LocalDate fechaTransferencia;
 
+    @JsonIgnore
+    @Hidden
     @Transient
     private String comprobanteUrl;
 
+    @JsonIgnore
+    @Hidden
     @Transient
     private Long revisadoPorApoderadoId;
 
+    @JsonIgnore
+    @Hidden
     @Transient
     private String motivoRechazo;
 
+    @JsonIgnore
+    @Hidden
     @Transient
     private LocalDateTime expiraEn;
 
@@ -216,6 +230,8 @@ public class Abono {
     public MedioPagoAbono getMedioPago() { return medioPago; }
     public void setMedioPago(MedioPagoAbono medioPago) { this.medioPago = medioPago; }
 
+    @JsonIgnore
+    @Hidden
     public String getTokenTransaccion() {
         if (tokenTransaccion != null) {
             return tokenTransaccion;
@@ -226,6 +242,8 @@ public class Abono {
         return medioPago == MedioPagoAbono.PASARELA_SIMULADA ? claveOperacion : null;
     }
 
+    @JsonIgnore
+    @Hidden
     public void setTokenTransaccion(String tokenTransaccion) {
         this.tokenTransaccion = tokenTransaccion;
         if (tokenTransaccion != null && this.medioPago == MedioPagoAbono.PASARELA_SIMULADA) {
@@ -239,24 +257,28 @@ public class Abono {
     public EstadoAbono getEstado() { return estado; }
     public void setEstado(EstadoAbono estado) { this.estado = estado; }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public LocalDate getFechaTransferencia() {
         if (fechaTransferencia != null) return fechaTransferencia;
         return transferencia != null ? transferencia.getFechaTransferencia() : null;
     }
     public void setFechaTransferencia(LocalDate fechaTransferencia) { this.fechaTransferencia = fechaTransferencia; }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getComprobanteUrl() {
         if (comprobanteUrl != null) return comprobanteUrl;
         return transferencia != null ? transferencia.getComprobanteUrl() : null;
     }
     public void setComprobanteUrl(String comprobanteUrl) { this.comprobanteUrl = comprobanteUrl; }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public Long getRevisadoPorApoderadoId() {
         if (revisadoPorApoderadoId != null) return revisadoPorApoderadoId;
         return transferencia != null ? transferencia.getRevisadoPorApoderadoId() : null;
     }
     public void setRevisadoPorApoderadoId(Long revisadoPorApoderadoId) { this.revisadoPorApoderadoId = revisadoPorApoderadoId; }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getMotivoRechazo() {
         if (motivoRechazo != null) return motivoRechazo;
         return transferencia != null ? transferencia.getMotivoRechazo() : null;
@@ -266,11 +288,15 @@ public class Abono {
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
+    @JsonIgnore
+    @Hidden
     public LocalDateTime getExpiraEn() {
         if (expiraEn != null) return expiraEn;
         return medioPago == MedioPagoAbono.PASARELA_SIMULADA && fechaCreacion != null
                 ? fechaCreacion.plusMinutes(15) : null;
     }
+    @JsonIgnore
+    @Hidden
     public void setExpiraEn(LocalDateTime expiraEn) { this.expiraEn = expiraEn; }
 
     public LocalDateTime getFechaResolucion() { return fechaResolucion; }

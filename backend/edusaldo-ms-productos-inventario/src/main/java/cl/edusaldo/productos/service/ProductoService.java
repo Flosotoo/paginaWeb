@@ -129,6 +129,9 @@ public class ProductoService {
     public void inactivarCategoria(Long id) {
         Categoria c = categoriaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada con ID: " + id));
+        if (!productoRepository.findByCategoriaId(id).isEmpty()) {
+            throw new IllegalStateException("No se puede eliminar o inactivar una categoría que posee productos asociados.");
+        }
         c.inactivar();
         categoriaRepository.save(c);
     }

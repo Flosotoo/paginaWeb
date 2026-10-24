@@ -29,11 +29,17 @@ public class InventarioController {
         this.inventarioService = inventarioService;
     }
 
-    @PostMapping({"/ingresos-manuales", "/ingresos"})
+    @PostMapping("/ingresos-manuales")
     @Operation(summary = "Registrar recepción e ingreso manual de mercadería por Encargado")
     public ResponseEntity<IngresoStockResponseDTO> registrarIngresoManual(@Valid @RequestBody IngresoManualDTO dto) {
         IngresoStock ingreso = inventarioService.registrarIngresoManual(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new IngresoStockResponseDTO(ingreso));
+    }
+
+    @Hidden
+    @PostMapping("/ingresos")
+    public ResponseEntity<IngresoStockResponseDTO> registrarIngresoManualLegacy(@Valid @RequestBody IngresoManualDTO dto) {
+        return registrarIngresoManual(dto);
     }
 
     @PostMapping("/conteos-fisicos")
@@ -83,6 +89,7 @@ public class InventarioController {
         return ResponseEntity.ok(new SolicitudAjusteResponseDTO(sol));
     }
 
+    @Hidden
     @PutMapping("/ajustes/{id}/resolver")
     @Operation(summary = "Resolver solicitud de ajuste de stock aprobando o rechazando por Administrador")
     public ResponseEntity<SolicitudAjusteResponseDTO> resolverAjuste(
@@ -141,6 +148,7 @@ public class InventarioController {
         return ResponseEntity.ok(list);
     }
 
+    @Hidden
     @GetMapping("/movimientos/producto/{productoId}")
     @Operation(summary = "Consultar libro mayor inmutable de movimientos de un producto")
     public ResponseEntity<List<MovimientoInventarioResponseDTO>> listarMovimientosPorProducto(@PathVariable Long productoId) {

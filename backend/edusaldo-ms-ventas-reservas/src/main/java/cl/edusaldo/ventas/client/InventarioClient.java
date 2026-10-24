@@ -24,6 +24,34 @@ public class InventarioClient {
     private boolean interserviceEnabled;
 
     /**
+     * S03: Consultar producto activo en el catálogo oficial (HU39 CA3).
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> consultarProductoActivo(Long productoId) {
+        if (!interserviceEnabled || productoId == null) {
+            return null;
+        }
+        try {
+            Map<String, Object> producto = restTemplate.getForObject(
+                    inventarioBaseUrl + "/api/productos/" + productoId, Map.class);
+            if (producto != null) {
+                if ("INACTIVO".equals(String.valueOf(producto.get("estado")))) {
+                    throw new IllegalStateException("El producto ID " + productoId + " se encuentra inactivo y no está disponible.");
+                }
+                return producto;
+            }
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new IllegalArgumentException("El producto ID " + productoId + " no existe en el catálogo.");
+        } catch (ResourceAccessException ignored) {
+            // Fallback local cuando MS Inventario no está levantado en entorno aislado
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            throw e;
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    /**
      * S04: Retener/reservar stock de producto al confirmar reserva (HU27).
      */
     public void reservarStock(Long productoId, int cantidad, Long usuarioId) {

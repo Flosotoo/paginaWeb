@@ -61,7 +61,7 @@ public class ReservaController {
         return ResponseEntity.ok(list);
     }
 
-    @PostMapping({"/{id}/marcar-lista", "/{id}/preparar"})
+    @PostMapping("/{id}/marcar-lista")
     @Operation(summary = "Marcar pedido como listo para retiro registrando responsable de preparación y notificación")
     public ResponseEntity<ReservaResponseDTO> marcarLista(
             @PathVariable Long id,
@@ -75,6 +75,15 @@ public class ReservaController {
 
         Reserva r = reservaService.marcarListaParaRetiro(id, finalEncargadoId);
         return ResponseEntity.ok(new ReservaResponseDTO(r));
+    }
+
+    @Hidden
+    @PostMapping("/{id}/preparar")
+    public ResponseEntity<ReservaResponseDTO> prepararLegacy(
+            @PathVariable Long id,
+            @RequestBody(required = false) MarcarListaDTO body,
+            @RequestParam(required = false) Long encargadoId) {
+        return marcarLista(id, body, encargadoId);
     }
 
     @Hidden

@@ -9,6 +9,8 @@ import cl.edusaldo.ventas.model.DetalleEntrega;
 import cl.edusaldo.ventas.model.Entrega;
 import cl.edusaldo.ventas.model.OperacionDistribuida;
 import cl.edusaldo.ventas.repository.EntregaRepository;
+import cl.edusaldo.ventas.model.NotificacionPendiente;
+import cl.edusaldo.ventas.repository.NotificacionPendienteRepository;
 import cl.edusaldo.ventas.repository.OperacionDistribuidaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,9 @@ import java.util.List;
 public class EntregaService {
 
     private final EntregaRepository entregaRepository;
+
+    @Autowired(required = false)
+    private NotificacionPendienteRepository notificacionRepository;
 
     @Autowired(required = false)
     private OperacionDistribuidaRepository operacionDistribuidaRepository;
@@ -56,8 +61,21 @@ public class EntregaService {
 
         List<DetalleEntrega> detalles = new ArrayList<>();
         for (ItemEntregaDTO item : dto.getItems()) {
-            detalles.add(new DetalleEntrega(null, item.getProductoId(), item.getNombreProducto(),
-                    item.getCantidad(), item.getPrecioUnitario()));
+            int precio = item.getPrecioUnitario();
+            String nombre = item.getNombreProducto();
+            if (inventarioClient != null) {
+                java.util.Map<String, Object> prod = inventarioClient.consultarProductoActivo(item.getProductoId());
+                if (prod != null) {
+                    if (prod.get("precio") != null) {
+                        precio = Integer.parseInt(prod.get("precio").toString());
+                    }
+                    if (prod.get("nombre") != null) {
+                        nombre = String.valueOf(prod.get("nombre"));
+                    }
+                }
+            }
+            detalles.add(new DetalleEntrega(null, item.getProductoId(), nombre,
+                    item.getCantidad(), precio));
         }
 
         Entrega entrega = Entrega.registrarEnMeson(dto.getAlumnoId(), dto.getEncargadoId(), detalles);
@@ -66,8 +84,8 @@ public class EntregaService {
             saldosClient.descontarSaldo(dto.getAlumnoId(), entrega.getTotal(), false, entrega.getNumero());
         }
         if (inventarioClient != null) {
-            for (ItemEntregaDTO item : dto.getItems()) {
-                inventarioClient.descontarStock(item.getProductoId(), item.getCantidad(), false, dto.getEncargadoId());
+            for (DetalleEntrega det : detalles) {
+                inventarioClient.descontarStock(det.getProductoId(), det.getCantidad(), false, dto.getEncargadoId());
             }
         }
 
@@ -79,6 +97,20 @@ public class EntregaService {
                     "ENTREGA_MESON", null, guardada.getId(), null);
             op.marcarCompletada();
             operacionDistribuidaRepository.save(op);
+        }
+
+        if (notificacionRepository != null && guardada.getId() != null) {
+            NotificacionPendiente notif = new NotificacionPendiente(
+                    null,
+                    guardada.getId(),
+                    guardada.getAlumnoId(),
+                    "ENTREGA_REALIZADA",
+                    "apoderado@colegio.cl",
+                    "Entrega realizada: " + guardada.getNumero(),
+                    "Se ha completado la entrega de materiales en mesón " + guardada.getNumero() + " por un total de $" + guardada.getTotal() + " CLP."
+            );
+            notif.setIdEstablecimiento(guardada.getIdEstablecimiento());
+            notificacionRepository.save(notif);
         }
 
         return guardada;

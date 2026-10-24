@@ -68,6 +68,9 @@ public class SaldoService {
         if (dto.getMonto() <= 0) {
             throw new IllegalArgumentException("El monto a abonar debe ser mayor a 0");
         }
+        if (usuariosSaldosClient != null) {
+            usuariosSaldosClient.validarAlumnoYVinculo(dto.getAlumnoId(), dto.getApoderadoId());
+        }
         CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
 
         Abono abono = Abono.iniciar(dto.getApoderadoId(), dto.getAlumnoId(), dto.getMonto());
@@ -85,6 +88,9 @@ public class SaldoService {
     public Abono registrarTransferencia(RegistrarTransferenciaDTO dto) {
         if (dto.getMonto() <= 0) {
             throw new IllegalArgumentException("El monto de la transferencia debe ser mayor a 0");
+        }
+        if (usuariosSaldosClient != null) {
+            usuariosSaldosClient.validarAlumnoYVinculo(dto.getAlumnoId(), dto.getApoderadoId());
         }
         CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
         Abono abono = Abono.registrarTransferencia(
@@ -125,6 +131,7 @@ public class SaldoService {
             cuenta = cuentaSaldoRepository.save(cuenta);
             abono = abonoRepository.save(abono);
             mov = movimientoSaldoRepository.save(mov);
+            rearmarAlertaSaldoBajoSiAplica(cuenta);
             if (transferenciaBancariaRepository != null && abono.getId() != null) {
                 transferenciaBancariaRepository.findByAbonoId(abono.getId()).ifPresent(t -> {
                     t.aprobar(dto.getRevisorApoderadoId());
@@ -193,6 +200,7 @@ public class SaldoService {
         cuenta = cuentaSaldoRepository.save(cuenta);
         abono = abonoRepository.save(abono);
         mov = movimientoSaldoRepository.save(mov);
+        rearmarAlertaSaldoBajoSiAplica(cuenta);
         if (pagoWebpaySimuladoRepository != null && abono.getId() != null) {
             pagoWebpaySimuladoRepository.findByAbonoId(abono.getId()).ifPresent(p -> {
                 p.registrarResultado("APROBADO");
@@ -272,15 +280,19 @@ public class SaldoService {
 
         cuenta = cuentaSaldoRepository.save(cuenta);
         mov = movimientoSaldoRepository.save(mov);
-        if (alertaSaldoBajo && alertaSaldoBajoRepository != null && cuenta.getId() != null) {
+        if (alertaSaldoBajoRepository != null && cuenta.getId() != null) {
             Long cId = cuenta.getId();
-            AlertaSaldoBajo alerta = alertaSaldoBajoRepository.findByCuentaSaldoId(cId)
-                    .orElseGet(() -> new AlertaSaldoBajo(cId, 3000, true));
-            alerta.evaluar(cuenta.getSaldoDisponible());
-            alerta = alertaSaldoBajoRepository.save(alerta);
-            if (notificacionSaldoPendienteRepository != null && alerta.getId() != null) {
-                notificacionSaldoPendienteRepository.save(new NotificacionSaldoPendiente(
-                        alerta.getId(), cuenta.getAlumnoId(), "A03-SALDO-BAJO-" + UUID.randomUUID().toString().substring(0, 8)));
+            java.util.Optional<AlertaSaldoBajo> alertaOpt = alertaSaldoBajoRepository.findByCuentaSaldoId(cId);
+            boolean estabaActiva = alertaOpt.map(AlertaSaldoBajo::isActiva).orElse(false);
+
+            if (cuenta.getSaldoDisponible() <= 3000) {
+                AlertaSaldoBajo alerta = alertaOpt.orElseGet(() -> new AlertaSaldoBajo(cId, 3000, false));
+                alerta.evaluar(cuenta.getSaldoDisponible());
+                alerta = alertaSaldoBajoRepository.save(alerta);
+                if (!estabaActiva && notificacionSaldoPendienteRepository != null && alerta.getId() != null) {
+                    notificacionSaldoPendienteRepository.save(new NotificacionSaldoPendiente(
+                            alerta.getId(), cuenta.getAlumnoId(), "A03-SALDO-BAJO-" + UUID.randomUUID().toString().substring(0, 8)));
+                }
             }
         }
         return new CobrarSaldoResponseDTO(cuenta, dto.getMonto(), alertaSaldoBajo, mov);
@@ -302,6 +314,7 @@ public class SaldoService {
 
         cuenta = cuentaSaldoRepository.save(cuenta);
         mov = movimientoSaldoRepository.save(mov);
+        rearmarAlertaSaldoBajoSiAplica(cuenta);
         return new MovimientoSaldoDTO(mov);
     }
 
@@ -413,5 +426,15 @@ public class SaldoService {
         );
         mov = movimientoSaldoRepository.save(mov);
         return new MovimientoSaldoDTO(mov);
+    }
+    private void rearmarAlertaSaldoBajoSiAplica(CuentaSaldo cuenta) {
+        if (alertaSaldoBajoRepository != null && cuenta != null && cuenta.getId() != null && cuenta.getSaldoDisponible() > 3000) {
+            alertaSaldoBajoRepository.findByCuentaSaldoId(cuenta.getId()).ifPresent(alerta -> {
+                if (alerta.isActiva()) {
+                    alerta.reactivar();
+                    alertaSaldoBajoRepository.save(alerta);
+                }
+            });
+        }
     }
 }

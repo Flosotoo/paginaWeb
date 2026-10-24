@@ -2,6 +2,9 @@ package cl.edusaldo.ventas.dto;
 
 import cl.edusaldo.ventas.model.EstadoReserva;
 import cl.edusaldo.ventas.model.Reserva;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,7 +14,10 @@ public class ReservaResponseDTO {
     private Long id;
     private String codigo;
     private Long alumnoId;
+    @JsonAlias({"apoderadoId"})
     private Long creadaPorId;
+    @JsonIgnore
+    @Hidden
     private Long apoderadoId; // Retrocompatibilidad
     private int total;
     private EstadoReserva estado;
@@ -70,7 +76,9 @@ public class ReservaResponseDTO {
     public String getCodigo() { return codigo; }
     public Long getAlumnoId() { return alumnoId; }
     public Long getCreadaPorId() { return creadaPorId; }
-    public Long getApoderadoId() { return apoderadoId; }
+    @JsonIgnore
+    @Hidden
+    public Long getApoderadoId() { return apoderadoId != null ? apoderadoId : creadaPorId; }
     public int getTotal() { return total; }
     public EstadoReserva getEstado() { return estado; }
     public String getMotivoCancelacion() { return motivoCancelacion; }

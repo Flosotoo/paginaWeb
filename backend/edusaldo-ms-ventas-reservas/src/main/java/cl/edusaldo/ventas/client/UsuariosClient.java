@@ -6,6 +6,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,8 +34,34 @@ public class UsuariosClient {
         try {
             Map<String, Object> alumno = restTemplate.getForObject(
                     usuariosBaseUrl + "/api/usuarios/" + alumnoId, Map.class);
-            if (alumno != null && Boolean.FALSE.equals(alumno.get("activo"))) {
-                throw new IllegalStateException("El alumno ID " + alumnoId + " se encuentra inactivo.");
+            if (alumno != null) {
+                if ("INACTIVA".equals(String.valueOf(alumno.get("estado"))) || Boolean.FALSE.equals(alumno.get("activo"))) {
+                    throw new IllegalStateException("El alumno se encuentra inactivo y no puede realizar operaciones.");
+                }
+            }
+            if (solicitanteId != null && !solicitanteId.equals(alumnoId)) {
+                Map<String, Object> solicitante = restTemplate.getForObject(
+                        usuariosBaseUrl + "/api/usuarios/" + solicitanteId, Map.class);
+                if (solicitante != null && "ROLE_APODERADO".equals(String.valueOf(solicitante.get("rol")))) {
+                    List<Map<String, Object>> pupilos = restTemplate.getForObject(
+                            usuariosBaseUrl + "/api/usuarios/apoderados/" + solicitanteId + "/alumnos", List.class);
+                    boolean vinculado = false;
+                    if (pupilos != null) {
+                        for (Map<String, Object> p : pupilos) {
+                            Object idObj = p.get("id") != null ? p.get("id") : p.get("alumnoId");
+                            if (idObj != null && Long.valueOf(idObj.toString()).equals(alumnoId)) {
+                                String estado = String.valueOf(p.get("estado"));
+                                if (!"INACTIVA".equals(estado)) {
+                                    vinculado = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!vinculado) {
+                        throw new IllegalStateException("El apoderado no tiene un vínculo activo con el alumno solicitado.");
+                    }
+                }
             }
         } catch (HttpClientErrorException.NotFound e) {
             throw new IllegalArgumentException("El alumno ID " + alumnoId + " no existe en MS Usuarios.");
@@ -58,7 +85,7 @@ public class UsuariosClient {
             Map<String, Object> resp = restTemplate.getForObject(
                     usuariosBaseUrl + "/api/usuarios/alumnos/" + alumnoId + "/puede-reservar", Map.class);
             if (resp != null && Boolean.FALSE.equals(resp.get("puedeReservar"))) {
-                throw new IllegalStateException("HU25: El alumno menor de 12 años no está habilitado para confirmar reservas por sí mismo.");
+                throw new IllegalStateException("El alumno menor de 12 años no está habilitado para confirmar reservas por sí mismo.");
             }
         } catch (ResourceAccessException ignored) {
             // Fallback local en tests aislados

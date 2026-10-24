@@ -30,6 +30,7 @@ public class CuentaSaldo {
 
     @Transient
     @JsonIgnore
+    @io.swagger.v3.oas.annotations.Hidden
     private LocalDateTime bloqueadaHasta;
 
     @Version
@@ -245,6 +246,7 @@ public class CuentaSaldo {
     public void setSaldoComprometido(int saldoComprometido) { this.saldoComprometido = saldoComprometido; }
 
     @JsonIgnore
+    @io.swagger.v3.oas.annotations.Hidden
     public LocalDateTime getBloqueadaHasta() { return bloqueadaHasta; }
     public void setBloqueadaHasta(LocalDateTime bloqueadaHasta) { this.bloqueadaHasta = bloqueadaHasta; }
 

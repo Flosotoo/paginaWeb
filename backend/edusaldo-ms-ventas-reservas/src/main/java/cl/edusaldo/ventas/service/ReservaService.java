@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReservaService {
@@ -54,23 +55,65 @@ public class ReservaService {
             usuariosClient.validarAutonomiaReserva(dto.getAlumnoId(), dto.getCreadaPorId());
         }
 
-        int total = dto.getItems().stream()
-                .mapToInt(i -> i.getCantidad() * i.getPrecioUnitario())
-                .sum();
+        java.util.List<ItemReservaDTO> itemsProcesados = new java.util.ArrayList<>();
+        int total = 0;
+        for (ItemReservaDTO item : dto.getItems()) {
+            int precio = item.getPrecioUnitario();
+            String nombre = item.getNombreProducto();
+            if (inventarioClient != null) {
+                Map<String, Object> prod = inventarioClient.consultarProductoActivo(item.getProductoId());
+                if (prod != null) {
+                    if (prod.get("precio") != null) {
+                        precio = Integer.parseInt(prod.get("precio").toString());
+                    }
+                    if (prod.get("nombre") != null) {
+                        nombre = String.valueOf(prod.get("nombre"));
+                    }
+                }
+            }
+            total += item.getCantidad() * precio;
+            itemsProcesados.add(new ItemReservaDTO(item.getProductoId(), nombre, item.getCantidad(), precio));
+        }
 
         String codigo = "RES-" + (1000 + (int)(Math.random() * 9000));
         Reserva r = new Reserva(codigo, dto.getAlumnoId(), dto.getCreadaPorId(), total);
 
-        for (ItemReservaDTO item : dto.getItems()) {
+        for (ItemReservaDTO item : itemsProcesados) {
             r.agregarDetalle(item.getProductoId(), item.getNombreProducto(), item.getCantidad(), item.getPrecioUnitario());
         }
 
+        boolean saldoRetenido = false;
         if (saldosClient != null) {
             saldosClient.comprometerSaldo(dto.getAlumnoId(), total, codigo);
+            saldoRetenido = true;
         }
+
         if (inventarioClient != null) {
-            for (ItemReservaDTO item : dto.getItems()) {
-                inventarioClient.reservarStock(item.getProductoId(), item.getCantidad(), dto.getCreadaPorId());
+            int itemsRetenidos = 0;
+            try {
+                for (ItemReservaDTO item : itemsProcesados) {
+                    inventarioClient.reservarStock(item.getProductoId(), item.getCantidad(), dto.getCreadaPorId());
+                    itemsRetenidos++;
+                }
+            } catch (Exception ex) {
+                if (saldoRetenido && saldosClient != null) {
+                    try {
+                        saldosClient.liberarSaldo(dto.getAlumnoId(), total, codigo);
+                    } catch (Exception ignored) {}
+                }
+                for (int i = 0; i < itemsRetenidos; i++) {
+                    ItemReservaDTO it = itemsProcesados.get(i);
+                    try {
+                        inventarioClient.liberarStock(it.getProductoId(), it.getCantidad(), dto.getCreadaPorId());
+                    } catch (Exception ignored) {}
+                }
+                if (operacionDistribuidaRepository != null) {
+                    OperacionDistribuida op = new OperacionDistribuida(
+                            "OP-RES-" + codigo, "RESERVA", null, null, null);
+                    op.marcarCompensada();
+                    operacionDistribuidaRepository.save(op);
+                }
+                throw ex;
             }
         }
 
@@ -82,6 +125,20 @@ public class ReservaService {
                     "OP-RES-" + guardada.getCodigo(), "RESERVA", guardada.getId(), null, null);
             op.marcarCompletada();
             operacionDistribuidaRepository.save(op);
+        }
+
+        if (notificacionRepository != null && guardada.getId() != null) {
+            NotificacionPendiente notif = new NotificacionPendiente(
+                    guardada.getId(),
+                    null,
+                    guardada.getAlumnoId(),
+                    "RESERVA_CONFIRMADA",
+                    "apoderado@colegio.cl",
+                    "Confirmación de reserva: " + guardada.getCodigo(),
+                    "Su reserva " + guardada.getCodigo() + " ha sido confirmada exitosamente por un total de $" + guardada.getTotal() + " CLP."
+            );
+            notif.setIdEstablecimiento(guardada.getIdEstablecimiento());
+            notificacionRepository.save(notif);
         }
 
         return guardada;
@@ -185,6 +242,20 @@ public class ReservaService {
                     "ENTREGA_RESERVA", r.getId(), guardada.getId(), null);
             op.marcarCompletada();
             operacionDistribuidaRepository.save(op);
+        }
+
+        if (notificacionRepository != null && guardada.getId() != null) {
+            NotificacionPendiente notif = new NotificacionPendiente(
+                    r.getId(),
+                    guardada.getId(),
+                    guardada.getAlumnoId(),
+                    "ENTREGA_REALIZADA",
+                    "apoderado@colegio.cl",
+                    "Entrega realizada: " + guardada.getNumero(),
+                    "Se ha completado la entrega de materiales " + guardada.getNumero() + " por un total de $" + guardada.getTotal() + " CLP."
+            );
+            notif.setIdEstablecimiento(guardada.getIdEstablecimiento());
+            notificacionRepository.save(notif);
         }
 
         return guardada;

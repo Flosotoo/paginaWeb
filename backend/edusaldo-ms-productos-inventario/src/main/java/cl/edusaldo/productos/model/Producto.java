@@ -1,5 +1,8 @@
 package cl.edusaldo.productos.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -31,6 +34,8 @@ public class Producto {
     private String descripcion;
 
     @Transient
+    @JsonIgnore
+    @Hidden
     private String imagenUrl;
 
     @Column(name = "curso_nivel", nullable = false, length = 100)
@@ -234,7 +239,11 @@ public class Producto {
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    @JsonIgnore
+    @Hidden
     public String getImagenUrl() { return imagenUrl; }
+    @JsonIgnore
+    @Hidden
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
     public String getCursoNivel() { return cursoNivel; }
     public void setCursoNivel(String cursoNivel) { this.cursoNivel = cursoNivel; }

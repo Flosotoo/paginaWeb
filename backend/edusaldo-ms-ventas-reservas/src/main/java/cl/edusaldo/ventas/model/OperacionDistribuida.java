@@ -79,6 +79,11 @@ public class OperacionDistribuida {
         this.actualizadoEn = LocalDateTime.now();
     }
 
+    public void marcarCompensada() {
+        this.estado = "COMPENSADA";
+        this.actualizadoEn = LocalDateTime.now();
+    }
+
     public void marcarCompletada() {
         this.estado = "COMPLETADA";
         this.actualizadoEn = LocalDateTime.now();

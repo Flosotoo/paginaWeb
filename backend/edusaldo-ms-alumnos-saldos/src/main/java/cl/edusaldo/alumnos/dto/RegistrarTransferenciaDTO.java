@@ -18,7 +18,8 @@ public class RegistrarTransferenciaDTO {
     @Positive(message = "El monto debe ser mayor a 0")
     private int monto;
 
-    private LocalDate fechaTransferencia;
+    @NotNull(message = "La fecha de transferencia es obligatoria")
+    private LocalDate fechaTransferencia = LocalDate.now();
 
     @NotBlank(message = "La URL o referencia del comprobante es obligatoria")
     private String comprobanteUrl;

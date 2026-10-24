@@ -29,6 +29,7 @@ public class EntregaController {
         this.entregaService = entregaService;
     }
 
+    @Hidden
     @PostMapping("/reserva/{reservaId}")
     @Operation(summary = "Confirmar retiro de reserva generando entrega formal y cobro definitivo")
     public ResponseEntity<EntregaResponseDTO> entregaReserva(

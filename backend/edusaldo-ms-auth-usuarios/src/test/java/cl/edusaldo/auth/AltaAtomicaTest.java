@@ -111,11 +111,14 @@ class AltaAtomicaTest {
         when(alumnoRepository.findById(20L)).thenReturn(Optional.of(alumno));
         when(apoderadoRepository.findById(10L)).thenReturn(Optional.of(apoderado));
         when(apoderadoAlumnoRepository.findByIdApoderadoIdAndIdAlumnoId(10L, 20L)).thenReturn(Optional.of(rel));
-        when(apoderadoAlumnoRepository.countByIdAlumnoId(20L)).thenReturn(2L); // Alumno tiene otro apoderado
+        when(apoderadoAlumnoRepository.countByIdAlumnoIdAndActivoTrue(20L)).thenReturn(2L); // Alumno tiene otro apoderado
 
         usuarioService.desvincularApoderado(20L, 10L, "Cambio de tutor legal informado por juzgado", 1L);
 
-        verify(apoderadoAlumnoRepository, times(1)).delete(rel);
+        assertFalse(rel.isActivo());
+        assertEquals("Cambio de tutor legal informado por juzgado", rel.getMotivoDesvinculacion());
+        verify(apoderadoAlumnoRepository, times(1)).save(rel);
+        verify(apoderadoAlumnoRepository, never()).delete(any());
         verify(auditoriaService, times(1)).registrar(eq(1L), eq("DESVINCULACION_APODERADO"), eq("ApoderadoAlumno"), eq("10-20"), contains("Cambio de tutor legal"));
     }
 
@@ -134,7 +137,7 @@ class AltaAtomicaTest {
         when(alumnoRepository.findById(20L)).thenReturn(Optional.of(alumno));
         when(apoderadoRepository.findById(10L)).thenReturn(Optional.of(apoderado));
         when(apoderadoAlumnoRepository.findByIdApoderadoIdAndIdAlumnoId(10L, 20L)).thenReturn(Optional.of(rel));
-        when(apoderadoAlumnoRepository.countByIdAlumnoId(20L)).thenReturn(1L); // Solo tiene 1 apoderado
+        when(apoderadoAlumnoRepository.countByIdAlumnoIdAndActivoTrue(20L)).thenReturn(1L); // Solo tiene 1 apoderado
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> usuarioService.desvincularApoderado(20L, 10L, "Intento sin otro apoderado", 1L));
