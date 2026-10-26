@@ -1,10 +1,12 @@
 package cl.edusaldo.alumnos.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotNull;
 
 public class ResolverTransferenciaDTO {
 
     @NotNull(message = "El ID del apoderado revisor del Centro de Padres es obligatorio")
+    @JsonAlias({"apoderadoRevisorId", "revisadoPorApoderadoId"})
     private Long revisorApoderadoId;
 
     @NotNull(message = "Debe indicar si aprueba o rechaza la transferencia")

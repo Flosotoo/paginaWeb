@@ -272,7 +272,7 @@ $ok17 = ($r17.StatusCode -eq 200 -and $r17.Body.Count -ge 2)
 Check-Result -Num "17" -Title "HU21/HU46: Consulta de libro mayor movimientos_saldo inmutable" -Success $ok17 -Detail $r17
 
 # Caso 18: HU23 - Liquidacion de saldo por retiro de alumno con constancia
-$r18 = Invoke-Api -Method POST -Endpoint "/api/saldos/cuenta/liquidar" -Body @{
+$r18 = Invoke-Api -Method POST -Endpoint "/api/saldos/liquidar-retiro" -Body @{
     alumnoId = $nuevoAlumnoId
     apoderadoId = $nuevoApoderadoId
     medio = "TRANSFERENCIA_ELECTRONICA"
@@ -293,7 +293,7 @@ $ok19 = ($r19.StatusCode -eq 200 -and $r19.Body.Count -ge 3)
 Check-Result -Num "19" -Title "HU24/HU38: Consulta de catalogo y existencias de productos" -Success $ok19 -Detail $r19
 
 # Caso 20: HU46 - Ingreso manual de stock por Encargado (HU42 CA3: sin proveedor ni factura)
-$r20 = Invoke-Api -Method POST -Endpoint "/api/inventario/ingresos" -Body @{
+$r20 = Invoke-Api -Method POST -Endpoint "/api/inventario/ingresos-manuales" -Body @{
     idEstablecimiento = 1
     encargadoId = 2
     observacion = "Recepcion de reposicion de utiles escolares"
@@ -309,7 +309,7 @@ $r21 = Invoke-Api -Method POST -Endpoint "/api/inventario/ajustes/solicitar" -Bo
     idEstablecimiento = 1
     productoId = 1
     encargadoId = 2
-    diferencia = -2
+    cantidad = -2
     motivo = "Dano por derrame de tinta en almacen"
 }
 $ok21 = ($r21.StatusCode -in @(200, 201) -and $r21.Body.estado -eq "PENDIENTE")
@@ -317,10 +317,8 @@ $solicitudAjusteId = if ($ok21) { $r21.Body.id } else { 1 }
 Check-Result -Num "21" -Title "HU44: Solicitud de ajuste de stock en estado PENDIENTE por Encargado" -Success $ok21 -Detail $r21
 
 # Caso 22: HU44 - Aprobacion exclusiva por Administrador
-$r22 = Invoke-Api -Method PUT -Endpoint "/api/inventario/ajustes/$solicitudAjusteId/resolver" -Body @{
-    aprobar = $true
+$r22 = Invoke-Api -Method POST -Endpoint "/api/inventario/ajustes/$solicitudAjusteId/aprobar" -Body @{
     administradorId = 1
-    observacion = "Merma justificada y aprobada"
 }
 $ok22 = ($r22.StatusCode -eq 200 -and $r22.Body.estado -eq "APROBADA")
 Check-Result -Num "22" -Title "HU44: Aprobacion de ajuste por Administrador e impacto en stockFisico" -Success $ok22 -Detail $r22
@@ -340,7 +338,7 @@ $ok23 = ($r23.StatusCode -in @(200, 201) -and $prodAntes -eq $prodDespues)
 Check-Result -Num "23" -Title "HU43: Conteo fisico registra diferencia sin alterar stockFisico (Stock intacto: $prodDespues)" -Success $ok23 -Detail $r23
 
 # Caso 24: Consulta de libro mayor MovimientoInventario
-$r24 = Invoke-Api -Method GET -Endpoint "/api/inventario/movimientos/producto/1"
+$r24 = Invoke-Api -Method GET -Endpoint "/api/inventario/movimientos?productoId=1"
 $ok24 = ($r24.StatusCode -eq 200 -and $r24.Body.Count -ge 1)
 Check-Result -Num "24" -Title "Consulta de libro mayor movimientos_inventario (trazabilidad fisica/reservada)" -Success $ok24 -Detail $r24
 
@@ -375,12 +373,16 @@ $reservaTomasId = if ($ok26) { $r26.Body.id } else { 1 }
 Check-Result -Num "26" -Title "HU27: Creacion de reserva por alumno >= 12 anos con retencion de saldo y stock (S01-S04)" -Success $ok26 -Detail $r26
 
 # Caso 27: HU31 CA2 - Preparacion de reserva por Encargado registra encargadId y fechaPreparacion
-$r27 = Invoke-Api -Method PUT -Endpoint "/api/reservas/$reservaTomasId/preparar?encargadoId=2"
+$r27 = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaTomasId/marcar-lista" -Body @{
+    encargadoId = 2
+}
 $ok27 = ($r27.StatusCode -eq 200 -and $r27.Body.preparadaPorId -eq 2 -and $r27.Body.estado -eq "LISTA_PARA_RETIRO")
 Check-Result -Num "27" -Title "HU31 CA2: Preparacion registra encargadId=2 y fechaPreparacion (LISTA_PARA_RETIRO)" -Success $ok27 -Detail $r27
 
 # Caso 28: HU33 - Confirmacion de retiro genera Entrega formal y cobro definitivo
-$r28 = Invoke-Api -Method POST -Endpoint "/api/entregas/reserva/$($reservaTomasId)?encargadoId=2"
+$r28 = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaTomasId/entregar" -Body @{
+    encargadoId = 2
+}
 $ok28 = ($r28.StatusCode -in @(200, 201) -and $null -ne $r28.Body.id)
 $entregaTomasId = if ($ok28) { $r28.Body.id } else { 1 }
 $detEntregaId = if ($ok28 -and $r28.Body.items -and $r28.Body.items.Count -gt 0) { $r28.Body.items[0].id } else { 1 }
@@ -426,7 +428,7 @@ $rResLista = Invoke-Api -Method POST -Endpoint "/api/reservas" -Body @{
     )
 }
 $resListaId = if ($rResLista.StatusCode -in @(200, 201)) { $rResLista.Body.id } else { 98 }
-Invoke-Api -Method PUT -Endpoint "/api/reservas/$resListaId/preparar?encargadoId=2" | Out-Null
+Invoke-Api -Method POST -Endpoint "/api/reservas/$resListaId/marcar-lista" -Body @{ encargadoId = 2 } | Out-Null
 
 $rApoderadoFalla = Invoke-Api -Method POST -Endpoint "/api/reservas/$resListaId/cancelar" -Body @{
     usuarioId = 3

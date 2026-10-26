@@ -61,8 +61,8 @@ public class EntregaService {
 
         List<DetalleEntrega> detalles = new ArrayList<>();
         for (ItemEntregaDTO item : dto.getItems()) {
-            int precio = item.getPrecioUnitario();
-            String nombre = item.getNombreProducto();
+            int precio = (item.getPrecioUnitario() != null) ? item.getPrecioUnitario() : 0;
+            String nombre = (item.getNombreProducto() != null) ? item.getNombreProducto() : "";
             if (inventarioClient != null) {
                 java.util.Map<String, Object> prod = inventarioClient.consultarProductoActivo(item.getProductoId());
                 if (prod != null) {

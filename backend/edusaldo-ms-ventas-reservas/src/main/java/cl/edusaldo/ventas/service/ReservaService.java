@@ -58,8 +58,8 @@ public class ReservaService {
         java.util.List<ItemReservaDTO> itemsProcesados = new java.util.ArrayList<>();
         int total = 0;
         for (ItemReservaDTO item : dto.getItems()) {
-            int precio = item.getPrecioUnitario();
-            String nombre = item.getNombreProducto();
+            int precio = (item.getPrecioUnitario() != null) ? item.getPrecioUnitario() : 0;
+            String nombre = (item.getNombreProducto() != null) ? item.getNombreProducto() : "";
             if (inventarioClient != null) {
                 Map<String, Object> prod = inventarioClient.consultarProductoActivo(item.getProductoId());
                 if (prod != null) {

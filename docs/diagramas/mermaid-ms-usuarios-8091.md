@@ -4,17 +4,21 @@
 classDiagram
 direction LR
 
-class Establecimiento {
-  +Long idEstablecimiento
-  +String nombre
+class ConfiguracionInstitucional {
+  +Long id
+  +String rutEstablecimiento
+  +String nombreEstablecimiento
+  +String nombreLibreria
   +String correoContacto
+  +String logoUrl
   +Boolean activo
-  +actualizarDatos()
+  +actualizar(nombreEstablecimiento, nombreLibreria, correoContacto, logoUrl)
 }
 
 class Usuario {
   <<abstract>>
-  +Long idUsuario
+  +Long id
+  +Long idEstablecimiento
   +String rut
   +String primerNombre
   +String segundoNombre
@@ -24,123 +28,148 @@ class Usuario {
   -String passwordHash
   +EstadoCuenta estado
   +int intentosFallidos
-  +DateTime bloqueoHasta
-  +registrarIntentoFallido()
+  +LocalDateTime bloqueoHasta
+  +LocalDateTime fechaCreacion
+  +LocalDateTime ultimoAcceso
+  +registrarAccesoExitoso()
+  +registrarIntentoFallido(maxIntentos, minutosBloqueo)
   +reiniciarIntentos()
   +puedeIniciarSesion() boolean
-  +cambiarClave(nuevaClaveHash)
+  +cambiarPassword(nuevoHash)
+  +restablecerPassword(hashTemporal)
   +inactivar()
   +reactivar()
 }
 
 class Administrador {
-  +puedeGestionar(estId) boolean
+  +getRol() String
 }
 
 class Encargado {
-  +estaHabilitado(estId) boolean
+  +getRol() String
 }
 
 class Apoderado {
-  +estaVinculado(alumnoId) boolean
+  +String telefono
+  +Boolean autorizadoCentroPadres
+  +cambiarAutorizacionCentroPadres(autorizado)
+  +getRol() String
 }
 
 class Alumno {
-  +Date fechaNacimiento
+  +LocalDate fechaNacimiento
   +String curso
   +calcularEdad() int
-  +puedeIniciarSesion(edadMinima) boolean
+  +puedeIniciarSesion() boolean
+  +getRol() String
 }
 
 class Adscripcion {
-  +Long idAdscripcion
+  +Long id
+  +Long idEstablecimiento
+  +Long usuarioId
   +EstadoAdscripcion estado
   +activar()
   +inactivar()
 }
 
-class VinculoApoderadoAlumno {
-  +Long idVinculo
-  +String parentesco
+class ApoderadoAlumno {
+  +ApoderadoAlumnoId id
+  +Parentesco parentesco
   +Boolean activo
-  +DateTime fechaVinculacion
-  +DateTime fechaDesvinculacion
-  +String motivo
+  +LocalDateTime fechaAsociacion
+  +LocalDateTime fechaDesvinculacion
+  +String motivoDesvinculacion
   +desvincular(motivo)
 }
 
 class AutorizacionCentroPadres {
-  +Long idAutorizacion
+  +Long id
+  +Long idEstablecimiento
+  +Long apoderadoId
   +Long otorgadaPorAdminId
   +Boolean vigente
-  +DateTime fechaAutorizacion
-  +DateTime fechaRevocacion
-  +otorgar()
+  +LocalDateTime fechaAutorizacion
+  +LocalDateTime fechaRevocacion
+  +otorgar(adminId)
   +revocar()
   +estaVigente() boolean
 }
 
-class PoliticaInstitucional {
-  +Long idPolitica
-  +int maxIntentos
-  +int minutosCooldown
+class PoliticaAcceso {
+  +Long id
+  +int maxIntentosFallidos
+  +int minutosBloqueo
   +int edadMinimaAlumno
-  +int umbralSaldoBajoCLP
-  +actualizarParametros()
+  +int umbralSaldoBajoClp
+  +modificar(maxIntentos, minBloqueo, edadMin, umbral)
+  +debeBloquear(intentos) boolean
 }
 
 class TokenRecuperacion {
-  +Long idToken
+  +Long id
+  +Long usuarioId
   -String hashToken
-  +DateTime venceEn
-  +Boolean utilizado
-  +esValido() boolean
-  +consumir()
+  +LocalDateTime expiraEn
+  +Boolean usado
+  +estaVigente() boolean
+  +marcarUsado()
 }
 
 class ConsentimientoPrivacidad {
-  +Long idConsentimiento
-  +String versionAviso
-  +DateTime fechaAceptacion
-  +registrarAceptacion()
+  +Long id
+  +Long usuarioId
+  +String version
+  +LocalDateTime fechaAceptacion
+  +String ipOrigen
 }
 
 class ImportacionNomina {
-  +Long idImportacion
-  +DateTime fecha
-  +EstadoImportacion estado
-  +validar()
-  +confirmarRegistrosValidos()
+  +Long id
+  +Long idEstablecimiento
+  +Long administradorId
+  +LocalDateTime fecha
+  +String estado
+  +int totalFilas
+  +int filasValidas
+  +int filasConError
+  +agregarFila(fila)
 }
 
 class FilaNomina {
-  +Long idFila
+  +Long id
   +int numeroFila
+  +String rutAlumno
+  +String rutApoderado
   +String resultado
   +String observacion
   +marcarError(motivo)
 }
 
 class SolicitudCorreccionDatos {
-  +Long idSolicitud
+  +Long id
+  +Long idEstablecimiento
   +Long usuarioId
   +String campoSolicitado
   +String valorActual
   +String valorPropuesto
   +String motivo
   +String estado
-  +Long resueltaPorId
-  +DateTime fechaSolicitud
-  +DateTime fechaResolucion
-  +resolver(aprobar,adminId,observacion)
+  +Long resueltaPorAdminId
+  +LocalDateTime fechaSolicitud
+  +LocalDateTime fechaResolucion
+  +String observacionResolucion
+  +resolver(aprobar, adminId, observacion)
 }
 
 class RegistroAuditoria {
-  +Long idRegistro
+  +Long id
   +Long actorId
   +String accion
-  +DateTime fecha
-  +registrar()
+  +String entidadTipo
+  +String entidadId
+  +String detalles
+  +LocalDateTime fecha
 }
 
 Usuario <|-- Administrador
@@ -149,29 +178,29 @@ Usuario <|-- Apoderado
 Usuario <|-- Alumno
 
 Usuario "1" -- "0..*" Adscripcion : pertenece
-Establecimiento "1" -- "0..*" Adscripcion : agrupa
+ConfiguracionInstitucional "1" -- "0..*" Adscripcion : agrupa
 
-Apoderado "1" -- "0..*" VinculoApoderadoAlumno : participa
-Alumno "1" -- "1..*" VinculoApoderadoAlumno : tiene
+Apoderado "1" -- "0..*" ApoderadoAlumno : participa
+Alumno "1" -- "1..*" ApoderadoAlumno : tiene
 
 Apoderado "1" -- "0..*" AutorizacionCentroPadres : recibe
-Establecimiento "1" -- "0..*" AutorizacionCentroPadres : aplica
+ConfiguracionInstitucional "1" -- "0..*" AutorizacionCentroPadres : aplica
 Administrador ..> AutorizacionCentroPadres : autoriza
 
-Establecimiento "1" *-- "1" PoliticaInstitucional : configura
+ConfiguracionInstitucional "1" *-- "1" PoliticaAcceso : configura
 Usuario "1" *-- "0..*" TokenRecuperacion : solicita
 Usuario "1" *-- "0..*" ConsentimientoPrivacidad : acepta
 
-Establecimiento "1" -- "0..*" ImportacionNomina : registra
+ConfiguracionInstitucional "1" -- "0..*" ImportacionNomina : registra
 ImportacionNomina "1" *-- "1..*" FilaNomina : contiene
 
 Apoderado "1" -- "0..*" SolicitudCorreccionDatos : solicita
 Administrador ..> SolicitudCorreccionDatos : resuelve
-Establecimiento "1" -- "0..*" SolicitudCorreccionDatos : gestiona
+ConfiguracionInstitucional "1" -- "0..*" SolicitudCorreccionDatos : gestiona
 
-Establecimiento "1" -- "0..*" RegistroAuditoria : conserva
+ConfiguracionInstitucional "1" -- "0..*" RegistroAuditoria : conserva
 
-note for Usuario "Los administradores son creados por EduSaldo. Acceso automático según rol y permisos."
-note for VinculoApoderadoAlumno "Alumno activo: al menos un apoderado activo. La desvinculación conserva historial."
-note for AutorizacionCentroPadres "Permiso adicional a Apoderado. No constituye un quinto rol."
+note for Usuario "Los administradores son creados por EduSaldo (HU02 CA1). Acceso automático según rol y permisos."
+note for ApoderadoAlumno "Invariante de no orfandad: Alumno activo exige al menos un apoderado activo (HU12 CA3). La desvinculación conserva historial."
+note for AutorizacionCentroPadres "Permiso institucional adicional al rol APODERADO para validar transferencias (S12). NO constituye un quinto rol."
 ```

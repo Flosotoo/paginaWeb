@@ -2,6 +2,8 @@
 # Propósito: Suite de Pruebas de Borde y Casos de Ataque ("Teacher Attack Suite")
 #            Diseñada para evaluar la resiliencia y el blindaje ante intentos
 #            deliberados de romper las invariantes de negocio de EduSaldo.
+#            Verificación estricta de códigos HTTP y mensajes de error reales
+#            sin falsos positivos por errores de validación sintáctica (400).
 # =============================================================================
 
 $Gateway = "http://localhost:8090"
@@ -51,16 +53,29 @@ function Check-Edge {
     param(
         [string]$Num,
         [string]$Title,
-        [bool]$Success,
         $Detail,
-        [string]$Expected
+        [int[]]$ExpectedCodes = @(422),
+        [string]$ExpectedMessageContains = "",
+        [bool]$AllowValidationError = $false
     )
-    if ($Success) {
+    $codeMatch = $Detail.StatusCode -in $ExpectedCodes
+    $msgMatch = $true
+    if ($ExpectedMessageContains -ne "") {
+        $msg = if ($Detail.Body -and $Detail.Body.message) { [string]$Detail.Body.message } else { "" }
+        $msgMatch = $msg -like "*$ExpectedMessageContains*"
+    }
+    $valError = if ($Detail.Body -and $Detail.Body.error) { $Detail.Body.error -eq "Validation Error" } else { $false }
+    $notValError = $AllowValidationError -or (-not $valError)
+
+    $success = $codeMatch -and $msgMatch -and $notValError
+
+    if ($success) {
         $global:Passed++
         Write-Host "  [PASS] $Num. $Title -> Rechazo esperado ($($Detail.StatusCode)): $($Detail.Body.message)" -ForegroundColor Green
     } else {
         $global:Failed++
-        Write-Host "  [FAIL] $Num. $Title -> Obtenido: $($Detail.StatusCode), Esperado: $Expected" -ForegroundColor Red
+        $gotMsg = if ($Detail.Body) { $Detail.Body.message } else { "Sin cuerpo" }
+        Write-Host "  [FAIL] $Num. $Title -> Obtenido: $($Detail.StatusCode) (Msg: '$gotMsg'), Esperado: ($($ExpectedCodes -join ',')) con '$ExpectedMessageContains'" -ForegroundColor Red
         if ($Detail.Body) { Write-Host "         Respuesta: $($Detail.Body | ConvertTo-Json -Compress)" -ForegroundColor DarkGray }
     }
 }
@@ -78,7 +93,7 @@ $r1 = Invoke-Api -Method POST -Endpoint "/api/usuarios" -Body @{
     correo = "hacker@test.cl"
     rol = "ADMINISTRADOR"
 }
-Check-Edge -Num "E01" -Title "Bloqueo de creación pública de Administrador (HU02 CA1)" -Success ($r1.StatusCode -in @(400, 422)) -Detail $r1 -Expected "400/422"
+Check-Edge -Num "E01" -Title "Bloqueo de creación pública de Administrador (HU02 CA1)" -Detail $r1 -ExpectedCodes @(400, 422) -ExpectedMessageContains "HU02 CA1"
 
 # 2. Abono con monto negativo o cero bloqueado
 $r2 = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/iniciar" -Body @{
@@ -86,7 +101,7 @@ $r2 = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/iniciar" -Body @{
     apoderadoId = 3
     monto = -5000
 }
-Check-Edge -Num "E02" -Title "Bloqueo de abono con monto negativo/cero" -Success ($r2.StatusCode -in @(400, 422)) -Detail $r2 -Expected "400/422"
+Check-Edge -Num "E02" -Title "Bloqueo de abono con monto negativo/cero" -Detail $r2 -ExpectedCodes @(400) -ExpectedMessageContains "monto" -AllowValidationError $true
 
 # 3. Abono para alumno sin vínculo con el apoderado bloqueado (S11)
 $r3 = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/iniciar" -Body @{
@@ -94,7 +109,7 @@ $r3 = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/iniciar" -Body @{
     apoderadoId = 3 # Apoderado de Colegio 1
     monto = 10000
 }
-Check-Edge -Num "E03" -Title "Bloqueo de abono para alumno no vinculado (S11)" -Success ($r3.StatusCode -in @(400, 422)) -Detail $r3 -Expected "400/422"
+Check-Edge -Num "E03" -Title "Bloqueo de abono para alumno no vinculado (S11)" -Detail $r3 -ExpectedCodes @(400, 422) -ExpectedMessageContains "nculo"
 
 # 4. Retención de saldo mayor al disponible bloqueada (Invariante Saldo)
 $r4 = Invoke-Api -Method POST -Endpoint "/api/saldos/retener" -Body @{
@@ -102,15 +117,16 @@ $r4 = Invoke-Api -Method POST -Endpoint "/api/saldos/retener" -Body @{
     monto = 99999999
     reservaId = 9999
 }
-Check-Edge -Num "E04" -Title "Invariante de Saldo: Rechazo por sobregiro" -Success ($r4.StatusCode -in @(400, 422)) -Detail $r4 -Expected "400/422"
+Check-Edge -Num "E04" -Title "Invariante de Saldo: Rechazo por sobregiro" -Detail $r4 -ExpectedCodes @(422) -ExpectedMessageContains "Saldo insuficiente"
 
 # 5. Retención de stock mayor al físico disponible bloqueada (Invariante Stock)
 $r5 = Invoke-Api -Method POST -Endpoint "/api/inventario/retener" -Body @{
     productoId = 1
     cantidad = 999999
     reservaId = 9999
+    usuarioId = 3
 }
-Check-Edge -Num "E05" -Title "Invariante de Stock: Rechazo por stock insuficiente" -Success ($r5.StatusCode -in @(400, 422)) -Detail $r5 -Expected "400/422"
+Check-Edge -Num "E05" -Title "Invariante de Stock: Rechazo por stock insuficiente" -Detail $r5 -ExpectedCodes @(422) -ExpectedMessageContains "Stock insuficiente"
 
 # 6. Auto-aprobación de ajuste de stock por el mismo Encargado bloqueada (HU44 CA3)
 # Creamos una solicitud de ajuste por encargado 2
@@ -121,12 +137,15 @@ $rAjuste = Invoke-Api -Method POST -Endpoint "/api/inventario/ajustes/solicitar"
     motivo = "Reposición de prueba para evaluar auto-aprobación"
     encargadoId = 2
 }
+if ($rAjuste.StatusCode -ne 201) {
+    Write-Host "  [WARN] No se pudo crear ajuste previo para E06 (Status $($rAjuste.StatusCode))" -ForegroundColor Yellow
+}
 $solId = if ($rAjuste.Body.id) { $rAjuste.Body.id } else { 1 }
 # Encargado 2 intenta aprobar su propia solicitud
 $r6 = Invoke-Api -Method POST -Endpoint "/api/inventario/ajustes/$solId/aprobar" -Body @{
     administradorId = 2
 }
-Check-Edge -Num "E06" -Title "Bloqueo de auto-aprobación de ajuste por el solicitante (HU44 CA3)" -Success ($r6.StatusCode -in @(400, 422)) -Detail $r6 -Expected "400/422"
+Check-Edge -Num "E06" -Title "Bloqueo de auto-aprobación de ajuste por el solicitante (HU44 CA3)" -Detail $r6 -ExpectedCodes @(422) -ExpectedMessageContains "propia solicitud"
 
 # 7. Entrega de reserva en estado PENDIENTE bloqueada (HU33 CA1)
 # Creamos una reserva nueva (estado PENDIENTE)
@@ -137,10 +156,16 @@ $rRes = Invoke-Api -Method POST -Endpoint "/api/reservas" -Body @{
         @{ productoId = 1; cantidad = 1 }
     )
 }
+if ($rRes.StatusCode -ne 201) {
+    Write-Host "  [WARN] No se pudo crear reserva nueva para E07 (Status $($rRes.StatusCode))" -ForegroundColor Yellow
+}
 $reservaPendId = if ($rRes.Body.id) { $rRes.Body.id } else { 1 }
+
 # Intento de entregar directamente sin preparar
-$r7 = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/entregar?encargadoId=2"
-Check-Edge -Num "E07" -Title "Bloqueo de entrega de reserva en estado PENDIENTE (HU33 CA1)" -Success ($r7.StatusCode -in @(400, 422)) -Detail $r7 -Expected "400/422"
+$r7 = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/entregar" -Body @{
+    encargadoId = 2
+}
+Check-Edge -Num "E07" -Title "Bloqueo de entrega de reserva en estado PENDIENTE (HU33 CA1)" -Detail $r7 -ExpectedCodes @(422) -ExpectedMessageContains "lista para entrega"
 
 # 8. Devolución de más ítems de los entregados bloqueada (Invariante Devolución)
 $r8 = Invoke-Api -Method POST -Endpoint "/api/devoluciones" -Body @{
@@ -151,32 +176,36 @@ $r8 = Invoke-Api -Method POST -Endpoint "/api/devoluciones" -Body @{
         @{ detalleEntregaId = 1; cantidad = 9999 }
     )
 }
-Check-Edge -Num "E08" -Title "Invariante de Devolución: Rechazo al devolver más de lo entregado" -Success ($r8.StatusCode -in @(400, 422)) -Detail $r8 -Expected "400/422"
+Check-Edge -Num "E08" -Title "Invariante de Devolución: Rechazo al devolver más de lo entregado" -Detail $r8 -ExpectedCodes @(422) -ExpectedMessageContains "excede"
 
 # 9. Cancelación por Apoderado de reserva LISTA_PARA_RETIRO bloqueada (HU28 vs HU32)
 # Preparamos la reserva para que pase a LISTA_PARA_RETIRO
-$null = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/marcar-lista?encargadoId=2"
+$null = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/marcar-lista" -Body @{
+    encargadoId = 2
+}
 # Apoderado intenta cancelar
 $r9 = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/cancelar" -Body @{
     motivo = "Cancelacion tardia por apoderado"
     usuarioId = 3
     rol = "ROLE_APODERADO"
 }
-Check-Edge -Num "E09" -Title "HU28: Bloqueo a Apoderado de cancelar reserva LISTA_PARA_RETIRO" -Success ($r9.StatusCode -in @(400, 422)) -Detail $r9 -Expected "400/422"
+Check-Edge -Num "E09" -Title "HU28: Bloqueo a Apoderado de cancelar reserva LISTA_PARA_RETIRO" -Detail $r9 -ExpectedCodes @(422) -ExpectedMessageContains "cancelar reservas en estado PENDIENTE"
 
 # 10. Cancelación de reserva ya ENTREGADA bloqueada
 # Entregamos la reserva
-$null = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/entregar?encargadoId=2"
+$null = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/entregar" -Body @{
+    encargadoId = 2
+}
 $r10 = Invoke-Api -Method POST -Endpoint "/api/reservas/$reservaPendId/cancelar" -Body @{
     motivo = "Intento cancelar despues de entregar"
     usuarioId = 2
     rol = "ROLE_ENCARGADO"
 }
-Check-Edge -Num "E10" -Title "Invariante de Reserva: Rechazo al cancelar reserva ya ENTREGADA" -Success ($r10.StatusCode -in @(400, 422)) -Detail $r10 -Expected "400/422"
+Check-Edge -Num "E10" -Title "Invariante de Reserva: Rechazo al cancelar reserva ya ENTREGADA" -Detail $r10 -ExpectedCodes @(422) -ExpectedMessageContains "no se puede cancelar"
 
 # 11. Desvincular único apoderado activo de un alumno bloqueado (HU12 CA3)
 $r11 = Invoke-Api -Method DELETE -Endpoint "/api/usuarios/alumnos/4/apoderados/3?motivo=PruebaBorde"
-Check-Edge -Num "E11" -Title "HU12 CA3: Bloqueo de desvinculación de único apoderado activo" -Success ($r11.StatusCode -in @(400, 422)) -Detail $r11 -Expected "400/422"
+Check-Edge -Num "E11" -Title "HU12 CA3: Bloqueo de desvinculación de único apoderado activo" -Detail $r11 -ExpectedCodes @(409, 422) -ExpectedMessageContains "apoderado"
 
 # 12. Creación de reserva autónoma por alumna menor de 12 años bloqueada (HU24/HU26)
 $r12 = Invoke-Api -Method POST -Endpoint "/api/reservas" -Body @{
@@ -186,7 +215,7 @@ $r12 = Invoke-Api -Method POST -Endpoint "/api/reservas" -Body @{
         @{ productoId = 1; cantidad = 1 }
     )
 }
-Check-Edge -Num "E12" -Title "HU24/HU26: Bloqueo de reserva autónoma a menor de 12 años" -Success ($r12.StatusCode -in @(400, 422)) -Detail $r12 -Expected "400/422"
+Check-Edge -Num "E12" -Title "HU24/HU26: Bloqueo de reserva autónoma a menor de 12 años" -Detail $r12 -ExpectedCodes @(422) -ExpectedMessageContains "12"
 
 # 13. Aprobación de transferencia por apoderado NO autorizado bloqueada (S12)
 # Registramos una transferencia para alumno 4
@@ -195,23 +224,28 @@ $rTrf = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/transferencia" -Bo
     apoderadoId = 3
     alumnoId = 4
     monto = 5000
+    fechaTransferencia = "2026-10-26"
     comprobanteUrl = "https://edusaldo.cl/comprobantes/test.pdf"
 }
 $abonoTrfId = if ($rTrf.Body.id) { $rTrf.Body.id } else { 2 }
 # Apoderado 8 (del colegio 2, sin autorización en colegio 1) intenta resolver
 $r13 = Invoke-Api -Method PUT -Endpoint "/api/saldos/abonos/$abonoTrfId/resolver-transferencia" -Body @{
-    apoderadoRevisorId = 8
+    revisorApoderadoId = 8
     aprobar = $true
 }
-Check-Edge -Num "E13" -Title "S12 / HU20: Bloqueo de resolución de transferencia a apoderado no autorizado" -Success ($r13.StatusCode -in @(400, 422)) -Detail $r13 -Expected "400/422"
+Check-Edge -Num "E13" -Title "S12 / HU20: Bloqueo de resolución de transferencia a apoderado no autorizado" -Detail $r13 -ExpectedCodes @(422) -ExpectedMessageContains "Centro de Padres"
 
 # 14. Inactivación de categoría con productos asociados bloqueada
 $r14 = Invoke-Api -Method DELETE -Endpoint "/api/categorias/1"
-Check-Edge -Num "E14" -Title "Bloqueo de inactivación de categoría con productos asociados" -Success ($r14.StatusCode -in @(400, 422)) -Detail $r14 -Expected "400/422"
+Check-Edge -Num "E14" -Title "Bloqueo de inactivación de categoría con productos asociados" -Detail $r14 -ExpectedCodes @(400, 422) -ExpectedMessageContains "productos asociados"
 
-# 15. Aislamiento multi-tenant: Colegio 1 consultando producto de Colegio 2
-$r15 = Invoke-Api -Method GET -Endpoint "/api/saldos/cuenta/9" # Alumno 9 es de Colegio 2, saldo de Colegio 1
-Check-Edge -Num "E15" -Title "Aislamiento Multi-tenant: Cuenta de saldo aislada por establecimiento" -Success ($r15.StatusCode -in @(200, 404)) -Detail $r15 -Expected "Aislado"
+# 15. Aislamiento multi-tenant: Operación cruzada entre colegios bloqueada
+$r15 = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/iniciar" -Body @{
+    alumnoId = 9 # Alumno de Colegio 2
+    apoderadoId = 3 # Apoderado de Colegio 1
+    monto = 5000
+}
+Check-Edge -Num "E15" -Title "Aislamiento Multi-tenant: Bloqueo de operaciones cruzadas entre colegios distintos" -Detail $r15 -ExpectedCodes @(422, 404) -ExpectedMessageContains "nculo"
 
 Write-Host "=============================================================================" -ForegroundColor Cyan
 Write-Host "  RESULTADO CASOS DE BORDE: $Passed PASARON | $Failed FALLARON" -ForegroundColor Cyan
