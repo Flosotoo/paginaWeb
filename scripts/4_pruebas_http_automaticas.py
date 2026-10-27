@@ -3,7 +3,7 @@
 #            casos de uso reales y de borde (edge cases) EXCLUSIVAMENTE a
 #            través del API Gateway (puerto 8090) sobre los 4 microservicios de EduSaldo.
 # Prerrequisitos: Los 5 servicios deben estar corriendo en puertos 8090 y 8091-8094.
-# Ejecución: python backend/scripts/pruebas_http_automaticas.py
+# Ejecución: python scripts/4_pruebas_http_automaticas.py
 # =============================================================================
 
 import urllib.request
@@ -14,44 +14,47 @@ import sys
 
 # Reconfigurar stdout/stderr con UTF-8 y sustitución de caracteres para Windows
 try:
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    if hasattr(sys.stderr, 'reconfigure'):
-        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
     pass
+
 
 def safe_print(text):
     try:
         print(text)
     except Exception:
         try:
-            safe_text = str(text).encode('ascii', errors='replace').decode('ascii')
+            safe_text = str(text).encode("ascii", errors="replace").decode("ascii")
             print(safe_text)
         except Exception:
             pass
 
+
 GATEWAY = "http://localhost:8090"
 current_test_calls = []
+
 
 def post(endpoint, data):
     url = f"{GATEWAY}{endpoint}"
     req = urllib.request.Request(
         url,
-        data=json.dumps(data).encode('utf-8'),
-        headers={'Content-Type': 'application/json'},
-        method='POST'
+        data=json.dumps(data).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
     )
     status_code = 0
     body = None
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
             status_code = resp.status
-            body = json.loads(resp.read().decode('utf-8'))
+            body = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         status_code = e.code
         try:
-            body = json.loads(e.read().decode('utf-8'))
+            body = json.loads(e.read().decode("utf-8"))
         except Exception:
             body = e.reason
     except Exception as ex:
@@ -59,22 +62,23 @@ def post(endpoint, data):
         body = str(ex)
     if not isinstance(body, (dict, list)):
         body = {"error": str(body), "message": str(body)}
-    current_test_calls.append(('POST', url, data, status_code, body))
+    current_test_calls.append(("POST", url, data, status_code, body))
     return status_code, body
+
 
 def get(endpoint):
     url = f"{GATEWAY}{endpoint}"
-    req = urllib.request.Request(url, method='GET')
+    req = urllib.request.Request(url, method="GET")
     status_code = 0
     body = None
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
             status_code = resp.status
-            body = json.loads(resp.read().decode('utf-8'))
+            body = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         status_code = e.code
         try:
-            body = json.loads(e.read().decode('utf-8'))
+            body = json.loads(e.read().decode("utf-8"))
         except Exception:
             body = e.reason
     except Exception as ex:
@@ -82,24 +86,25 @@ def get(endpoint):
         body = str(ex)
     if not isinstance(body, (dict, list)):
         body = {"error": str(body), "message": str(body)}
-    current_test_calls.append(('GET', url, None, status_code, body))
+    current_test_calls.append(("GET", url, None, status_code, body))
     return status_code, body
+
 
 def put(endpoint, data=None):
     url = f"{GATEWAY}{endpoint}"
-    payload = json.dumps(data).encode('utf-8') if data is not None else None
-    headers = {'Content-Type': 'application/json'} if data is not None else {}
-    req = urllib.request.Request(url, data=payload, headers=headers, method='PUT')
+    payload = json.dumps(data).encode("utf-8") if data is not None else None
+    headers = {"Content-Type": "application/json"} if data is not None else {}
+    req = urllib.request.Request(url, data=payload, headers=headers, method="PUT")
     status_code = 0
     body = None
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
             status_code = resp.status
-            body = json.loads(resp.read().decode('utf-8'))
+            body = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         status_code = e.code
         try:
-            body = json.loads(e.read().decode('utf-8'))
+            body = json.loads(e.read().decode("utf-8"))
         except Exception:
             body = e.reason
     except Exception as ex:
@@ -107,22 +112,23 @@ def put(endpoint, data=None):
         body = str(ex)
     if not isinstance(body, (dict, list)):
         body = {"error": str(body), "message": str(body)}
-    current_test_calls.append(('PUT', url, data, status_code, body))
+    current_test_calls.append(("PUT", url, data, status_code, body))
     return status_code, body
+
 
 def delete(endpoint):
     url = f"{GATEWAY}{endpoint}"
-    req = urllib.request.Request(url, method='DELETE')
+    req = urllib.request.Request(url, method="DELETE")
     status_code = 0
     body = None
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
             status_code = resp.status
-            body = json.loads(resp.read().decode('utf-8'))
+            body = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         status_code = e.code
         try:
-            body = json.loads(e.read().decode('utf-8'))
+            body = json.loads(e.read().decode("utf-8"))
         except Exception:
             body = e.reason
     except Exception as ex:
@@ -130,11 +136,13 @@ def delete(endpoint):
         body = str(ex)
     if not isinstance(body, (dict, list)):
         body = {"error": str(body), "message": str(body)}
-    current_test_calls.append(('DELETE', url, None, status_code, body))
+    current_test_calls.append(("DELETE", url, None, status_code, body))
     return status_code, body
+
 
 passed = 0
 failed = 0
+
 
 def format_multiline(data, indent="            "):
     if data is None:
@@ -144,6 +152,7 @@ def format_multiline(data, indent="            "):
         return "\n".join(f"{indent}{line}" for line in text.splitlines())
     except Exception:
         return f"{indent}{str(data)}"
+
 
 def check(num, desc, cond, extra=""):
     global passed, failed
@@ -163,6 +172,7 @@ def check(num, desc, cond, extra=""):
         safe_print(format_multiline(resp, "            "))
     current_test_calls.clear()
 
+
 print("=============================================================================")
 print("  EDUSALDO - BATERÍA COMPLETA DE PRUEBAS EN VIVO VÍA API GATEWAY (8090)")
 print("=============================================================================")
@@ -173,48 +183,88 @@ print("=========================================================================
 print("\n--- 1. MS USUARIOS Y AUTH (Puerto 8091) ---")
 
 # Caso 1: Login exitoso
-st, res = post("/api/auth/login", {"identificador": "admin@colegio.cl", "password": "admin123"})
-check("01", "Login Administrador exitoso", st == 200 and "token" in res, f"(Usuario: {res.get('nombreCompleto')})")
+st, res = post(
+    "/api/auth/login", {"identificador": "admin@colegio.cl", "password": "admin123"}
+)
+check(
+    "01",
+    "Login Administrador exitoso",
+    st == 200 and "token" in res,
+    f"(Usuario: {res.get('nombreCompleto')})",
+)
 
 # Caso 2: Login con credenciales incorrectas
-st, res = post("/api/auth/login", {"identificador": "admin@colegio.cl", "password": "clave_falsa_999"})
-check("02", "Login fallido controlado con rechazo", st in [400, 401], f"(Mensaje: {res.get('message')})")
+st, res = post(
+    "/api/auth/login",
+    {"identificador": "admin@colegio.cl", "password": "clave_falsa_999"},
+)
+check(
+    "02",
+    "Login fallido controlado con rechazo",
+    st in [400, 401],
+    f"(Mensaje: {res.get('message')})",
+)
 
 # Caso 3: Alta atómica Alumno + Apoderado (HU15)
 ts = int(time.time())
-st, res = post("/api/usuarios/alumnos", {
-    "rutAlumno": f"24.{ts % 900 + 100}.111-K",
-    "primerNombreAlumno": "Tomás",
-    "primerApellidoAlumno": "González",
-    "fechaNacimiento": "2012-05-15",
-    "curso": "7° Básico",
-    "rutApoderado": f"16.{ts % 900 + 100}.222-3",
-    "primerNombreApoderado": "Carlos",
-    "primerApellidoApoderado": "González",
-    "correoApoderado": f"apoderado_{ts}@gmail.com",
-    "telefonoApoderado": "+56912345678",
-    "parentesco": "PADRE"
-})
-check("03", "Alta atómica Alumno + Apoderado (HU15)", st in [200, 201] and res.get("alumnoId") is not None, f"(Alumno ID: {res.get('alumnoId')})")
+st, res = post(
+    "/api/usuarios/alumnos",
+    {
+        "rutAlumno": f"24.{ts % 900 + 100}.111-K",
+        "primerNombreAlumno": "Tomás",
+        "primerApellidoAlumno": "González",
+        "fechaNacimiento": "2012-05-15",
+        "curso": "7° Básico",
+        "rutApoderado": f"16.{ts % 900 + 100}.222-3",
+        "primerNombreApoderado": "Carlos",
+        "primerApellidoApoderado": "González",
+        "correoApoderado": f"apoderado_{ts}@gmail.com",
+        "telefonoApoderado": "+56912345678",
+        "parentesco": "PADRE",
+    },
+)
+check(
+    "03",
+    "Alta atómica Alumno + Apoderado (HU15)",
+    st in [200, 201] and res.get("alumnoId") is not None,
+    f"(Alumno ID: {res.get('alumnoId')})",
+)
 created_alumno_id = res.get("alumnoId")
 created_apoderado_id = res.get("apoderadoId")
 
 # Caso 4: Consulta de alumnos de un apoderado (HU17)
 if created_apoderado_id:
     st, res = get(f"/api/usuarios/apoderados/{created_apoderado_id}/alumnos")
-    check("04", "Consulta de pupilos asociados a apoderado (HU17)", st == 200 and len(res) >= 1)
+    check(
+        "04",
+        "Consulta de pupilos asociados a apoderado (HU17)",
+        st == 200 and len(res) >= 1,
+    )
 
 # Caso 05: Consulta de configuración institucional
 st_cfg, res_cfg = get("/api/configuracion")
-check("05", "Consulta de configuración institucional", st_cfg == 200 and "nombreEstablecimiento" in res_cfg)
+check(
+    "05",
+    "Consulta de configuración institucional",
+    st_cfg == 200 and "nombreEstablecimiento" in res_cfg,
+)
 
 # Caso 06: Consulta de usuario Alumno por ID (HU04 Autonomía >= 12 años)
 st_alu, res_alu = get(f"/api/usuarios/{created_alumno_id if created_alumno_id else 1}")
-check("06", "Consulta de usuario Alumno por ID (HU04 Autonomía >= 12 años)", st_alu == 200 and res_alu.get("id") == (created_alumno_id if created_alumno_id else 1))
+check(
+    "06",
+    "Consulta de usuario Alumno por ID (HU04 Autonomía >= 12 años)",
+    st_alu == 200
+    and res_alu.get("id") == (created_alumno_id if created_alumno_id else 1),
+)
 
 # Caso 07: Verificación de registro de auditoría de seguridad
 st_aud, res_aud = get("/api/auditoria")
-check("07", "Verificación de registro de auditoría de seguridad", st_aud == 200 and len(res_aud) >= 1)
+check(
+    "07",
+    "Verificación de registro de auditoría de seguridad",
+    st_aud == 200 and len(res_aud) >= 1,
+)
 
 # -----------------------------------------------------------------------------
 # 2. MS SALDOS Y ABONOS (Puerto 8092)
@@ -224,28 +274,42 @@ print("\n--- 2. MS SALDOS Y ABONOS (Puerto 8092) ---")
 alumno_target = created_alumno_id if created_alumno_id else 1
 # Caso 08: Consulta de saldo inicial de pupilo
 st, res = get(f"/api/saldos/cuenta/{alumno_target}")
-check("08", "Consulta de saldo inicial de pupilo", st in [200, 201] and "saldoDisponible" in res)
+check(
+    "08",
+    "Consulta de saldo inicial de pupilo",
+    st in [200, 201] and "saldoDisponible" in res,
+)
 
 # Caso 09: Inicio de abono Webpay simulado (Token UUID generado)
-st, res = post("/api/saldos/abonos/iniciar", {
-    "apoderadoId": created_apoderado_id if created_apoderado_id else 1,
-    "alumnoId": alumno_target,
-    "monto": 15000
-})
-check("09", "Inicio de abono Webpay simulado (Token UUID generado)", st in [200, 201] and "token" in res)
+st, res = post(
+    "/api/saldos/abonos/iniciar",
+    {
+        "apoderadoId": created_apoderado_id if created_apoderado_id else 1,
+        "alumnoId": alumno_target,
+        "monto": 15000,
+    },
+)
+check(
+    "09",
+    "Inicio de abono Webpay simulado (Token UUID generado)",
+    st in [200, 201] and "token" in res,
+)
 token_abono = res.get("token")
 
 # Caso 10: Confirmación de abono y acreditación en CuentaSaldo
 if token_abono:
     st, res = post("/api/saldos/abonos/confirmar", {"token": token_abono})
-    check("10", "Confirmación de abono y acreditación en CuentaSaldo", st == 200 and res.get("estado") == "APROBADO")
+    check(
+        "10",
+        "Confirmación de abono y acreditación en CuentaSaldo",
+        st == 200 and res.get("estado") == "APROBADO",
+    )
 
 # Caso 11: Edge case - Retención fallida por saldo insuficiente (400/422)
-st, res = post("/api/saldos/retener", {
-    "alumnoId": alumno_target,
-    "monto": 9999999,
-    "reservaId": 999
-})
+st, res = post(
+    "/api/saldos/retener",
+    {"alumnoId": alumno_target, "monto": 9999999, "reservaId": 999},
+)
 check("11", "Rechazo controlado por saldo insuficiente (400/422)", st in [400, 422])
 
 # Caso 12: Consulta de libro mayor MovimientoSaldo
@@ -263,31 +327,45 @@ check("13", "Consulta de catálogo y existencias", st == 200 and len(res) >= 1)
 prod_target_id = res[0].get("id") if (isinstance(res, list) and len(res) > 0) else 1
 
 # Caso 14: Ingreso manual de stock por Encargado (HU46)
-st, res = post("/api/inventario/ingresos-manuales", {
-    "encargadoId": 2,
-    "proveedor": "Distribuidora Central Escolar",
-    "documentoReferencia": "GUIA-DESPACHO-4581",
-    "observacion": "Recepción de materiales",
-    "detalles": [
-        {"productoId": prod_target_id, "cantidad": 20}
-    ]
-})
+st, res = post(
+    "/api/inventario/ingresos-manuales",
+    {
+        "encargadoId": 2,
+        "proveedor": "Distribuidora Central Escolar",
+        "documentoReferencia": "GUIA-DESPACHO-4581",
+        "observacion": "Recepción de materiales",
+        "detalles": [{"productoId": prod_target_id, "cantidad": 20}],
+    },
+)
 check("14", "Ingreso manual de stock por Encargado (HU46)", st in [200, 201])
 
 # Caso 15: Solicitud de ajuste de stock en PENDIENTE
-st, res = post("/api/inventario/ajustes/solicitar", {
-    "productoId": prod_target_id,
-    "cantidad": -2,
-    "motivo": "Merma por deterioro en estante",
-    "encargadoId": 2
-})
-check("15", "Solicitud de ajuste de stock en PENDIENTE", st in [200, 201] and res.get("estado") == "PENDIENTE")
+st, res = post(
+    "/api/inventario/ajustes/solicitar",
+    {
+        "productoId": prod_target_id,
+        "cantidad": -2,
+        "motivo": "Merma por deterioro en estante",
+        "encargadoId": 2,
+    },
+)
+check(
+    "15",
+    "Solicitud de ajuste de stock en PENDIENTE",
+    st in [200, 201] and res.get("estado") == "PENDIENTE",
+)
 ajuste_id = res.get("id")
 
 # Caso 16: Aprobación de ajuste por Administrador e impacto en stock
 if ajuste_id:
-    st, res = post(f"/api/inventario/ajustes/{ajuste_id}/aprobar", {"administradorId": 1})
-    check("16", "Aprobación de ajuste por Administrador e impacto en stock", st == 200 and res.get("estado") == "APROBADA")
+    st, res = post(
+        f"/api/inventario/ajustes/{ajuste_id}/aprobar", {"administradorId": 1}
+    )
+    check(
+        "16",
+        "Aprobación de ajuste por Administrador e impacto en stock",
+        st == 200 and res.get("estado") == "APROBADA",
+    )
 
 # Caso 17: Consulta de libro mayor MovimientoInventario
 st, res = get("/api/inventario/movimientos")
@@ -299,47 +377,102 @@ check("17", "Consulta de libro mayor MovimientoInventario", st == 200 and len(re
 print("\n--- 4. MS RESERVAS Y ENTREGAS (Puerto 8094) ---")
 
 # Caso 18: Creación de reserva con retención de saldo y stock
-st, res = post("/api/reservas", {
-    "alumnoId": alumno_target,
-    "creadaPorId": created_apoderado_id if created_apoderado_id else 1,
-    "items": [
-        {"productoId": prod_target_id, "nombreProducto": "Cuaderno universitario", "cantidad": 2, "precioUnitario": 1500}
-    ]
-})
-check("18", "Creación de reserva con retención de saldo y stock", st in [200, 201] and res.get("estado") == "PENDIENTE")
+st, res = post(
+    "/api/reservas",
+    {
+        "alumnoId": alumno_target,
+        "creadaPorId": created_apoderado_id if created_apoderado_id else 1,
+        "items": [
+            {
+                "productoId": prod_target_id,
+                "nombreProducto": "Cuaderno universitario",
+                "cantidad": 2,
+                "precioUnitario": 1500,
+            }
+        ],
+    },
+)
+check(
+    "18",
+    "Creación de reserva con retención de saldo y stock",
+    st in [200, 201] and res.get("estado") == "PENDIENTE",
+)
 reserva_id = res.get("id")
 
 # Caso 19: Preparación de reserva (HU31 CA2: preparadaPorId y fecha)
 if reserva_id:
     st, res = post(f"/api/reservas/{reserva_id}/marcar-lista", {"encargadoId": 2})
-    check("19", "Preparación de reserva (HU31 CA2: preparadaPorId y fecha)", st == 200 and res.get("preparadaPorId") == 2 and res.get("fechaPreparacion") is not None)
+    check(
+        "19",
+        "Preparación de reserva (HU31 CA2: preparadaPorId y fecha)",
+        st == 200
+        and res.get("preparadaPorId") == 2
+        and res.get("fechaPreparacion") is not None,
+    )
 
 # Caso 20: Confirmación de retiro genera Entrega formal
 if reserva_id:
     st, res = post(f"/api/reservas/{reserva_id}/entregar", {"encargadoId": 2})
-    check("20", "Confirmación de retiro genera Entrega formal", st in [200, 201] and res.get("origen") == "RESERVA")
+    check(
+        "20",
+        "Confirmación de retiro genera Entrega formal",
+        st in [200, 201] and res.get("origen") == "RESERVA",
+    )
     entrega_id = res.get("id")
 
 # Caso 21: Entrega directa presencial en mesón (MESON)
-st, res = post("/api/entregas/meson", {
-    "alumnoId": alumno_target,
-    "encargadoId": 2,
-    "items": [
-        {"productoId": prod_target_id, "nombreProducto": "Lápiz grafito", "cantidad": 1, "precioUnitario": 500}
-    ]
-})
-check("21", "Entrega directa presencial en mesón (MESON)", st in [200, 201] and res.get("origen") == "MESON")
+st, res = post(
+    "/api/entregas/meson",
+    {
+        "alumnoId": alumno_target,
+        "encargadoId": 2,
+        "items": [
+            {
+                "productoId": prod_target_id,
+                "nombreProducto": "Lápiz grafito",
+                "cantidad": 1,
+                "precioUnitario": 500,
+            }
+        ],
+    },
+)
+check(
+    "21",
+    "Entrega directa presencial en mesón (MESON)",
+    st in [200, 201] and res.get("origen") == "MESON",
+)
 
 # Caso 22: Cancelación de reserva por Alumno >= 12 años
-st_res2, res2 = post("/api/reservas", {
-    "alumnoId": alumno_target,
-    "creadaPorId": alumno_target,
-    "items": [{"productoId": prod_target_id, "nombreProducto": "Regla 30cm", "cantidad": 1, "precioUnitario": 800}]
-})
+st_res2, res2 = post(
+    "/api/reservas",
+    {
+        "alumnoId": alumno_target,
+        "creadaPorId": alumno_target,
+        "items": [
+            {
+                "productoId": prod_target_id,
+                "nombreProducto": "Regla 30cm",
+                "cantidad": 1,
+                "precioUnitario": 800,
+            }
+        ],
+    },
+)
 if st_res2 in [200, 201] and res2.get("id"):
     r2_id = res2.get("id")
-    st, res = post(f"/api/reservas/{r2_id}/cancelar", {"motivo": "Cancelado por alumno antes de retiro", "usuarioId": alumno_target, "rol": "ALU"})
-    check("22", "Cancelación de reserva por Alumno >= 12 años", st == 200 and res.get("estado") == "CANCELADA")
+    st, res = post(
+        f"/api/reservas/{r2_id}/cancelar",
+        {
+            "motivo": "Cancelado por alumno antes de retiro",
+            "usuarioId": alumno_target,
+            "rol": "ALU",
+        },
+    )
+    check(
+        "22",
+        "Cancelación de reserva por Alumno >= 12 años",
+        st == 200 and res.get("estado") == "CANCELADA",
+    )
 
 # Caso 23: Consulta de historial de entregas operativas
 st, res = get("/api/entregas/historial")

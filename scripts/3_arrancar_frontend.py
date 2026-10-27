@@ -1,13 +1,24 @@
 # =============================================================================
 # Propósito: Instala dependencias (si faltan) y arranca el frontend en Vite (puerto 5173).
-# Ejecución: python frontend/arrancar_frontend.py
+# Ejecución: python scripts/3_arrancar_frontend.py
 # =============================================================================
 
 import os
 import subprocess
 import sys
 
-FRONTEND_DIR = os.path.dirname(os.path.abspath(__file__))
+# Reconfigurar stdout/stderr con UTF-8 para Windows
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend") if os.path.exists(os.path.join(ROOT_DIR, "frontend")) else ROOT_DIR
 
 print("=============================================================================")
 print("  EDUSALDO - INICIANDO FRONTEND WEB (REACT + VITE)")

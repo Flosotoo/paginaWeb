@@ -1,52 +1,105 @@
-# EduSaldo - Librería Escolar Digital
+# Frontend Web · EduSaldo (React 18 + TypeScript + Vite)
 
-Proyecto semestral para la asignatura **Desarrollo Fullstack II (DSY1104)**.
+La interfaz de usuario de **EduSaldo** es una Single Page Application (SPA) moderna, componentizada y fuertemente tipada en **TypeScript**, construida con **React 18**, **Vite** y **Bootstrap 5**. Consume los endpoints de negocio a través del **API Gateway** central en `http://localhost:8090`.
 
-## Equipo
+---
 
-- Integrante 1: Pamela Acuña
-- Integrante 2: Antonio Jara
-- Integrante 3: Florencia Soto
+## 🛠️ Stack Tecnológico
 
-## Problema
+- **Framework:** [React 18.3](https://react.dev/)
+- **Lenguaje:** [TypeScript 5.6](https://www.typescriptlang.org/)
+- **Bundler / Servidor de Desarrollo:** [Vite 6.0](https://vitejs.dev/) con SWC
+- **Enrutamiento:** [React Router DOM v6](https://reactrouter.com/)
+- **Estilos y Responsive:** [Bootstrap 5.3](https://getbootstrap.com/)
+- **Testing:** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) con `jsdom`
 
-Cuando los abonos, entregas y saldos se gestionan mediante registros manuales o planillas independientes, los apoderados no siempre pueden consultar de manera inmediata los movimientos asociados a sus alumnos. Falta un sistema centralizado que permita consultar oportunamente los abonos, entregas, saldos y movimientos de cada alumno, y que facilite el control administrativo y operativo de la librería escolar.
+---
 
-## Solución propuesta
+## 📁 Estructura del Proyecto
 
-**EduSaldo** es una aplicación web que gestiona una librería escolar, su catálogo de productos y usuarios, junto con la administración de estudiantes, abonos de saldo mediante pasarela Webpay (simulada), reservas, entregas de materiales, movimientos e inventario.
+```text
+frontend/
+├── src/
+│   ├── components/       <- Componentes reutilizables (Navbar, ProductCard, Carrito, etc.)
+│   ├── context/          <- Contextos globales de estado (Autenticación, Carrito, Sesión)
+│   ├── data/             <- Catálogos y datos iniciales para desarrollo local
+│   ├── pages/            <- Vistas completas agrupadas por rol de usuario
+│   │   ├── admin/        <- Panel de administración (usuarios, configuración, ajustes)
+│   │   ├── encargado/    <- Mesón de librería (preparación de reservas, entregas)
+│   │   ├── apoderado/    <- Portal apoderado (abonos Webpay, pupilos, movimientos)
+│   │   └── alumno/       <- Portal alumno >= 12 años (consulta de saldo, reservas)
+│   ├── routes/           <- Definición de rutas públicas y privadas protegidas por rol
+│   ├── tests/            <- Batería de pruebas unitarias y de integración (Vitest + RTL)
+│   ├── types/            <- Modelos e interfaces TypeScript del dominio
+│   ├── utils/            <- Helpers y formateadores (moneda CLP, RUT chileno, fechas)
+│   ├── App.tsx           <- Componente raíz y proveedor de rutas
+│   └── main.tsx          <- Punto de entrada del frontend
+├── index.html            <- Plantilla HTML base
+├── package.json          <- Dependencias y scripts de ejecución
+├── tsconfig.json         <- Configuración del compilador TypeScript
+└── vite.config.ts        <- Configuración de Vite y proxy hacia el API Gateway
+```
 
-## Objetivo general
+---
 
-Desarrollar una aplicación web para gestionar una librería escolar y centralizar el registro de productos, usuarios, entregas de materiales y saldos asociados a estudiantes, utilizando HTML, CSS, JavaScript y React en el frontend, y Spring Boot bajo arquitectura de microservicios en el backend, con el propósito de mejorar la trazabilidad, transparencia y control de las operaciones.
+## 🚀 Puesta en Marcha
 
-## Organización y roles
+### Prerrequisitos
+- **Node.js:** Versión 20 o superior
+- **npm:** Versión 10 o superior
 
-- **Organización:** Centro General de Padres y Apoderados (Centro de Padres), que administra los fondos y es responsable de la librería escolar, donde se gestionan los materiales.
-- **Sistema:** EduSaldo.
-- **Apoderado:** abona saldo a sus alumnos con Webpay (simulado), consulta sus movimientos y reserva materiales para cualquiera de sus pupilos.
-- **Encargado de Librería:** gestiona stock físico, registra ingresos manuales de mercadería, prepara reservas rotuladas (`preparadaPorId`, `fechaPreparacion`), entrega materiales en mesón y solicita ajustes de inventario.
-- **Administrador:** gestiona usuarios, alumnos, asociaciones familiares, catálogo de productos, aprueba o rechaza solicitudes de ajuste de stock y administra los parámetros y configuración institucional del sistema.
-- **Alumno (estudiante):** entidad del dominio con saldo individual (`alumnoId`). Si tiene 12 años o más, cuenta con inicio de sesión propio (correo institucional), puede consultar su saldo y gestionar reservas para sí mismo. Si es menor de 12 años, no inicia sesión y opera mediante sus apoderados o identificación presencial en el mesón.
+### Opción 1: Mediante el Script Centralizado (Recomendado)
+Desde la raíz del monorepo `EduSaldo`:
+```bash
+python scripts/3_arrancar_frontend.py
+```
+*(Verifica e instala `node_modules` si no existen y arranca el servidor en `http://localhost:5173`).*
 
-## Conceptos
+### Opción 2: Comandos npm directos
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-- **Abono:** dinero que el apoderado incorpora, mediante pasarela Webpay simulada, al saldo de uno de sus alumnos.
-- **Saldo disponible:** fondos reales que tiene el alumno para retirar materiales (`saldoDisponible = saldoActual - saldoComprometido`).
-- **Reserva:** selección anticipada de materiales para retirarlos posteriormente; compromete saldo y stock físico, es preparada y rotulada por el encargado, y se concreta en una entrega al momento del retiro.
-- **Entrega de materiales:** acto de despacho presencial de artículos (por retiro de reserva o atención en mesón) que descuenta formalmente el saldo y el stock físico.
-- **Movimiento de saldo / inventario:** registro inmutable de auditoría para cada operación que afecta el saldo o el stock.
+El servidor quedará disponible en: **`http://localhost:5173`**
 
-Flujo del abono: *Abonar saldo* → elegir alumno → ingresar monto → pasarela simulada con token → cuenta temporalmente bloqueada → al aprobarse, se acredita en `CuentaSaldo` y se genera `MovimientoSaldo` → desbloqueo de cuenta. Webpay está **simulado**: no hay pasarela real ni se solicitan datos bancarios reales.
+---
 
-## Arquitectura de Microservicios (Backend EduSaldo)
+## 👥 Roles de Usuario en la SPA
 
-La solución se estructura bajo el patrón Domain-Driven Design (DDD) en **4 microservicios de negocio desacoplados** más un **API Gateway** central en topología de estrella (Hub & Spoke):
+| Rol | Vistas Clave | Capacidades en la Interfaz |
+| :--- | :--- | :--- |
+| **Administrador** | `/admin/**` | Gestión de usuarios, nómina, parámetros del colegio, catálogo y aprobación de ajustes de stock. |
+| **Encargado de Librería** | `/encargado/**` | Preparación de pedidos (`preparadaPorId`, `fechaPreparacion`), despacho en mesón, devoluciones e inventario físico. |
+| **Apoderado** | `/apoderado/**` | Abono de fondos vía Webpay simulado, consulta de saldo de pupilos y reserva de materiales. |
+| **Alumno ($\ge$ 12 años)** | `/alumno/**` | Autonomía para consulta de saldo propio y reserva personal de útiles. |
 
-1. **MS Auth y Usuarios (8091 · `db_usuarios`):** Autenticación JWT, jerarquía polimórfica de usuarios (`Administrador`, `Encargado`, `Apoderado`, `Alumno`), clase de asociación pura `ApoderadoAlumno`, política de acceso con bloqueo dinámico tras intentos fallidos, configuración institucional, parámetros del sistema y registro centralizado de auditoría.
-2. **MS Saldos y Abonos (8092 · `db_saldos`):** Cuentas de saldo por alumno (`alumnoId`), invariante financiera (`saldoDisponible >= 0`), abonos Webpay simulados con bloqueo temporal, liquidación por retiro del alumno y bitácora inmutable de `MovimientoSaldo`.
-3. **MS Productos e Inventario (8093 · `db_inventario`):** Catálogo de productos, categorías, stock físico, reservado y disponible, módulo de ingreso manual de stock y solicitudes de ajuste de stock solicitadas por el Encargado y aprobadas por el Administrador.
-4. **MS Reservas y Entregas (8094 · `db_reservas`):** Ciclo de reservas multilínea con trazabilidad de preparación (HU31 CA2: `preparadaPorId`, `fechaPreparacion`), cancelaciones permitidas para staff, apoderados y alumnos $\ge$ 12 años, entregas en mesón, devoluciones de materiales y notificación interna por correo a apoderados.
-- **API Gateway (8090):** Punto único de entrada para el frontend React, encargado del enrutamiento perimetral y la seguridad sin lógica de negocio propia.
+---
 
-*(Nota: Los anteriores módulos de Compras 8085 y Finanzas 8086 fueron desestimados para evitar sobreingeniería y ajustar el alcance a los requerimientos evaluativos del curso).*
+## 🧪 Pruebas Unitarias y de Componentes
+
+La suite de pruebas frontend utiliza **Vitest** y **React Testing Library**:
+
+```bash
+# Ejecutar todas las pruebas una vez
+npm test
+
+# Modo observador (watch) para desarrollo
+npm run test:watch
+
+# Generar reporte de cobertura de código
+npm run test:coverage
+```
+
+---
+
+## 📦 Compilación para Producción
+
+Para compilar la SPA optimizada y validada por el compilador de TypeScript:
+
+```bash
+npm run build
+```
+
+Los artefactos listos para distribución se generarán en la carpeta `frontend/dist/`.

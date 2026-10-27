@@ -3,37 +3,75 @@
 #            Elimina bases de datos obsoletas y recrea limpiamente los 4 esquemas
 #            canónicos (db_usuarios, db_saldos, db_inventario, db_reservas)
 #            ejecutando sus respectivos scripts schema.sql y seeds iniciales.
-# Ejecución: python backend/scripts/reset_bases_datos.py
+# Ejecución: python scripts/1_reset_bases_datos.py
 # =============================================================================
 
 import os
 import subprocess
 import sys
 
+# Reconfigurar stdout/stderr con UTF-8 para Windows
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-def find_root_dir():
-    candidates = [
-        os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..')),
-        os.path.abspath(os.path.join(SCRIPT_DIR, '..')),
-        os.path.abspath('.')
-    ]
-    for c in candidates:
-        if os.path.exists(os.path.join(c, 'edusaldo-api-gateway')):
-            return c
-    return candidates[0]
-
-ROOT_DIR = find_root_dir()
+ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+BACKEND_DIR = os.path.join(ROOT_DIR, "backend") if os.path.exists(os.path.join(ROOT_DIR, "backend")) else ROOT_DIR
 
 MYSQL_PATH = r"C:\xampp\mysql\bin\mysql.exe"
 if not os.path.exists(MYSQL_PATH):
     MYSQL_PATH = "mysql"
 
 schemas = [
-    ("db_usuarios", os.path.join(ROOT_DIR, "edusaldo-ms-auth-usuarios", "src", "main", "resources", "schema.sql")),
-    ("db_saldos", os.path.join(ROOT_DIR, "edusaldo-ms-alumnos-saldos", "src", "main", "resources", "schema.sql")),
-    ("db_inventario", os.path.join(ROOT_DIR, "edusaldo-ms-productos-inventario", "src", "main", "resources", "schema.sql")),
-    ("db_reservas", os.path.join(ROOT_DIR, "edusaldo-ms-ventas-reservas", "src", "main", "resources", "schema.sql")),
+    (
+        "db_usuarios",
+        os.path.join(
+            BACKEND_DIR,
+            "edusaldo-ms-auth-usuarios",
+            "src",
+            "main",
+            "resources",
+            "schema.sql",
+        ),
+    ),
+    (
+        "db_saldos",
+        os.path.join(
+            BACKEND_DIR,
+            "edusaldo-ms-alumnos-saldos",
+            "src",
+            "main",
+            "resources",
+            "schema.sql",
+        ),
+    ),
+    (
+        "db_inventario",
+        os.path.join(
+            BACKEND_DIR,
+            "edusaldo-ms-productos-inventario",
+            "src",
+            "main",
+            "resources",
+            "schema.sql",
+        ),
+    ),
+    (
+        "db_reservas",
+        os.path.join(
+            BACKEND_DIR,
+            "edusaldo-ms-ventas-reservas",
+            "src",
+            "main",
+            "resources",
+            "schema.sql",
+        ),
+    ),
 ]
 
 legacy_dbs = [
@@ -42,7 +80,7 @@ legacy_dbs = [
     "db_auth_usuarios",
     "db_ventas_reservas",
     "db_compras",
-    "db_finanzas_config"
+    "db_finanzas_config",
 ]
 
 print("=============================================================================")
@@ -58,7 +96,12 @@ for db, _ in schemas:
 
 print("[1/3] Limpiando esquemas en MySQL/MariaDB...")
 try:
-    p = subprocess.run([MYSQL_PATH, "-u", "root", "-e", clean_sql], capture_output=True, text=True, check=True)
+    p = subprocess.run(
+        [MYSQL_PATH, "-u", "root", "-e", clean_sql],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     print("      Bases de datos obsoletas eliminadas y esquemas canónicos recreados.")
 except subprocess.CalledProcessError as e:
     print(f"[ERROR] Error al recrear bases de datos: {e.stderr}")
@@ -73,8 +116,16 @@ for db_name, sql_file in schemas:
     with open(sql_file, "r", encoding="utf-8") as f:
         sql_content = f.read()
     try:
-        p = subprocess.run([MYSQL_PATH, "-u", "root", db_name], input=sql_content, capture_output=True, text=True, check=True)
-        print(f"      [OK] {db_name} poblada exitosamente desde {os.path.basename(sql_file)}")
+        p = subprocess.run(
+            [MYSQL_PATH, "-u", "root", db_name],
+            input=sql_content,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        print(
+            f"      [OK] {db_name} poblada exitosamente desde {os.path.basename(sql_file)}"
+        )
     except subprocess.CalledProcessError as e:
         print(f"      [ERROR] Fallo al cargar {db_name}: {e.stderr}")
 
@@ -89,6 +140,8 @@ SELECT 'db_inventario', count(*) FROM db_inventario.productos
 UNION ALL
 SELECT 'db_reservas', count(*) FROM db_reservas.reservas;
 """
-res = subprocess.run([MYSQL_PATH, "-u", "root", "-e", summary_sql], capture_output=True, text=True)
+res = subprocess.run(
+    [MYSQL_PATH, "-u", "root", "-e", summary_sql], capture_output=True, text=True
+)
 print(res.stdout)
 print("[OK] FRESH START COMPLETADO EXITOSAMENTE.")

@@ -4,13 +4,7 @@ El **API Gateway** es el punto único de entrada (_Single Point of Entry_) para 
 
 ---
 
-## 1. Clonación de la Suite Completa de EduSaldo
-
-Para clonar la solución completa con el Gateway, los 4 microservicios, el Frontend SPA y el repositorio de documentación en un mismo directorio contenedor:
-
----
-
-## 2. Topología de Red y Enrutamiento
+## 1. Topología de Red y Enrutamiento
 
 Toda solicitud del cliente o frontend apunta exclusivamente a `http://localhost:8090`. El Gateway redirige de forma transparente al microservicio dueño del dominio:
 
@@ -27,16 +21,14 @@ El Gateway expone cabeceras `Access-Control-Allow-Origin` para los orígenes de 
 
 ---
 
-## 3. Scripts de Arranque Simultáneo y Pruebas
+## 2. Operación y Pruebas
 
-Toda la operativa, scripts de inicialización y baterías de prueba están centralizados en la carpeta [`../scripts/`](../scripts/):
+Toda la operativa y herramientas están centralizadas en [`scripts/`](../../scripts/):
 
 ### Arranque Simultáneo de Servicios:
-
-- **Multiplataforma (Python):** `python backend/scripts/arrancar_servicios.py`
+- **Multiplataforma (Python):** `python scripts/2_arrancar_servicios.py`
 
 ### Guías y Baterías de Prueba:
-
-- 📖 **[Manual Operativo, Despliegue y Swagger UI](../scripts/README.md):** Guía completa de MySQL, arranque y pruebas manuales.
-- 🤖 **Pruebas Automatizadas E2E:** `python backend/scripts/pruebas_http_automaticas.py`
-- 📮 **Colección Postman:** [`../scripts/pruebas_postman_coleccion.json`](../scripts/pruebas_postman_coleccion.json)
+- 📖 **[Manual Operativo de Backend](../README.md):** Guía completa del backend, bases de datos y Swagger UI.
+- 🤖 **Pruebas Automatizadas E2E:** `python scripts/4_pruebas_http_automaticas.py`
+- 📮 **Colección Postman:** [`scripts/pruebas_postman_coleccion.json`](../../scripts/pruebas_postman_coleccion.json)
