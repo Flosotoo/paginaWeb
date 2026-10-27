@@ -33,11 +33,10 @@ Toda la operativa, scripts de inicialización y baterías de prueba están centr
 
 ### Arranque Simultáneo de Servicios:
 
-- **Windows (PowerShell):** `.\backend\scripts\arrancar_servicios.ps1`
 - **Multiplataforma (Python):** `python backend/scripts/arrancar_servicios.py`
 
 ### Guías y Baterías de Prueba:
 
 - 📖 **[Manual Operativo, Despliegue y Swagger UI](../scripts/README.md):** Guía completa de MySQL, arranque y pruebas manuales.
-- 🤖 **Pruebas Automatizadas E2E:** `python backend/scripts/pruebas_http_automaticas.py` o `.\backend\scripts\pruebas_http_automaticas.ps1`
+- 🤖 **Pruebas Automatizadas E2E:** `python backend/scripts/pruebas_http_automaticas.py`
 - 📮 **Colección Postman:** [`../scripts/pruebas_postman_coleccion.json`](../scripts/pruebas_postman_coleccion.json)

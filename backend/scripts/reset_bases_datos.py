@@ -3,7 +3,7 @@
 #            Elimina bases de datos obsoletas y recrea limpiamente los 4 esquemas
 #            canónicos (db_usuarios, db_saldos, db_inventario, db_reservas)
 #            ejecutando sus respectivos scripts schema.sql y seeds iniciales.
-# Ejecución: python edusaldo-api-gateway/scripts/reset_bases_datos.py
+# Ejecución: python backend/scripts/reset_bases_datos.py
 # =============================================================================
 
 import os

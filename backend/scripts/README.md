@@ -1,19 +1,17 @@
 # Suite Operativa de Backend · Scripts y Pruebas
 
-Esta carpeta centraliza el herramental operativo para la administración de bases de datos MySQL, el arranque concurrente de los 4 microservicios y del API Gateway, y las baterías de pruebas automatizadas y manuales de **EduSaldo 2.0**.
+Esta carpeta centraliza el herramental operativo para la administración de bases de datos MySQL, el arranque concurrente de los 4 microservicios y del API Gateway, y las baterías de pruebas automatizadas y manuales de **EduSaldo 2.0**. Todos los scripts están implementados en **Python**, garantizando ejecución multiplataforma y agnóstica al sistema operativo (Windows, Linux, macOS).
 
 ---
 
 ## 🛠️ Herramientas Disponibles
 
-| Script / Archivo | Variante | Propósito |
+| Script / Archivo | Lenguaje | Propósito |
 | :--- | :---: | :--- |
-| **`reset_bases_datos.ps1`** | PowerShell | Recrea limpiamente los 4 esquemas MySQL con sus tablas y datos iniciales. |
-| **`reset_bases_datos.py`** | Python | Variante multiplataforma para recreación de esquemas MySQL. |
-| **`arrancar_servicios.ps1`** | PowerShell | Compila y levanta concurrentemente los 4 microservicios y el API Gateway. |
-| **`arrancar_servicios.py`** | Python | Variante multiplataforma de arranque concurrente con transmisión de logs en vivo. |
-| **`pruebas_http_automaticas.ps1`** | PowerShell | Batería E2E de 20 casos de prueba reales sobre el Gateway (8090). |
-| **`pruebas_http_automaticas.py`** | Python | Variante multiplataforma de la batería E2E de 20 pruebas. |
+| **`reset_bases_datos.py`** | Python | Recreación limpia (fresh start) de los 4 esquemas MySQL (`db_usuarios`, `db_saldos`, `db_inventario`, `db_reservas`). |
+| **`arrancar_servicios.py`** | Python | Arranque concurrente de los 4 microservicios y el API Gateway con monitor de logs en vivo. |
+| **`detener_servicios.py`** | Python | Detención limpia de servicios y liberación de puertos 8090 a 8094. |
+| **`pruebas_http_automaticas.py`** | Python | Batería E2E de 20 casos de prueba reales sobre el Gateway (8090). |
 | **`pruebas_postman_coleccion.json`** | JSON | Colección Postman con todas las peticiones organizadas por microservicio. |
 
 ---
@@ -22,25 +20,17 @@ Esta carpeta centraliza el herramental operativo para la administración de base
 
 Crea y puebla limpiamente los 4 esquemas canónicos (`db_usuarios`, `db_saldos`, `db_inventario`, `db_reservas`):
 
-```powershell
-# En Windows (PowerShell):
-.\backend\scripts\reset_bases_datos.ps1
-
-# Multiplataforma (Python):
+```bash
 python backend/scripts/reset_bases_datos.py
 ```
 
 ---
 
-## 2. Arranque Simultáneo de Servicios
+## 2. Arranque Simultáneo y Control de Servicios
 
 Levanta los 4 microservicios backend y el API Gateway en segundo plano, confirmando la disponibilidad de cada puerto antes de finalizar:
 
-```powershell
-# En Windows (PowerShell):
-.\backend\scripts\arrancar_servicios.ps1
-
-# Multiplataforma (Python):
+```bash
 python backend/scripts/arrancar_servicios.py
 ```
 
@@ -51,17 +41,20 @@ python backend/scripts/arrancar_servicios.py
 - **`8093`**: MS Productos e Inventario (`db_inventario`)
 - **`8094`**: MS Reservas y Entregas (`db_reservas`)
 
+### Detención de Servicios:
+Para detener todos los servicios y liberar inmediatamente los puertos:
+
+```bash
+python backend/scripts/detener_servicios.py
+```
+
 ---
 
 ## 3. Batería de Pruebas Automatizadas (E2E en Vivo)
 
 Ejecuta 20 casos de uso reales y de borde exclusivamente contra `http://localhost:8090`, validando ciclo de reservas, quiebres de stock, rechazos por saldo insuficiente y flujo de ajuste de inventario:
 
-```powershell
-# En Windows (PowerShell):
-.\backend\scripts\pruebas_http_automaticas.ps1
-
-# Multiplataforma (Python):
+```bash
 python backend/scripts/pruebas_http_automaticas.py
 ```
 

@@ -33,7 +33,7 @@ EduSaldo/
 │
 ├── frontend/                              <- SPA Web en React + TypeScript
 │   ├── src/                               <- Componentes, páginas por rol y servicios API
-│   ├── arrancar_frontend.ps1 / .py        <- Script de inicio rápido del frontend
+│   ├── arrancar_frontend.py               <- Script de inicio rápido multiplataforma
 │   ├── package.json
 │   └── vite.config.ts
 │
@@ -45,9 +45,10 @@ EduSaldo/
     ├── edusaldo-ms-ventas-reservas/       <- Puerto 8094 · Reservas, entregas y devoluciones (db_reservas)
     └── scripts/                           <- Herramientas de arranque y de pruebas
         ├── README.md                      <- Guía de Swagger y documentación de scripts
-        ├── arrancar_servicios.ps1 / .py   <- Arranque concurrente de los 5 servicios
-        ├── reset_bases_datos.ps1 / .py    <- Borrado de las BD y creación de esquemas MySQL
-        ├── pruebas_http_automaticas.*     <- Pruebas E2E automatizadas
+        ├── arrancar_servicios.py          <- Arranque concurrente de los 5 servicios
+        ├── detener_servicios.py           <- Detención de servicios y liberación de puertos
+        ├── reset_bases_datos.py           <- Borrado de las BD y creación de esquemas MySQL
+        ├── pruebas_http_automaticas.py    <- Pruebas E2E automatizadas
         └── pruebas_postman_coleccion.json <- Colección Postman preconfigurada
 ```
 
@@ -77,19 +78,19 @@ EduSaldo/
 
 ### Paso 1: Configurar las Bases de Datos MySQL
 Ejecuta el script de reinicio para crear las 4 bases de datos canónicas limpias con sus tablas y datos iniciales:
-```powershell
-.\backend\scripts\reset_bases_datos.ps1
+```bash
+python backend/scripts/reset_bases_datos.py
 ```
-*(O ejecuta `python backend/scripts/reset_bases_datos.py`)*
+
 
 ---
 
 ### Paso 2: Levantar el Backend (Gateway + 4 Microservicios)
 Ejecuta el script de arranque simultáneo:
-```powershell
-.\backend\scripts\arrancar_servicios.ps1
+```bash
+python backend/scripts/arrancar_servicios.py
 ```
-*(O ejecuta `python backend/scripts/arrancar_servicios.py`)*
+
 
 El script levantará concurrentemente los servicios en segundo plano y confirmará en consola cuando los 5 puertos (`8090`, `8091`, `8092`, `8093`, `8094`) estén respondiendo.
 
@@ -97,10 +98,10 @@ El script levantará concurrentemente los servicios en segundo plano y confirmar
 
 ### Paso 3: Levantar el Frontend Web
 Ejecuta el script de arranque del frontend:
-```powershell
-.\frontend\arrancar_frontend.ps1
+```bash
+python frontend/arrancar_frontend.py
 ```
-*(O ejecuta `python frontend/arrancar_frontend.py` o directamente `cd frontend && npm install && npm run dev`)*
+*(O directamente `cd frontend && npm install && npm run dev`)*
 
 Abre tu navegador en `http://localhost:5173`.
 
