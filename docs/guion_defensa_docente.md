@@ -17,7 +17,7 @@ Este documento contiene las respuestas y justificaciones técnicas exactas ante 
 
 ### P2: "¿Por qué cada microservicio tiene su propia base de datos MySQL?"
 > **Respuesta:**
-> *"Por la regla arquitectónica fundamental de **Database-per-Service**. Si los 4 microservicios compartieran una sola base de datos o cruzaran `FOREIGN KEY` entre esquemas distintos, tendríamos un 'monolito distribuido': un cambio en una tabla rompería a los demás servicios y un bloqueo de tabla (lock) en inventario detendría la autenticación. Cada microservicio es dueño absoluto de sus tablas y solo se comunican mediante APIs REST síncronas tipadas (S01 a S12) o eventos asíncronos persistentes (A01 a A03)."*
+> *"Por la regla arquitectónica fundamental de **Database-per-Service**. Si los 4 microservicios compartieran una sola base de datos o cruzaran `FOREIGN KEY` entre esquemas distintos, tendríamos un 'monolito distribuido': un cambio en una tabla rompería a los demás servicios y un bloqueo de tabla (lock) en inventario detendría la autenticación. Cada microservicio es dueño absoluto de sus tablas y solo se comunican mediante APIs REST síncronas tipadas (S01 a S11) o eventos asíncronos persistentes (A01 a A03)."*
 
 ---
 
@@ -27,10 +27,12 @@ Este documento contiene las respuestas y justificaciones técnicas exactas ante 
 > **Respuesta:**
 > *"Porque todos los actores del colegio comparten los mismos atributos base de identidad (`rut`, `primerNombre`, `primerApellido`, `correo`, `passwordHash`, `estado`, `intentosFallidos`). `SINGLE_TABLE` con `@DiscriminatorColumn(name = 'tipo_usuario')` ofrece el mejor rendimiento en MySQL (cero costo de `JOIN` en el login), mientras que las subclases polimórficas (`Alumno`, `Apoderado`, `Encargado`, `Administrador`) encapsulan su comportamiento y reglas específicas."*
 
-### P4: "¿Existe el rol 'Autorizador' o cuántos roles hay realmente en el sistema?"
+### P4: "¿Por qué el sistema no acepta transferencias bancarias manuales y opera exclusivamente con pasarela en línea?"
 > **Respuesta:**
-> *"En EduSaldo existen **estrictamente 4 roles de usuario**: `ADMINISTRADOR`, `ENCARGADO`, `APODERADO` y `ALUMNO`.*
-> *El llamado 'Autorizador' no es un rol separado; es una **autorización institucional delegada** (`AutorizacionCentroPadres`, HU08/HU20/S12). El Administrador habilita el flag `autorizadoCentroPadres = true` sobre un `Apoderado` del Centro de Padres para facultarlo a aprobar o rechazar transferencias bancarias de terceros. Modelarlo como rol duplicaría cuentas si un apoderado es a la vez miembro del Centro de Padres."*
+> *"Por tres razones críticas de ingeniería y negocio:*
+> * 1. **Prevención de Fraude y Riesgo Operacional:** Las transferencias bancarias exigen subir comprobantes que pueden ser adulterados o reutilizados, generando colas de espera con revisión humana propensas a error.*
+> * 2. **Conciliación Contable Inmediata e Idempotente:** El flujo Webpay opera en dos fases (`/iniciar` con token UUID transaccional y `/confirmar` con acreditación atómica). Si la pasarela reintenta la confirmación por intermitencias de red, el sistema detecta el token ya procesado y no duplica saldo.*
+> * 3. **Reducción de Complejidad y Desacoplamiento:** Eliminamos intermediarios ambiguos (apoderados revisores de comprobantes) y suprimimos la dependencia inter-servicio S12, garantizando transacciones 100% automatizadas y auditadas en milisegundos."*
 
 ### P5: "¿Por qué un alumno no puede existir sin apoderado?"
 > **Respuesta:**

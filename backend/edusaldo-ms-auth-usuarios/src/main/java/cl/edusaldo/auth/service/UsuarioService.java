@@ -29,8 +29,6 @@ public class UsuarioService {
     @Autowired(required = false)
     private AdscripcionRepository adscripcionRepository;
 
-    @Autowired(required = false)
-    private AutorizacionCentroPadresRepository autorizacionCentroPadresRepository;
 
     @Autowired(required = false)
     private ImportacionNominaRepository importacionNominaRepository;
@@ -125,13 +123,7 @@ public class UsuarioService {
         switch (rol) {
             case ADMINISTRADOR -> u = new Administrador(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal);
             case ENCARGADO -> u = new Encargado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal);
-            case APODERADO -> {
-                Apoderado ap = new Apoderado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getTelefono());
-                if (Boolean.TRUE.equals(dto.getAutorizadoCentroPadres())) {
-                    ap.setAutorizadoCentroPadres(true);
-                }
-                u = ap;
-            }
+            case APODERADO -> u = new Apoderado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getTelefono());
             case ALUMNO -> {
                 Alumno al = new Alumno(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getFechaNacimiento(), dto.getCurso());
                 al.setEstado(al.calcularEdad() >= 12 ? EstadoCuenta.PRIMER_ACCESO : EstadoCuenta.ACTIVA);
@@ -147,11 +139,6 @@ public class UsuarioService {
         Usuario guardado = usuarioRepository.save(u);
         if (adscripcionRepository != null && guardado.getId() != null) {
             adscripcionRepository.save(new Adscripcion(guardado.getIdEstablecimiento(), guardado.getId()));
-        }
-        if (guardado instanceof Apoderado ap && Boolean.TRUE.equals(dto.getAutorizadoCentroPadres())
-                && autorizacionCentroPadresRepository != null && ap.getId() != null) {
-            autorizacionCentroPadresRepository.save(new AutorizacionCentroPadres(
-                    ap.getIdEstablecimiento(), ap.getId(), 1L, true));
         }
         auditoriaService.registrar(null, "CREAR_USUARIO", u.getClass().getSimpleName(), guardado.getId().toString(),
                 "Usuario creado: " + guardado.getRut() + " (" + guardado.getRol() + ")");
@@ -303,32 +290,6 @@ public class UsuarioService {
                 apoderadoId + "-" + alumnoId,
                 "Motivo: " + (motivo != null ? motivo : "Sin motivo informado")
         );
-    }
-
-    @Transactional
-    public Apoderado cambiarAutorizacionCentroPadres(Long apoderadoId, boolean autorizado, Long adminId) {
-        Apoderado apoderado = apoderadoRepository.findById(apoderadoId)
-                .orElseThrow(() -> new IllegalArgumentException("Apoderado no encontrado con ID: " + apoderadoId));
-
-        apoderado.cambiarAutorizacionCentroPadres(autorizado);
-        Apoderado guardado = apoderadoRepository.save(apoderado);
-        if (autorizacionCentroPadresRepository != null && guardado.getId() != null) {
-            Long admId = adminId != null ? adminId : 1L;
-            AutorizacionCentroPadres aut = autorizacionCentroPadresRepository.findByApoderadoId(guardado.getId())
-                    .orElseGet(() -> new AutorizacionCentroPadres(guardado.getIdEstablecimiento(), guardado.getId(), admId, autorizado));
-            if (autorizado) {
-                aut.otorgar(admId);
-            } else {
-                aut.revocar();
-            }
-            autorizacionCentroPadresRepository.save(aut);
-        }
-
-        auditoriaService.registrar(adminId != null ? adminId : 1L,
-                autorizado ? "HABILITAR_CENTRO_PADRES" : "REVOCAR_CENTRO_PADRES",
-                "Apoderado", apoderadoId.toString(),
-                "Autorización Centro de Padres cambiada a: " + autorizado);
-        return guardado;
     }
 
     @Transactional
@@ -554,24 +515,12 @@ public class UsuarioService {
     public Usuario obtenerPorId(Long id) {
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
-        if (u instanceof Apoderado ap && autorizacionCentroPadresRepository != null && ap.getId() != null) {
-            autorizacionCentroPadresRepository.findByApoderadoId(ap.getId())
-                    .ifPresent(aut -> ap.setAutorizadoCentroPadres(aut.isVigente()));
-        }
         return u;
     }
 
     @Transactional(readOnly = true)
     public List<Usuario> listarTodos() {
         List<Usuario> list = usuarioRepository.findAll();
-        if (autorizacionCentroPadresRepository != null) {
-            for (Usuario u : list) {
-                if (u instanceof Apoderado ap && ap.getId() != null) {
-                    autorizacionCentroPadresRepository.findByApoderadoId(ap.getId())
-                            .ifPresent(aut -> ap.setAutorizadoCentroPadres(aut.isVigente()));
-                }
-            }
-        }
         return list;
     }
 }

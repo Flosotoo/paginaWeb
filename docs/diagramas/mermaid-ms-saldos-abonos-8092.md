@@ -13,84 +13,83 @@ class CuentaSaldo {
   +Long version
   +LocalDateTime fechaCreacion
   +disponible() int
-  +abonarSaldo(monto, referencia, usuarioId) MovimientoSaldo
-  +retenerSaldo(monto, reservaId, usuarioId) MovimientoSaldo
-  +liberarSaldo(monto, reservaId, usuarioId) MovimientoSaldo
-  +cobrarSaldo(monto, reservaId, usuarioId) MovimientoSaldo
-  +reintegrarSaldo(monto, referencia, usuarioId) MovimientoSaldo
-  +liquidarSaldo(comprobante, adminId) MovimientoSaldo
+  +acreditarMontoAbonado(abono) MovimientoSaldo
+  +retenerSaldoPorReserva(monto, reservaId) MovimientoSaldo
+  +liberarSaldoReservado(reservaId) MovimientoSaldo
+  +consumirSaldoReservado(monto, referencia) MovimientoSaldo
+  +liquidarSaldoPorRetiro(apoderadoId, medio, op, motivo) MovimientoSaldo
 }
 
 class Abono {
   +Long id
   +Long apoderadoId
+  +Long alumnoId
   +int monto
-  +MetodoPago metodoPago
+  +MedioPagoAbono medioPago
   +EstadoAbono estado
-  +String referencia
+  +String claveOperacion
   +LocalDateTime fechaCreacion
-  +aprobar()
-  +rechazar(motivo)
-  +estaPendiente() boolean
+  +LocalDateTime fechaResolucion
+  +iniciar(apoderadoId, alumnoId, monto) Abono
+  +aprobar(token)
+  +rechazar(token)
+  +verificarToken(token) boolean
+  +estaVigente() boolean
 }
 
-class TransferenciaBancaria {
+class PagoWebpaySimulado {
   +Long id
-  +LocalDate fechaTransferencia
-  +String comprobanteUrl
-  +Long revisadoPorApoderadoId
-  +LocalDateTime fechaRevision
-  +String motivoRechazo
-  +aprobar(revisorApoderadoId)
-  +rechazar(revisorApoderadoId, motivo)
+  +Long abonoId
+  +String referenciaPago
+  +String resultado
+  +LocalDateTime fechaResultado
+  +registrarResultado(resultado)
 }
 
 class CompromisoSaldo {
   +Long id
+  +Long cuentaSaldoId
   +Long reservaId
-  +int monto
-  +EstadoCompromiso estado
-  +LocalDateTime fechaCreacion
-  +liberar()
-  +consumir()
+  +int montoClp
+  +String estado
+  +LocalDateTime fechaActualizacion
 }
 
 class MovimientoSaldo {
   +Long id
   +TipoMovimientoSaldo tipo
   +int monto
-  +int saldoAnterior
-  +int saldoNuevo
-  +String referencia
-  +Long usuarioId
-  +LocalDateTime fechaCreacion
+  +int saldoResultante
+  +String descripcion
+  +String referenciaUnica
+  +LocalDateTime fecha
 }
 
-class ConstanciaDevolucion {
+class ConstanciaDevolucionSaldo {
   +Long id
-  +int monto
+  +String codigoConstancia
+  +int montoDevuelto
+  +String medio
+  +String numeroOperacion
   +String motivo
-  +Long administradorId
-  +String comprobanteUrl
-  +LocalDateTime fechaCreacion
+  +LocalDateTime fecha
 }
 
 class AlertaSaldoBajo {
   +Long id
-  +int umbral
-  +LocalDateTime fechaAlerta
-  +Boolean atendida
-  +marcarAtendida()
+  +int umbralAplicadoClp
+  +boolean activa
+  +LocalDateTime fechaUltimoAviso
 }
 
 CuentaSaldo "1" *-- "0..*" Abono : registra
-Abono "1" *-- "0..1" TransferenciaBancaria : detalla
+Abono "1" *-- "1" PagoWebpaySimulado : pasarela en línea
 CuentaSaldo "1" *-- "0..*" CompromisoSaldo : retiene
-CuentaSaldo "1" *-- "0..*" MovimientoSaldo : historial
-CuentaSaldo "1" *-- "0..*" ConstanciaDevolucion : liquida
+CuentaSaldo "1" *-- "0..*" MovimientoSaldo : libro mayor
+CuentaSaldo "1" *-- "0..*" ConstanciaDevolucionSaldo : liquida
 CuentaSaldo "1" *-- "0..*" AlertaSaldoBajo : emite
 
 note for CuentaSaldo "Invariante Financiera: saldoDisponible = saldoActual - saldoComprometido >= 0."
-note for TransferenciaBancaria "Aprobacion Centro de Padres (HU20 / S12): Solo un Apoderado con autorizadoCentroPadres=true puede resolverla."
-note for MovimientoSaldo "Libro mayor inmutable: Cada variacion contable genera un asiento auditable en CLP."
+note for Abono "Pago Electrónico Automatizado: Se inicia con token único y se confirma en línea contra la pasarela simulada."
+note for MovimientoSaldo "Libro mayor inmutable: Cada variación contable genera un asiento auditable en CLP."
 ```

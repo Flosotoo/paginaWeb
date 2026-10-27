@@ -69,29 +69,4 @@ public class UsuariosSaldosClient {
         } catch (Exception ignored) {
         }
     }
-
-    /**
-     * S12: Valida que el apoderado exista, esté activo y tenga autorizadoCentroPadres == true.
-     */
-    @SuppressWarnings("unchecked")
-    public void validarAutorizacionCentroPadres(Long apoderadoId) {
-        if (!interserviceEnabled || apoderadoId == null) {
-            return;
-        }
-        try {
-            Map<String, Object> resp = restTemplate.getForObject(
-                    usuariosBaseUrl + "/api/usuarios/" + apoderadoId, Map.class);
-            if (resp != null) {
-                Object autorizado = resp.get("autorizadoCentroPadres");
-                if (!Boolean.parseBoolean(String.valueOf(autorizado))) {
-                    throw new IllegalStateException("El apoderado ID " + apoderadoId
-                            + " no posee autorización del Centro de Padres para validar transferencias bancarias.");
-                }
-            }
-        } catch (IllegalStateException ex) {
-            throw ex;
-        } catch (Exception ignored) {
-            // Fallback resiliente si MS Usuarios no está levantado en entorno aislado
-        }
-    }
 }

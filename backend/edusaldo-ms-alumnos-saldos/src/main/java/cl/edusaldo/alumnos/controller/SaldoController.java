@@ -47,22 +47,6 @@ public class SaldoController {
         return ResponseEntity.ok(res);
     }
 
-    @PostMapping("/abonos/transferencia")
-    @Operation(summary = "Registrar abono por transferencia bancaria con comprobante adjunto para revisión")
-    public ResponseEntity<Abono> registrarTransferencia(@Valid @RequestBody RegistrarTransferenciaDTO dto) {
-        Abono res = saldoService.registrarTransferencia(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(res);
-    }
-
-    @PutMapping("/abonos/{abonoId}/resolver-transferencia")
-    @Operation(summary = "Aprobar o rechazar transferencia bancaria por apoderado autorizado del Centro de Padres")
-    public ResponseEntity<ConfirmarAbonoResponseDTO> resolverTransferencia(
-            @PathVariable Long abonoId,
-            @Valid @RequestBody ResolverTransferenciaDTO dto) {
-        ConfirmarAbonoResponseDTO res = saldoService.resolverTransferencia(abonoId, dto);
-        return ResponseEntity.ok(res);
-    }
-
     @GetMapping("/abonos")
     @Operation(summary = "Listar abonos registrados con filtro opcional por alumno o estado")
     public ResponseEntity<List<Abono>> listarAbonos(

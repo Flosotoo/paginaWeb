@@ -81,17 +81,6 @@ public class UsuarioController {
         return ResponseEntity.ok(list);
     }
 
-    @PutMapping("/apoderados/{id}/autorizacion-centro-padres")
-    @Operation(summary = "Habilitar o revocar autorización del Centro de Padres para validar transferencias")
-    public ResponseEntity<UsuarioResponseDTO> cambiarAutorizacionCentroPadres(
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> payload,
-            @RequestParam(required = false, defaultValue = "1") Long adminId) {
-        boolean autorizado = payload != null && Boolean.parseBoolean(String.valueOf(payload.getOrDefault("autorizado", "false")));
-        Apoderado ap = usuarioService.cambiarAutorizacionCentroPadres(id, autorizado, adminId);
-        return ResponseEntity.ok(new UsuarioResponseDTO(ap));
-    }
-
     @DeleteMapping("/alumnos/{alumnoId}/apoderados/{apoderadoId}")
     @Operation(summary = "Desvincular apoderado de un alumno conservando historial")
     public ResponseEntity<Map<String, String>> desvincularApoderado(

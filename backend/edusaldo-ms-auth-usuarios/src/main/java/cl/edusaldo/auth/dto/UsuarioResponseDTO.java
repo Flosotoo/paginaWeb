@@ -18,7 +18,6 @@ public class UsuarioResponseDTO {
     private String nombreCompleto;
     private String correo;
     private String telefono;
-    private Boolean autorizadoCentroPadres;
     private String rol;
     private EstadoCuenta estado;
     private LocalDateTime fechaCreacion;
@@ -51,7 +50,6 @@ public class UsuarioResponseDTO {
 
         if (u instanceof Apoderado apoderado) {
             this.telefono = apoderado.getTelefono();
-            this.autorizadoCentroPadres = apoderado.isAutorizadoCentroPadres();
         } else if (u instanceof Alumno alumno) {
             this.curso = alumno.getCurso();
             this.fechaNacimiento = alumno.getFechaNacimiento();
@@ -72,7 +70,6 @@ public class UsuarioResponseDTO {
     public String getNombreCompleto() { return nombreCompleto; }
     public String getCorreo() { return correo; }
     public String getTelefono() { return telefono; }
-    public Boolean getAutorizadoCentroPadres() { return autorizadoCentroPadres; }
     public String getRol() { return rol; }
     public EstadoCuenta getEstado() { return estado; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }

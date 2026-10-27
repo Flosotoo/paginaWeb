@@ -94,9 +94,7 @@ public class CuentaSaldo {
         }
         this.saldoActual += abono.getMonto();
         String ref = abono.getTokenTransaccion() != null ? abono.getTokenTransaccion() : abono.getClaveOperacion();
-        String desc = abono.getMedioPago() == MedioPagoAbono.TRANSFERENCIA_BANCARIA
-                ? "Abono por transferencia bancaria validada # " + ref
-                : "Abono de saldo vía pasarela simulada # " + ref;
+        String desc = "Abono de saldo vía pasarela simulada # " + ref;
         MovimientoSaldo mov = new MovimientoSaldo(
                 this,
                 TipoMovimientoSaldo.ABONO,

@@ -27,8 +27,6 @@ public class SaldoService {
     @Autowired(required = false)
     private PagoWebpaySimuladoRepository pagoWebpaySimuladoRepository;
 
-    @Autowired(required = false)
-    private TransferenciaBancariaRepository transferenciaBancariaRepository;
 
     @Autowired(required = false)
     private CompromisoSaldoRepository compromisoSaldoRepository;
@@ -82,76 +80,6 @@ public class SaldoService {
                     abono.getId(), abono.getTokenTransaccion(), "PENDIENTE"));
         }
         return new IniciarAbonoResponseDTO(abono);
-    }
-
-    @Transactional
-    public Abono registrarTransferencia(RegistrarTransferenciaDTO dto) {
-        if (dto.getMonto() <= 0) {
-            throw new IllegalArgumentException("El monto de la transferencia debe ser mayor a 0");
-        }
-        if (usuariosSaldosClient != null) {
-            usuariosSaldosClient.validarAlumnoYVinculo(dto.getAlumnoId(), dto.getApoderadoId());
-        }
-        CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
-        Abono abono = Abono.registrarTransferencia(
-                cuenta,
-                dto.getApoderadoId(),
-                dto.getAlumnoId(),
-                dto.getMonto(),
-                dto.getFechaTransferencia(),
-                dto.getComprobanteUrl(),
-                dto.getNumeroOperacion()
-        );
-        abono = abonoRepository.save(abono);
-        if (transferenciaBancariaRepository != null && abono.getId() != null) {
-            transferenciaBancariaRepository.save(new TransferenciaBancaria(
-                    abono.getId(), abono.getFechaTransferencia(), abono.getComprobanteUrl()));
-        }
-        return abono;
-    }
-
-    @Transactional
-    public ConfirmarAbonoResponseDTO resolverTransferencia(Long abonoId, ResolverTransferenciaDTO dto) {
-        Abono abono = abonoRepository.findById(abonoId)
-                .orElseThrow(() -> new IllegalArgumentException("Abono por transferencia no encontrado con ID: " + abonoId));
-
-        if (usuariosSaldosClient != null) {
-            usuariosSaldosClient.validarAutorizacionCentroPadres(dto.getRevisorApoderadoId());
-        }
-
-        CuentaSaldo cuenta = obtenerCuenta(abono.getAlumnoId());
-        abono.setCuentaSaldo(cuenta);
-
-        if (Boolean.TRUE.equals(dto.getAprobar())) {
-            cuenta.bloquearTemporalmente(30);
-            abono.aprobarTransferencia(dto.getRevisorApoderadoId());
-            MovimientoSaldo mov = cuenta.acreditarMontoAbonado(abono);
-            cuenta.desbloquear();
-
-            cuenta = cuentaSaldoRepository.save(cuenta);
-            abono = abonoRepository.save(abono);
-            mov = movimientoSaldoRepository.save(mov);
-            rearmarAlertaSaldoBajoSiAplica(cuenta);
-            if (transferenciaBancariaRepository != null && abono.getId() != null) {
-                transferenciaBancariaRepository.findByAbonoId(abono.getId()).ifPresent(t -> {
-                    t.aprobar(dto.getRevisorApoderadoId());
-                    transferenciaBancariaRepository.save(t);
-                });
-            }
-            return new ConfirmarAbonoResponseDTO(abono, cuenta, mov);
-        } else {
-            String motivo = (dto.getMotivoRechazo() != null && !dto.getMotivoRechazo().isBlank())
-                    ? dto.getMotivoRechazo() : "Rechazado en conciliación bancaria del Centro de Padres";
-            abono.rechazarTransferencia(dto.getRevisorApoderadoId(), motivo);
-            abono = abonoRepository.save(abono);
-            if (transferenciaBancariaRepository != null && abono.getId() != null) {
-                transferenciaBancariaRepository.findByAbonoId(abono.getId()).ifPresent(t -> {
-                    t.rechazar(dto.getRevisorApoderadoId(), motivo);
-                    transferenciaBancariaRepository.save(t);
-                });
-            }
-            return new ConfirmarAbonoResponseDTO(abono, cuenta, null);
-        }
     }
 
     @Transactional(readOnly = true)

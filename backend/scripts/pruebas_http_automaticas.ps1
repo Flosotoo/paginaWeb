@@ -456,26 +456,18 @@ $ok32 = ($r32.StatusCode -eq 200 -and $null -ne $r32.Body.codigoDevolucion)
 Check-Result -Num "32" -Title "HU36: Devolucion con reintegro contable automatico (S09) y stock (S10)" -Success $ok32 -Detail $r32
 
 # -----------------------------------------------------------------------------
-# 5. ORQUESTACION S01-S12 Y MULTIESTABLECIMIENTO (MULTI-TENANT)
+# 5. ORQUESTACION S01-S11 Y MULTIESTABLECIMIENTO (MULTI-TENANT)
 # -----------------------------------------------------------------------------
-Write-Host "`n--- 5. ORQUESTACION S01-S12 Y MULTIESTABLECIMIENTO (MULTI-TENANT) ---" -ForegroundColor Yellow
+Write-Host "`n--- 5. ORQUESTACION S01-S11 Y MULTIESTABLECIMIENTO (MULTI-TENANT) ---" -ForegroundColor Yellow
 
-# Caso 33: HU08/HU20/S12 - Transferencia bancaria validada por Apoderado Centro de Padres
-$rRegTrf = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/transferencia" -Body @{
-    alumnoId = 4
-    apoderadoId = 3
-    monto = 20000
-    numeroOperacion = "BANCO-CHILE-998877"
-    comprobanteUrl = "https://edusaldo.cl/comprobantes/trf-9988.pdf"
+# Caso 33: HU18/HU21 - Idempotencia de confirmación Webpay (evita doble acreditación de saldo)
+$saldoAntes33 = (Invoke-Api -Method GET -Endpoint "/api/saldos/cuenta/4").Body.saldoActual
+$r33 = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/confirmar" -Body @{
+    token = $tokenWebpay
 }
-$trfId = if ($rRegTrf.StatusCode -in @(200, 201)) { $rRegTrf.Body.id } else { 2 }
-
-$r33 = Invoke-Api -Method PUT -Endpoint "/api/saldos/abonos/$trfId/resolver-transferencia" -Body @{
-    aprobar = $true
-    revisorApoderadoId = 3
-}
-$ok33 = ($r33.StatusCode -eq 200 -and $r33.Body.estado -eq "APROBADO")
-Check-Result -Num "33" -Title "HU08/HU20/S12: Transferencia aprobada por Apoderado Centro de Padres autorizado" -Success $ok33 -Detail $r33
+$saldoDespues33 = (Invoke-Api -Method GET -Endpoint "/api/saldos/cuenta/4").Body.saldoActual
+$ok33 = ($r33.StatusCode -eq 200 -and $r33.Body.estado -eq "APROBADO" -and $saldoAntes33 -eq $saldoDespues33)
+Check-Result -Num "33" -Title "HU18/HU21: Idempotencia Webpay (reintento con mismo token no duplica saldo contable)" -Success $ok33 -Detail $r33
 
 # Caso 34: Multi-tenant - Login Administrador Colegio San Agustín (Colegio 2)
 $r34 = Invoke-Api -Method POST -Endpoint "/api/auth/login" -Body @{

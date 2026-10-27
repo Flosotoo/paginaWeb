@@ -51,8 +51,6 @@ class Encargado {
 
 class Apoderado {
   +String telefono
-  +Boolean autorizadoCentroPadres
-  +cambiarAutorizacionCentroPadres(autorizado)
   +getRol() String
 }
 
@@ -81,19 +79,6 @@ class ApoderadoAlumno {
   +LocalDateTime fechaDesvinculacion
   +String motivoDesvinculacion
   +desvincular(motivo)
-}
-
-class AutorizacionCentroPadres {
-  +Long id
-  +Long idEstablecimiento
-  +Long apoderadoId
-  +Long otorgadaPorAdminId
-  +Boolean vigente
-  +LocalDateTime fechaAutorizacion
-  +LocalDateTime fechaRevocacion
-  +otorgar(adminId)
-  +revocar()
-  +estaVigente() boolean
 }
 
 class PoliticaAcceso {
@@ -183,10 +168,6 @@ ConfiguracionInstitucional "1" -- "0..*" Adscripcion : agrupa
 Apoderado "1" -- "0..*" ApoderadoAlumno : participa
 Alumno "1" -- "1..*" ApoderadoAlumno : tiene
 
-Apoderado "1" -- "0..*" AutorizacionCentroPadres : recibe
-ConfiguracionInstitucional "1" -- "0..*" AutorizacionCentroPadres : aplica
-Administrador ..> AutorizacionCentroPadres : autoriza
-
 ConfiguracionInstitucional "1" *-- "1" PoliticaAcceso : configura
 Usuario "1" *-- "0..*" TokenRecuperacion : solicita
 Usuario "1" *-- "0..*" ConsentimientoPrivacidad : acepta
@@ -202,5 +183,4 @@ ConfiguracionInstitucional "1" -- "0..*" RegistroAuditoria : conserva
 
 note for Usuario "Los administradores son creados por EduSaldo (HU02 CA1). Acceso automático según rol y permisos."
 note for ApoderadoAlumno "Invariante de no orfandad: Alumno activo exige al menos un apoderado activo (HU12 CA3). La desvinculación conserva historial."
-note for AutorizacionCentroPadres "Permiso institucional adicional al rol APODERADO para validar transferencias (S12). NO constituye un quinto rol."
 ```

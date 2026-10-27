@@ -217,23 +217,11 @@ $r12 = Invoke-Api -Method POST -Endpoint "/api/reservas" -Body @{
 }
 Check-Edge -Num "E12" -Title "HU24/HU26: Bloqueo de reserva autónoma a menor de 12 años" -Detail $r12 -ExpectedCodes @(422) -ExpectedMessageContains "12"
 
-# 13. Aprobación de transferencia por apoderado NO autorizado bloqueada (S12)
-# Registramos una transferencia para alumno 4
-$rTrf = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/transferencia" -Body @{
-    idEstablecimiento = 1
-    apoderadoId = 3
-    alumnoId = 4
-    monto = 5000
-    fechaTransferencia = "2026-10-26"
-    comprobanteUrl = "https://edusaldo.cl/comprobantes/test.pdf"
+# 13. Bloqueo de confirmación de abono Webpay con token falso o inexistente (HU21)
+$r13 = Invoke-Api -Method POST -Endpoint "/api/saldos/abonos/confirmar" -Body @{
+    token = "TOKEN-HACKER-FALSO-9999"
 }
-$abonoTrfId = if ($rTrf.Body.id) { $rTrf.Body.id } else { 2 }
-# Apoderado 8 (del colegio 2, sin autorización en colegio 1) intenta resolver
-$r13 = Invoke-Api -Method PUT -Endpoint "/api/saldos/abonos/$abonoTrfId/resolver-transferencia" -Body @{
-    revisorApoderadoId = 8
-    aprobar = $true
-}
-Check-Edge -Num "E13" -Title "S12 / HU20: Bloqueo de resolución de transferencia a apoderado no autorizado" -Detail $r13 -ExpectedCodes @(422) -ExpectedMessageContains "Centro de Padres"
+Check-Edge -Num "E13" -Title "HU21: Bloqueo de confirmación de abono con token falso o inexistente" -Detail $r13 -ExpectedCodes @(400, 422) -ExpectedMessageContains "token"
 
 # 14. Inactivación de categoría con productos asociados bloqueada
 $r14 = Invoke-Api -Method DELETE -Endpoint "/api/categorias/1"

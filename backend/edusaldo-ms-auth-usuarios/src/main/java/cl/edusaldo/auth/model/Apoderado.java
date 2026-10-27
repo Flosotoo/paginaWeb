@@ -12,13 +12,6 @@ public class Apoderado extends Usuario {
     @Column(name = "telefono", length = 30)
     private String telefono;
 
-    @Transient
-    private boolean autorizadoCentroPadres = false;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "apoderado", fetch = FetchType.LAZY)
-    private List<AutorizacionCentroPadres> autorizacionesCentroPadres = new ArrayList<>();
-
     @JsonIgnore
     @OneToMany(mappedBy = "apoderado", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApoderadoAlumno> alumnosAsociados = new ArrayList<>();
@@ -30,16 +23,11 @@ public class Apoderado extends Usuario {
     public Apoderado(String rut, String primerNombre, String primerApellido, String correo, String passwordHash, String telefono) {
         super(rut, primerNombre, primerApellido, correo, passwordHash);
         this.telefono = telefono;
-        this.autorizadoCentroPadres = false;
     }
 
     @Override
     public String getRol() {
         return "ROLE_APODERADO";
-    }
-
-    public void cambiarAutorizacionCentroPadres(boolean autorizado) {
-        this.autorizadoCentroPadres = autorizado;
     }
 
     public String getTelefono() {
@@ -48,28 +36,6 @@ public class Apoderado extends Usuario {
 
     public void setTelefono(String telefono) {
         this.telefono = telefono;
-    }
-
-    public boolean isAutorizadoCentroPadres() {
-        if (this.autorizadoCentroPadres) {
-            return true;
-        }
-        if (this.autorizacionesCentroPadres != null && !this.autorizacionesCentroPadres.isEmpty()) {
-            return this.autorizacionesCentroPadres.stream().anyMatch(AutorizacionCentroPadres::isVigente);
-        }
-        return false;
-    }
-
-    public void setAutorizadoCentroPadres(boolean autorizadoCentroPadres) {
-        this.autorizadoCentroPadres = autorizadoCentroPadres;
-    }
-
-    public List<AutorizacionCentroPadres> getAutorizacionesCentroPadres() {
-        return autorizacionesCentroPadres;
-    }
-
-    public void setAutorizacionesCentroPadres(List<AutorizacionCentroPadres> autorizacionesCentroPadres) {
-        this.autorizacionesCentroPadres = autorizacionesCentroPadres;
     }
 
     public List<ApoderadoAlumno> getAlumnosAsociados() {

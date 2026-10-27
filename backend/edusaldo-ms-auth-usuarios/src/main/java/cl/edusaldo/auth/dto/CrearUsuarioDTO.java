@@ -29,7 +29,6 @@ public class CrearUsuarioDTO {
 
     private String telefono;
 
-    private Boolean autorizadoCentroPadres = false;
 
     @NotNull(message = "El rol es obligatorio")
     private Rol rol;
@@ -55,8 +54,6 @@ public class CrearUsuarioDTO {
     public void setCorreo(String correo) { this.correo = correo; }
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
-    public Boolean getAutorizadoCentroPadres() { return autorizadoCentroPadres; }
-    public void setAutorizadoCentroPadres(Boolean autorizadoCentroPadres) { this.autorizadoCentroPadres = autorizadoCentroPadres; }
     public Rol getRol() { return rol; }
     public void setRol(Rol rol) { this.rol = rol; }
     public String getCurso() { return curso; }
