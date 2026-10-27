@@ -9,8 +9,7 @@ Esta carpeta centraliza el herramental operativo para la administración de base
 | Script / Archivo | Lenguaje | Propósito |
 | :--- | :---: | :--- |
 | **`reset_bases_datos.py`** | Python | Recreación limpia (fresh start) de los 4 esquemas MySQL (`db_usuarios`, `db_saldos`, `db_inventario`, `db_reservas`). |
-| **`arrancar_servicios.py`** | Python | Arranque concurrente de los 4 microservicios y el API Gateway con monitor de logs en vivo. |
-| **`detener_servicios.py`** | Python | Detención limpia de servicios y liberación de puertos 8090 a 8094. |
+| **`arrancar_servicios.py`** | Python | Control integral de servicios: auto-liberación de puertos huérfanos, arranque concurrente, monitoreo en vivo y parada (`--stop`). |
 | **`pruebas_http_automaticas.py`** | Python | Batería E2E de 20 casos de prueba reales sobre el Gateway (8090). |
 | **`pruebas_postman_coleccion.json`** | JSON | Colección Postman con todas las peticiones organizadas por microservicio. |
 
@@ -45,7 +44,7 @@ python backend/scripts/arrancar_servicios.py
 Para detener todos los servicios y liberar inmediatamente los puertos:
 
 ```bash
-python backend/scripts/detener_servicios.py
+python backend/scripts/arrancar_servicios.py --stop
 ```
 
 ---

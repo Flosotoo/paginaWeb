@@ -12,6 +12,25 @@ import json
 import time
 import sys
 
+# Reconfigurar stdout/stderr con UTF-8 y sustitución de caracteres para Windows
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
+
+def safe_print(text):
+    try:
+        print(text)
+    except Exception:
+        try:
+            safe_text = str(text).encode('ascii', errors='replace').decode('ascii')
+            print(safe_text)
+        except Exception:
+            pass
+
 GATEWAY = "http://localhost:8090"
 current_test_calls = []
 
@@ -130,18 +149,18 @@ def check(num, desc, cond, extra=""):
     global passed, failed
     if cond:
         passed += 1
-        print(f"  [PASS] {num}. {desc} {extra}")
+        safe_print(f"  [PASS] {num}. {desc} {extra}")
     else:
         failed += 1
-        print(f"  [FAIL] {num}. {desc} {extra}")
+        safe_print(f"  [FAIL] {num}. {desc} {extra}")
     for method, url, payload, status, resp in current_test_calls:
-        print(f"       -> [{method}] {url}")
+        safe_print(f"       -> [{method}] {url}")
         if payload is not None:
-            print("          Payload Enviado:")
-            print(format_multiline(payload, "            "))
-        print(f"       <- HTTP {status}")
-        print("          Respuesta del Microservicio:")
-        print(format_multiline(resp, "            "))
+            safe_print("          Payload Enviado:")
+            safe_print(format_multiline(payload, "            "))
+        safe_print(f"       <- HTTP {status}")
+        safe_print("          Respuesta del Microservicio:")
+        safe_print(format_multiline(resp, "            "))
     current_test_calls.clear()
 
 print("=============================================================================")

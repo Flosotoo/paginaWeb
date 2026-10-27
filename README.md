@@ -45,8 +45,7 @@ EduSaldo/
     ├── edusaldo-ms-ventas-reservas/       <- Puerto 8094 · Reservas, entregas y devoluciones (db_reservas)
     └── scripts/                           <- Herramientas de arranque y de pruebas
         ├── README.md                      <- Guía de Swagger y documentación de scripts
-        ├── arrancar_servicios.py          <- Arranque concurrente de los 5 servicios
-        ├── detener_servicios.py           <- Detención de servicios y liberación de puertos
+        ├── arrancar_servicios.py          <- Arranque, monitoreo de logs y parada (--stop)
         ├── reset_bases_datos.py           <- Borrado de las BD y creación de esquemas MySQL
         ├── pruebas_http_automaticas.py    <- Pruebas E2E automatizadas
         └── pruebas_postman_coleccion.json <- Colección Postman preconfigurada
