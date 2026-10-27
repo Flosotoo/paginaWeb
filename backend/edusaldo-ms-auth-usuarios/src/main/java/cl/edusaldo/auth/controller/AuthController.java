@@ -2,6 +2,7 @@ package cl.edusaldo.auth.controller;
 
 import cl.edusaldo.auth.dto.*;
 import cl.edusaldo.auth.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -28,6 +29,7 @@ public class AuthController {
         return ResponseEntity.ok(res);
     }
 
+    @Hidden
     @PostMapping("/logout")
     @Operation(summary = "Cerrar sesión activa del usuario")
     public ResponseEntity<Map<String, String>> logout(

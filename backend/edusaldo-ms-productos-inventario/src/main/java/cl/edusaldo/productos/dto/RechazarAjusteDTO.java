@@ -1,11 +1,17 @@
 package cl.edusaldo.productos.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class RechazarAjusteDTO {
 
+    @JsonAlias({"autorizadorId"})
     private Long administradorId;
+
+    @JsonIgnore
+    @Hidden
     private Long autorizadorId; // compatibilidad
 
     @NotBlank(message = "El motivo de rechazo es obligatorio")
@@ -26,12 +32,19 @@ public class RechazarAjusteDTO {
         this.administradorId = administradorId;
     }
 
+    @JsonIgnore
+    @Hidden
     public Long getAutorizadorId() {
-        return autorizadorId;
+        return autorizadorId != null ? autorizadorId : administradorId;
     }
 
+    @JsonIgnore
+    @Hidden
     public void setAutorizadorId(Long autorizadorId) {
         this.autorizadorId = autorizadorId;
+        if (this.administradorId == null) {
+            this.administradorId = autorizadorId;
+        }
     }
 
     public String getMotivoRechazo() {

@@ -1,7 +1,9 @@
 package cl.edusaldo.productos.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -14,7 +16,10 @@ public class DescontarStockDTO {
     @Min(value = 1, message = "La cantidad a descontar debe ser al menos 1")
     private int cantidad;
 
+    @JsonAlias({"referenciaId"})
     private Long entregaId;
+    @JsonIgnore
+    @Hidden
     private Long referenciaId;
 
     private boolean vieneDeReserva = true;
@@ -45,8 +50,17 @@ public class DescontarStockDTO {
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
     public Long getEntregaId() { return entregaId != null ? entregaId : referenciaId; }
     public void setEntregaId(Long entregaId) { this.entregaId = entregaId; }
-    public Long getReferenciaId() { return referenciaId != null ? referenciaId : entregaId; }
-    public void setReferenciaId(Long referenciaId) { this.referenciaId = referenciaId; }
+    @JsonIgnore
+    @Hidden
+    public Long getReferenciaId() { return getEntregaId(); }
+    @JsonIgnore
+    @Hidden
+    public void setReferenciaId(Long referenciaId) {
+        this.referenciaId = referenciaId;
+        if (this.entregaId == null) {
+            this.entregaId = referenciaId;
+        }
+    }
     public boolean isVieneDeReserva() { return vieneDeReserva; }
     public void setVieneDeReserva(boolean vieneDeReserva) { this.vieneDeReserva = vieneDeReserva; }
     public Long getUsuarioId() { return usuarioId; }

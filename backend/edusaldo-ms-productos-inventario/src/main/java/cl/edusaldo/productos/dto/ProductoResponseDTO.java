@@ -2,12 +2,16 @@ package cl.edusaldo.productos.dto;
 
 import cl.edusaldo.productos.model.EstadoRegistro;
 import cl.edusaldo.productos.model.Producto;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 
 public class ProductoResponseDTO {
     private Long id;
     private String sku;
     private String nombre;
     private String descripcion;
+    @JsonIgnore
+    @Hidden
     private String imagenUrl;
     private String cursoNivel;
     private int precio;
@@ -48,6 +52,8 @@ public class ProductoResponseDTO {
     public String getSku() { return sku; }
     public String getNombre() { return nombre; }
     public String getDescripcion() { return descripcion; }
+    @JsonIgnore
+    @Hidden
     public String getImagenUrl() { return imagenUrl; }
     public String getCursoNivel() { return cursoNivel; }
     public int getPrecio() { return precio; }

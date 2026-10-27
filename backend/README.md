@@ -59,6 +59,12 @@ Ejecuta la suite de 23 casos de prueba de integración contra el Gateway (`http:
 python scripts/4_pruebas_http_automaticas.py
 ```
 
+### 4. Batería de Resiliencia y Casos de Borde (15 Controles)
+Evalúa el blindaje contra intentos deliberados de violar invariantes de negocio:
+```bash
+python scripts/5_pruebas_casos_borde.py
+```
+
 ---
 
 ## 🌐 Pruebas Manuales en Swagger UI

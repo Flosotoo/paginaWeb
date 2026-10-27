@@ -1,6 +1,6 @@
 -- =============================================================================
 -- ESQUEMA 1: db_usuarios (edusaldo-ms-auth-usuarios - Puerto 8091)
--- 100% Conectado en Diseñador de phpMyAdmin (12 Tablas Espejo Exacto del Mermaid)
+-- 100% Conectado en Diseñador de phpMyAdmin (11 Tablas Espejo Exacto del Mermaid)
 -- =============================================================================
 
 CREATE DATABASE IF NOT EXISTS db_usuarios CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -28,24 +28,26 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 1. Raíz de Multiestablecimiento
 CREATE TABLE configuracion_institucional (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    rut_establecimiento VARCHAR(15) NOT NULL DEFAULT '65.111.222-3',
+    rut_establecimiento VARCHAR(20) NOT NULL UNIQUE,
     nombre_establecimiento VARCHAR(150) NOT NULL,
-    nombre_libreria VARCHAR(150) NOT NULL,
+    nombre_libreria VARCHAR(150) NULL,
     correo_contacto VARCHAR(150) NOT NULL,
-    logo_url VARCHAR(255),
-    activo BOOLEAN NOT NULL DEFAULT TRUE
+    logo_url VARCHAR(255) NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion DATETIME NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Usuarios Polimórficos (SINGLE_TABLE: ADMINISTRADOR, ENCARGADO, APODERADO, ALUMNO)
+-- 2. Usuarios Polimórficos de la Institución
 CREATE TABLE usuarios (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
-    tipo_usuario VARCHAR(31) NOT NULL,
-    rut VARCHAR(12) NOT NULL UNIQUE,
+    tipo_usuario VARCHAR(30) NOT NULL,
+    rut VARCHAR(20) NOT NULL UNIQUE,
     primer_nombre VARCHAR(100) NOT NULL,
-    segundo_nombre VARCHAR(100),
+    segundo_nombre VARCHAR(100) NULL,
     primer_apellido VARCHAR(100) NOT NULL,
-    segundo_apellido VARCHAR(100),
+    segundo_apellido VARCHAR(100) NULL,
     correo VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255),
     estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVA',
@@ -90,24 +92,7 @@ CREATE TABLE apoderado_alumnos (
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Autorización Centro de Padres
-CREATE TABLE autorizaciones_centro_padres (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    id_establecimiento BIGINT NOT NULL DEFAULT 1,
-    apoderado_id BIGINT NOT NULL,
-    otorgada_por_admin_id BIGINT NOT NULL DEFAULT 1,
-    vigente TINYINT(1) NOT NULL DEFAULT 1,
-    fecha_autorizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    fecha_revocacion DATETIME NULL,
-    CONSTRAINT fk_aut_cp_establecimiento FOREIGN KEY (id_establecimiento)
-        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
-    CONSTRAINT fk_aut_cp_apoderado FOREIGN KEY (apoderado_id)
-        REFERENCES usuarios(id) ON DELETE CASCADE,
-    CONSTRAINT fk_aut_cp_admin FOREIGN KEY (otorgada_por_admin_id)
-        REFERENCES usuarios(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 6. Política Institucional y Parámetros por Establecimiento
+-- 5. Política Institucional y Parámetros por Establecimiento
 CREATE TABLE politica_acceso (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1 UNIQUE,
@@ -119,7 +104,7 @@ CREATE TABLE politica_acceso (
         REFERENCES configuracion_institucional(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Tokens de Recuperación de Contraseña (Nunca guarda tokens en texto plano)
+-- 6. Tokens de Recuperación de Contraseña
 CREATE TABLE tokens_recuperacion (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL,
@@ -132,18 +117,41 @@ CREATE TABLE tokens_recuperacion (
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Consentimientos de Privacidad
+-- 7. Consentimientos de Privacidad
 CREATE TABLE consentimientos_privacidad (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL,
     version_aviso VARCHAR(50) NOT NULL,
     fecha_aceptacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ip_origen VARCHAR(45),
+    ip_origen VARCHAR(50),
     CONSTRAINT fk_consentimiento_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. Importaciones de Nómina Masiva
+-- 8. Solicitudes de Corrección de Datos Personales
+CREATE TABLE solicitudes_correccion_datos (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    usuario_id BIGINT NOT NULL,
+    campo_solicitado VARCHAR(80) NOT NULL,
+    valor_actual VARCHAR(255) NULL,
+    valor_propuesto VARCHAR(255) NOT NULL,
+    motivo VARCHAR(500) NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
+    fecha_solicitud DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion DATETIME NULL,
+    resuelta_por_id BIGINT NULL,
+    observacion_resolucion VARCHAR(500) NULL,
+    INDEX idx_solicitudes_establecimiento (id_establecimiento),
+    CONSTRAINT fk_solicitud_correccion_establecimiento FOREIGN KEY (id_establecimiento)
+        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
+    CONSTRAINT fk_solicitud_correccion_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_solicitud_correccion_admin FOREIGN KEY (resuelta_por_id)
+        REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. Importaciones Masivas de Nómina Escolar
 CREATE TABLE importaciones_nomina (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -153,13 +161,14 @@ CREATE TABLE importaciones_nomina (
     total_filas INT NOT NULL DEFAULT 0,
     filas_validas INT NOT NULL DEFAULT 0,
     filas_con_error INT NOT NULL DEFAULT 0,
+    INDEX idx_importaciones_establecimiento (id_establecimiento),
     CONSTRAINT fk_imp_nomina_establecimiento FOREIGN KEY (id_establecimiento)
         REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
     CONSTRAINT fk_imp_nomina_admin FOREIGN KEY (administrador_id)
         REFERENCES usuarios(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 10. Filas de Nómina Masiva
+-- 10. Filas Detalle de Nómina Escolar
 CREATE TABLE filas_nomina (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     importacion_id BIGINT NOT NULL,
@@ -172,29 +181,7 @@ CREATE TABLE filas_nomina (
         REFERENCES importaciones_nomina(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 11. Solicitudes de Corrección de Datos Personales
-CREATE TABLE solicitudes_correccion_datos (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    id_establecimiento BIGINT NOT NULL DEFAULT 1,
-    usuario_id BIGINT NOT NULL,
-    campo_solicitado VARCHAR(80) NOT NULL,
-    valor_actual VARCHAR(255) NULL,
-    valor_propuesto VARCHAR(255) NOT NULL,
-    motivo VARCHAR(500) NOT NULL,
-    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
-    resuelta_por_id BIGINT NULL,
-    observacion_resolucion VARCHAR(500) NULL,
-    fecha_solicitud DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    fecha_resolucion DATETIME NULL,
-    CONSTRAINT fk_solicitud_correccion_establecimiento FOREIGN KEY (id_establecimiento)
-        REFERENCES configuracion_institucional(id) ON DELETE CASCADE,
-    CONSTRAINT fk_solicitud_correccion_usuario FOREIGN KEY (usuario_id)
-        REFERENCES usuarios(id) ON DELETE CASCADE,
-    CONSTRAINT fk_solicitud_correccion_admin FOREIGN KEY (resuelta_por_id)
-        REFERENCES usuarios(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 12. Registro de Auditoría
+-- 11. Auditoría Inmutable del Establecimiento
 CREATE TABLE registro_auditoria (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -245,9 +232,6 @@ INSERT INTO adscripciones (id, id_establecimiento, usuario_id, estado, fecha_ads
 (7, 2, 7, 'ACTIVA', NOW()),
 (8, 2, 8, 'ACTIVA', NOW()),
 (9, 2, 9, 'ACTIVA', NOW());
-
-INSERT INTO autorizaciones_centro_padres (id, id_establecimiento, apoderado_id, otorgada_por_admin_id, vigente, fecha_autorizacion, fecha_revocacion) VALUES
-(1, 1, 3, 1, 1, NOW(), NULL);
 
 INSERT INTO apoderado_alumnos (apoderado_id, alumno_id, parentesco, activo, fecha_asociacion) VALUES
 (3, 4, 'PADRE', TRUE, NOW()),

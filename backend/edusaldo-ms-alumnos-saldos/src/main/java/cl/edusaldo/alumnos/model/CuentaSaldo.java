@@ -30,6 +30,7 @@ public class CuentaSaldo {
 
     @Transient
     @JsonIgnore
+    @io.swagger.v3.oas.annotations.Hidden
     private LocalDateTime bloqueadaHasta;
 
     @Version
@@ -93,9 +94,7 @@ public class CuentaSaldo {
         }
         this.saldoActual += abono.getMonto();
         String ref = abono.getTokenTransaccion() != null ? abono.getTokenTransaccion() : abono.getClaveOperacion();
-        String desc = abono.getMedioPago() == MedioPagoAbono.TRANSFERENCIA_BANCARIA
-                ? "Abono por transferencia bancaria validada # " + ref
-                : "Abono de saldo vía pasarela simulada # " + ref;
+        String desc = "Abono de saldo vía pasarela simulada # " + ref;
         MovimientoSaldo mov = new MovimientoSaldo(
                 this,
                 TipoMovimientoSaldo.ABONO,
@@ -245,6 +244,7 @@ public class CuentaSaldo {
     public void setSaldoComprometido(int saldoComprometido) { this.saldoComprometido = saldoComprometido; }
 
     @JsonIgnore
+    @io.swagger.v3.oas.annotations.Hidden
     public LocalDateTime getBloqueadaHasta() { return bloqueadaHasta; }
     public void setBloqueadaHasta(LocalDateTime bloqueadaHasta) { this.bloqueadaHasta = bloqueadaHasta; }
 

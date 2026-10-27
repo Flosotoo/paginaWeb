@@ -5,115 +5,91 @@ classDiagram
 direction LR
 
 class CuentaSaldo {
-  +Long idCuenta
+  +Long id
   +Long alumnoId
   +Long idEstablecimiento
-  +int saldoActualCLP
-  +int saldoComprometidoCLP
+  +int saldoActual
+  +int saldoComprometido
   +Long version
+  +LocalDateTime fechaCreacion
   +disponible() int
-  +acreditar(monto,claveOperacion)
-  +comprometer(reservaId,monto)
-  +liberar(reservaId)
-  +consumir(reservaId,entregaId)
-  +reintegrar(devolucionId,monto)
+  +acreditarMontoAbonado(abono) MovimientoSaldo
+  +retenerSaldoPorReserva(monto, reservaId) MovimientoSaldo
+  +liberarSaldoReservado(reservaId) MovimientoSaldo
+  +consumirSaldoReservado(monto, referencia) MovimientoSaldo
+  +liquidarSaldoPorRetiro(apoderadoId, medio, op, motivo) MovimientoSaldo
 }
 
 class Abono {
-  +Long idAbono
+  +Long id
   +Long apoderadoId
-  +int montoCLP
-  +MedioPago medio
+  +Long alumnoId
+  +int monto
+  +MedioPagoAbono medioPago
   +EstadoAbono estado
-  +DateTime fechaSolicitud
   +String claveOperacion
-  +aprobar()
-  +rechazar(motivo)
-  +estaPendiente() boolean
+  +LocalDateTime fechaCreacion
+  +LocalDateTime fechaResolucion
+  +iniciar(apoderadoId, alumnoId, monto) Abono
+  +aprobar(token)
+  +rechazar(token)
+  +verificarToken(token) boolean
+  +estaVigente() boolean
 }
 
 class PagoWebpaySimulado {
-  +Long idPago
+  +Long id
+  +Long abonoId
   +String referenciaPago
   +String resultado
-  +DateTime fechaResultado
-  +registrarResultado()
-}
-
-class TransferenciaBancaria {
-  +Long idTransferencia
-  +Date fechaTransferencia
-  +String comprobanteUrl
-  +Long revisadoPorApoderadoId
-  +DateTime fechaRevision
-  +String motivoRechazo
-  +aprobar(revisorId)
-  +rechazar(revisorId,motivo)
+  +LocalDateTime fechaResultado
+  +registrarResultado(resultado)
 }
 
 class CompromisoSaldo {
-  +Long idCompromiso
+  +Long id
+  +Long cuentaSaldoId
   +Long reservaId
-  +int montoCLP
-  +EstadoCompromiso estado
-  +comprometer()
-  +liberar()
-  +consumir()
+  +int montoClp
+  +String estado
+  +LocalDateTime fechaActualizacion
 }
 
 class MovimientoSaldo {
-  +Long idMovimiento
-  +TipoMovimiento tipo
-  +int montoCLP
-  +int saldoResultanteCLP
+  +Long id
+  +TipoMovimientoSaldo tipo
+  +int monto
+  +int saldoResultante
+  +String descripcion
   +String referenciaUnica
-  +DateTime fecha
+  +LocalDateTime fecha
 }
 
 class ConstanciaDevolucionSaldo {
-  +Long idConstancia
-  +Long administradorId
-  +int montoCLP
-  +Date fechaEntregaDinero
-  +String referencia
-  +registrarSalida()
+  +Long id
+  +String codigoConstancia
+  +int montoDevuelto
+  +String medio
+  +String numeroOperacion
+  +String motivo
+  +LocalDateTime fecha
 }
 
 class AlertaSaldoBajo {
-  +Long idAlerta
-  +int umbralAplicadoCLP
-  +Boolean activa
-  +DateTime fechaUltimoAviso
-  +evaluar(saldoDisponible)
-  +reactivar()
+  +Long id
+  +int umbralAplicadoClp
+  +boolean activa
+  +LocalDateTime fechaUltimoAviso
 }
 
-class NotificacionSaldoPendiente {
-  +Long idNotificacion
-  +Long alumnoId
-  +String claveEvento
-  +EstadoEnvio estado
-  +int intentos
-  +DateTime siguienteIntento
-  +marcarEnviada()
-  +programarReintento()
-}
+CuentaSaldo "1" *-- "0..*" Abono : registra
+Abono "1" *-- "1" PagoWebpaySimulado : pasarela en línea
+CuentaSaldo "1" *-- "0..*" CompromisoSaldo : retiene
+CuentaSaldo "1" *-- "0..*" MovimientoSaldo : libro mayor
+CuentaSaldo "1" *-- "0..*" ConstanciaDevolucionSaldo : liquida
+CuentaSaldo "1" *-- "0..*" AlertaSaldoBajo : emite
 
-CuentaSaldo "1" *-- "0..*" Abono : recibe
-CuentaSaldo "1" *-- "0..*" MovimientoSaldo : registra
-CuentaSaldo "1" *-- "0..*" CompromisoSaldo : mantiene
-CuentaSaldo "1" *-- "0..*" ConstanciaDevolucionSaldo : documenta
-CuentaSaldo "1" *-- "0..*" AlertaSaldoBajo : controla
-
-Abono "1" *-- "0..1" PagoWebpaySimulado : pagoWebpay
-Abono "1" *-- "0..1" TransferenciaBancaria : transferencia
-Abono "1" --> "0..1" MovimientoSaldo : acredita
-
-ConstanciaDevolucionSaldo "1" --> "1" MovimientoSaldo : genera
-AlertaSaldoBajo "1" --> "0..*" NotificacionSaldoPendiente : genera
-
-note for CuentaSaldo "Disponible = actual - comprometido. No puede ser negativo. Version protege concurrencia."
-note for Abono "Se utiliza una sola modalidad de pago. No vence automaticamente."
-note for MovimientoSaldo "Referencia unica para evitar aplicar dos veces la misma operacion."
-note for TransferenciaBancaria "Solo un apoderado autorizado del Centro de Padres puede aprobar o rechazar."
+note for CuentaSaldo "Invariante Financiera: saldoDisponible = saldoActual - saldoComprometido >= 0."
+note for Abono "Pago Electrónico Automatizado: Se inicia con token único y se confirma en línea contra la pasarela simulada."
+note for MovimientoSaldo "Libro mayor inmutable: Cada variación contable genera un asiento auditable en CLP."
 ```

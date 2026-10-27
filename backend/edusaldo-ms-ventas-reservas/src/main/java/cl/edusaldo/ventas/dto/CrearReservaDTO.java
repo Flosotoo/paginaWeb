@@ -1,5 +1,8 @@
 package cl.edusaldo.ventas.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -11,9 +14,12 @@ public class CrearReservaDTO {
     private Long alumnoId;
 
     // Puede ser Apoderado o Alumno (>= 12 años)
+    @JsonAlias({"apoderadoId"})
     private Long creadaPorId;
 
     // Campo de retrocompatibilidad
+    @JsonIgnore
+    @Hidden
     private Long apoderadoId;
 
     @NotEmpty(message = "La reserva debe contener al menos un material")
@@ -39,7 +45,12 @@ public class CrearReservaDTO {
         }
     }
 
-    public Long getApoderadoId() { return apoderadoId; }
+    @JsonIgnore
+    @Hidden
+    public Long getApoderadoId() { return apoderadoId != null ? apoderadoId : getCreadaPorId(); }
+
+    @JsonIgnore
+    @Hidden
     public void setApoderadoId(Long apoderadoId) {
         this.apoderadoId = apoderadoId;
         if (this.creadaPorId == null) {

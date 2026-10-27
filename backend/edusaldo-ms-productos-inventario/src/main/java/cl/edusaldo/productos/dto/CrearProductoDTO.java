@@ -1,6 +1,9 @@
 package cl.edusaldo.productos.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,13 +19,15 @@ public class CrearProductoDTO {
     private String nombre;
 
     private String descripcion;
+    @JsonIgnore
+    @Hidden
     private String imagenUrl;
 
     @NotBlank(message = "El curso/nivel es obligatorio")
     private String cursoNivel;
 
     @NotNull(message = "El precio es obligatorio")
-    @Min(value = 0, message = "El precio no puede ser negativo")
+    @Positive(message = "El precio debe ser un entero positivo mayor a 0")
     private Integer precio;
 
     @Min(value = 0, message = "El stock inicial no puede ser negativo")
@@ -41,7 +46,11 @@ public class CrearProductoDTO {
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    @JsonIgnore
+    @Hidden
     public String getImagenUrl() { return imagenUrl; }
+    @JsonIgnore
+    @Hidden
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
     public String getCursoNivel() { return cursoNivel; }
     public void setCursoNivel(String cursoNivel) { this.cursoNivel = cursoNivel; }

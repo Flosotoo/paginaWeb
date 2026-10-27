@@ -61,6 +61,9 @@ public class SolicitudAjusteStock {
     }
 
     public void aprobar(Long adminId) {
+        if (adminId != null && adminId.equals(this.encargadoId)) {
+            throw new IllegalStateException("El encargado que solicitó el ajuste no puede aprobar ni rechazar su propia solicitud.");
+        }
         if (this.estado != EstadoSolicitud.PENDIENTE) {
             throw new IllegalStateException("Solo se pueden aprobar solicitudes en estado PENDIENTE.");
         }
@@ -70,6 +73,9 @@ public class SolicitudAjusteStock {
     }
 
     public void rechazar(Long adminId, String motivoRechazo) {
+        if (adminId != null && adminId.equals(this.encargadoId)) {
+            throw new IllegalStateException("El encargado que solicitó el ajuste no puede aprobar ni rechazar su propia solicitud.");
+        }
         if (this.estado != EstadoSolicitud.PENDIENTE) {
             throw new IllegalStateException("Solo se pueden rechazar solicitudes en estado PENDIENTE.");
         }

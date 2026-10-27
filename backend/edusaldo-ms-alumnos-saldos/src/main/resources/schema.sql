@@ -1,6 +1,7 @@
 -- =============================================================================
 -- ESQUEMA 2: db_saldos (edusaldo-ms-alumnos-saldos - Puerto 8092)
--- 100% Conectado y Normalizado en 3FN en Diseñador de phpMyAdmin (9 Tablas)
+-- 100% Conectado y Normalizado en 3FN en Diseñador de phpMyAdmin (8 Tablas)
+-- Pagos Exclusivos vía Pasarela Webpay Simulada con Acreditación Inmediata
 -- =============================================================================
 
 CREATE DATABASE IF NOT EXISTS db_saldos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -12,7 +13,6 @@ DROP TABLE IF EXISTS alertas_saldo_bajo;
 DROP TABLE IF EXISTS constancias_devolucion_saldo;
 DROP TABLE IF EXISTS movimientos_saldo;
 DROP TABLE IF EXISTS compromisos_saldo;
-DROP TABLE IF EXISTS transferencias_bancarias;
 DROP TABLE IF EXISTS pagos_webpay_simulado;
 DROP TABLE IF EXISTS abonos;
 DROP TABLE IF EXISTS cuentas_saldo;
@@ -48,7 +48,7 @@ CREATE TABLE abonos (
         REFERENCES cuentas_saldo(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Pago Webpay Simulado
+-- 3. Pago Webpay Simulado (Pasarela en línea)
 CREATE TABLE pagos_webpay_simulado (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     abono_id BIGINT NOT NULL UNIQUE,
@@ -59,20 +59,7 @@ CREATE TABLE pagos_webpay_simulado (
         REFERENCES abonos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Transferencia Bancaria
-CREATE TABLE transferencias_bancarias (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    abono_id BIGINT NOT NULL UNIQUE,
-    fecha_transferencia DATE NOT NULL,
-    comprobante_url VARCHAR(255) NOT NULL,
-    revisado_por_apoderado_id BIGINT NULL,
-    fecha_revision DATETIME NULL,
-    motivo_rechazo VARCHAR(255) NULL,
-    CONSTRAINT fk_transf_abono FOREIGN KEY (abono_id)
-        REFERENCES abonos(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 5. Compromisos de Saldo por Reserva
+-- 4. Compromisos de Saldo por Reserva
 CREATE TABLE compromisos_saldo (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cuenta_saldo_id BIGINT NOT NULL,
@@ -84,7 +71,7 @@ CREATE TABLE compromisos_saldo (
         REFERENCES cuentas_saldo(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. Libro Mayor Inmutable de Movimientos de Saldo (Mermaid: MovimientoSaldo)
+-- 5. Libro Mayor Inmutable de Movimientos de Saldo (Mermaid: MovimientoSaldo)
 CREATE TABLE movimientos_saldo (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cuenta_saldo_id BIGINT NOT NULL,
@@ -102,7 +89,7 @@ CREATE TABLE movimientos_saldo (
         REFERENCES abonos(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Constancia de Devolución de Saldo por Retiro
+-- 6. Constancia de Devolución por Retiro de Alumno
 CREATE TABLE constancias_devolucion_saldo (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cuenta_saldo_id BIGINT NOT NULL,
@@ -111,16 +98,16 @@ CREATE TABLE constancias_devolucion_saldo (
     apoderado_id BIGINT NOT NULL,
     monto_clp INT NOT NULL,
     medio VARCHAR(50) NULL,
-    fecha_entrega_dinero DATE NOT NULL,
+    fecha_entrega_dinero DATE NOT NULL DEFAULT (CURRENT_DATE),
     referencia VARCHAR(100) NOT NULL UNIQUE,
     motivo VARCHAR(255) NULL,
     CONSTRAINT fk_constancia_cuenta FOREIGN KEY (cuenta_saldo_id)
-        REFERENCES cuentas_saldo(id) ON DELETE CASCADE,
+        REFERENCES cuentas_saldo(id) ON DELETE RESTRICT,
     CONSTRAINT fk_constancia_movimiento FOREIGN KEY (movimiento_saldo_id)
         REFERENCES movimientos_saldo(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Alerta de Saldo Bajo
+-- 7. Alerta de Saldo Bajo
 CREATE TABLE alertas_saldo_bajo (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cuenta_saldo_id BIGINT NOT NULL UNIQUE,
@@ -131,7 +118,7 @@ CREATE TABLE alertas_saldo_bajo (
         REFERENCES cuentas_saldo(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. Notificación de Saldo Pendiente
+-- 8. Notificación de Saldo Pendiente
 CREATE TABLE notificaciones_saldo_pendientes (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     alerta_saldo_bajo_id BIGINT NOT NULL,
@@ -155,19 +142,17 @@ INSERT INTO cuentas_saldo (id, id_establecimiento, alumno_id, saldo_actual, sald
 
 INSERT INTO abonos (id, id_establecimiento, cuenta_saldo_id, apoderado_id, alumno_id, monto, medio_pago, clave_operacion, estado, fecha_creacion, fecha_resolucion) VALUES
 (1, 1, 1, 3, 4, 25000, 'PASARELA_SIMULADA', 'SEED-TOKEN-ALU4-001', 'APROBADO', NOW(), NOW()),
-(2, 1, 2, 3, 5, 15000, 'TRANSFERENCIA_BANCARIA', 'TRF-SEED-ALU5-002', 'APROBADO', NOW(), NOW()),
+(2, 1, 2, 3, 5, 15000, 'PASARELA_SIMULADA', 'SEED-TOKEN-ALU5-002', 'APROBADO', NOW(), NOW()),
 (3, 2, 3, 8, 9, 30000, 'PASARELA_SIMULADA', 'SEED-TOKEN-ALU9-COLEGIO2', 'APROBADO', NOW(), NOW());
 
 INSERT INTO pagos_webpay_simulado (id, abono_id, referencia_pago, resultado, fecha_resultado) VALUES
 (1, 1, 'SEED-TOKEN-ALU4-001', 'APROBADO', NOW()),
-(2, 3, 'SEED-TOKEN-ALU9-COLEGIO2', 'APROBADO', NOW());
-
-INSERT INTO transferencias_bancarias (id, abono_id, fecha_transferencia, comprobante_url, revisado_por_apoderado_id, fecha_revision, motivo_rechazo) VALUES
-(1, 2, CURDATE(), 'https://edusaldo.cl/comprobantes/seed-trf-alu5.pdf', 3, NOW(), NULL);
+(2, 2, 'SEED-TOKEN-ALU5-002', 'APROBADO', NOW()),
+(3, 3, 'SEED-TOKEN-ALU9-COLEGIO2', 'APROBADO', NOW());
 
 INSERT INTO movimientos_saldo (id, cuenta_saldo_id, abono_id, tipo, monto, saldo_resultante, fecha, referencia_id, descripcion, referencia_unica) VALUES
 (1, 1, 1, 'ABONO', 25000, 25000, NOW(), 1, 'Abono inicial vía pasarela simulada # SEED-TOKEN-ALU4-001', 'SEED-REF-SALDO-1'),
-(2, 2, 2, 'ABONO', 15000, 15000, NOW(), 2, 'Abono inicial por transferencia bancaria validada # TRF-SEED-ALU5-002', 'SEED-REF-SALDO-2'),
+(2, 2, 2, 'ABONO', 15000, 15000, NOW(), 2, 'Abono inicial vía pasarela simulada # SEED-TOKEN-ALU5-002', 'SEED-REF-SALDO-2'),
 (3, 3, 3, 'ABONO', 30000, 30000, NOW(), 3, 'Abono inicial Colegio San Agustín vía pasarela # SEED-TOKEN-ALU9-COLEGIO2', 'SEED-REF-SALDO-3');
 
 INSERT INTO alertas_saldo_bajo (id, cuenta_saldo_id, umbral_aplicado_clp, activa, fecha_ultimo_aviso) VALUES

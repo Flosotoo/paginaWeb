@@ -5,91 +5,100 @@ classDiagram
 direction LR
 
 class Reserva {
-  +Long idReserva
+  +Long id
   +Long idEstablecimiento
+  +String codigo
   +Long alumnoId
-  +Long creadaPorUsuarioId
+  +Long creadaPorId
   +EstadoReserva estado
-  +int totalCLP
-  +DateTime fechaCreacion
-  +Long preparadaPorEncargadoId
-  +DateTime fechaPreparacion
+  +int total
+  +LocalDateTime fechaCreacion
+  +Long preparadaPorId
+  +LocalDateTime fechaPreparacion
   +String motivoCancelacion
-  +calcularTotal() int
-  +marcarLista(encargadoId)
-  +cancelar(actorId,motivo)
-  +marcarEntregada()
+  +Long usuarioCancelacionId
+  +LocalDateTime fechaCancelacion
+  +confirmar()
+  +marcarListaParaRetiro(encargadoId)
+  +cancelar(usuarioId, rol, motivo)
+  +confirmarRetiroYGenerarEntrega(encargadoId) Entrega
 }
 
 class DetalleReserva {
-  +Long idDetalleReserva
+  +Long id
   +Long productoId
+  +String nombreProducto
   +int cantidad
-  +int precioUnitarioCLP
-  +subtotal() int
+  +int precioUnitario
+  +int subtotal
 }
 
 class Entrega {
-  +Long idEntrega
+  +Long id
   +Long idEstablecimiento
+  +String numeroEntrega
+  +Long reservaId
   +Long alumnoId
-  +Long encargadoId
   +OrigenEntrega origen
-  +String claveOperacion
-  +DateTime fecha
-  +int totalCLP
-  +registrarConfirmacion()
+  +int total
+  +Long encargadoId
+  +LocalDateTime fechaEntrega
+  +agregarDetalle(productoId, nombre, cantidad, precio)
 }
 
 class DetalleEntrega {
-  +Long idDetalleEntrega
+  +Long id
   +Long productoId
+  +String nombreProducto
   +int cantidad
-  +int precioUnitarioCLP
-  +subtotal() int
-  +cantidadDevolvible() int
+  +int precioUnitario
+  +int subtotal
 }
 
 class Devolucion {
-  +Long idDevolucion
+  +Long id
   +Long idEstablecimiento
   +Long encargadoId
-  +DateTime fecha
+  +LocalDateTime fechaDevolucion
   +String motivo
-  +String claveOperacion
-  +confirmar()
+  +int totalReintegrado
+  +agregarDetalle(detalleEntrega, cantidad, monto)
 }
 
 class DetalleDevolucion {
-  +Long idDetalleDevolucion
+  +Long id
   +int cantidad
-  +int montoReintegradoCLP
-  +validarLimite() boolean
+  +int montoReintegrado
 }
 
 class OperacionDistribuida {
-  +Long idOperacion
-  +Long idEstablecimiento
-  +String claveIdempotencia
-  +TipoOperacion tipo
-  +EstadoOperacion estado
-  +DateTime actualizadoEn
-  +marcarPasoConfirmado(paso)
-  +marcarPendienteRecuperacion()
+  +Long id
+  +String codigoOperacion
+  +String tipo
+  +Long reservaId
+  +Long entregaId
+  +Long devolucionId
+  +String estado
+  +LocalDateTime fechaCreacion
   +marcarCompletada()
+  +marcarCompensada()
 }
 
 class NotificacionPendiente {
-  +Long idNotificacion
+  +Long id
   +Long idEstablecimiento
+  +Long reservaId
+  +Long entregaId
   +Long alumnoId
-  +TipoNotificacion tipo
-  +String referenciaOperacion
-  +EstadoEnvio estado
+  +String tipo
+  +String destinatario
+  +String asunto
+  +String mensaje
+  +String estado
   +int intentos
-  +DateTime siguienteIntento
+  +LocalDateTime fechaCreacion
   +marcarEnviada()
-  +programarReintento()
+  +incrementarIntento()
 }
 
 Reserva "1" *-- "1..*" DetalleReserva : contiene
@@ -98,18 +107,9 @@ Reserva "0..1" <-- "0..1" Entrega : origina
 Entrega "1" *-- "1..*" DetalleEntrega : contiene
 Entrega "1" <-- "0..*" Devolucion : recibe
 Devolucion "1" *-- "1..*" DetalleDevolucion : contiene
-DetalleEntrega "1" <-- "0..*" DetalleDevolucion : corresponde
 
-Reserva "0..1" <-- "0..*" OperacionDistribuida : seguimiento
-Entrega "0..1" <-- "0..*" OperacionDistribuida : seguimiento
-Devolucion "0..1" <-- "0..*" OperacionDistribuida : seguimiento
-
-Reserva "0..1" <-- "0..*" NotificacionPendiente : genera
-Entrega "0..1" <-- "0..*" NotificacionPendiente : genera
-
-note for Reserva "Estados: PENDIENTE, LISTA_PARA_RETIRO, ENTREGADA y CANCELADA."
-note for Entrega "Puede provenir de reserva o del meson sin reserva previa."
-note for DetalleDevolucion "No se permite devolver mas unidades que las entregadas menos las ya devueltas."
-note for OperacionDistribuida "Guarda avance y recuperacion de operaciones entre saldo e inventario."
-note for NotificacionPendiente "El fallo de correo no revierte una entrega confirmada."
+note for Reserva "Trazabilidad de Preparacion (HU31 CA2): Registra preparadaPorId y fechaPreparacion al pasar a LISTA_PARA_RETIRO."
+note for Reserva "Invariante de Entrega (HU33 CA1): Exige estrictamente que la reserva este en LISTA_PARA_RETIRO antes de confirmar retiro."
+note for Reserva "Politica de Cancelacion: Apoderados/Alumnos solo cancelan en PENDIENTE (HU28); Encargados en PENDIENTE o LISTA_PARA_RETIRO (HU32)."
+note for Entrega "Atencion en Meson (HU34): Permite entrega directa presencial a menores de 12 anos debitando de su saldo disponible."
 ```

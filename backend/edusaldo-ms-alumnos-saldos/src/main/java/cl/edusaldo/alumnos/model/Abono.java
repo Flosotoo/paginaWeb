@@ -1,8 +1,8 @@
 package cl.edusaldo.alumnos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -57,24 +57,12 @@ public class Abono {
     private PagoWebpaySimulado pagoWebpay;
 
     @JsonIgnore
-    @OneToOne(mappedBy = "abono", fetch = FetchType.LAZY)
-    private TransferenciaBancaria transferencia;
-
+    @Hidden
     @Transient
     private String tokenTransaccion;
 
-    @Transient
-    private LocalDate fechaTransferencia;
-
-    @Transient
-    private String comprobanteUrl;
-
-    @Transient
-    private Long revisadoPorApoderadoId;
-
-    @Transient
-    private String motivoRechazo;
-
+    @JsonIgnore
+    @Hidden
     @Transient
     private LocalDateTime expiraEn;
 
@@ -100,27 +88,6 @@ public class Abono {
 
     public static Abono iniciar(Long apoderadoId, Long alumnoId, int monto) {
         return new Abono(apoderadoId, alumnoId, monto);
-    }
-
-    public static Abono registrarTransferencia(CuentaSaldo cuenta, Long apoderadoId, Long alumnoId, int monto,
-                                               LocalDate fechaTransferencia, String comprobanteUrl, String numeroOperacion) {
-        if (monto <= 0) {
-            throw new IllegalArgumentException("El monto de la transferencia debe ser mayor a 0");
-        }
-        Abono a = new Abono(apoderadoId, alumnoId, monto);
-        a.setCuentaSaldo(cuenta);
-        a.setIdEstablecimiento(cuenta != null ? cuenta.getIdEstablecimiento() : 1L);
-        a.setMedioPago(MedioPagoAbono.TRANSFERENCIA_BANCARIA);
-        a.setEstado(EstadoAbono.PENDIENTE_VALIDACION);
-        a.setFechaTransferencia(fechaTransferencia != null ? fechaTransferencia : LocalDate.now());
-        a.setComprobanteUrl(comprobanteUrl);
-        String clave = (numeroOperacion != null && !numeroOperacion.isBlank())
-                ? "TRF-" + numeroOperacion.trim() + "-" + UUID.randomUUID().toString().substring(0, 8)
-                : "TRF-" + UUID.randomUUID().toString().substring(0, 12);
-        a.setClaveOperacion(clave);
-        a.tokenTransaccion = null;
-        a.expiraEn = null;
-        return a;
     }
 
     public boolean verificarToken(String token) {
@@ -154,31 +121,6 @@ public class Abono {
 
     public void aprobar() {
         this.estado = EstadoAbono.APROBADO;
-        this.fechaResolucion = LocalDateTime.now();
-    }
-
-    public void aprobarTransferencia(Long revisorApoderadoId) {
-        if (this.medioPago != MedioPagoAbono.TRANSFERENCIA_BANCARIA) {
-            throw new IllegalStateException("El abono no corresponde a una transferencia bancaria.");
-        }
-        if (this.estado != EstadoAbono.PENDIENTE_VALIDACION && this.estado != EstadoAbono.PENDIENTE) {
-            throw new IllegalStateException("La transferencia ya fue procesada con estado: " + this.estado);
-        }
-        this.estado = EstadoAbono.APROBADO;
-        this.revisadoPorApoderadoId = revisorApoderadoId;
-        this.fechaResolucion = LocalDateTime.now();
-    }
-
-    public void rechazarTransferencia(Long revisorApoderadoId, String motivo) {
-        if (this.medioPago != MedioPagoAbono.TRANSFERENCIA_BANCARIA) {
-            throw new IllegalStateException("El abono no corresponde a una transferencia bancaria.");
-        }
-        if (this.estado != EstadoAbono.PENDIENTE_VALIDACION && this.estado != EstadoAbono.PENDIENTE) {
-            throw new IllegalStateException("La transferencia ya fue procesada con estado: " + this.estado);
-        }
-        this.estado = EstadoAbono.RECHAZADO;
-        this.revisadoPorApoderadoId = revisorApoderadoId;
-        this.motivoRechazo = motivo;
         this.fechaResolucion = LocalDateTime.now();
     }
 
@@ -216,6 +158,8 @@ public class Abono {
     public MedioPagoAbono getMedioPago() { return medioPago; }
     public void setMedioPago(MedioPagoAbono medioPago) { this.medioPago = medioPago; }
 
+    @JsonIgnore
+    @Hidden
     public String getTokenTransaccion() {
         if (tokenTransaccion != null) {
             return tokenTransaccion;
@@ -223,12 +167,14 @@ public class Abono {
         if (pagoWebpay != null && pagoWebpay.getReferenciaPago() != null) {
             return pagoWebpay.getReferenciaPago();
         }
-        return medioPago == MedioPagoAbono.PASARELA_SIMULADA ? claveOperacion : null;
+        return claveOperacion;
     }
 
+    @JsonIgnore
+    @Hidden
     public void setTokenTransaccion(String tokenTransaccion) {
         this.tokenTransaccion = tokenTransaccion;
-        if (tokenTransaccion != null && this.medioPago == MedioPagoAbono.PASARELA_SIMULADA) {
+        if (tokenTransaccion != null) {
             this.claveOperacion = tokenTransaccion;
         }
     }
@@ -239,40 +185,22 @@ public class Abono {
     public EstadoAbono getEstado() { return estado; }
     public void setEstado(EstadoAbono estado) { this.estado = estado; }
 
-    public LocalDate getFechaTransferencia() {
-        if (fechaTransferencia != null) return fechaTransferencia;
-        return transferencia != null ? transferencia.getFechaTransferencia() : null;
-    }
-    public void setFechaTransferencia(LocalDate fechaTransferencia) { this.fechaTransferencia = fechaTransferencia; }
-
-    public String getComprobanteUrl() {
-        if (comprobanteUrl != null) return comprobanteUrl;
-        return transferencia != null ? transferencia.getComprobanteUrl() : null;
-    }
-    public void setComprobanteUrl(String comprobanteUrl) { this.comprobanteUrl = comprobanteUrl; }
-
-    public Long getRevisadoPorApoderadoId() {
-        if (revisadoPorApoderadoId != null) return revisadoPorApoderadoId;
-        return transferencia != null ? transferencia.getRevisadoPorApoderadoId() : null;
-    }
-    public void setRevisadoPorApoderadoId(Long revisadoPorApoderadoId) { this.revisadoPorApoderadoId = revisadoPorApoderadoId; }
-
-    public String getMotivoRechazo() {
-        if (motivoRechazo != null) return motivoRechazo;
-        return transferencia != null ? transferencia.getMotivoRechazo() : null;
-    }
-    public void setMotivoRechazo(String motivoRechazo) { this.motivoRechazo = motivoRechazo; }
-
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
+    @JsonIgnore
+    @Hidden
     public LocalDateTime getExpiraEn() {
         if (expiraEn != null) return expiraEn;
-        return medioPago == MedioPagoAbono.PASARELA_SIMULADA && fechaCreacion != null
-                ? fechaCreacion.plusMinutes(15) : null;
+        return fechaCreacion != null ? fechaCreacion.plusMinutes(15) : null;
     }
+    @JsonIgnore
+    @Hidden
     public void setExpiraEn(LocalDateTime expiraEn) { this.expiraEn = expiraEn; }
 
     public LocalDateTime getFechaResolucion() { return fechaResolucion; }
     public void setFechaResolucion(LocalDateTime fechaResolucion) { this.fechaResolucion = fechaResolucion; }
+
+    public PagoWebpaySimulado getPagoWebpay() { return pagoWebpay; }
+    public void setPagoWebpay(PagoWebpaySimulado pagoWebpay) { this.pagoWebpay = pagoWebpay; }
 }

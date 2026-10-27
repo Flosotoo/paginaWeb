@@ -27,8 +27,6 @@ public class SaldoService {
     @Autowired(required = false)
     private PagoWebpaySimuladoRepository pagoWebpaySimuladoRepository;
 
-    @Autowired(required = false)
-    private TransferenciaBancariaRepository transferenciaBancariaRepository;
 
     @Autowired(required = false)
     private CompromisoSaldoRepository compromisoSaldoRepository;
@@ -68,6 +66,9 @@ public class SaldoService {
         if (dto.getMonto() <= 0) {
             throw new IllegalArgumentException("El monto a abonar debe ser mayor a 0");
         }
+        if (usuariosSaldosClient != null) {
+            usuariosSaldosClient.validarAlumnoYVinculo(dto.getAlumnoId(), dto.getApoderadoId());
+        }
         CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
 
         Abono abono = Abono.iniciar(dto.getApoderadoId(), dto.getAlumnoId(), dto.getMonto());
@@ -79,72 +80,6 @@ public class SaldoService {
                     abono.getId(), abono.getTokenTransaccion(), "PENDIENTE"));
         }
         return new IniciarAbonoResponseDTO(abono);
-    }
-
-    @Transactional
-    public Abono registrarTransferencia(RegistrarTransferenciaDTO dto) {
-        if (dto.getMonto() <= 0) {
-            throw new IllegalArgumentException("El monto de la transferencia debe ser mayor a 0");
-        }
-        CuentaSaldo cuenta = obtenerCuenta(dto.getAlumnoId());
-        Abono abono = Abono.registrarTransferencia(
-                cuenta,
-                dto.getApoderadoId(),
-                dto.getAlumnoId(),
-                dto.getMonto(),
-                dto.getFechaTransferencia(),
-                dto.getComprobanteUrl(),
-                dto.getNumeroOperacion()
-        );
-        abono = abonoRepository.save(abono);
-        if (transferenciaBancariaRepository != null && abono.getId() != null) {
-            transferenciaBancariaRepository.save(new TransferenciaBancaria(
-                    abono.getId(), abono.getFechaTransferencia(), abono.getComprobanteUrl()));
-        }
-        return abono;
-    }
-
-    @Transactional
-    public ConfirmarAbonoResponseDTO resolverTransferencia(Long abonoId, ResolverTransferenciaDTO dto) {
-        Abono abono = abonoRepository.findById(abonoId)
-                .orElseThrow(() -> new IllegalArgumentException("Abono por transferencia no encontrado con ID: " + abonoId));
-
-        if (usuariosSaldosClient != null) {
-            usuariosSaldosClient.validarAutorizacionCentroPadres(dto.getRevisorApoderadoId());
-        }
-
-        CuentaSaldo cuenta = obtenerCuenta(abono.getAlumnoId());
-        abono.setCuentaSaldo(cuenta);
-
-        if (Boolean.TRUE.equals(dto.getAprobar())) {
-            cuenta.bloquearTemporalmente(30);
-            abono.aprobarTransferencia(dto.getRevisorApoderadoId());
-            MovimientoSaldo mov = cuenta.acreditarMontoAbonado(abono);
-            cuenta.desbloquear();
-
-            cuenta = cuentaSaldoRepository.save(cuenta);
-            abono = abonoRepository.save(abono);
-            mov = movimientoSaldoRepository.save(mov);
-            if (transferenciaBancariaRepository != null && abono.getId() != null) {
-                transferenciaBancariaRepository.findByAbonoId(abono.getId()).ifPresent(t -> {
-                    t.aprobar(dto.getRevisorApoderadoId());
-                    transferenciaBancariaRepository.save(t);
-                });
-            }
-            return new ConfirmarAbonoResponseDTO(abono, cuenta, mov);
-        } else {
-            String motivo = (dto.getMotivoRechazo() != null && !dto.getMotivoRechazo().isBlank())
-                    ? dto.getMotivoRechazo() : "Rechazado en conciliación bancaria del Centro de Padres";
-            abono.rechazarTransferencia(dto.getRevisorApoderadoId(), motivo);
-            abono = abonoRepository.save(abono);
-            if (transferenciaBancariaRepository != null && abono.getId() != null) {
-                transferenciaBancariaRepository.findByAbonoId(abono.getId()).ifPresent(t -> {
-                    t.rechazar(dto.getRevisorApoderadoId(), motivo);
-                    transferenciaBancariaRepository.save(t);
-                });
-            }
-            return new ConfirmarAbonoResponseDTO(abono, cuenta, null);
-        }
     }
 
     @Transactional(readOnly = true)
@@ -193,6 +128,7 @@ public class SaldoService {
         cuenta = cuentaSaldoRepository.save(cuenta);
         abono = abonoRepository.save(abono);
         mov = movimientoSaldoRepository.save(mov);
+        rearmarAlertaSaldoBajoSiAplica(cuenta);
         if (pagoWebpaySimuladoRepository != null && abono.getId() != null) {
             pagoWebpaySimuladoRepository.findByAbonoId(abono.getId()).ifPresent(p -> {
                 p.registrarResultado("APROBADO");
@@ -272,15 +208,19 @@ public class SaldoService {
 
         cuenta = cuentaSaldoRepository.save(cuenta);
         mov = movimientoSaldoRepository.save(mov);
-        if (alertaSaldoBajo && alertaSaldoBajoRepository != null && cuenta.getId() != null) {
+        if (alertaSaldoBajoRepository != null && cuenta.getId() != null) {
             Long cId = cuenta.getId();
-            AlertaSaldoBajo alerta = alertaSaldoBajoRepository.findByCuentaSaldoId(cId)
-                    .orElseGet(() -> new AlertaSaldoBajo(cId, 3000, true));
-            alerta.evaluar(cuenta.getSaldoDisponible());
-            alerta = alertaSaldoBajoRepository.save(alerta);
-            if (notificacionSaldoPendienteRepository != null && alerta.getId() != null) {
-                notificacionSaldoPendienteRepository.save(new NotificacionSaldoPendiente(
-                        alerta.getId(), cuenta.getAlumnoId(), "A03-SALDO-BAJO-" + UUID.randomUUID().toString().substring(0, 8)));
+            java.util.Optional<AlertaSaldoBajo> alertaOpt = alertaSaldoBajoRepository.findByCuentaSaldoId(cId);
+            boolean estabaActiva = alertaOpt.map(AlertaSaldoBajo::isActiva).orElse(false);
+
+            if (cuenta.getSaldoDisponible() <= 3000) {
+                AlertaSaldoBajo alerta = alertaOpt.orElseGet(() -> new AlertaSaldoBajo(cId, 3000, false));
+                alerta.evaluar(cuenta.getSaldoDisponible());
+                alerta = alertaSaldoBajoRepository.save(alerta);
+                if (!estabaActiva && notificacionSaldoPendienteRepository != null && alerta.getId() != null) {
+                    notificacionSaldoPendienteRepository.save(new NotificacionSaldoPendiente(
+                            alerta.getId(), cuenta.getAlumnoId(), "A03-SALDO-BAJO-" + UUID.randomUUID().toString().substring(0, 8)));
+                }
             }
         }
         return new CobrarSaldoResponseDTO(cuenta, dto.getMonto(), alertaSaldoBajo, mov);
@@ -302,6 +242,7 @@ public class SaldoService {
 
         cuenta = cuentaSaldoRepository.save(cuenta);
         mov = movimientoSaldoRepository.save(mov);
+        rearmarAlertaSaldoBajoSiAplica(cuenta);
         return new MovimientoSaldoDTO(mov);
     }
 
@@ -413,5 +354,15 @@ public class SaldoService {
         );
         mov = movimientoSaldoRepository.save(mov);
         return new MovimientoSaldoDTO(mov);
+    }
+    private void rearmarAlertaSaldoBajoSiAplica(CuentaSaldo cuenta) {
+        if (alertaSaldoBajoRepository != null && cuenta != null && cuenta.getId() != null && cuenta.getSaldoDisponible() > 3000) {
+            alertaSaldoBajoRepository.findByCuentaSaldoId(cuenta.getId()).ifPresent(alerta -> {
+                if (alerta.isActiva()) {
+                    alerta.reactivar();
+                    alertaSaldoBajoRepository.save(alerta);
+                }
+            });
+        }
     }
 }

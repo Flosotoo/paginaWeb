@@ -1,6 +1,8 @@
 package cl.edusaldo.alumnos.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -17,8 +19,11 @@ public class LiquidarSaldoDTO {
     private String medio;
 
     @NotBlank(message = "El comprobante es obligatorio")
+    @JsonAlias({"comprobanteDevolucionUrl"})
     private String comprobante;
 
+    @JsonIgnore
+    @Hidden
     private String comprobanteDevolucionUrl;
 
     private Long administradorId = 1L;
@@ -45,10 +50,14 @@ public class LiquidarSaldoDTO {
     public String getMedio() { return medio; }
     public void setMedio(String medio) { this.medio = medio; }
 
-    public String getComprobante() { return comprobante; }
+    public String getComprobante() { return comprobante != null ? comprobante : comprobanteDevolucionUrl; }
     public void setComprobante(String comprobante) { this.comprobante = comprobante; }
 
-    public String getComprobanteDevolucionUrl() { return comprobanteDevolucionUrl; }
+    @JsonIgnore
+    @Hidden
+    public String getComprobanteDevolucionUrl() { return comprobanteDevolucionUrl != null ? comprobanteDevolucionUrl : comprobante; }
+    @JsonIgnore
+    @Hidden
     public void setComprobanteDevolucionUrl(String comprobanteDevolucionUrl) { this.comprobanteDevolucionUrl = comprobanteDevolucionUrl; }
 
     public Long getAdministradorId() { return administradorId != null ? administradorId : 1L; }

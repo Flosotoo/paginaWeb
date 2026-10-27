@@ -29,8 +29,6 @@ public class UsuarioService {
     @Autowired(required = false)
     private AdscripcionRepository adscripcionRepository;
 
-    @Autowired(required = false)
-    private AutorizacionCentroPadresRepository autorizacionCentroPadresRepository;
 
     @Autowired(required = false)
     private ImportacionNominaRepository importacionNominaRepository;
@@ -125,13 +123,7 @@ public class UsuarioService {
         switch (rol) {
             case ADMINISTRADOR -> u = new Administrador(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal);
             case ENCARGADO -> u = new Encargado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal);
-            case APODERADO -> {
-                Apoderado ap = new Apoderado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getTelefono());
-                if (Boolean.TRUE.equals(dto.getAutorizadoCentroPadres())) {
-                    ap.setAutorizadoCentroPadres(true);
-                }
-                u = ap;
-            }
+            case APODERADO -> u = new Apoderado(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getTelefono());
             case ALUMNO -> {
                 Alumno al = new Alumno(dto.getRut(), dto.getPrimerNombre(), dto.getPrimerApellido(), dto.getCorreo(), passwordTemporal, dto.getFechaNacimiento(), dto.getCurso());
                 al.setEstado(al.calcularEdad() >= 12 ? EstadoCuenta.PRIMER_ACCESO : EstadoCuenta.ACTIVA);
@@ -147,11 +139,6 @@ public class UsuarioService {
         Usuario guardado = usuarioRepository.save(u);
         if (adscripcionRepository != null && guardado.getId() != null) {
             adscripcionRepository.save(new Adscripcion(guardado.getIdEstablecimiento(), guardado.getId()));
-        }
-        if (guardado instanceof Apoderado ap && Boolean.TRUE.equals(dto.getAutorizadoCentroPadres())
-                && autorizacionCentroPadresRepository != null && ap.getId() != null) {
-            autorizacionCentroPadresRepository.save(new AutorizacionCentroPadres(
-                    ap.getIdEstablecimiento(), ap.getId(), 1L, true));
         }
         auditoriaService.registrar(null, "CREAR_USUARIO", u.getClass().getSimpleName(), guardado.getId().toString(),
                 "Usuario creado: " + guardado.getRut() + " (" + guardado.getRol() + ")");
@@ -284,12 +271,16 @@ public class UsuarioService {
         ApoderadoAlumno rel = apoderadoAlumnoRepository.findByIdApoderadoIdAndIdAlumnoId(apoderadoId, alumnoId)
                 .orElseThrow(() -> new IllegalArgumentException("No existe asociación entre el apoderado y el alumno"));
 
-        if (alumno.getEstado() == EstadoCuenta.ACTIVA && apoderadoAlumnoRepository.countByIdAlumnoId(alumnoId) <= 1) {
+        long countActivos = apoderadoAlumnoRepository.countByIdAlumnoIdAndActivoTrue(alumnoId);
+        if (countActivos == 0) {
+            countActivos = apoderadoAlumnoRepository.countByIdAlumnoId(alumnoId);
+        }
+        if (alumno.getEstado() == EstadoCuenta.ACTIVA && countActivos <= 1) {
             throw new IllegalStateException("No es posible desvincular al único apoderado de un alumno activo.");
         }
 
         rel.desvincular(motivo);
-        apoderadoAlumnoRepository.delete(rel);
+        apoderadoAlumnoRepository.save(rel);
         alumno.desvincularApoderado(apoderado);
 
         auditoriaService.registrar(
@@ -299,32 +290,6 @@ public class UsuarioService {
                 apoderadoId + "-" + alumnoId,
                 "Motivo: " + (motivo != null ? motivo : "Sin motivo informado")
         );
-    }
-
-    @Transactional
-    public Apoderado cambiarAutorizacionCentroPadres(Long apoderadoId, boolean autorizado, Long adminId) {
-        Apoderado apoderado = apoderadoRepository.findById(apoderadoId)
-                .orElseThrow(() -> new IllegalArgumentException("Apoderado no encontrado con ID: " + apoderadoId));
-
-        apoderado.cambiarAutorizacionCentroPadres(autorizado);
-        Apoderado guardado = apoderadoRepository.save(apoderado);
-        if (autorizacionCentroPadresRepository != null && guardado.getId() != null) {
-            Long admId = adminId != null ? adminId : 1L;
-            AutorizacionCentroPadres aut = autorizacionCentroPadresRepository.findByApoderadoId(guardado.getId())
-                    .orElseGet(() -> new AutorizacionCentroPadres(guardado.getIdEstablecimiento(), guardado.getId(), admId, autorizado));
-            if (autorizado) {
-                aut.otorgar(admId);
-            } else {
-                aut.revocar();
-            }
-            autorizacionCentroPadresRepository.save(aut);
-        }
-
-        auditoriaService.registrar(adminId != null ? adminId : 1L,
-                autorizado ? "HABILITAR_CENTRO_PADRES" : "REVOCAR_CENTRO_PADRES",
-                "Apoderado", apoderadoId.toString(),
-                "Autorización Centro de Padres cambiada a: " + autorizado);
-        return guardado;
     }
 
     @Transactional
@@ -437,22 +402,44 @@ public class UsuarioService {
         auditoriaService.registrar(u.getId(), "CAMBIO_PASSWORD_AUTH", "Usuario", u.getId().toString(), "Cambio exitoso de contraseña");
     }
 
+    private String hashSha256(String input) {
+        if (input == null) return null;
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] bytes = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error calculando hash SHA-256", e);
+        }
+    }
+
     @Transactional
     public String solicitarRecuperacionPassword(String correo) {
         Usuario u = usuarioRepository.findByCorreo(correo)
                 .orElseThrow(() -> new IllegalArgumentException("No existe cuenta asociada al correo: " + correo));
 
         String token = UUID.randomUUID().toString();
-        TokenRecuperacion tr = new TokenRecuperacion(u.getId(), token, LocalDateTime.now().plusHours(2));
-        tokenRecuperacionRepository.save(tr);
+        String hashToken = hashSha256(token);
+        TokenRecuperacion tr = new TokenRecuperacion(u.getId(), hashToken, LocalDateTime.now().plusHours(2));
+        tr = tokenRecuperacionRepository.save(tr);
 
-        auditoriaService.registrar(u.getId(), "SOLICITUD_RECUPERACION_PASSWORD", "TokenRecuperacion", token, "Token de recuperación generado");
+        auditoriaService.registrar(u.getId(), "SOLICITUD_RECUPERACION_PASSWORD", "TokenRecuperacion",
+                tr.getId() != null ? tr.getId().toString() : "0", "Solicitud de recuperación generada");
         return token;
     }
 
     @Transactional
     public void confirmarRecuperacionPassword(ConfirmarRecuperacionDTO dto) {
-        TokenRecuperacion tr = tokenRecuperacionRepository.findByToken(dto.getToken())
+        String tokenRaw = dto.getToken();
+        String hashToken = hashSha256(tokenRaw);
+        TokenRecuperacion tr = tokenRecuperacionRepository.findByHashToken(hashToken)
+                .or(() -> tokenRecuperacionRepository.findByToken(hashToken))
+                .or(() -> tokenRecuperacionRepository.findByHashToken(tokenRaw))
+                .or(() -> tokenRecuperacionRepository.findByToken(tokenRaw))
                 .orElseThrow(() -> new IllegalArgumentException("Token de recuperación no válido o inexistente"));
 
         if (!tr.estaVigente()) {
@@ -528,24 +515,12 @@ public class UsuarioService {
     public Usuario obtenerPorId(Long id) {
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
-        if (u instanceof Apoderado ap && autorizacionCentroPadresRepository != null && ap.getId() != null) {
-            autorizacionCentroPadresRepository.findByApoderadoId(ap.getId())
-                    .ifPresent(aut -> ap.setAutorizadoCentroPadres(aut.isVigente()));
-        }
         return u;
     }
 
     @Transactional(readOnly = true)
     public List<Usuario> listarTodos() {
         List<Usuario> list = usuarioRepository.findAll();
-        if (autorizacionCentroPadresRepository != null) {
-            for (Usuario u : list) {
-                if (u instanceof Apoderado ap && ap.getId() != null) {
-                    autorizacionCentroPadresRepository.findByApoderadoId(ap.getId())
-                            .ifPresent(aut -> ap.setAutorizadoCentroPadres(aut.isVigente()));
-                }
-            }
-        }
         return list;
     }
 }

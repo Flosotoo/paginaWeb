@@ -32,6 +32,9 @@ public class UsuarioController {
     @PostMapping
     @Operation(summary = "Crear nuevo usuario de personal o apoderado con clave temporal")
     public ResponseEntity<UsuarioResponseDTO> crear(@Valid @RequestBody CrearUsuarioDTO dto) {
+        if (dto.getRol() == cl.edusaldo.auth.model.Rol.ADMINISTRADOR) {
+            throw new IllegalArgumentException("Por política de seguridad (HU02 CA1), las cuentas de Administrador son creadas exclusivamente por EduSaldo y no mediante este registro.");
+        }
         Usuario u = usuarioService.crearUsuario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UsuarioResponseDTO(u));
     }
@@ -76,17 +79,6 @@ public class UsuarioController {
     public ResponseEntity<List<AlumnoResponseDTO>> obtenerAlumnosDeApoderado(@PathVariable Long id) {
         List<AlumnoResponseDTO> list = usuarioService.obtenerAlumnosDeApoderado(id);
         return ResponseEntity.ok(list);
-    }
-
-    @PutMapping("/apoderados/{id}/autorizacion-centro-padres")
-    @Operation(summary = "Habilitar o revocar autorización del Centro de Padres para validar transferencias")
-    public ResponseEntity<UsuarioResponseDTO> cambiarAutorizacionCentroPadres(
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> payload,
-            @RequestParam(required = false, defaultValue = "1") Long adminId) {
-        boolean autorizado = payload != null && Boolean.parseBoolean(String.valueOf(payload.getOrDefault("autorizado", "false")));
-        Apoderado ap = usuarioService.cambiarAutorizacionCentroPadres(id, autorizado, adminId);
-        return ResponseEntity.ok(new UsuarioResponseDTO(ap));
     }
 
     @DeleteMapping("/alumnos/{alumnoId}/apoderados/{apoderadoId}")

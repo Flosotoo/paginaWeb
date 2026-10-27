@@ -5,118 +5,134 @@ classDiagram
 direction LR
 
 class Categoria {
-  +Long idCategoria
+  +Long id
   +Long idEstablecimiento
   +String nombre
-  +Boolean activa
-  +modificar()
+  +String descripcion
+  +EstadoRegistro estado
+  +LocalDateTime fechaCreacion
+  +modificar(nombre, descripcion)
   +inactivar()
+  +activar()
 }
 
 class Producto {
-  +Long idProducto
+  +Long id
   +Long idEstablecimiento
   +String sku
   +String nombre
   +String descripcion
   +String cursoNivel
-  +int precioCLP
+  +int precio
   +int stockFisico
   +int stockReservado
-  +int umbralCritico
+  +int stockCritico
   +Long version
-  +Boolean activo
+  +EstadoRegistro estado
+  +LocalDateTime fechaCreacion
   +disponible() int
   +esCritico() boolean
   +cambiarPrecio(nuevoPrecio)
+  +retenerStock(cantidad, reservaId, usuarioId) MovimientoInventario
+  +liberarStock(cantidad, reservaId, usuarioId) MovimientoInventario
+  +descontarStockReservado(cantidad, referenciaId, usuarioId) MovimientoInventario
+  +ingresarStockManual(cantidad, ingresoId, usuarioId) MovimientoInventario
   +inactivar()
+  +activar()
 }
 
 class IngresoStock {
-  +Long idIngreso
+  +Long id
   +Long idEstablecimiento
   +Long encargadoId
-  +DateTime fecha
+  +LocalDateTime fechaIngreso
   +String referenciaUnica
-  +registrar()
+  +String observacion
+  +agregarDetalle(producto, cantidad)
 }
 
-class DetalleIngreso {
-  +Long idDetalle
+class DetalleIngresoStock {
+  +Long id
   +int cantidad
-  +validarCantidad() boolean
 }
 
 class ReservaStock {
-  +Long idReservaStock
+  +Long id
   +Long idEstablecimiento
   +Long reservaId
-  +EstadoReservaStock estado
-  +comprometer()
+  +Long encargadoId
+  +LocalDateTime fechaReserva
+  +EstadoSolicitud estado
+  +agregarDetalle(producto, cantidad)
   +liberar()
   +consumir()
 }
 
 class DetalleReservaStock {
-  +Long idDetalle
+  +Long id
   +int cantidad
 }
 
-class InventarioFisico {
-  +Long idInventario
+class ConteoFisico {
+  +Long id
   +Long idEstablecimiento
   +Long encargadoId
-  +DateTime fecha
-  +finalizarConteo()
+  +LocalDateTime fechaConteo
+  +String observaciones
+  +agregarDetalle(producto, stockContado)
 }
 
-class DetalleConteo {
-  +Long idDetalle
-  +int cantidadContada
-  +int cantidadSistema
-  +diferencia() int
+class DetalleConteoFisico {
+  +Long id
+  +int stockSistema
+  +int stockContado
+  +int diferencia
+  +calcularDiferencia() int
 }
 
 class SolicitudAjusteStock {
-  +Long idSolicitud
+  +Long id
   +Long idEstablecimiento
   +Long encargadoId
   +Long administradorId
-  +int variacion
+  +int cantidad
   +String motivo
-  +EstadoAjuste estado
-  +solicitar()
+  +EstadoSolicitud estado
+  +LocalDateTime fechaSolicitud
+  +LocalDateTime fechaResolucion
+  +String motivoRechazo
   +aprobar(adminId)
-  +rechazar(adminId,motivo)
+  +rechazar(adminId, motivo)
 }
 
 class MovimientoInventario {
-  +Long idMovimiento
-  +TipoMovimientoStock tipo
-  +int variacionFisica
-  +int variacionReservada
-  +Long responsableId
-  +String referenciaUnica
-  +DateTime fecha
+  +Long id
+  +TipoMovimientoInventario tipo
+  +int cantidad
+  +int stockAnterior
+  +int stockNuevo
+  +String motivo
+  +Long referenciaId
+  +Long usuarioId
+  +LocalDateTime fecha
 }
 
 Categoria "1" <-- "0..*" Producto : clasifica
 
-IngresoStock "1" *-- "1..*" DetalleIngreso : contiene
-Producto "1" <-- "0..*" DetalleIngreso : corresponde
+IngresoStock "1" *-- "1..*" DetalleIngresoStock : contiene
+Producto "1" <-- "0..*" DetalleIngresoStock : corresponde
 
 ReservaStock "1" *-- "1..*" DetalleReservaStock : contiene
 Producto "1" <-- "0..*" DetalleReservaStock : compromete
 
-InventarioFisico "1" *-- "1..*" DetalleConteo : contiene
-Producto "1" <-- "0..*" DetalleConteo : contabiliza
+ConteoFisico "1" *-- "1..*" DetalleConteoFisico : contiene
+Producto "1" <-- "0..*" DetalleConteoFisico : contabiliza
 
 Producto "1" <-- "0..*" SolicitudAjusteStock : recibe
 Producto "1" -- "0..*" MovimientoInventario : historial
-SolicitudAjusteStock "1" --> "0..1" MovimientoInventario : ajusteAprobado
 
-note for Producto "Stock disponible = stock fisico - stock reservado. SKU unico por colegio."
-note for ReservaStock "La reserva compromete stock, pero no disminuye el stock fisico."
-note for SolicitudAjusteStock "El Encargado solicita y el Administrador aprueba o rechaza."
-note for MovimientoInventario "Referencia unica evita movimientos duplicados por reintentos."
+note for Producto "Invariante de Stock: stockDisponible = stockFisico - stockReservado >= 0."
+note for ConteoFisico "El conteo registra diferencias fisicas (HU43) sin mutar automaticamente el stock fisico."
+note for SolicitudAjusteStock "Segregacion de funciones (HU44 CA3): El Encargado solicita y el Administrador aprueba/rechaza (prohibida auto-aprobacion)."
+note for MovimientoInventario "Kardex inmutable. Trazabilidad completa de ingresos, salidas, retenciones y ajustes."
 ```

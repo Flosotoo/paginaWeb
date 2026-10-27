@@ -2,18 +2,26 @@ package cl.edusaldo.alumnos.dto;
 
 import cl.edusaldo.alumnos.model.Abono;
 import cl.edusaldo.alumnos.model.EstadoAbono;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.Hidden;
 import java.time.LocalDateTime;
 
 public class IniciarAbonoResponseDTO {
     private Long id;
+    @JsonIgnore
+    @Hidden
     private Long abonoId;
     private String token;
+    @JsonIgnore
+    @Hidden
     private String tokenTransaccion;
     private Long alumnoId;
     private Long apoderadoId;
     private int monto;
     private EstadoAbono estado;
     private LocalDateTime fechaCreacion;
+    @JsonIgnore
+    @Hidden
     private LocalDateTime expiraEn;
 
     public IniciarAbonoResponseDTO() {}
@@ -34,13 +42,21 @@ public class IniciarAbonoResponseDTO {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    @JsonIgnore
+    @Hidden
     public Long getAbonoId() { return abonoId; }
+    @JsonIgnore
+    @Hidden
     public void setAbonoId(Long abonoId) { this.abonoId = abonoId; }
 
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
 
+    @JsonIgnore
+    @Hidden
     public String getTokenTransaccion() { return tokenTransaccion; }
+    @JsonIgnore
+    @Hidden
     public void setTokenTransaccion(String tokenTransaccion) { this.tokenTransaccion = tokenTransaccion; }
 
     public Long getAlumnoId() { return alumnoId; }
@@ -58,6 +74,10 @@ public class IniciarAbonoResponseDTO {
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
+    @JsonIgnore
+    @Hidden
     public LocalDateTime getExpiraEn() { return expiraEn; }
+    @JsonIgnore
+    @Hidden
     public void setExpiraEn(LocalDateTime expiraEn) { this.expiraEn = expiraEn; }
 }

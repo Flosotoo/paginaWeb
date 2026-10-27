@@ -24,6 +24,7 @@ EduSaldo/
 │   ├── 2_arrancar_servicios.py            <- Arranque concurrente de los 5 servicios (con --stop)
 │   ├── 3_arrancar_frontend.py             <- Servidor de desarrollo Vite en http://localhost:5173
 │   ├── 4_pruebas_http_automaticas.py      <- Batería E2E de 23 pruebas de integración en vivo
+│   ├── 5_pruebas_casos_borde.py           <- Batería de resiliencia y casos de borde (15 controles)
 │   └── pruebas_postman_coleccion.json     <- Colección Postman preconfigurada
 │
 ├── backend/                               <- Ecosistema Backend en Spring Boot (Ver backend/README.md)
@@ -105,6 +106,10 @@ Toda la operativa de pruebas está centralizada en [`scripts/`](scripts/):
 - **Batería Automatizada E2E (23 casos):**
   ```bash
   python scripts/4_pruebas_http_automaticas.py
+  ```
+- **Batería de Resiliencia / Casos de Borde (15 controles):**
+  ```bash
+  python scripts/5_pruebas_casos_borde.py
   ```
 - **Colección Postman:** Importa [`scripts/pruebas_postman_coleccion.json`](scripts/pruebas_postman_coleccion.json) directamente en Postman.
 - **Consolas Swagger UI:** Consulta [`backend/README.md`](backend/README.md#flujos-principales-para-probar-en-swagger) para ver ejemplos de payloads interactivos listos para copiar y pegar.

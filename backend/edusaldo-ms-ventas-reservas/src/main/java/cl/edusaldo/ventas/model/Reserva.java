@@ -147,7 +147,7 @@ public class Reserva {
      * HU33: Retiro de materiales y generación formal de Entrega por concepto.
      */
     public Entrega confirmarRetiroYGenerarEntrega(Long encargadoId) {
-        if (this.estado != EstadoReserva.LISTA_PARA_RETIRO && this.estado != EstadoReserva.PENDIENTE) {
+        if (this.estado != EstadoReserva.LISTA_PARA_RETIRO) {
             throw new IllegalStateException("La reserva no está lista para entrega (estado actual: " + this.estado + ").");
         }
         this.estado = EstadoReserva.ENTREGADA;

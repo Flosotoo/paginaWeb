@@ -15,4 +15,5 @@ public interface ApoderadoAlumnoRepository extends JpaRepository<ApoderadoAlumno
     Optional<ApoderadoAlumno> findByIdApoderadoIdAndIdAlumnoId(Long apoderadoId, Long alumnoId);
     void deleteByIdApoderadoIdAndIdAlumnoId(Long apoderadoId, Long alumnoId);
     long countByIdAlumnoId(Long alumnoId);
+    long countByIdAlumnoIdAndActivoTrue(Long alumnoId);
 }
