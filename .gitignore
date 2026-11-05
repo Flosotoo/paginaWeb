@@ -34,6 +34,10 @@ logs/
 *.log
 services_pids.json
 
+# === Python ===
+__pycache__/
+*.py[cod]
+
 # === Frontend / Node & React ===
 node_modules/
 **/node_modules/
