@@ -32,7 +32,7 @@ node_modules = os.path.join(FRONTEND_DIR, "node_modules")
 if not os.path.exists(node_modules):
     print("[1/2] Carpeta node_modules no encontrada. Instalando dependencias con npm install...")
     try:
-        subprocess.run(["npm", "install"], check=True, shell=True)
+        subprocess.run("npm install" if os.name == "nt" else ["npm", "install"], check=True, shell=os.name == "nt")
     except subprocess.CalledProcessError as e:
         print(f"[ERROR] Error al instalar dependencias: {e}")
         sys.exit(1)
@@ -42,7 +42,7 @@ else:
 # 2. Iniciar servidor Vite
 print("[2/2] Iniciando servidor de desarrollo en http://localhost:5173...")
 try:
-    subprocess.run(["npm", "run", "dev"], check=True, shell=True)
+    subprocess.run("npm run dev" if os.name == "nt" else ["npm", "run", "dev"], check=True, shell=os.name == "nt")
 except KeyboardInterrupt:
     print("\n[INFO] Servidor frontend detenido por el usuario.")
 except subprocess.CalledProcessError as e:

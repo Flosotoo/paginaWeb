@@ -15,6 +15,7 @@ import json
 import os
 import platform
 import signal
+import secrets
 import subprocess
 import sys
 import time
@@ -195,6 +196,22 @@ def main():
     )
     print(f"Directorio backend detectado: {BACKEND_DIR}\n")
 
+    jars = {}
+    for name, _, _ in services:
+        target_dir = os.path.join(BACKEND_DIR, name, "target")
+        candidates = sorted(f for f in os.listdir(target_dir) if f.endswith(".jar") and not f.endswith(".original")) if os.path.isdir(target_dir) else []
+        if candidates:
+            jars[name] = os.path.join(target_dir, candidates[0])
+        else:
+            print(f"[ERROR] No se encontro el archivo JAR en {target_dir}. Compila primero.")
+    if len(jars) != len(services):
+        print("[ERROR] Arranque cancelado: faltan archivos JAR.")
+        return 1
+
+    if os.environ.get("EDUSALDO_INTERNAL_KEY") and len(os.environ["EDUSALDO_INTERNAL_KEY"]) < 32:
+        print("[ERROR] EDUSALDO_INTERNAL_KEY debe tener al menos 32 caracteres.")
+        return 1
+
     # 1. Comprobar y liberar puertos ocupados previamente
     print("[1/3] Verificando estado inicial de puertos y liberando conflictos...")
     pre_cleaned = stop_all_services(quiet=True)
@@ -208,24 +225,14 @@ def main():
     logs_dir = os.path.join(BACKEND_DIR, "logs")
     os.makedirs(logs_dir, exist_ok=True)
 
+    os.environ.setdefault("EDUSALDO_INTERNAL_KEY", secrets.token_urlsafe(48))
+
     spawned_processes = []
     log_handles = []
 
     for name, port, tag in services:
         svc_dir = os.path.join(BACKEND_DIR, name)
-        jar_file = None
-        target_dir = os.path.join(svc_dir, "target")
-        if os.path.exists(target_dir):
-            for f in os.listdir(target_dir):
-                if f.endswith(".jar") and not f.endswith(".original"):
-                    jar_file = os.path.join(target_dir, f)
-                    break
-
-        if not jar_file or not os.path.exists(jar_file):
-            print(
-                f"[ERROR] No se encontro el archivo JAR en {target_dir}. Compila primero."
-            )
-            continue
+        jar_file = jars[name]
 
         log_path = os.path.join(logs_dir, f"{name}.log")
         log_fp = open(log_path, "w", encoding="utf-8")
@@ -282,27 +289,30 @@ def main():
             "  \033[91m[ALERTA] Algunos servicios aun no responden en sus puertos:\033[0m",
             ports_to_check,
         )
-        if detached_mode:
-            sys.exit(1)
+        print("  [ERROR] Arranque incompleto; revisa los logs en backend/logs.")
+        stop_all_services(quiet=False)
+        for fp in log_handles:
+            fp.close()
+        return 1
     else:
         print(
-            "  \033[92m[OK] LOS 4 MICROSERVICIOS Y EL GATEWAY ESTAN 100% ONLINE Y OPERATIVOS.\033[0m"
+            "  \033[92m[OK] Los 4 microservicios y el gateway responden en sus puertos.\033[0m"
         )
 
     print("\n" + "=" * 77)
-    print("  URLS DISPONIBLES:")
+    print("  GATEWAY Y PUERTOS INTERNOS:")
     print("  * API Gateway Central:       http://localhost:8090")
     print(
-        "  * MS Usuarios y Auth:        http://localhost:8091 (Swagger: /swagger-ui.html)"
+        "  * MS Usuarios y Auth:        http://localhost:8091 (acceso interno protegido)"
     )
     print(
-        "  * MS Alumnos y Saldos:       http://localhost:8092 (Swagger: /swagger-ui.html)"
+        "  * MS Alumnos y Saldos:       http://localhost:8092 (acceso interno protegido)"
     )
     print(
-        "  * MS Productos e Inventario: http://localhost:8093 (Swagger: /swagger-ui.html)"
+        "  * MS Productos e Inventario: http://localhost:8093 (acceso interno protegido)"
     )
     print(
-        "  * MS Reservas y Entregas:    http://localhost:8094 (Swagger: /swagger-ui.html)"
+        "  * MS Reservas y Entregas:    http://localhost:8094 (acceso interno protegido)"
     )
     print("=" * 77)
 
@@ -376,4 +386,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

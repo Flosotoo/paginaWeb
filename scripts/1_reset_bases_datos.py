@@ -7,6 +7,7 @@
 # =============================================================================
 
 import os
+import shutil
 import subprocess
 import sys
 
@@ -87,6 +88,16 @@ print("=========================================================================
 print("  EDUSALDO - REINICIO LIMPIO (FRESH START) DE BASES DE DATOS")
 print("=============================================================================")
 
+if not shutil.which(MYSQL_PATH):
+    print(f"[ERROR] No se encontro el cliente MySQL: {MYSQL_PATH}")
+    sys.exit(1)
+missing = [path for _, path in schemas if not os.path.isfile(path)]
+if missing:
+    for path in missing:
+        print(f"[ERROR] No se encontro {path}")
+    print("[ERROR] Reinicio cancelado antes de modificar las bases de datos.")
+    sys.exit(1)
+
 # 1. Eliminar bases de datos obsoletas y recrear las 4 canónicas
 clean_sql = ""
 for db in legacy_dbs:
@@ -109,9 +120,11 @@ except subprocess.CalledProcessError as e:
 
 # 2. Cargar schemas y seeds
 print("[2/3] Cargando schema.sql y seeds para los 4 microservicios...")
+load_failed = False
 for db_name, sql_file in schemas:
     if not os.path.exists(sql_file):
-        print(f"      [AVISO] No se encontró {sql_file}")
+        print(f"      [ERROR] No se encontró {sql_file}")
+        load_failed = True
         continue
     with open(sql_file, "r", encoding="utf-8") as f:
         sql_content = f.read()
@@ -128,6 +141,11 @@ for db_name, sql_file in schemas:
         )
     except subprocess.CalledProcessError as e:
         print(f"      [ERROR] Fallo al cargar {db_name}: {e.stderr}")
+        load_failed = True
+
+if load_failed:
+    print("[ERROR] Reinicio incompleto; las bases pueden haber quedado parcialmente cargadas.")
+    sys.exit(1)
 
 # 3. Resumen de conteos
 print("[3/3] Resumen de registros iniciales creados:")
@@ -144,4 +162,7 @@ res = subprocess.run(
     [MYSQL_PATH, "-u", "root", "-e", summary_sql], capture_output=True, text=True
 )
 print(res.stdout)
+if res.returncode != 0:
+    print(f"[ERROR] No se pudo obtener el resumen: {res.stderr}")
+    sys.exit(1)
 print("[OK] FRESH START COMPLETADO EXITOSAMENTE.")
