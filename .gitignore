@@ -87,3 +87,13 @@ Desktop.ini
 *.njsproj
 *.sln
 *.sw?
+# === Tests E2E y Reportes ===
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/
+.playwright/
+**/e2e/
+playwright.config.*
+**/playwright.config.*
+
