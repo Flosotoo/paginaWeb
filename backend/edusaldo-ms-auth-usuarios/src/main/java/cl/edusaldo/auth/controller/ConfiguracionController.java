@@ -5,31 +5,33 @@ import cl.edusaldo.auth.model.ConfiguracionInstitucional;
 import cl.edusaldo.auth.service.ConfiguracionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/configuracion")
-@Tag(name = "Configuración Institucional", description = "Datos institucionales del establecimiento y librería escolar")
+@Tag(
+    name = "Configuración Institucional",
+    description = "Datos institucionales del establecimiento y librería escolar")
 public class ConfiguracionController {
 
-    private final ConfiguracionService configuracionService;
+  private final ConfiguracionService configuracionService;
 
-    public ConfiguracionController(ConfiguracionService configuracionService) {
-        this.configuracionService = configuracionService;
-    }
+  public ConfiguracionController(ConfiguracionService configuracionService) {
+    this.configuracionService = configuracionService;
+  }
 
-    @GetMapping
-    @Operation(summary = "Consultar datos institucionales del establecimiento y la librería")
-    public ResponseEntity<ConfiguracionInstitucional> obtener() {
-        return ResponseEntity.ok(configuracionService.obtenerConfiguracion());
-    }
+  @GetMapping
+  @Operation(summary = "Consultar datos institucionales del establecimiento y la librería")
+  public ResponseEntity<ConfiguracionInstitucional> obtener() {
+    return ResponseEntity.ok(configuracionService.obtenerConfiguracion());
+  }
 
-    @PutMapping
-    @Operation(summary = "Actualizar datos institucionales del establecimiento")
-    public ResponseEntity<ConfiguracionInstitucional> actualizar(
-            @RequestBody ConfiguracionDTO dto,
-            @RequestParam(required = false, defaultValue = "1") Long adminId) {
-        return ResponseEntity.ok(configuracionService.actualizarConfiguracion(dto, adminId));
-    }
+  @PutMapping
+  @Operation(summary = "Actualizar datos institucionales del establecimiento")
+  public ResponseEntity<ConfiguracionInstitucional> actualizar(
+      @Valid @RequestBody ConfiguracionDTO dto, @RequestParam(required = false) Long adminId) {
+    return ResponseEntity.ok(configuracionService.actualizarConfiguracion(dto, adminId));
+  }
 }

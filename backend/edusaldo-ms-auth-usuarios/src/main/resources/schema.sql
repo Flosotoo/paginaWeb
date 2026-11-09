@@ -1,12 +1,10 @@
--- =============================================================================
--- ESQUEMA 1: db_usuarios (edusaldo-ms-auth-usuarios - Puerto 8091)
--- 100% Conectado en Diseñador de phpMyAdmin (11 Tablas Espejo Exacto del Mermaid)
--- =============================================================================
 
 CREATE DATABASE IF NOT EXISTS db_usuarios CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE db_usuarios;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS correos_simulados;
+DROP TABLE IF EXISTS sesiones_usuario;
 DROP TABLE IF EXISTS consultas_contacto;
 DROP TABLE IF EXISTS tokens_revocados;
 DROP TABLE IF EXISTS intentos_acceso;
@@ -25,7 +23,6 @@ DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS configuracion_institucional;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- 1. Raíz de Multiestablecimiento
 CREATE TABLE configuracion_institucional (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     rut_establecimiento VARCHAR(20) NOT NULL UNIQUE,
@@ -38,7 +35,6 @@ CREATE TABLE configuracion_institucional (
     fecha_actualizacion DATETIME NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Usuarios Polimórficos de la Institución
 CREATE TABLE usuarios (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -63,7 +59,6 @@ CREATE TABLE usuarios (
         REFERENCES configuracion_institucional(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Adscripciones de Usuario a Establecimiento
 CREATE TABLE adscripciones (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -76,7 +71,6 @@ CREATE TABLE adscripciones (
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Asociación Apoderado - Alumno
 CREATE TABLE apoderado_alumnos (
     apoderado_id BIGINT NOT NULL,
     alumno_id BIGINT NOT NULL,
@@ -92,7 +86,6 @@ CREATE TABLE apoderado_alumnos (
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Política Institucional y Parámetros por Establecimiento
 CREATE TABLE politica_acceso (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1 UNIQUE,
@@ -104,7 +97,6 @@ CREATE TABLE politica_acceso (
         REFERENCES configuracion_institucional(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. Tokens de Recuperación de Contraseña
 CREATE TABLE tokens_recuperacion (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL,
@@ -117,7 +109,6 @@ CREATE TABLE tokens_recuperacion (
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Consentimientos de Privacidad
 CREATE TABLE consentimientos_privacidad (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     usuario_id BIGINT NOT NULL,
@@ -128,7 +119,6 @@ CREATE TABLE consentimientos_privacidad (
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Solicitudes de Corrección de Datos Personales
 CREATE TABLE solicitudes_correccion_datos (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -151,11 +141,10 @@ CREATE TABLE solicitudes_correccion_datos (
         REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. Importaciones Masivas de Nómina Escolar
 CREATE TABLE importaciones_nomina (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
-    administrador_id BIGINT NOT NULL DEFAULT 1,
+    administrador_id BIGINT NOT NULL,
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     estado VARCHAR(30) NOT NULL DEFAULT 'COMPLETADA',
     total_filas INT NOT NULL DEFAULT 0,
@@ -168,7 +157,6 @@ CREATE TABLE importaciones_nomina (
         REFERENCES usuarios(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 10. Filas Detalle de Nómina Escolar
 CREATE TABLE filas_nomina (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     importacion_id BIGINT NOT NULL,
@@ -181,7 +169,6 @@ CREATE TABLE filas_nomina (
         REFERENCES importaciones_nomina(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 11. Auditoría Inmutable del Establecimiento
 CREATE TABLE registro_auditoria (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -199,28 +186,25 @@ CREATE TABLE registro_auditoria (
         REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =============================================================================
--- SEMILLAS INICIALES (db_usuarios)
--- =============================================================================
 
 INSERT INTO configuracion_institucional (id, rut_establecimiento, nombre_establecimiento, nombre_libreria, correo_contacto, logo_url, activo) VALUES
-(1, '65.111.222-3', 'Colegio San José', 'Librería Escolar EduSaldo', 'libreria@colegiosanjose.cl', '/assets/logo-colegio.png', TRUE),
-(2, '65.999.888-7', 'Colegio San Agustín', 'Librería San Agustín', 'contacto@sanagustin.cl', '/assets/logo-sanagustin.cl', TRUE);
+(1, '65111222-2', 'Colegio San José', 'Librería Escolar EduSaldo', 'libreria@colegiosanjose.cl', '/assets/logo-colegio.png', TRUE),
+(2, '65999888-2', 'Colegio San Agustín', 'Librería San Agustín', 'contacto@sanagustin.cl', '/assets/logo-sanagustin.cl', TRUE);
 
 INSERT INTO politica_acceso (id, id_establecimiento, max_intentos_fallidos, minutos_bloqueo, edad_minima_alumno, umbral_saldo_bajo_clp) VALUES
 (1, 1, 5, 15, 12, 3000),
 (2, 2, 5, 15, 12, 3000);
 
 INSERT INTO usuarios (id, id_establecimiento, tipo_usuario, rut, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, correo, password_hash, estado, intentos_fallidos, bloqueo_hasta, telefono, fecha_nacimiento, curso) VALUES
-(1, 1, 'ADMINISTRADOR', '15.666.777-8', 'Antonio', 'Andrés', 'Jara', 'Soto', 'admin@colegio.cl', 'admin123', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
-(2, 1, 'ENCARGADO', '11.222.333-4', 'Marta', 'Lucía', 'Gómez', 'Pérez', 'libreria@colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
-(3, 1, 'APODERADO', '12.345.678-9', 'Carlos', 'Eduardo', 'Pérez', 'Muñoz', 'carlos.perez@gmail.com', 'Edu123456', 'ACTIVA', 0, NULL, '+56987654321', NULL, NULL),
-(4, 1, 'ALUMNO', '23.456.789-0', 'Tomás', 'Ignacio', 'Pérez', 'Gómez', 'tomas.perez@alumnos.colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2011-04-15', '8° Básico A'),
-(5, 1, 'ALUMNO', '25.111.222-3', 'Sofía', 'Belén', 'Pérez', 'Gómez', 'sofia.perez@alumnos.colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2017-08-20', '2° Básico B'),
-(6, 2, 'ADMINISTRADOR', '16.111.222-3', 'Rodrigo', 'Esteban', 'Pino', 'Vera', 'admin@sanagustin.cl', 'admin123', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
-(7, 2, 'ENCARGADO', '14.222.333-4', 'Patricia', 'Elena', 'Morales', 'Rios', 'libreria@sanagustin.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
-(8, 2, 'APODERADO', '13.456.789-1', 'Ignacio', 'Andrés', 'Salas', 'Castro', 'ignacio.salas@gmail.com', 'Edu123456', 'ACTIVA', 0, NULL, '+56977788899', NULL, NULL),
-(9, 2, 'ALUMNO', '24.789.012-3', 'Matías', 'Alonso', 'Salas', 'Rojas', 'matias.salas@alumnos.sanagustin.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2010-09-10', '1° Medio B');
+(1, 1, 'ADMINISTRADOR', '15666777-3', 'Antonio', 'Andrés', 'Navarro', 'Castro', 'admin@colegio.cl', 'admin123', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(2, 1, 'ENCARGADO', '11222333-9', 'Marta', 'Lucía', 'Gómez', 'Pérez', 'libreria@colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(3, 1, 'APODERADO', '12345678-5', 'Carlos', 'Eduardo', 'Pérez', 'Muñoz', 'carlos.perez@gmail.com', 'Edu123456', 'ACTIVA', 0, NULL, '+56987654321', NULL, NULL),
+(4, 1, 'ALUMNO', '23456789-6', 'Tomás', 'Ignacio', 'Pérez', 'Gómez', 'tomas.perez@alumnos.colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2011-04-15', '8° Básico A'),
+(5, 1, 'ALUMNO', '25111222-3', 'Sofía', 'Belén', 'Pérez', 'Gómez', 'sofia.perez@alumnos.colegio.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2017-08-20', '2° Básico B'),
+(6, 2, 'ADMINISTRADOR', '16111222-4', 'Rodrigo', 'Esteban', 'Pino', 'Vera', 'admin@sanagustin.cl', 'admin123', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(7, 2, 'ENCARGADO', '14222333-3', 'Patricia', 'Elena', 'Morales', 'Rios', 'libreria@sanagustin.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, NULL, NULL),
+(8, 2, 'APODERADO', '13456789-9', 'Ignacio', 'Andrés', 'Salas', 'Castro', 'ignacio.salas@gmail.com', 'Edu123456', 'ACTIVA', 0, NULL, '+56977788899', NULL, NULL),
+(9, 2, 'ALUMNO', '24789012-2', 'Matías', 'Alonso', 'Salas', 'Rojas', 'matias.salas@alumnos.sanagustin.cl', 'Edu123456', 'ACTIVA', 0, NULL, NULL, '2010-09-10', '1° Medio B');
 
 INSERT INTO adscripciones (id, id_establecimiento, usuario_id, estado, fecha_adscripcion) VALUES
 (1, 1, 1, 'ACTIVA', NOW()),
@@ -245,3 +229,26 @@ INSERT INTO consentimientos_privacidad (usuario_id, version_aviso, fecha_aceptac
 INSERT INTO registro_auditoria (id_establecimiento, fecha_hora, usuario_id, accion, entidad, entidad_id, detalle) VALUES
 (1, NOW(), 1, 'INICIALIZACION_SISTEMA', 'ConfiguracionInstitucional', '1', 'Carga inicial de datos semilla del establecimiento 1'),
 (2, NOW(), 6, 'INICIALIZACION_SISTEMA', 'ConfiguracionInstitucional', '2', 'Carga inicial de datos semilla del establecimiento 2');
+
+CREATE TABLE sesiones_usuario (
+ hash VARCHAR(64) PRIMARY KEY,
+ usuario_id BIGINT NOT NULL,
+ vencimiento DATETIME NOT NULL,
+ revocada BOOLEAN NOT NULL DEFAULT FALSE,
+ CONSTRAINT fk_sesion_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- La bandeja local permite demostrar envío y recuperación sin depender de SMTP.
+CREATE TABLE IF NOT EXISTS correos_simulados (
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ usuario_id BIGINT NOT NULL,
+ id_establecimiento BIGINT NOT NULL,
+ destinatario VARCHAR(150) NOT NULL,
+ tipo VARCHAR(30) NOT NULL,
+ contenido VARCHAR(1000) NOT NULL,
+ fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_correo_tenant_usuario (id_establecimiento,usuario_id),
+ CONSTRAINT fk_correo_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+ CONSTRAINT fk_correo_establecimiento FOREIGN KEY (id_establecimiento) REFERENCES configuracion_institucional(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -2,38 +2,49 @@ package cl.edusaldo.auth.service;
 
 import cl.edusaldo.auth.model.RegistroAuditoria;
 import cl.edusaldo.auth.repository.RegistroAuditoriaRepository;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class AuditoriaService {
 
-    private final RegistroAuditoriaRepository auditoriaRepository;
+  @org.springframework.beans.factory.annotation.Autowired(required = false)
+  private cl.edusaldo.auth.repository.UsuarioRepository usuarioRepository;
 
-    public AuditoriaService(RegistroAuditoriaRepository auditoriaRepository) {
-        this.auditoriaRepository = auditoriaRepository;
-    }
+  private final RegistroAuditoriaRepository auditoriaRepository;
 
-    @Transactional
-    public RegistroAuditoria registrar(Long usuarioId, String accion, String entidad, String entidadId, String detalle) {
-        RegistroAuditoria reg = new RegistroAuditoria(usuarioId, accion, entidad, entidadId, detalle);
-        return auditoriaRepository.save(reg);
-    }
+  public AuditoriaService(RegistroAuditoriaRepository auditoriaRepository) {
+    this.auditoriaRepository = auditoriaRepository;
+  }
 
-    @Transactional(readOnly = true)
-    public List<RegistroAuditoria> listarTodas() {
-        return auditoriaRepository.findAllByOrderByFechaHoraDesc();
-    }
+  @Transactional
+  public RegistroAuditoria registrar(
+      Long usuarioId, String accion, String entidad, String entidadId, String detalle) {
+    if (TenantContext.actor() != null) usuarioId = TenantContext.actor();
+    RegistroAuditoria reg = new RegistroAuditoria(usuarioId, accion, entidad, entidadId, detalle);
+    reg.setIdEstablecimiento(TenantContext.current());
+    if (usuarioRepository != null && usuarioId != null)
+      usuarioRepository
+          .findById(usuarioId)
+          .ifPresent(u -> reg.setIdEstablecimiento(u.getIdEstablecimiento()));
+    return auditoriaRepository.save(reg);
+  }
 
-    @Transactional(readOnly = true)
-    public List<RegistroAuditoria> listarPorUsuario(Long usuarioId) {
-        return auditoriaRepository.findByUsuarioIdOrderByFechaHoraDesc(usuarioId);
-    }
+  @Transactional(readOnly = true)
+  public List<RegistroAuditoria> listarTodas() {
+    return auditoriaRepository.findByIdEstablecimientoOrderByFechaHoraDesc(TenantContext.current());
+  }
 
-    @Transactional(readOnly = true)
-    public List<RegistroAuditoria> listarPorEntidad(String entidad) {
-        return auditoriaRepository.findByEntidadOrderByFechaHoraDesc(entidad);
-    }
+  @Transactional(readOnly = true)
+  public List<RegistroAuditoria> listarPorUsuario(Long usuarioId) {
+    return auditoriaRepository.findByIdEstablecimientoAndUsuarioIdOrderByFechaHoraDesc(
+        TenantContext.current(), usuarioId);
+  }
+
+  @Transactional(readOnly = true)
+  public List<RegistroAuditoria> listarPorEntidad(String entidad) {
+    return auditoriaRepository.findByIdEstablecimientoAndEntidadOrderByFechaHoraDesc(
+        TenantContext.current(), entidad);
+  }
 }

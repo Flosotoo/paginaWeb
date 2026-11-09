@@ -1,10 +1,14 @@
 package cl.edusaldo.auth.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class ConfiguracionDTO {
-    private String nombreEstablecimiento;
-    private String nombreLibreria;
-    private String correoContacto;
-    private String logoUrl;
+    @NotBlank @Size(max = 150) private String nombreEstablecimiento;
+    @NotBlank @Size(max = 150) private String nombreLibreria;
+    @NotBlank @Email @Size(max = 150) private String correoContacto;
+    @Size(max = 255) private String logoUrl;
 
     public ConfiguracionDTO() {}
 

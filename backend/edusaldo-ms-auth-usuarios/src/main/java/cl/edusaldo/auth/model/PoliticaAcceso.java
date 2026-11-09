@@ -42,10 +42,7 @@ public class PoliticaAcceso {
 
     public PoliticaAcceso(int maxIntentosFallidos, int minutosBloqueo, int edadMinimaAlumno, int umbralSaldoBajoClp) {
         this.idEstablecimiento = 1L;
-        this.maxIntentosFallidos = maxIntentosFallidos;
-        this.minutosBloqueo = minutosBloqueo;
-        this.edadMinimaAlumno = edadMinimaAlumno > 0 && edadMinimaAlumno <= 25 ? edadMinimaAlumno : 12;
-        this.umbralSaldoBajoClp = umbralSaldoBajoClp > 0 ? umbralSaldoBajoClp : 3000;
+        modificar(maxIntentosFallidos, minutosBloqueo, edadMinimaAlumno, umbralSaldoBajoClp);
     }
 
     public boolean debeBloquear(int intentosRecientes) {
@@ -53,10 +50,12 @@ public class PoliticaAcceso {
     }
 
     public void modificar(int maxIntentos, int minBloqueo, int edadMinima, int umbralSaldoBajo) {
-        if (maxIntentos > 0) this.maxIntentosFallidos = maxIntentos;
-        if (minBloqueo > 0) this.minutosBloqueo = minBloqueo;
-        if (edadMinima > 0 && edadMinima <= 25) this.edadMinimaAlumno = edadMinima;
-        if (umbralSaldoBajo > 0) this.umbralSaldoBajoClp = umbralSaldoBajo;
+        if (maxIntentos <= 0 || minBloqueo <= 0 || edadMinima != 12 || umbralSaldoBajo < 0)
+            throw new IllegalArgumentException("Política inválida: intentos y minutos deben ser positivos, edad 12 y umbral no negativo");
+        this.maxIntentosFallidos = maxIntentos;
+        this.minutosBloqueo = minBloqueo;
+        this.edadMinimaAlumno = edadMinima;
+        this.umbralSaldoBajoClp = umbralSaldoBajo;
     }
 
     public Long getId() { return id; }

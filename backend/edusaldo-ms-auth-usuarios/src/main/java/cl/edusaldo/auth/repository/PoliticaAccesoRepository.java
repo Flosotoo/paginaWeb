@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PoliticaAccesoRepository extends JpaRepository<PoliticaAcceso, Long> {
+  java.util.Optional<PoliticaAcceso> findByIdEstablecimiento(Long tenant);
 }

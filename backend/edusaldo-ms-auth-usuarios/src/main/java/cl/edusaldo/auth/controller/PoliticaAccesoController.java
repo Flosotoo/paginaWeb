@@ -10,26 +10,27 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/politica-acceso")
-@Tag(name = "Política de Acceso", description = "Reglas de bloqueo temporal y tiempos de vigencia del establecimiento")
+@Tag(
+    name = "Política de Acceso",
+    description = "Reglas de bloqueo temporal y tiempos de vigencia del establecimiento")
 public class PoliticaAccesoController {
 
-    private final PoliticaAccesoService politicaAccesoService;
+  private final PoliticaAccesoService politicaAccesoService;
 
-    public PoliticaAccesoController(PoliticaAccesoService politicaAccesoService) {
-        this.politicaAccesoService = politicaAccesoService;
-    }
+  public PoliticaAccesoController(PoliticaAccesoService politicaAccesoService) {
+    this.politicaAccesoService = politicaAccesoService;
+  }
 
-    @GetMapping
-    @Operation(summary = "Consultar política de acceso y bloqueo vigente del establecimiento")
-    public ResponseEntity<PoliticaAcceso> obtener() {
-        return ResponseEntity.ok(politicaAccesoService.obtenerPolitica());
-    }
+  @GetMapping
+  @Operation(summary = "Consultar política de acceso y bloqueo vigente del establecimiento")
+  public ResponseEntity<PoliticaAcceso> obtener() {
+    return ResponseEntity.ok(politicaAccesoService.obtenerPolitica());
+  }
 
-    @PutMapping
-    @Operation(summary = "Modificar parámetros de la política de acceso del establecimiento")
-    public ResponseEntity<PoliticaAcceso> modificar(
-            @RequestBody PoliticaAccesoDTO dto,
-            @RequestParam(required = false, defaultValue = "1") Long adminId) {
-        return ResponseEntity.ok(politicaAccesoService.modificarPolitica(dto, adminId));
-    }
+  @PutMapping
+  @Operation(summary = "Modificar parámetros de la política de acceso del establecimiento")
+  public ResponseEntity<PoliticaAcceso> modificar(
+      @RequestBody PoliticaAccesoDTO dto, @RequestParam(required = false) Long adminId) {
+    return ResponseEntity.ok(politicaAccesoService.modificarPolitica(dto, adminId));
+  }
 }

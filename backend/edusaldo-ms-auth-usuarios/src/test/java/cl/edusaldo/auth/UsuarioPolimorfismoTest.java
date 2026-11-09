@@ -14,11 +14,11 @@ class UsuarioPolimorfismoTest {
     @Test
     @DisplayName("Administrador retorna ROLE_ADMINISTRADOR y puede iniciar sesión si está activo")
     void testAdministradorRolYAcceso() {
-        Administrador admin = new Administrador("15.666.777-8", "Antonio", "Jara", "admin@colegio.cl", "hash123");
+        Administrador admin = new Administrador("15.666.777-8", "Antonio", "Navarro", "admin@colegio.cl", "hash123");
         admin.setEstado(EstadoCuenta.ACTIVA);
 
         assertEquals("ROLE_ADMINISTRADOR", admin.getRol());
-        assertEquals("Antonio Jara", admin.getNombreCompleto());
+        assertEquals("Antonio Navarro", admin.getNombreCompleto());
         assertTrue(admin.puedeIniciarSesion());
     }
 
