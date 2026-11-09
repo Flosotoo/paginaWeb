@@ -10,51 +10,92 @@ import jakarta.validation.constraints.Positive;
 
 public class CobrarSaldoDTO {
 
-    @NotNull(message = "El ID del alumno es obligatorio")
-    private Long alumnoId;
+  private Long reservaId;
 
-    @NotNull(message = "El monto es obligatorio")
-    @Positive(message = "El monto a cobrar debe ser mayor a 0")
-    private int monto;
+  public Long getReservaId() {
+    return reservaId;
+  }
 
-    @NotNull(message = "El ID de la entrega es obligatorio")
-    @JsonAlias({"referenciaId", "ventaId"})
-    private Long entregaId;
+  public void setReservaId(Long value) {
+    this.reservaId = value;
+  }
 
-    @JsonAlias({"veniaDeReserva", "esReserva"})
-    private boolean vieneDeReserva = false;
+  @NotNull(message = "El ID del alumno es obligatorio")
+  private Long alumnoId;
 
-    @JsonProperty("referenciaUnica")
-    @JsonAlias({"idempotencyKey", "claveOperacion", "referencia"})
-    @Schema(description = "Referencia o código único de la operación para evitar registros duplicados")
-    private String referenciaUnica;
+  @NotNull(message = "El monto es obligatorio")
+  @Positive(message = "El monto a cobrar debe ser mayor a 0")
+  private int monto;
 
-    public CobrarSaldoDTO() {}
+  @NotNull(message = "El ID de la entrega es obligatorio")
+  @JsonAlias({"referenciaId", "ventaId"})
+  private Long entregaId;
 
-    public CobrarSaldoDTO(Long alumnoId, int monto, Long entregaId, boolean vieneDeReserva) {
-        this.alumnoId = alumnoId;
-        this.monto = monto;
-        this.entregaId = entregaId;
-        this.vieneDeReserva = vieneDeReserva;
-    }
+  @JsonAlias({"veniaDeReserva", "esReserva"})
+  private boolean vieneDeReserva = false;
 
-    public Long getAlumnoId() { return alumnoId; }
-    public void setAlumnoId(Long alumnoId) { this.alumnoId = alumnoId; }
+  @JsonProperty("referenciaUnica")
+  @JsonAlias({"idempotencyKey", "claveOperacion", "referencia"})
+  @Schema(
+      description = "Referencia o código único de la operación para evitar registros duplicados")
+  private String referenciaUnica;
 
-    public int getMonto() { return monto; }
-    public void setMonto(int monto) { this.monto = monto; }
+  public CobrarSaldoDTO() {}
 
-    public Long getEntregaId() { return entregaId; }
-    public void setEntregaId(Long entregaId) { this.entregaId = entregaId; }
+  public CobrarSaldoDTO(Long alumnoId, int monto, Long entregaId, boolean vieneDeReserva) {
+    this.alumnoId = alumnoId;
+    this.monto = monto;
+    this.entregaId = entregaId;
+    this.vieneDeReserva = vieneDeReserva;
+  }
 
-    public boolean isVieneDeReserva() { return vieneDeReserva; }
-    public void setVieneDeReserva(boolean vieneDeReserva) { this.vieneDeReserva = vieneDeReserva; }
+  public Long getAlumnoId() {
+    return alumnoId;
+  }
 
-    public String getReferenciaUnica() { return referenciaUnica; }
-    public void setReferenciaUnica(String referenciaUnica) { this.referenciaUnica = referenciaUnica; }
+  public void setAlumnoId(Long alumnoId) {
+    this.alumnoId = alumnoId;
+  }
 
-    @JsonIgnore
-    @Hidden
-    public String getIdempotencyKey() { return referenciaUnica; }
-    public void setIdempotencyKey(String idempotencyKey) { this.referenciaUnica = idempotencyKey; }
+  public int getMonto() {
+    return monto;
+  }
+
+  public void setMonto(int monto) {
+    this.monto = monto;
+  }
+
+  public Long getEntregaId() {
+    return entregaId;
+  }
+
+  public void setEntregaId(Long entregaId) {
+    this.entregaId = entregaId;
+  }
+
+  public boolean isVieneDeReserva() {
+    return vieneDeReserva;
+  }
+
+  public void setVieneDeReserva(boolean vieneDeReserva) {
+    this.vieneDeReserva = vieneDeReserva;
+  }
+
+  public String getReferenciaUnica() {
+    return referenciaUnica;
+  }
+
+  public void setReferenciaUnica(String referenciaUnica) {
+    this.referenciaUnica = referenciaUnica;
+  }
+
+  @JsonIgnore
+  @Hidden
+  public String getIdempotencyKey() {
+    return referenciaUnica;
+  }
+
+  public void setIdempotencyKey(String idempotencyKey) {
+    this.referenciaUnica = idempotencyKey;
+  }
 }

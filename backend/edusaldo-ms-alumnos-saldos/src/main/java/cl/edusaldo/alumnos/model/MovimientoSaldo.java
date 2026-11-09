@@ -7,95 +7,182 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "movimientos_saldo")
 public class MovimientoSaldo {
+  @Column(name = "entrega_id")
+  private Long entregaId;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  public Long getEntregaId() {
+    return entregaId;
+  }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cuenta_saldo_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_movimiento_cuenta"))
-    @JsonIgnore
-    private CuentaSaldo cuentaSaldo;
+  public void setEntregaId(Long entregaId) {
+    this.entregaId = entregaId;
+  }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "abono_id",
-            foreignKey = @ForeignKey(name = "fk_movimiento_abono"))
-    @JsonIgnore
-    private Abono abono;
+  @Column(name = "operacion_compensacion_id")
+  private Long operacionCompensacionId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo", nullable = false, length = 50)
-    private TipoMovimientoSaldo tipo;
+  public Long getOperacionCompensacionId() {
+    return operacionCompensacionId;
+  }
 
-    @Column(name = "monto", nullable = false)
-    private int monto;
+  public void setOperacionCompensacionId(Long operacionCompensacionId) {
+    this.operacionCompensacionId = operacionCompensacionId;
+  }
 
-    @Column(name = "saldo_resultante", nullable = false)
-    private int saldoResultante;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "fecha", nullable = false)
-    private LocalDateTime fecha = LocalDateTime.now();
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(
+      name = "cuenta_saldo_id",
+      nullable = false,
+      foreignKey = @ForeignKey(name = "fk_movimiento_cuenta"))
+  @JsonIgnore
+  private CuentaSaldo cuentaSaldo;
 
-    @Column(name = "referencia_id")
-    private Long referenciaId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "abono_id", foreignKey = @ForeignKey(name = "fk_movimiento_abono"))
+  @JsonIgnore
+  private Abono abono;
 
-    @Column(name = "descripcion", nullable = false)
-    private String descripcion;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "tipo", nullable = false, length = 50)
+  private TipoMovimientoSaldo tipo;
 
-    @Column(name = "referencia_unica", length = 100, unique = true)
-    private String referenciaUnica;
+  @Column(name = "monto", nullable = false)
+  private int monto;
 
-    public MovimientoSaldo() {}
+  @Column(name = "saldo_resultante", nullable = false)
+  private int saldoResultante;
 
-    public MovimientoSaldo(CuentaSaldo cuentaSaldo, TipoMovimientoSaldo tipo, int monto, int saldoResultante,
-                           Long referenciaId, String descripcion) {
-        this(cuentaSaldo, tipo, monto, saldoResultante, referenciaId, descripcion, null);
-    }
+  @Column(name = "fecha", nullable = false)
+  private LocalDateTime fecha = LocalDateTime.now();
 
-    public MovimientoSaldo(CuentaSaldo cuentaSaldo, TipoMovimientoSaldo tipo, int monto, int saldoResultante,
-                           Long referenciaId, String descripcion, String referenciaUnica) {
-        this.cuentaSaldo = cuentaSaldo;
-        this.tipo = tipo;
-        this.monto = monto;
-        this.saldoResultante = saldoResultante;
-        this.referenciaId = referenciaId;
-        this.descripcion = descripcion;
-        this.referenciaUnica = referenciaUnica;
-        this.fecha = LocalDateTime.now();
-    }
+  @Column(name = "referencia_id")
+  private Long referenciaId;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  @Column(name = "descripcion", nullable = false)
+  private String descripcion;
 
-    public CuentaSaldo getCuentaSaldo() { return cuentaSaldo; }
-    public void setCuentaSaldo(CuentaSaldo cuentaSaldo) { this.cuentaSaldo = cuentaSaldo; }
+  @Column(name = "referencia_unica", length = 100, unique = true)
+  private String referenciaUnica;
 
-    public Long getCuentaSaldoId() { return cuentaSaldo != null ? cuentaSaldo.getId() : null; }
+  public MovimientoSaldo() {}
 
-    public Abono getAbono() { return abono; }
-    public void setAbono(Abono abono) { this.abono = abono; }
+  public MovimientoSaldo(
+      CuentaSaldo cuentaSaldo,
+      TipoMovimientoSaldo tipo,
+      int monto,
+      int saldoResultante,
+      Long referenciaId,
+      String descripcion) {
+    this(cuentaSaldo, tipo, monto, saldoResultante, referenciaId, descripcion, null);
+  }
 
-    public Long getAbonoId() { return abono != null ? abono.getId() : null; }
+  public MovimientoSaldo(
+      CuentaSaldo cuentaSaldo,
+      TipoMovimientoSaldo tipo,
+      int monto,
+      int saldoResultante,
+      Long referenciaId,
+      String descripcion,
+      String referenciaUnica) {
+    this.cuentaSaldo = cuentaSaldo;
+    this.tipo = tipo;
+    this.monto = monto;
+    this.saldoResultante = saldoResultante;
+    this.referenciaId = referenciaId;
+    this.descripcion = descripcion;
+    this.referenciaUnica = referenciaUnica;
+    this.fecha = LocalDateTime.now();
+  }
 
-    public TipoMovimientoSaldo getTipo() { return tipo; }
-    public void setTipo(TipoMovimientoSaldo tipo) { this.tipo = tipo; }
+  public Long getId() {
+    return id;
+  }
 
-    public int getMonto() { return monto; }
-    public void setMonto(int monto) { this.monto = monto; }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public int getSaldoResultante() { return saldoResultante; }
-    public void setSaldoResultante(int saldoResultante) { this.saldoResultante = saldoResultante; }
+  public CuentaSaldo getCuentaSaldo() {
+    return cuentaSaldo;
+  }
 
-    public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+  public void setCuentaSaldo(CuentaSaldo cuentaSaldo) {
+    this.cuentaSaldo = cuentaSaldo;
+  }
 
-    public Long getReferenciaId() { return referenciaId; }
-    public void setReferenciaId(Long referenciaId) { this.referenciaId = referenciaId; }
+  public Long getCuentaSaldoId() {
+    return cuentaSaldo != null ? cuentaSaldo.getId() : null;
+  }
 
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+  public Abono getAbono() {
+    return abono;
+  }
 
-    public String getReferenciaUnica() { return referenciaUnica; }
-    public void setReferenciaUnica(String referenciaUnica) { this.referenciaUnica = referenciaUnica; }
+  public void setAbono(Abono abono) {
+    this.abono = abono;
+  }
+
+  public Long getAbonoId() {
+    return abono != null ? abono.getId() : null;
+  }
+
+  public TipoMovimientoSaldo getTipo() {
+    return tipo;
+  }
+
+  public void setTipo(TipoMovimientoSaldo tipo) {
+    this.tipo = tipo;
+  }
+
+  public int getMonto() {
+    return monto;
+  }
+
+  public void setMonto(int monto) {
+    this.monto = monto;
+  }
+
+  public int getSaldoResultante() {
+    return saldoResultante;
+  }
+
+  public void setSaldoResultante(int saldoResultante) {
+    this.saldoResultante = saldoResultante;
+  }
+
+  public LocalDateTime getFecha() {
+    return fecha;
+  }
+
+  public void setFecha(LocalDateTime fecha) {
+    this.fecha = fecha;
+  }
+
+  public Long getReferenciaId() {
+    return referenciaId;
+  }
+
+  public void setReferenciaId(Long referenciaId) {
+    this.referenciaId = referenciaId;
+  }
+
+  public String getDescripcion() {
+    return descripcion;
+  }
+
+  public void setDescripcion(String descripcion) {
+    this.descripcion = descripcion;
+  }
+
+  public String getReferenciaUnica() {
+    return referenciaUnica;
+  }
+
+  public void setReferenciaUnica(String referenciaUnica) {
+    this.referenciaUnica = referenciaUnica;
+  }
 }

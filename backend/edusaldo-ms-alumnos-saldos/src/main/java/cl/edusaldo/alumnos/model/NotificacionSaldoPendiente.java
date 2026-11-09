@@ -8,82 +8,140 @@ import java.time.LocalDateTime;
 @Table(name = "notificaciones_saldo_pendientes")
 public class NotificacionSaldoPendiente {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "alerta_saldo_bajo_id", nullable = false)
-    private Long alertaSaldoBajoId;
+  @Column(name = "alerta_saldo_bajo_id", nullable = false)
+  private Long alertaSaldoBajoId;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "alerta_saldo_bajo_id", insertable = false, updatable = false,
-            foreignKey = @ForeignKey(name = "fk_notif_saldo_alerta"))
-    private AlertaSaldoBajo alertaSaldoBajo;
+  @JsonIgnore
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(
+      name = "alerta_saldo_bajo_id",
+      insertable = false,
+      updatable = false,
+      foreignKey = @ForeignKey(name = "fk_notif_saldo_alerta"))
+  private AlertaSaldoBajo alertaSaldoBajo;
 
-    @Column(name = "alumno_id", nullable = false)
-    private Long alumnoId;
+  @Column(name = "alumno_id", nullable = false)
+  private Long alumnoId;
 
-    @Column(name = "clave_evento", nullable = false, unique = true, length = 100)
-    private String claveEvento;
+  @Column(name = "clave_evento", nullable = false, unique = true, length = 100)
+  private String claveEvento;
 
-    @Column(name = "estado", nullable = false, length = 30)
-    private String estado = "PENDIENTE";
+  @Column(name = "estado", nullable = false, length = 30)
+  private String estado = "PENDIENTE";
 
-    @Column(name = "intentos", nullable = false)
-    private int intentos = 0;
+  @Column(name = "intentos", nullable = false)
+  private int intentos = 0;
 
-    @Column(name = "siguiente_intento")
-    private LocalDateTime siguienteIntento;
+  @Column(name = "siguiente_intento")
+  private LocalDateTime siguienteIntento;
 
-    public NotificacionSaldoPendiente() {}
+  @Column(name = "contenido", columnDefinition = "TEXT")
+  private String contenido;
 
-    public NotificacionSaldoPendiente(Long alertaSaldoBajoId, Long alumnoId, String claveEvento) {
-        this.alertaSaldoBajoId = alertaSaldoBajoId;
-        this.alumnoId = alumnoId;
-        this.claveEvento = claveEvento;
-        this.estado = "ENVIADA";
-        this.intentos = 1;
-        this.siguienteIntento = null;
+  @Column(name = "destinatarios_json", columnDefinition = "TEXT")
+  private String destinatariosJson;
+
+  public String getContenido() { return contenido; }
+  public String getDestinatariosJson() { return destinatariosJson; }
+
+  public NotificacionSaldoPendiente() {}
+
+  public NotificacionSaldoPendiente(Long alertaSaldoBajoId, Long alumnoId, String claveEvento) {
+    this.alertaSaldoBajoId = alertaSaldoBajoId;
+    this.alumnoId = alumnoId;
+    this.claveEvento = claveEvento;
+  }
+
+  public void marcarSimulada(String contenido, String destinatariosJson) {
+    this.intentos++;
+    this.contenido = contenido;
+    this.destinatariosJson = destinatariosJson;
+    this.estado = "SIMULADA";
+    this.siguienteIntento = null;
+  }
+
+  public void registrarFallo() {
+    this.intentos++;
+    this.estado = intentos >= 3 ? "FALLIDA" : "PENDIENTE";
+    this.siguienteIntento = intentos >= 3 ? null : LocalDateTime.now().plusMinutes(5);
+  }
+
+  public void recuperar() {
+    if (!"FALLIDA".equals(estado))
+      throw new IllegalStateException("Solo se pueden recuperar notificaciones fallidas");
+    estado = "PENDIENTE";
+    intentos = 0;
+    siguienteIntento = null;
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getAlertaSaldoBajoId() {
+    return alertaSaldoBajoId;
+  }
+
+  public void setAlertaSaldoBajoId(Long alertaSaldoBajoId) {
+    this.alertaSaldoBajoId = alertaSaldoBajoId;
+  }
+
+  public AlertaSaldoBajo getAlertaSaldoBajo() {
+    return alertaSaldoBajo;
+  }
+
+  public void setAlertaSaldoBajo(AlertaSaldoBajo alertaSaldoBajo) {
+    this.alertaSaldoBajo = alertaSaldoBajo;
+    if (alertaSaldoBajo != null && alertaSaldoBajo.getId() != null) {
+      this.alertaSaldoBajoId = alertaSaldoBajo.getId();
     }
+  }
 
-    public void marcarEnviada() {
-        this.estado = "ENVIADA";
-        this.siguienteIntento = null;
-    }
+  public Long getAlumnoId() {
+    return alumnoId;
+  }
 
-    public void programarReintento() {
-        this.estado = "PENDIENTE";
-        this.intentos++;
-        this.siguienteIntento = LocalDateTime.now().plusMinutes(5);
-    }
+  public void setAlumnoId(Long alumnoId) {
+    this.alumnoId = alumnoId;
+  }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  public String getClaveEvento() {
+    return claveEvento;
+  }
 
-    public Long getAlertaSaldoBajoId() { return alertaSaldoBajoId; }
-    public void setAlertaSaldoBajoId(Long alertaSaldoBajoId) { this.alertaSaldoBajoId = alertaSaldoBajoId; }
+  public void setClaveEvento(String claveEvento) {
+    this.claveEvento = claveEvento;
+  }
 
-    public AlertaSaldoBajo getAlertaSaldoBajo() { return alertaSaldoBajo; }
-    public void setAlertaSaldoBajo(AlertaSaldoBajo alertaSaldoBajo) {
-        this.alertaSaldoBajo = alertaSaldoBajo;
-        if (alertaSaldoBajo != null && alertaSaldoBajo.getId() != null) {
-            this.alertaSaldoBajoId = alertaSaldoBajo.getId();
-        }
-    }
+  public String getEstado() {
+    return estado;
+  }
 
-    public Long getAlumnoId() { return alumnoId; }
-    public void setAlumnoId(Long alumnoId) { this.alumnoId = alumnoId; }
+  public void setEstado(String estado) {
+    this.estado = estado;
+  }
 
-    public String getClaveEvento() { return claveEvento; }
-    public void setClaveEvento(String claveEvento) { this.claveEvento = claveEvento; }
+  public int getIntentos() {
+    return intentos;
+  }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+  public void setIntentos(int intentos) {
+    this.intentos = intentos;
+  }
 
-    public int getIntentos() { return intentos; }
-    public void setIntentos(int intentos) { this.intentos = intentos; }
+  public LocalDateTime getSiguienteIntento() {
+    return siguienteIntento;
+  }
 
-    public LocalDateTime getSiguienteIntento() { return siguienteIntento; }
-    public void setSiguienteIntento(LocalDateTime siguienteIntento) { this.siguienteIntento = siguienteIntento; }
+  public void setSiguienteIntento(LocalDateTime siguienteIntento) {
+    this.siguienteIntento = siguienteIntento;
+  }
 }

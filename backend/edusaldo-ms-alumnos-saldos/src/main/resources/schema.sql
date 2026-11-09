@@ -26,6 +26,7 @@ CREATE TABLE cuentas_saldo (
     saldo_actual INT NOT NULL DEFAULT 0,
     saldo_comprometido INT NOT NULL DEFAULT 0,
     version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT chk_cuenta_saldo CHECK (saldo_actual >= saldo_comprometido AND saldo_comprometido >= 0),
     INDEX idx_cuentas_establecimiento (id_establecimiento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -67,12 +68,15 @@ CREATE TABLE compromisos_saldo (
     monto_clp INT NOT NULL,
     estado VARCHAR(30) NOT NULL DEFAULT 'COMPROMETIDO',
     fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_compromiso_reserva UNIQUE (cuenta_saldo_id, reserva_id),
     CONSTRAINT fk_compromiso_cuenta FOREIGN KEY (cuenta_saldo_id)
         REFERENCES cuentas_saldo(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Libro Mayor Inmutable de Movimientos de Saldo (Mermaid: MovimientoSaldo)
 CREATE TABLE movimientos_saldo (
+    entrega_id BIGINT NULL,
+    operacion_compensacion_id BIGINT NULL,
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cuenta_saldo_id BIGINT NOT NULL,
     abono_id BIGINT NULL,
@@ -99,8 +103,9 @@ CREATE TABLE constancias_devolucion_saldo (
     monto_clp INT NOT NULL,
     medio VARCHAR(50) NULL,
     fecha_entrega_dinero DATE NOT NULL DEFAULT (CURRENT_DATE),
-    referencia VARCHAR(100) NOT NULL UNIQUE,
+    referencia VARCHAR(100) NOT NULL,
     motivo VARCHAR(255) NULL,
+    CONSTRAINT uk_constancia_cuenta_referencia UNIQUE (cuenta_saldo_id, referencia),
     CONSTRAINT fk_constancia_cuenta FOREIGN KEY (cuenta_saldo_id)
         REFERENCES cuentas_saldo(id) ON DELETE RESTRICT,
     CONSTRAINT fk_constancia_movimiento FOREIGN KEY (movimiento_saldo_id)
@@ -127,6 +132,8 @@ CREATE TABLE notificaciones_saldo_pendientes (
     estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
     intentos INT NOT NULL DEFAULT 0,
     siguiente_intento DATETIME NULL,
+    contenido TEXT NULL,
+    destinatarios_json TEXT NULL,
     CONSTRAINT fk_notif_saldo_alerta FOREIGN KEY (alerta_saldo_bajo_id)
         REFERENCES alertas_saldo_bajo(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -136,7 +143,7 @@ CREATE TABLE notificaciones_saldo_pendientes (
 -- =============================================================================
 
 INSERT INTO cuentas_saldo (id, id_establecimiento, alumno_id, saldo_actual, saldo_comprometido, version) VALUES
-(1, 1, 4, 25000, 0, 0),
+(1, 1, 4, 22000, 0, 0),
 (2, 1, 5, 15000, 0, 0),
 (3, 2, 9, 30000, 0, 0);
 
@@ -159,3 +166,10 @@ INSERT INTO alertas_saldo_bajo (id, cuenta_saldo_id, umbral_aplicado_clp, activa
 (1, 1, 3000, 0, NULL),
 (2, 2, 3000, 0, NULL),
 (3, 3, 3000, 0, NULL);
+
+INSERT INTO compromisos_saldo (cuenta_saldo_id, reserva_id, monto_clp, estado, fecha_actualizacion)
+VALUES (1, 1, 3000, 'CONSUMIDO', NOW());
+
+INSERT INTO movimientos_saldo (cuenta_saldo_id, tipo, monto, saldo_resultante, fecha, referencia_id, entrega_id, descripcion, referencia_unica) VALUES
+(1, 'RESERVA', 3000, 25000, NOW(), 1, NULL, 'Retención para reserva RES-1001', 'HOLD-RES-1001'),
+(1, 'ENTREGA', 3000, 22000, NOW(), 1, 1, 'Entrega de materiales ENT-1001', 'CHARGE-1');

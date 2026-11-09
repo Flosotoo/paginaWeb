@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "constancias_devolucion_saldo")
+@Table(name = "constancias_devolucion_saldo", uniqueConstraints = @UniqueConstraint(name = "uk_constancia_cuenta_referencia", columnNames = {"cuenta_saldo_id", "referencia"}))
 public class ConstanciaDevolucionSaldo {
 
     @Id
@@ -45,7 +45,7 @@ public class ConstanciaDevolucionSaldo {
     @Column(name = "fecha_entrega_dinero", nullable = false)
     private LocalDate fechaEntregaDinero = LocalDate.now();
 
-    @Column(name = "referencia", nullable = false, unique = true, length = 100)
+    @Column(name = "referencia", nullable = false, length = 100)
     private String referencia;
 
     @Column(name = "motivo", length = 255)
