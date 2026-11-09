@@ -7,7 +7,7 @@ flowchart TB
       WEB["«Frontend Web»<br/>React + TypeScript<br/>Administrador · Encargado · Apoderado · Alumno"]
       GW["«API Gateway»<br/>Puerto 8090"]
 
-      WEB -->|"HTTPS / REST"| GW
+      WEB -->|"HTTP / REST local"| GW
 
       subgraph MS["4 MICROSERVICIOS DE NEGOCIO"]
         direction LR

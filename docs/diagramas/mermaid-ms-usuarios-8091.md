@@ -11,8 +11,7 @@ class ConfiguracionInstitucional {
   +String nombreLibreria
   +String correoContacto
   +String logoUrl
-  +Boolean activo
-  +actualizar(nombreEstablecimiento, nombreLibreria, correoContacto, logoUrl)
+  +boolean activo
 }
 
 class Usuario {
@@ -27,84 +26,66 @@ class Usuario {
   +String correo
   -String passwordHash
   +EstadoCuenta estado
-  +int intentosFallidos
-  +LocalDateTime bloqueoHasta
   +LocalDateTime fechaCreacion
   +LocalDateTime ultimoAcceso
-  +registrarAccesoExitoso()
-  +registrarIntentoFallido(maxIntentos, minutosBloqueo)
-  +reiniciarIntentos()
-  +puedeIniciarSesion() boolean
-  +cambiarPassword(nuevoHash)
-  +restablecerPassword(hashTemporal)
-  +inactivar()
-  +reactivar()
+  +int intentosFallidos
+  +LocalDateTime bloqueoHasta
 }
 
 class Administrador {
-  +getRol() String
 }
 
 class Encargado {
-  +getRol() String
 }
 
 class Apoderado {
   +String telefono
-  +getRol() String
 }
 
 class Alumno {
   +LocalDate fechaNacimiento
   +String curso
-  +calcularEdad() int
-  +puedeIniciarSesion() boolean
-  +getRol() String
 }
 
 class Adscripcion {
   +Long id
   +Long idEstablecimiento
   +Long usuarioId
-  +EstadoAdscripcion estado
-  +activar()
-  +inactivar()
+  +String estado
+  +LocalDateTime fechaAdscripcion
 }
 
 class ApoderadoAlumno {
   +ApoderadoAlumnoId id
   +Parentesco parentesco
-  +Boolean activo
+  +boolean activo
   +LocalDateTime fechaAsociacion
   +LocalDateTime fechaDesvinculacion
   +String motivoDesvinculacion
-  +desvincular(motivo)
 }
 
 class PoliticaAcceso {
   +Long id
+  +Long idEstablecimiento
   +int maxIntentosFallidos
   +int minutosBloqueo
   +int edadMinimaAlumno
   +int umbralSaldoBajoClp
-  +modificar(maxIntentos, minBloqueo, edadMin, umbral)
-  +debeBloquear(intentos) boolean
 }
 
 class TokenRecuperacion {
   +Long id
   +Long usuarioId
   -String hashToken
-  +LocalDateTime expiraEn
-  +Boolean usado
-  +estaVigente() boolean
-  +marcarUsado()
+  +LocalDateTime fechaCreacion
+  +LocalDateTime venceEn
+  +boolean utilizado
 }
 
 class ConsentimientoPrivacidad {
   +Long id
   +Long usuarioId
-  +String version
+  +String versionAviso
   +LocalDateTime fechaAceptacion
   +String ipOrigen
 }
@@ -118,7 +99,6 @@ class ImportacionNomina {
   +int totalFilas
   +int filasValidas
   +int filasConError
-  +agregarFila(fila)
 }
 
 class FilaNomina {
@@ -128,7 +108,6 @@ class FilaNomina {
   +String rutApoderado
   +String resultado
   +String observacion
-  +marcarError(motivo)
 }
 
 class SolicitudCorreccionDatos {
@@ -140,22 +119,38 @@ class SolicitudCorreccionDatos {
   +String valorPropuesto
   +String motivo
   +String estado
-  +Long resueltaPorAdminId
+  +Long resueltaPorId
+  +String observacionResolucion
   +LocalDateTime fechaSolicitud
   +LocalDateTime fechaResolucion
-  +String observacionResolucion
-  +resolver(aprobar, adminId, observacion)
 }
 
 class RegistroAuditoria {
   +Long id
-  +Long actorId
+  +Long idEstablecimiento
+  +LocalDateTime fechaHora
+  +Long usuarioId
   +String accion
-  +String entidadTipo
+  +String entidad
   +String entidadId
-  +String detalles
-  +LocalDateTime fecha
+  +String detalle
 }
+
+class SesionUsuario {
+  -String hash
+  +LocalDateTime vencimiento
+  +boolean revocada
+}
+
+class CorreoSimulado {
+  +Long id
+  +String destinatario
+  +String tipo
+  +String contenido
+  +LocalDateTime fechaCreacion
+}
+
+Usuario "1" -- "0..*" SesionUsuario : mantiene
 
 Usuario <|-- Administrador
 Usuario <|-- Encargado

@@ -10,10 +10,6 @@ class Categoria {
   +String nombre
   +String descripcion
   +EstadoRegistro estado
-  +LocalDateTime fechaCreacion
-  +modificar(nombre, descripcion)
-  +inactivar()
-  +activar()
 }
 
 class Producto {
@@ -29,26 +25,15 @@ class Producto {
   +int stockCritico
   +Long version
   +EstadoRegistro estado
-  +LocalDateTime fechaCreacion
-  +disponible() int
-  +esCritico() boolean
-  +cambiarPrecio(nuevoPrecio)
-  +retenerStock(cantidad, reservaId, usuarioId) MovimientoInventario
-  +liberarStock(cantidad, reservaId, usuarioId) MovimientoInventario
-  +descontarStockReservado(cantidad, referenciaId, usuarioId) MovimientoInventario
-  +ingresarStockManual(cantidad, ingresoId, usuarioId) MovimientoInventario
-  +inactivar()
-  +activar()
 }
 
 class IngresoStock {
   +Long id
   +Long idEstablecimiento
   +Long encargadoId
-  +LocalDateTime fechaIngreso
+  +LocalDateTime fecha
   +String referenciaUnica
   +String observacion
-  +agregarDetalle(producto, cantidad)
 }
 
 class DetalleIngresoStock {
@@ -60,12 +45,8 @@ class ReservaStock {
   +Long id
   +Long idEstablecimiento
   +Long reservaId
-  +Long encargadoId
-  +LocalDateTime fechaReserva
-  +EstadoSolicitud estado
-  +agregarDetalle(producto, cantidad)
-  +liberar()
-  +consumir()
+  +LocalDateTime fechaCreacion
+  +String estado
 }
 
 class DetalleReservaStock {
@@ -79,7 +60,6 @@ class ConteoFisico {
   +Long encargadoId
   +LocalDateTime fechaConteo
   +String observaciones
-  +agregarDetalle(producto, stockContado)
 }
 
 class DetalleConteoFisico {
@@ -87,7 +67,6 @@ class DetalleConteoFisico {
   +int stockSistema
   +int stockContado
   +int diferencia
-  +calcularDiferencia() int
 }
 
 class SolicitudAjusteStock {
@@ -101,19 +80,19 @@ class SolicitudAjusteStock {
   +LocalDateTime fechaSolicitud
   +LocalDateTime fechaResolucion
   +String motivoRechazo
-  +aprobar(adminId)
-  +rechazar(adminId, motivo)
 }
 
 class MovimientoInventario {
   +Long id
   +TipoMovimientoInventario tipo
-  +int cantidad
-  +int stockAnterior
-  +int stockNuevo
-  +String motivo
-  +Long referenciaId
-  +Long usuarioId
+  +int variacionFisica
+  +int variacionReservada
+  +int stockResultante
+  +Long responsableId
+  +Long entregaId
+  +Long devolucionId
+  +Long operacionCompensacionId
+  +String referenciaUnica
   +LocalDateTime fecha
 }
 
