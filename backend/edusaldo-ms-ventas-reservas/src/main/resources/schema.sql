@@ -1,6 +1,5 @@
 -- =============================================================================
 -- EduSaldo · MS Reservas y Entregas (Puerto 8094)
--- Base de Datos: db_reservas (Espejo 1:1 con mermaid-ms-reservas-entregas-8094.md)
 -- 8 Tablas 100% Conectadas con Foreign Keys en InnoDB
 -- =============================================================================
 
@@ -25,6 +24,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE reservas (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    estado_operacion VARCHAR(40) NOT NULL DEFAULT 'COMPLETADA',
     codigo VARCHAR(50) NOT NULL UNIQUE,
     alumno_id BIGINT NOT NULL,
     creada_por_id BIGINT NOT NULL,
@@ -58,6 +58,7 @@ CREATE TABLE detalles_reserva (
 CREATE TABLE entregas (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    estado_operacion VARCHAR(40) NOT NULL DEFAULT 'COMPLETADA',
     numero VARCHAR(50) NOT NULL UNIQUE,
     reserva_id BIGINT NULL,
     alumno_id BIGINT NOT NULL,
@@ -65,6 +66,7 @@ CREATE TABLE entregas (
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total INT NOT NULL,
     encargado_id BIGINT NOT NULL,
+    CONSTRAINT uk_entrega_reserva UNIQUE (reserva_id),
     CONSTRAINT fk_entrega_reserva
         FOREIGN KEY (reserva_id) REFERENCES reservas(id)
         ON DELETE SET NULL ON UPDATE CASCADE,
@@ -87,11 +89,11 @@ CREATE TABLE detalles_entrega (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Tabla: devoluciones (Hija de entregas - HU36)
 CREATE TABLE devoluciones (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
-    codigo_devolucion VARCHAR(30) NOT NULL UNIQUE,
+    estado_operacion VARCHAR(40) NOT NULL DEFAULT 'COMPLETADA',
+    codigo_devolucion VARCHAR(50) NOT NULL UNIQUE,
     entrega_id BIGINT NOT NULL,
     alumno_id BIGINT NOT NULL,
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -122,7 +124,6 @@ CREATE TABLE detalles_devolucion (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Tabla: operaciones_distribuidas (Mermaid OperacionDistribuida - Política F3)
 CREATE TABLE operaciones_distribuidas (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -132,6 +133,14 @@ CREATE TABLE operaciones_distribuidas (
     reserva_id BIGINT NULL,
     entrega_id BIGINT NULL,
     devolucion_id BIGINT NULL,
+    umbral_saldo_bajo VARCHAR(30) NULL,
+    recuperada_por_id BIGINT NULL,
+    direccion VARCHAR(20) NOT NULL DEFAULT 'CONTINUAR',
+    pasos_confirmados TEXT NOT NULL DEFAULT '|',
+    usuario_id BIGINT NULL,
+    rol VARCHAR(30) NULL,
+    motivo VARCHAR(255) NULL,
+    ejecucion_hasta DATETIME NULL,
     actualizado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_op_dist_reserva
         FOREIGN KEY (reserva_id) REFERENCES reservas(id)
@@ -144,7 +153,6 @@ CREATE TABLE operaciones_distribuidas (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Tabla: notificaciones_pendientes (Hija de reservas y entregas - A01, A02, F5)
 CREATE TABLE notificaciones_pendientes (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
@@ -153,10 +161,10 @@ CREATE TABLE notificaciones_pendientes (
     alumno_id BIGINT NOT NULL,
     tipo_evento VARCHAR(50) NOT NULL,
     referencia_operacion VARCHAR(100) NULL,
-    destinatario_correo VARCHAR(150) NOT NULL,
+    destinatario_correo VARCHAR(150) NULL,
     asunto VARCHAR(200) NOT NULL,
-    mensaje VARCHAR(1000) NOT NULL,
-    estado VARCHAR(30) NOT NULL DEFAULT 'ENVIADA',
+    mensaje LONGTEXT NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'SIMULADA',
     intentos INT NOT NULL DEFAULT 1,
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_envio DATETIME NULL,
@@ -185,8 +193,8 @@ INSERT INTO entregas (id, id_establecimiento, numero, reserva_id, alumno_id, ori
 INSERT INTO detalles_entrega (id, entrega_id, producto_id, nombre_producto, cantidad, precio_unitario, cantidad_devuelta) VALUES
 (1, 1, 1, 'Cuaderno Universitario Matemática 100 Hojas', 2, 1500, 0);
 
-INSERT INTO operaciones_distribuidas (id, id_establecimiento, clave_idempotencia, tipo, estado, reserva_id, entrega_id, devolucion_id, actualizado_en) VALUES
-(1, 1, 'OP-RES-1001', 'ENTREGA_RESERVA', 'COMPLETADA', 1, 1, NULL, NOW());
+INSERT INTO operaciones_distribuidas (id, id_establecimiento, clave_idempotencia, tipo, estado, reserva_id, entrega_id, devolucion_id, usuario_id, rol, actualizado_en) VALUES
+(1, 1, 'OP-RES-1001', 'ENTREGA_RESERVA', 'COMPLETADA', 1, 1, NULL, 2, 'ENCARGADO', NOW());
 
 INSERT INTO notificaciones_pendientes (id, id_establecimiento, reserva_id, entrega_id, alumno_id, tipo_evento, referencia_operacion, destinatario_correo, asunto, mensaje, estado, intentos, fecha_creacion, fecha_envio, siguiente_intento) VALUES
-(1, 1, 1, 1, 4, 'RESERVA_LISTA_RETIRO', 'RESERVA_LISTA_RETIRO-1', 'apoderado@colegio.cl', 'Pedido listo para retiro: RES-1001', 'Su pedido RES-1001 se encuentra preparado y listo para retiro en librería.', 'ENVIADA', 1, NOW(), NOW(), NULL);
+(1, 1, 1, 1, 4, 'ENTREGA_REALIZADA', 'ENTREGA_REALIZADA-1', 'carlos.perez@gmail.com', 'Entrega registrada: ENT-1001', 'Se registró la entrega de materiales ENT-1001 por un total de $3000 CLP. Notificación simulada.', 'SIMULADA', 1, NOW(), NULL, NULL);

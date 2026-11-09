@@ -1,7 +1,5 @@
 package cl.edusaldo.ventas.service;
 
-import cl.edusaldo.ventas.client.InventarioClient;
-import cl.edusaldo.ventas.client.SaldosClient;
 import cl.edusaldo.ventas.dto.CrearDevolucionDTO;
 import cl.edusaldo.ventas.dto.ItemDevolucionDTO;
 import cl.edusaldo.ventas.model.DetalleEntrega;
@@ -10,114 +8,125 @@ import cl.edusaldo.ventas.model.Entrega;
 import cl.edusaldo.ventas.model.OperacionDistribuida;
 import cl.edusaldo.ventas.repository.DevolucionRepository;
 import cl.edusaldo.ventas.repository.EntregaRepository;
-import cl.edusaldo.ventas.repository.OperacionDistribuidaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
 
 @Service
 public class DevolucionService {
 
-    private final DevolucionRepository devolucionRepository;
-    private final EntregaRepository entregaRepository;
+  private final DevolucionRepository devolucionRepository;
+  private final EntregaRepository entregaRepository;
+  private final OperacionService operaciones;
+  private final cl.edusaldo.ventas.client.UsuariosClient usuariosClient;
 
-    @Autowired(required = false)
-    private OperacionDistribuidaRepository operacionDistribuidaRepository;
+  public DevolucionService(
+      DevolucionRepository devoluciones,
+      EntregaRepository entregas,
+      OperacionService operaciones,
+      cl.edusaldo.ventas.client.UsuariosClient usuarios) {
+    this.devolucionRepository = devoluciones;
+    this.entregaRepository = entregas;
+    this.operaciones = operaciones;
+    this.usuariosClient = usuarios;
+  }
 
-    @Autowired(required = false)
-    private SaldosClient saldosClient;
+  public Devolucion registrarDevolucion(CrearDevolucionDTO dto) {
+    if (dto.getItems() == null || dto.getItems().isEmpty())
+      throw new IllegalArgumentException("La devolución debe contener materiales");
+    java.util.Set<Long> unicos = new java.util.HashSet<>();
+    for (ItemDevolucionDTO item : dto.getItems())
+      if (!unicos.add(item.getDetalleEntregaId()))
+        throw new IllegalArgumentException("No se permite repetir detalles de entrega");
+    cl.edusaldo.ventas.config.ContextoSolicitud.staff();
+    Long actor = cl.edusaldo.ventas.config.ContextoSolicitud.usuario(dto.getEncargadoId());
+    OperacionDistribuida op =
+        operaciones.local(
+            () -> {
+              Entrega entrega =
+                  entregaRepository
+                      .bloquear(
+                          dto.getEntregaId(),
+                          cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+                      .orElseThrow(() -> new IllegalArgumentException("Entrega no encontrada"));
+              operaciones.disponible(entrega.getEstadoOperacion());
+              Map<Long, DetalleEntrega> detalles =
+                  entrega.getDetalles().stream()
+                      .collect(Collectors.toMap(DetalleEntrega::getId, Function.identity()));
+              Devolucion dev =
+                  new Devolucion(
+                      "DEV-" + java.util.UUID.randomUUID(),
+                      entrega.getId(),
+                      entrega.getAlumnoId(),
+                      dto.getMotivo(),
+                      0,
+                      actor);
+              for (ItemDevolucionDTO item : dto.getItems()) {
+                DetalleEntrega d = detalles.get(item.getDetalleEntregaId());
+                if (d == null)
+                  throw new IllegalArgumentException("El detalle no pertenece a la entrega");
+                if (item.getCantidad() <= 0
+                    || item.getCantidad() > d.getCantidad() - d.getCantidadDevuelta())
+                  throw new IllegalStateException("La devolución excede la cantidad disponible");
+                dev.agregarDetalle(
+                    d.getId(),
+                    d.getProductoId(),
+                    d.getNombreProducto(),
+                    item.getCantidad(),
+                    d.getPrecioUnitario());
+              }
+              dev.registrar();
+              dev.setIdEstablecimiento(entrega.getIdEstablecimiento());
+              dev.setEstadoOperacion("PENDIENTE_RECUPERACION");
+              entrega.setEstadoOperacion("PENDIENTE_RECUPERACION");
+              devolucionRepository.saveAndFlush(dev);
+              entregaRepository.save(entrega);
+              return operaciones.iniciar(
+                  "DEVOLUCION",
+                  entrega.getReservaId(),
+                  entrega.getId(),
+                  dev.getId(),
+                  actor,
+                  cl.edusaldo.ventas.config.ContextoSolicitud.rol(),
+                  dto.getMotivo());
+            });
+    operaciones.ejecutar(op.getId());
+    return obtenerPorId(op.getDevolucionId());
+  }
 
-    @Autowired(required = false)
-    private InventarioClient inventarioClient;
+  public Devolucion obtenerPorId(Long id) {
+    return devolucionRepository
+        .findByIdAndIdEstablecimiento(
+            id, cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+        .filter(d -> permitida(d.getAlumnoId()))
+        .orElseThrow(
+            () ->
+                new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Devolucion no encontrada"));
+  }
 
-    public DevolucionService(DevolucionRepository devolucionRepository, EntregaRepository entregaRepository) {
-        this.devolucionRepository = devolucionRepository;
-        this.entregaRepository = entregaRepository;
-    }
+  public List<Devolucion> listarPorEntrega(Long entregaId) {
+    return listarTodas().stream().filter(d -> d.getEntregaId().equals(entregaId)).toList();
+  }
 
-    /**
-     * HU36: Registro de devoluciones de materiales con actualización de líneas de entrega,
-     * reintegro automático de saldo (S09), reingreso de stock físico (S10) y trazabilidad OperacionDistribuida.
-     */
-    @Transactional
-    public Devolucion registrarDevolucion(CrearDevolucionDTO dto) {
-        Entrega entrega = entregaRepository.findById(dto.getEntregaId())
-                .orElseThrow(() -> new IllegalArgumentException("Entrega no encontrada con ID: " + dto.getEntregaId()));
+  public List<Devolucion> listarPorAlumno(Long alumnoId) {
+    return listarTodas().stream().filter(d -> d.getAlumnoId().equals(alumnoId)).toList();
+  }
 
-        Map<Long, DetalleEntrega> detallesMap = entrega.getDetalles().stream()
-                .collect(Collectors.toMap(DetalleEntrega::getId, Function.identity()));
+  public List<Devolucion> listarTodas() {
+    return devolucionRepository
+        .findByIdEstablecimientoOrderByIdDesc(
+            cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+        .stream()
+        .filter(d -> permitida(d.getAlumnoId()))
+        .toList();
+  }
 
-        String codigoDevolucion = "DEV-" + (1000 + (int)(Math.random() * 9000));
-        Devolucion devolucion = new Devolucion(codigoDevolucion, entrega.getId(), entrega.getAlumnoId(),
-                dto.getMotivo(), 0, dto.getEncargadoId());
-
-        for (ItemDevolucionDTO itemDev : dto.getItems()) {
-            DetalleEntrega det = detallesMap.get(itemDev.getDetalleEntregaId());
-            if (det == null) {
-                throw new IllegalArgumentException("Detalle de entrega ID " + itemDev.getDetalleEntregaId() +
-                        " no pertenece a la entrega " + entrega.getId());
-            }
-
-            // Actualiza la línea original de entrega verificando que no exceda lo entregado
-            det.registrarDevolucion(itemDev.getCantidad());
-
-            devolucion.agregarDetalle(det.getId(), det.getProductoId(), det.getNombreProducto(),
-                    itemDev.getCantidad(), det.getPrecioUnitario());
-        }
-
-        devolucion.registrar();
-
-        if (saldosClient != null) {
-            saldosClient.reintegrarSaldo(entrega.getAlumnoId(), devolucion.getTotalReintegro(),
-                    codigoDevolucion, dto.getEncargadoId());
-        }
-        if (inventarioClient != null) {
-            for (ItemDevolucionDTO itemDev : dto.getItems()) {
-                DetalleEntrega det = detallesMap.get(itemDev.getDetalleEntregaId());
-                if (det != null) {
-                    inventarioClient.reingresarStock(det.getProductoId(), itemDev.getCantidad(),
-                            dto.getEncargadoId(), "Devolución " + codigoDevolucion);
-                }
-            }
-        }
-
-        entregaRepository.save(entrega);
-        Devolucion guardada = devolucionRepository.save(devolucion);
-
-        if (operacionDistribuidaRepository != null && guardada.getId() != null) {
-            OperacionDistribuida op = new OperacionDistribuida(
-                    "OP-DEV-" + guardada.getCodigoDevolucion(),
-                    "DEVOLUCION", entrega.getReservaId(), entrega.getId(), guardada.getId());
-            op.marcarCompletada();
-            operacionDistribuidaRepository.save(op);
-        }
-
-        return guardada;
-    }
-
-    @Transactional(readOnly = true)
-    public Devolucion obtenerPorId(Long id) {
-        return devolucionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Devolución no encontrada con ID: " + id));
-    }
-
-    @Transactional(readOnly = true)
-    public List<Devolucion> listarPorEntrega(Long entregaId) {
-        return devolucionRepository.findByEntregaId(entregaId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Devolucion> listarPorAlumno(Long alumnoId) {
-        return devolucionRepository.findByAlumnoId(alumnoId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Devolucion> listarTodas() {
-        return devolucionRepository.findAllByOrderByFechaDesc();
-    }
+  private boolean permitida(Long alumno) {
+    if (cl.edusaldo.ventas.config.ContextoSolicitud.rol().equals("ENCARGADO")
+        || cl.edusaldo.ventas.config.ContextoSolicitud.rol().equals("ADMINISTRADOR")) return true;
+    return usuariosClient.puedeConsultarAlumno(alumno);
+  }
 }

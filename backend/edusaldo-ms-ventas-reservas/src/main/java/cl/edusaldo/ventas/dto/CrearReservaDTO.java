@@ -1,63 +1,35 @@
 package cl.edusaldo.ventas.dto;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import java.util.List;
 
 public class CrearReservaDTO {
+  @NotNull private Long alumnoId;
+  private Long creadaPorId;
+  @NotEmpty @Valid private List<ItemReservaDTO> items;
 
-    @NotNull(message = "El ID del alumno es obligatorio")
-    private Long alumnoId;
+  public Long getAlumnoId() {
+    return alumnoId;
+  }
 
-    // Puede ser Apoderado o Alumno (>= 12 años)
-    @JsonAlias({"apoderadoId"})
-    private Long creadaPorId;
+  public void setAlumnoId(Long id) {
+    alumnoId = id;
+  }
 
-    // Campo de retrocompatibilidad
-    @JsonIgnore
-    @Hidden
-    private Long apoderadoId;
+  public Long getCreadaPorId() {
+    return creadaPorId;
+  }
 
-    @NotEmpty(message = "La reserva debe contener al menos un material")
-    @Valid
-    private List<ItemReservaDTO> items;
+  public void setCreadaPorId(Long id) {
+    creadaPorId = id;
+  }
 
-    public CrearReservaDTO() {}
+  public List<ItemReservaDTO> getItems() {
+    return items;
+  }
 
-    public Long getAlumnoId() { return alumnoId; }
-    public void setAlumnoId(Long alumnoId) { this.alumnoId = alumnoId; }
-
-    public Long getCreadaPorId() {
-        if (this.creadaPorId != null) {
-            return this.creadaPorId;
-        }
-        return this.apoderadoId;
-    }
-
-    public void setCreadaPorId(Long creadaPorId) {
-        this.creadaPorId = creadaPorId;
-        if (this.apoderadoId == null) {
-            this.apoderadoId = creadaPorId;
-        }
-    }
-
-    @JsonIgnore
-    @Hidden
-    public Long getApoderadoId() { return apoderadoId != null ? apoderadoId : getCreadaPorId(); }
-
-    @JsonIgnore
-    @Hidden
-    public void setApoderadoId(Long apoderadoId) {
-        this.apoderadoId = apoderadoId;
-        if (this.creadaPorId == null) {
-            this.creadaPorId = apoderadoId;
-        }
-    }
-
-    public List<ItemReservaDTO> getItems() { return items; }
-    public void setItems(List<ItemReservaDTO> items) { this.items = items; }
+  public void setItems(List<ItemReservaDTO> items) {
+    this.items = items;
+  }
 }

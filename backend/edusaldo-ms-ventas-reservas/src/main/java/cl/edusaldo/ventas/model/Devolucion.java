@@ -2,133 +2,213 @@ package cl.edusaldo.ventas.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity
-@Table(name = "devoluciones", indexes = {
-        @Index(name = "idx_devoluciones_establecimiento", columnList = "id_establecimiento"),
-        @Index(name = "idx_devoluciones_alumno", columnList = "alumno_id")
-})
+@Table(
+    name = "devoluciones",
+    indexes = {
+      @Index(name = "idx_devoluciones_establecimiento", columnList = "id_establecimiento"),
+      @Index(name = "idx_devoluciones_alumno", columnList = "alumno_id")
+    })
 public class Devolucion {
 
-    private static final Logger log = LoggerFactory.getLogger(Devolucion.class);
+  private static final Logger log = LoggerFactory.getLogger(Devolucion.class);
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Column(name = "estado_operacion", nullable = false, length = 40)
+  private String estadoOperacion = "COMPLETADA";
 
-    @Column(name = "id_establecimiento", nullable = false)
-    private Long idEstablecimiento = 1L;
+  public String getEstadoOperacion() {
+    return estadoOperacion;
+  }
 
-    @Column(name = "codigo_devolucion", nullable = false, unique = true, length = 50)
-    private String codigoDevolucion;
+  public void setEstadoOperacion(String estado) {
+    estadoOperacion = estado;
+  }
 
-    @Column(name = "entrega_id", nullable = false)
-    private Long entregaId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "entrega_id", insertable = false, updatable = false,
-            foreignKey = @ForeignKey(name = "fk_devolucion_entrega"))
-    private Entrega entrega;
+  @Column(name = "id_establecimiento", nullable = false)
+  private Long idEstablecimiento = 1L;
 
-    @Column(name = "alumno_id", nullable = false)
-    private Long alumnoId; // Ref escalar a MS Alumnos
+  @Column(name = "codigo_devolucion", nullable = false, unique = true, length = 50)
+  private String codigoDevolucion;
 
-    @Column(name = "fecha", nullable = false)
-    private LocalDateTime fecha = LocalDateTime.now();
+  @Column(name = "entrega_id", nullable = false)
+  private Long entregaId;
 
-    @Column(name = "motivo", nullable = false)
-    private String motivo;
+  @JsonIgnore
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(
+      name = "entrega_id",
+      insertable = false,
+      updatable = false,
+      foreignKey = @ForeignKey(name = "fk_devolucion_entrega"))
+  private Entrega entrega;
 
-    @Column(name = "total_reintegro", nullable = false)
-    private int totalReintegro; // CLP en int
+  @Column(name = "alumno_id", nullable = false)
+  private Long alumnoId;
 
-    @Column(name = "encargado_id", nullable = false)
-    private Long encargadoId; // Ref escalar a MS Auth
+  @Column(name = "fecha", nullable = false)
+  private LocalDateTime fecha = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "devolucion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DetalleDevolucion> detalles = new ArrayList<>();
+  @Column(name = "motivo", nullable = false)
+  private String motivo;
 
-    public Devolucion() {
-        this.idEstablecimiento = 1L;
+  @Column(name = "total_reintegro", nullable = false)
+  private int totalReintegro;
+
+  @Column(name = "encargado_id", nullable = false)
+  private Long encargadoId;
+
+  @JsonIgnore
+  @OneToMany(mappedBy = "devolucion", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<DetalleDevolucion> detalles = new ArrayList<>();
+
+  public Devolucion() {
+    this.idEstablecimiento = 1L;
+  }
+
+  public Devolucion(
+      String codigoDevolucion,
+      Long entregaId,
+      Long alumnoId,
+      String motivo,
+      int totalReintegro,
+      Long encargadoId) {
+    this.idEstablecimiento = 1L;
+    this.codigoDevolucion = codigoDevolucion;
+    this.entregaId = entregaId;
+    this.alumnoId = alumnoId;
+    this.motivo = motivo;
+    this.totalReintegro = totalReintegro;
+    this.encargadoId = encargadoId;
+    this.fecha = LocalDateTime.now();
+  }
+
+  public int calcularTotalReintegro() {
+    this.totalReintegro =
+        this.detalles.stream().map(DetalleDevolucion::getMontoReintegro).reduce(0, Math::addExact);
+    return this.totalReintegro;
+  }
+
+  public void agregarDetalle(
+      Long detalleEntregaId,
+      Long productoId,
+      String nombreProducto,
+      int cantidad,
+      int precioUnitarioReintegro) {
+    this.detalles.add(
+        new DetalleDevolucion(
+            this, detalleEntregaId, productoId, nombreProducto, cantidad, precioUnitarioReintegro));
+  }
+
+  public void registrar() {
+    calcularTotalReintegro();
+    log.info(
+        "[MS-DEVOLUCIONES] Registro de devolución {} por monto ${} CLP para entregaId={}",
+        codigoDevolucion,
+        totalReintegro,
+        entregaId);
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getIdEstablecimiento() {
+    return idEstablecimiento != null ? idEstablecimiento : 1L;
+  }
+
+  public void setIdEstablecimiento(Long idEstablecimiento) {
+    this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L;
+  }
+
+  public String getCodigoDevolucion() {
+    return codigoDevolucion;
+  }
+
+  public void setCodigoDevolucion(String codigoDevolucion) {
+    this.codigoDevolucion = codigoDevolucion;
+  }
+
+  public Long getEntregaId() {
+    if (entrega != null && entrega.getId() != null) {
+      return entrega.getId();
     }
+    return entregaId;
+  }
 
-    public Devolucion(String codigoDevolucion, Long entregaId, Long alumnoId, String motivo, int totalReintegro, Long encargadoId) {
-        this.idEstablecimiento = 1L;
-        this.codigoDevolucion = codigoDevolucion;
-        this.entregaId = entregaId;
-        this.alumnoId = alumnoId;
-        this.motivo = motivo;
-        this.totalReintegro = totalReintegro;
-        this.encargadoId = encargadoId;
-        this.fecha = LocalDateTime.now();
+  public void setEntregaId(Long entregaId) {
+    this.entregaId = entregaId;
+  }
+
+  public Entrega getEntrega() {
+    return entrega;
+  }
+
+  public void setEntrega(Entrega entrega) {
+    this.entrega = entrega;
+    if (entrega != null && entrega.getId() != null) {
+      this.entregaId = entrega.getId();
     }
+  }
 
-    public int calcularTotalReintegro() {
-        this.totalReintegro = this.detalles.stream()
-                .mapToInt(DetalleDevolucion::getMontoReintegro)
-                .sum();
-        return this.totalReintegro;
-    }
+  public Long getAlumnoId() {
+    return alumnoId;
+  }
 
-    public void agregarDetalle(Long detalleEntregaId, Long productoId, String nombreProducto,
-                               int cantidad, int precioUnitarioReintegro) {
-        this.detalles.add(new DetalleDevolucion(this, detalleEntregaId, productoId, nombreProducto,
-                cantidad, precioUnitarioReintegro));
-    }
+  public void setAlumnoId(Long alumnoId) {
+    this.alumnoId = alumnoId;
+  }
 
-    public void registrar() {
-        calcularTotalReintegro();
-        log.info("[MS-DEVOLUCIONES] Registro de devolución {} por monto ${} CLP para entregaId={}",
-                codigoDevolucion, totalReintegro, entregaId);
-    }
+  public LocalDateTime getFecha() {
+    return fecha;
+  }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  public void setFecha(LocalDateTime fecha) {
+    this.fecha = fecha;
+  }
 
-    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
-    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
+  public String getMotivo() {
+    return motivo;
+  }
 
-    public String getCodigoDevolucion() { return codigoDevolucion; }
-    public void setCodigoDevolucion(String codigoDevolucion) { this.codigoDevolucion = codigoDevolucion; }
+  public void setMotivo(String motivo) {
+    this.motivo = motivo;
+  }
 
-    public Long getEntregaId() {
-        if (entrega != null && entrega.getId() != null) {
-            return entrega.getId();
-        }
-        return entregaId;
-    }
-    public void setEntregaId(Long entregaId) { this.entregaId = entregaId; }
+  public int getTotalReintegro() {
+    return totalReintegro;
+  }
 
-    public Entrega getEntrega() { return entrega; }
-    public void setEntrega(Entrega entrega) {
-        this.entrega = entrega;
-        if (entrega != null && entrega.getId() != null) {
-            this.entregaId = entrega.getId();
-        }
-    }
+  public void setTotalReintegro(int totalReintegro) {
+    this.totalReintegro = totalReintegro;
+  }
 
-    public Long getAlumnoId() { return alumnoId; }
-    public void setAlumnoId(Long alumnoId) { this.alumnoId = alumnoId; }
+  public Long getEncargadoId() {
+    return encargadoId;
+  }
 
-    public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+  public void setEncargadoId(Long encargadoId) {
+    this.encargadoId = encargadoId;
+  }
 
-    public String getMotivo() { return motivo; }
-    public void setMotivo(String motivo) { this.motivo = motivo; }
+  public List<DetalleDevolucion> getDetalles() {
+    return detalles;
+  }
 
-    public int getTotalReintegro() { return totalReintegro; }
-    public void setTotalReintegro(int totalReintegro) { this.totalReintegro = totalReintegro; }
-
-    public Long getEncargadoId() { return encargadoId; }
-    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
-
-    public List<DetalleDevolucion> getDetalles() { return detalles; }
-    public void setDetalles(List<DetalleDevolucion> detalles) { this.detalles = detalles; }
+  public void setDetalles(List<DetalleDevolucion> detalles) {
+    this.detalles = detalles;
+  }
 }

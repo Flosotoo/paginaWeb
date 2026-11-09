@@ -5,34 +5,55 @@ import jakarta.validation.constraints.NotNull;
 
 public class ItemReservaDTO {
 
-    @NotNull(message = "El ID del producto es obligatorio")
-    private Long productoId;
+  @NotNull(message = "El ID del producto es obligatorio")
+  private Long productoId;
 
-    private String nombreProducto;
+  private String nombreProducto;
 
-    @Min(value = 1, message = "La cantidad debe ser al menos 1")
-    private int cantidad;
+  @Min(value = 1, message = "La cantidad debe ser al menos 1")
+  private int cantidad;
 
-    private Integer precioUnitario; // CLP en int
+  private Integer precioUnitario;
 
-    public ItemReservaDTO() {}
+  public ItemReservaDTO() {}
 
-    public ItemReservaDTO(Long productoId, String nombreProducto, int cantidad, Integer precioUnitario) {
-        this.productoId = productoId;
-        this.nombreProducto = nombreProducto;
-        this.cantidad = cantidad;
-        this.precioUnitario = precioUnitario;
-    }
+  public ItemReservaDTO(
+      Long productoId, String nombreProducto, int cantidad, Integer precioUnitario) {
+    this.productoId = productoId;
+    this.nombreProducto = nombreProducto;
+    this.cantidad = cantidad;
+    this.precioUnitario = precioUnitario;
+  }
 
-    public Long getProductoId() { return productoId; }
-    public void setProductoId(Long productoId) { this.productoId = productoId; }
+  public Long getProductoId() {
+    return productoId;
+  }
 
-    public String getNombreProducto() { return nombreProducto; }
-    public void setNombreProducto(String nombreProducto) { this.nombreProducto = nombreProducto; }
+  public void setProductoId(Long productoId) {
+    this.productoId = productoId;
+  }
 
-    public int getCantidad() { return cantidad; }
-    public void setCantidad(int cantidad) { this.cantidad = cantidad; }
+  public String getNombreProducto() {
+    return nombreProducto;
+  }
 
-    public Integer getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(Integer precioUnitario) { this.precioUnitario = precioUnitario; }
+  public void setNombreProducto(String nombreProducto) {
+    this.nombreProducto = nombreProducto;
+  }
+
+  public int getCantidad() {
+    return cantidad;
+  }
+
+  public void setCantidad(int cantidad) {
+    this.cantidad = cantidad;
+  }
+
+  public Integer getPrecioUnitario() {
+    return precioUnitario;
+  }
+
+  public void setPrecioUnitario(Integer precioUnitario) {
+    this.precioUnitario = precioUnitario;
+  }
 }

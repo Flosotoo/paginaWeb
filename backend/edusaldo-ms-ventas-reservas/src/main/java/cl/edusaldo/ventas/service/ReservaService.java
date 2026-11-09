@@ -1,292 +1,249 @@
 package cl.edusaldo.ventas.service;
 
 import cl.edusaldo.ventas.client.InventarioClient;
-import cl.edusaldo.ventas.client.SaldosClient;
 import cl.edusaldo.ventas.client.UsuariosClient;
 import cl.edusaldo.ventas.dto.CrearReservaDTO;
 import cl.edusaldo.ventas.dto.ItemReservaDTO;
 import cl.edusaldo.ventas.model.*;
 import cl.edusaldo.ventas.repository.EntregaRepository;
 import cl.edusaldo.ventas.repository.NotificacionPendienteRepository;
-import cl.edusaldo.ventas.repository.OperacionDistribuidaRepository;
 import cl.edusaldo.ventas.repository.ReservaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ReservaService {
 
-    private final ReservaRepository reservaRepository;
-    private final EntregaRepository entregaRepository;
+  private final ReservaRepository reservaRepository;
+  private final EntregaRepository entregaRepository;
+  private final NotificacionPendienteRepository notificacionRepository;
+  private final OperacionService operaciones;
+  private final UsuariosClient usuariosClient;
+  private final InventarioClient inventarioClient;
 
-    @Autowired(required = false)
-    private NotificacionPendienteRepository notificacionRepository;
+  public ReservaService(
+      ReservaRepository reservas,
+      EntregaRepository entregas,
+      NotificacionPendienteRepository notificaciones,
+      OperacionService operaciones,
+      UsuariosClient usuarios,
+      InventarioClient inventario) {
+    this.reservaRepository = reservas;
+    this.entregaRepository = entregas;
+    this.notificacionRepository = notificaciones;
+    this.operaciones = operaciones;
+    this.usuariosClient = usuarios;
+    this.inventarioClient = inventario;
+  }
 
-    @Autowired(required = false)
-    private OperacionDistribuidaRepository operacionDistribuidaRepository;
-
-    @Autowired(required = false)
-    private UsuariosClient usuariosClient;
-
-    @Autowired(required = false)
-    private SaldosClient saldosClient;
-
-    @Autowired(required = false)
-    private InventarioClient inventarioClient;
-
-    public ReservaService(ReservaRepository reservaRepository, EntregaRepository entregaRepository) {
-        this.reservaRepository = reservaRepository;
-        this.entregaRepository = entregaRepository;
+  public Reserva crearReserva(CrearReservaDTO dto) {
+    if (dto.getItems() == null || dto.getItems().isEmpty()) {
+      throw new IllegalArgumentException("La reserva debe contener al menos un material.");
     }
 
-    @Transactional
-    public Reserva crearReserva(CrearReservaDTO dto) {
-        if (dto.getItems() == null || dto.getItems().isEmpty()) {
-            throw new IllegalArgumentException("La reserva debe contener al menos un material.");
-        }
-
-        if (usuariosClient != null) {
-            usuariosClient.validarAlumnoYVinculo(dto.getAlumnoId(), dto.getCreadaPorId());
-            usuariosClient.validarAutonomiaReserva(dto.getAlumnoId(), dto.getCreadaPorId());
-        }
-
-        java.util.List<ItemReservaDTO> itemsProcesados = new java.util.ArrayList<>();
-        int total = 0;
-        for (ItemReservaDTO item : dto.getItems()) {
-            int precio = (item.getPrecioUnitario() != null) ? item.getPrecioUnitario() : 0;
-            String nombre = (item.getNombreProducto() != null) ? item.getNombreProducto() : "";
-            if (inventarioClient != null) {
-                Map<String, Object> prod = inventarioClient.consultarProductoActivo(item.getProductoId());
-                if (prod != null) {
-                    if (prod.get("precio") != null) {
-                        precio = Integer.parseInt(prod.get("precio").toString());
-                    }
-                    if (prod.get("nombre") != null) {
-                        nombre = String.valueOf(prod.get("nombre"));
-                    }
-                }
-            }
-            total += item.getCantidad() * precio;
-            itemsProcesados.add(new ItemReservaDTO(item.getProductoId(), nombre, item.getCantidad(), precio));
-        }
-
-        String codigo = "RES-" + (1000 + (int)(Math.random() * 9000));
-        Reserva r = new Reserva(codigo, dto.getAlumnoId(), dto.getCreadaPorId(), total);
-
-        for (ItemReservaDTO item : itemsProcesados) {
-            r.agregarDetalle(item.getProductoId(), item.getNombreProducto(), item.getCantidad(), item.getPrecioUnitario());
-        }
-
-        boolean saldoRetenido = false;
-        if (saldosClient != null) {
-            saldosClient.comprometerSaldo(dto.getAlumnoId(), total, codigo);
-            saldoRetenido = true;
-        }
-
-        if (inventarioClient != null) {
-            int itemsRetenidos = 0;
-            try {
-                for (ItemReservaDTO item : itemsProcesados) {
-                    inventarioClient.reservarStock(item.getProductoId(), item.getCantidad(), dto.getCreadaPorId());
-                    itemsRetenidos++;
-                }
-            } catch (Exception ex) {
-                if (saldoRetenido && saldosClient != null) {
-                    try {
-                        saldosClient.liberarSaldo(dto.getAlumnoId(), total, codigo);
-                    } catch (Exception ignored) {}
-                }
-                for (int i = 0; i < itemsRetenidos; i++) {
-                    ItemReservaDTO it = itemsProcesados.get(i);
-                    try {
-                        inventarioClient.liberarStock(it.getProductoId(), it.getCantidad(), dto.getCreadaPorId());
-                    } catch (Exception ignored) {}
-                }
-                if (operacionDistribuidaRepository != null) {
-                    OperacionDistribuida op = new OperacionDistribuida(
-                            "OP-RES-" + codigo, "RESERVA", null, null, null);
-                    op.marcarCompensada();
-                    operacionDistribuidaRepository.save(op);
-                }
-                throw ex;
-            }
-        }
-
-        r.confirmar();
-        Reserva guardada = reservaRepository.save(r);
-
-        if (operacionDistribuidaRepository != null && guardada.getId() != null) {
-            OperacionDistribuida op = new OperacionDistribuida(
-                    "OP-RES-" + guardada.getCodigo(), "RESERVA", guardada.getId(), null, null);
-            op.marcarCompletada();
-            operacionDistribuidaRepository.save(op);
-        }
-
-        if (notificacionRepository != null && guardada.getId() != null) {
-            NotificacionPendiente notif = new NotificacionPendiente(
-                    guardada.getId(),
-                    null,
-                    guardada.getAlumnoId(),
-                    "RESERVA_CONFIRMADA",
-                    "apoderado@colegio.cl",
-                    "Confirmación de reserva: " + guardada.getCodigo(),
-                    "Su reserva " + guardada.getCodigo() + " ha sido confirmada exitosamente por un total de $" + guardada.getTotal() + " CLP."
-            );
-            notif.setIdEstablecimiento(guardada.getIdEstablecimiento());
-            notificacionRepository.save(notif);
-        }
-
-        return guardada;
+    java.util.Set<Long> productosUnicos = new java.util.HashSet<>();
+    for (ItemReservaDTO item : dto.getItems()) {
+      if (!productosUnicos.add(item.getProductoId()))
+        throw new IllegalArgumentException("No se permite repetir productos en una reserva");
+    }
+    dto.setCreadaPorId(cl.edusaldo.ventas.config.ContextoSolicitud.usuario(dto.getCreadaPorId()));
+    if (!permitida(dto.getAlumnoId()))
+      throw new org.springframework.web.server.ResponseStatusException(
+          org.springframework.http.HttpStatus.FORBIDDEN,
+          "El alumno no está vinculado al solicitante");
+    if (usuariosClient != null) {
+      usuariosClient.validarAlumnoYVinculo(dto.getAlumnoId(), dto.getCreadaPorId());
+      usuariosClient.validarAutonomiaReserva(dto.getAlumnoId(), dto.getCreadaPorId());
     }
 
-    /**
-     * HU31 CA2: Marcar pedido como lista para retiro registrando mandatoriamente
-     * encargadaId y fecha de preparación, y encolando notificación A01.
-     */
-    @Transactional
-    public Reserva marcarListaParaRetiro(Long reservaId, Long encargadoId) {
-        Reserva r = obtenerPorId(reservaId);
-        r.marcarListaParaRetiro(encargadoId);
-        Reserva guardada = reservaRepository.save(r);
-
-        if (notificacionRepository != null) {
-            NotificacionPendiente notif = new NotificacionPendiente(
-                    guardada.getId(),
-                    null,
-                    guardada.getAlumnoId(),
-                    "RESERVA_LISTA_RETIRO",
-                    "apoderado@colegio.cl",
-                    "Pedido listo para retiro: " + guardada.getCodigo(),
-                    "Su pedido " + guardada.getCodigo() + " se encuentra preparado y listo para retiro en librería."
-            );
-            notif.setIdEstablecimiento(guardada.getIdEstablecimiento());
-            notificacionRepository.save(notif);
+    java.util.List<ItemReservaDTO> itemsProcesados = new java.util.ArrayList<>();
+    int total = 0;
+    for (ItemReservaDTO item : dto.getItems()) {
+      int precio = (item.getPrecioUnitario() != null) ? item.getPrecioUnitario() : 0;
+      String nombre = (item.getNombreProducto() != null) ? item.getNombreProducto() : "";
+      if (inventarioClient != null) {
+        Map<String, Object> prod = inventarioClient.consultarProductoActivo(item.getProductoId());
+        if (prod != null) {
+          if (prod.get("precio") != null) {
+            precio = Integer.parseInt(prod.get("precio").toString());
+          }
+          if (prod.get("nombre") != null) {
+            nombre = String.valueOf(prod.get("nombre"));
+          }
         }
-
-        return guardada;
+      }
+      total = Math.addExact(total, Math.multiplyExact(item.getCantidad(), precio));
+      itemsProcesados.add(
+          new ItemReservaDTO(item.getProductoId(), nombre, item.getCantidad(), precio));
     }
 
-    /**
-     * HU28 y HU32: Cancelación diferenciada por rol (APO/ALU solo en PENDIENTE; ENC/ADMIN en PENDIENTE o LISTA_PARA_RETIRO).
-     * Libera saldo comprometido (S05), libera stock reservado (S06), registra OperacionDistribuida y encola notificación A02.
-     */
-    @Transactional
-    public Reserva cancelarReserva(Long reservaId, String motivo, Long usuarioId, String rol) {
-        Reserva r = obtenerPorId(reservaId);
-        r.cancelar(motivo, usuarioId, rol);
+    String codigo = "RES-" + java.util.UUID.randomUUID().toString();
+    Reserva r = new Reserva(codigo, dto.getAlumnoId(), dto.getCreadaPorId(), total);
 
-        if (saldosClient != null) {
-            saldosClient.liberarSaldo(r.getAlumnoId(), r.getTotal(), r.getCodigo());
-        }
-        if (inventarioClient != null && r.getDetalles() != null) {
-            for (DetalleReserva det : r.getDetalles()) {
-                inventarioClient.liberarStock(det.getProductoId(), det.getCantidad(), usuarioId);
-            }
-        }
-
-        Reserva guardada = reservaRepository.save(r);
-
-        if (operacionDistribuidaRepository != null && guardada.getId() != null) {
-            OperacionDistribuida op = new OperacionDistribuida(
-                    "OP-CAN-" + guardada.getCodigo() + "-" + System.currentTimeMillis(),
-                    "CANCELACION", guardada.getId(), null, null);
-            op.marcarCompletada();
-            operacionDistribuidaRepository.save(op);
-        }
-
-        if (notificacionRepository != null) {
-            NotificacionPendiente notif = new NotificacionPendiente(
-                    guardada.getId(),
-                    null,
-                    guardada.getAlumnoId(),
-                    "RESERVA_CANCELADA",
-                    "apoderado@colegio.cl",
-                    "Reserva cancelada: " + guardada.getCodigo(),
-                    "Reserva " + guardada.getCodigo() + " cancelada. Motivo: " + guardada.getMotivoCancelacion()
-            );
-            notif.setIdEstablecimiento(guardada.getIdEstablecimiento());
-            notificacionRepository.save(notif);
-        }
-
-        return guardada;
+    for (ItemReservaDTO item : itemsProcesados) {
+      r.agregarDetalle(
+          item.getProductoId(),
+          item.getNombreProducto(),
+          item.getCantidad(),
+          item.getPrecioUnitario());
     }
 
-    /**
-     * HU33: Retiro de reserva y generación formal de Entrega por concepto (S07 y S08).
-     */
-    @Transactional
-    public Entrega entregarReserva(Long reservaId, Long encargadoId) {
-        Reserva r = obtenerPorId(reservaId);
-        Entrega entrega = r.confirmarRetiroYGenerarEntrega(encargadoId);
+    r.confirmar();
+    r.setIdEstablecimiento(cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento());
+    r.setEstadoOperacion("PENDIENTE_RECUPERACION");
+    OperacionDistribuida op =
+        operaciones.local(
+            () -> {
+              reservaRepository.saveAndFlush(r);
+              return operaciones.iniciar(
+                  "RESERVA",
+                  r.getId(),
+                  null,
+                  null,
+                  dto.getCreadaPorId(),
+                  cl.edusaldo.ventas.config.ContextoSolicitud.rol(),
+                  null);
+            });
+    operaciones.ejecutar(op.getId());
+    Reserva guardada = obtenerPorId(r.getId());
+    return guardada;
+  }
 
-        if (saldosClient != null) {
-            saldosClient.descontarSaldo(r.getAlumnoId(), r.getTotal(), true, r.getCodigo());
-        }
-        if (inventarioClient != null && r.getDetalles() != null) {
-            for (DetalleReserva det : r.getDetalles()) {
-                inventarioClient.descontarStock(det.getProductoId(), det.getCantidad(), true, encargadoId);
-            }
-        }
+  public Reserva marcarListaParaRetiro(Long reservaId, Long encargadoId) {
+    cl.edusaldo.ventas.config.ContextoSolicitud.staff();
+    Long actor = cl.edusaldo.ventas.config.ContextoSolicitud.usuario(encargadoId);
+    obtenerPorId(reservaId);
+    operaciones.local(
+        () -> {
+          Reserva r =
+              reservaRepository
+                  .bloquear(
+                      reservaId, cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+                  .orElseThrow(() -> new IllegalArgumentException("Reserva no encontrada"));
+          operaciones.disponible(r.getEstadoOperacion());
+          r.marcarListaParaRetiro(actor);
+          reservaRepository.save(r);
+          operaciones.registrarNotificacionPendiente(
+              r.getId(), null, r.getAlumnoId(), "RESERVA_LISTA_RETIRO", r.getIdEstablecimiento());
+          return null;
+        });
+    return obtenerPorId(reservaId);
+  }
 
-        reservaRepository.save(r);
-        Entrega guardada = entregaRepository.save(entrega);
+  public Reserva cancelarReserva(Long reservaId, String motivo, Long usuarioId, String rol) {
+    Long actor = cl.edusaldo.ventas.config.ContextoSolicitud.usuario(usuarioId);
+    String rolSeguro =
+        cl.edusaldo.ventas.config.ContextoSolicitud.header("X-Rol") == null
+            ? rol
+            : cl.edusaldo.ventas.config.ContextoSolicitud.rol();
+    obtenerPorId(reservaId);
+    OperacionDistribuida op =
+        operaciones.local(
+            () -> {
+              Reserva r =
+                  reservaRepository
+                      .bloquear(
+                          reservaId, cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+                      .orElseThrow(() -> new IllegalArgumentException("Reserva no encontrada"));
+              operaciones.disponible(r.getEstadoOperacion());
+              EstadoReserva previo = r.getEstado();
+              r.cancelar(motivo, actor, rolSeguro);
+              r.setEstado(previo);
+              r.setMotivoCancelacion(null);
+              r.setCanceladaPorId(null);
+              r.setEstadoOperacion("PENDIENTE_RECUPERACION");
+              reservaRepository.save(r);
+              return operaciones.iniciar(
+                  "CANCELACION", r.getId(), null, null, actor, rolSeguro, motivo);
+            });
+    operaciones.ejecutar(op.getId());
+    Reserva guardada = obtenerPorId(reservaId);
+    return guardada;
+  }
 
-        if (operacionDistribuidaRepository != null && guardada.getId() != null) {
-            OperacionDistribuida op = new OperacionDistribuida(
-                    "OP-ENT-RES-" + guardada.getNumero(),
-                    "ENTREGA_RESERVA", r.getId(), guardada.getId(), null);
-            op.marcarCompletada();
-            operacionDistribuidaRepository.save(op);
-        }
+  public Entrega entregarReserva(Long reservaId, Long encargadoId) {
+    cl.edusaldo.ventas.config.ContextoSolicitud.staff();
+    Long actor = cl.edusaldo.ventas.config.ContextoSolicitud.usuario(encargadoId);
+    OperacionDistribuida op =
+        operaciones.local(
+            () -> {
+              Reserva r =
+                  reservaRepository
+                      .bloquear(
+                          reservaId, cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+                      .orElseThrow(() -> new IllegalArgumentException("Reserva no encontrada"));
+              operaciones.disponible(r.getEstadoOperacion());
+              EstadoReserva previo = r.getEstado();
+              Entrega entrega = r.confirmarRetiroYGenerarEntrega(actor);
+              r.setEstado(previo);
+              r.setEstadoOperacion("PENDIENTE_RECUPERACION");
+              entrega.setEstadoOperacion("PENDIENTE_RECUPERACION");
+              entregaRepository.saveAndFlush(entrega);
+              reservaRepository.save(r);
+              return operaciones.iniciar(
+                  "ENTREGA_RESERVA",
+                  r.getId(),
+                  entrega.getId(),
+                  null,
+                  actor,
+                  cl.edusaldo.ventas.config.ContextoSolicitud.rol(),
+                  null);
+            });
+    operaciones.ejecutar(op.getId());
+    Entrega guardada =
+        entregaRepository
+            .findByIdAndIdEstablecimiento(
+                op.getEntregaId(), cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+            .orElseThrow();
+    return guardada;
+  }
 
-        if (notificacionRepository != null && guardada.getId() != null) {
-            NotificacionPendiente notif = new NotificacionPendiente(
-                    r.getId(),
-                    guardada.getId(),
-                    guardada.getAlumnoId(),
-                    "ENTREGA_REALIZADA",
-                    "apoderado@colegio.cl",
-                    "Entrega realizada: " + guardada.getNumero(),
-                    "Se ha completado la entrega de materiales " + guardada.getNumero() + " por un total de $" + guardada.getTotal() + " CLP."
-            );
-            notif.setIdEstablecimiento(guardada.getIdEstablecimiento());
-            notificacionRepository.save(notif);
-        }
+  public Reserva obtenerPorId(Long id) {
+    return reservaRepository
+        .findByIdAndIdEstablecimiento(
+            id, cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+        .filter(r -> permitida(r.getAlumnoId()))
+        .orElseThrow(
+            () ->
+                new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Reserva no encontrada"));
+  }
 
-        return guardada;
+  public List<Reserva> listarPorAlumno(Long alumnoId) {
+    return listarTodas().stream().filter(r -> r.getAlumnoId().equals(alumnoId)).toList();
+  }
+
+  public List<Reserva> listarTodas() {
+    return reservaRepository
+        .findByIdEstablecimientoOrderByIdDesc(
+            cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+        .stream()
+        .filter(r -> permitida(r.getAlumnoId()))
+        .toList();
+  }
+
+  public List<Reserva> listarPorEstado(EstadoReserva estado) {
+    return listarTodas().stream().filter(r -> r.getEstado() == estado).toList();
+  }
+
+  public List<NotificacionPendiente> listarNotificaciones() {
+    if (notificacionRepository == null) {
+      return Collections.emptyList();
     }
+    java.util.Map<Long, Boolean> accesoPorAlumno = new java.util.HashMap<>();
+    return notificacionRepository
+        .findByIdEstablecimientoOrderByFechaCreacionDesc(
+            cl.edusaldo.ventas.config.ContextoSolicitud.establecimiento())
+        .stream()
+        .filter(n -> accesoPorAlumno.computeIfAbsent(n.getAlumnoId(), this::permitida))
+        .toList();
+  }
 
-    @Transactional(readOnly = true)
-    public Reserva obtenerPorId(Long id) {
-        return reservaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Reserva no encontrada con ID: " + id));
-    }
-
-    @Transactional(readOnly = true)
-    public List<Reserva> listarPorAlumno(Long alumnoId) {
-        return reservaRepository.findByAlumnoId(alumnoId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Reserva> listarTodas() {
-        return reservaRepository.findAllByOrderByFechaCreacionDesc();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Reserva> listarPorEstado(EstadoReserva estado) {
-        return reservaRepository.findByEstado(estado);
-    }
-
-    @Transactional(readOnly = true)
-    public List<NotificacionPendiente> listarNotificaciones() {
-        if (notificacionRepository == null) {
-            return Collections.emptyList();
-        }
-        return notificacionRepository.findAll();
-    }
+  private boolean permitida(Long alumno) {
+    if (cl.edusaldo.ventas.config.ContextoSolicitud.rol().equals("ENCARGADO")
+        || cl.edusaldo.ventas.config.ContextoSolicitud.rol().equals("ADMINISTRADOR")) return true;
+    return usuariosClient.puedeConsultarAlumno(alumno);
+  }
 }
