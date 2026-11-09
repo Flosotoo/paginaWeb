@@ -1,105 +1,21 @@
-# Frontend Web · EduSaldo (React 18 + TypeScript + Vite)
+# Frontend de EduSaldo
 
-La interfaz de usuario de **EduSaldo** es una Single Page Application (SPA) moderna, componentizada y fuertemente tipada en **TypeScript**, construida con **React 18**, **Vite** y **Bootstrap 5**. Consume los endpoints de negocio a través del **API Gateway** central en `http://localhost:8090`.
+La interfaz usa React, TypeScript y Vite; requiere Node.js 22.12 o posterior. Las peticiones HTTP pasan por una instancia Axios compartida y llegan al gateway local en `http://localhost:8090`; puede configurarse con `VITE_API_BASE_URL`.
 
----
-
-## 🛠️ Stack Tecnológico
-
-- **Framework:** [React 18.3](https://react.dev/)
-- **Lenguaje:** [TypeScript 5.6](https://www.typescriptlang.org/)
-- **Bundler / Servidor de Desarrollo:** [Vite 6.0](https://vitejs.dev/) con SWC
-- **Enrutamiento:** [React Router DOM v6](https://reactrouter.com/)
-- **Estilos y Responsive:** [Bootstrap 5.3](https://getbootstrap.com/)
-- **Testing:** [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) con `jsdom`
-
----
-
-## 📁 Estructura del Proyecto
-
-```text
-frontend/
-├── src/
-│   ├── components/       <- Componentes reutilizables (Navbar, ProductCard, Carrito, etc.)
-│   ├── context/          <- Contextos globales de estado (Autenticación, Carrito, Sesión)
-│   ├── data/             <- Catálogos y datos iniciales para desarrollo local
-│   ├── pages/            <- Vistas completas agrupadas por rol de usuario
-│   │   ├── admin/        <- Panel de administración (usuarios, configuración, ajustes)
-│   │   ├── encargado/    <- Mesón de librería (preparación de reservas, entregas)
-│   │   ├── apoderado/    <- Portal apoderado (abonos Webpay, pupilos, movimientos)
-│   │   └── alumno/       <- Portal alumno >= 12 años (consulta de saldo, reservas)
-│   ├── routes/           <- Definición de rutas públicas y privadas protegidas por rol
-│   ├── tests/            <- Batería de pruebas unitarias y de integración (Vitest + RTL)
-│   ├── types/            <- Modelos e interfaces TypeScript del dominio
-│   ├── utils/            <- Helpers y formateadores (moneda CLP, RUT chileno, fechas)
-│   ├── App.tsx           <- Componente raíz y proveedor de rutas
-│   └── main.tsx          <- Punto de entrada del frontend
-├── index.html            <- Plantilla HTML base
-├── package.json          <- Dependencias y scripts de ejecución
-├── tsconfig.json         <- Configuración del compilador TypeScript
-└── vite.config.ts        <- Configuración de Vite y proxy hacia el API Gateway
-```
-
----
-
-## 🚀 Puesta en Marcha
-
-### Prerrequisitos
-- **Node.js:** Versión 20 o superior
-- **npm:** Versión 10 o superior
-
-### Opción 1: Mediante el Script Centralizado (Recomendado)
-Desde la raíz del monorepo `EduSaldo`:
-```bash
-python scripts/3_arrancar_frontend.py
-```
-*(Verifica e instala `node_modules` si no existen y arranca el servidor en `http://localhost:5173`).*
-
-### Opción 2: Comandos npm directos
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-El servidor quedará disponible en: **`http://localhost:5173`**
+La interfaz conectada actualmente permite iniciar y cerrar sesión, consultar cuentas, movimientos, alertas y catálogo, efectuar abonos simulados, crear y cancelar reservas y consultar sus avisos simulados, preparar y entregar reservas, registrar entregas directas y devoluciones, gestionar solicitudes de ajuste y registrar categorías, productos e ingresos de stock. El administrador también puede consultar, crear, inactivar y reactivar usuarios de personal o apoderados, matricular alumnos con apoderado, y restablecer claves. También se gestionan vínculos familiares, nóminas CSV, políticas, solicitudes de corrección de datos, consentimiento, liquidación de saldo y informes de saldos y movimientos por alumno y período con exportación CSV. El pago y los correos son simulados.
 
----
-
-## 👥 Roles de Usuario en la SPA
-
-| Rol | Vistas Clave | Capacidades en la Interfaz |
-| :--- | :--- | :--- |
-| **Administrador** | `/admin/**` | Gestión de usuarios, nómina, parámetros del colegio, catálogo y aprobación de ajustes de stock. |
-| **Encargado de Librería** | `/encargado/**` | Preparación de pedidos (`preparadaPorId`, `fechaPreparacion`), despacho en mesón, devoluciones e inventario físico. |
-| **Apoderado** | `/apoderado/**` | Abono de fondos vía Webpay simulado, consulta de saldo de pupilos y reserva de materiales. |
-| **Alumno ($\ge$ 12 años)** | `/alumno/**` | Autonomía para consulta de saldo propio y reserva personal de útiles. |
-
----
-
-## 🧪 Pruebas Unitarias y de Componentes
-
-La suite de pruebas frontend utiliza **Vitest** y **React Testing Library**:
+La cobertura de los requisitos y los reportes todavía debe verificarse criterio por criterio; algunas funciones siguen pendientes. Las operaciones reales y sus restricciones se comprueban en el backend.
 
 ```bash
-# Ejecutar todas las pruebas una vez
 npm test
-
-# Modo observador (watch) para desarrollo
-npm run test:watch
-
-# Generar reporte de cobertura de código
-npm run test:coverage
-```
-
----
-
-## 📦 Compilación para Producción
-
-Para compilar la SPA optimizada y validada por el compilador de TypeScript:
-
-```bash
 npm run build
+npm run test:e2e
 ```
 
-Los artefactos listos para distribución se generarán en la carpeta `frontend/dist/`.
+Las pruebas de navegador requieren que el gateway y los cuatro servicios estén iniciados con las bases y semillas locales, y que Playwright tenga Chromium instalado (`npx playwright install chromium`). Algunas pruebas crean datos y realizan movimientos de prueba; su ejecución debe reservarse para bases de desarrollo.
