@@ -1,8 +1,19 @@
 {
   "info": {
-    "name": "EduSaldo - Microservicios & API Gateway",
-    "description": "Colección oficial para evaluación de los 4 microservicios y API Gateway de EduSaldo.",
+    "_postman_id": "4a53a3d5-3167-44cd-bd62-ed58eeda0af6",
+    "name": "EduSaldo · Flujos y controles",
+    "description": "Requiere gateway, cuatro servicios y semillas de prueba. La ejecución crea una categoría y producto, acredita saldo de prueba y registra reserva, entrega y devolución. Los IDs se capturan de respuestas. Ejecutar sobre datos descartables. Un requisito previo fallido detiene la colección.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token_admin}}",
+        "type": "string"
+      }
+    ]
   },
   "variable": [
     {
@@ -11,611 +22,2785 @@
       "type": "string"
     },
     {
-      "key": "ms_auth",
-      "value": "http://localhost:8091",
+      "key": "admin_usuario",
+      "value": "admin@colegio.cl",
       "type": "string"
     },
     {
-      "key": "ms_alumnos",
-      "value": "http://localhost:8092",
+      "key": "admin_password",
+      "value": "admin123",
       "type": "string"
     },
     {
-      "key": "ms_productos",
-      "value": "http://localhost:8093",
+      "key": "admin_otro_usuario",
+      "value": "admin@sanagustin.cl",
       "type": "string"
     },
     {
-      "key": "ms_ventas",
-      "value": "http://localhost:8094",
+      "key": "admin_otro_password",
+      "value": "admin123",
+      "type": "string"
+    },
+    {
+      "key": "encargado_usuario",
+      "value": "libreria@colegio.cl",
+      "type": "string"
+    },
+    {
+      "key": "encargado_password",
+      "value": "Edu123456",
+      "type": "string"
+    },
+    {
+      "key": "apoderado_usuario",
+      "value": "carlos.perez@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "apoderado_password",
+      "value": "Edu123456",
+      "type": "string"
+    },
+    {
+      "key": "alumno_usuario",
+      "value": "tomas.perez@alumnos.colegio.cl",
+      "type": "string"
+    },
+    {
+      "key": "alumno_password",
+      "value": "Edu123456",
+      "type": "string"
+    },
+    {
+      "key": "token_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_admin_otro",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_encargado",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_apoderado",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_alumno",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_admin_otro",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_encargado",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_apoderado",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_alumno",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "establecimiento_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "establecimiento_admin_otro",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "establecimiento_encargado",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "establecimiento_apoderado",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "establecimiento_alumno",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_categoria",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_producto",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_abono",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_reserva",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_entrega",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "id_detalle",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "saldo_previo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "comprometido_previo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "saldo_abonado",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "stock_previo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservado_previo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "saldo_pre_entrega",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "stock_pre_entrega",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "marca",
+      "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "1. MS Auth y Usuarios (8091)",
-      "item": [
-        {
-          "name": "Login Exitoso (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"identificador\": \"admin@colegio.cl\",\n  \"password\": \"admin123\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/auth/login",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+      "name": "Iniciar sesión: admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/auth/login",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identificador\": \"{{admin_usuario}}\", \"password\": \"{{admin_password}}\"}",
+          "options": {
+            "raw": {
+              "language": "json"
             }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "for (const nombre of ['token_admin','token_admin_otro','token_encargado','token_apoderado','token_alumno','id_admin','id_admin_otro','id_encargado','id_apoderado','id_alumno','establecimiento_admin','establecimiento_admin_otro','establecimiento_encargado','establecimiento_apoderado','establecimiento_alumno','id_categoria','id_producto','token_abono','id_reserva','id_entrega','id_detalle','saldo_previo','comprometido_previo','saldo_abonado','stock_previo','reservado_previo','saldo_pre_entrega','stock_pre_entrega']) pm.collectionVariables.set(nombre, '');",
+              "pm.collectionVariables.set('marca', Date.now() + '-' + Math.floor(Math.random()*1000000));"
+            ]
           }
         },
         {
-          "name": "Login Fallido (Credenciales Erróneas)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"identificador\": \"admin@colegio.cl\",\n  \"password\": \"clave_falsa\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/auth/login",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Crear Usuario Staff (PRIMER_ACCESO)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"rut\": \"17.888.999-4\",\n  \"primerNombre\": \"Ignacio\",\n  \"primerApellido\": \"Soto\",\n  \"correo\": \"ignacio.soto@colegio.cl\",\n  \"rol\": \"ENCARGADO\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/usuarios",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Listar Todos los Usuarios",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{gateway}}/api/usuarios",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            }
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Sesión corresponde al rol solicitado', () => {",
+              "  pm.expect(datos.token).to.be.a('string').and.not.empty;",
+              "  pm.expect(datos.usuarioId).to.be.a('number').above(0);",
+              "  pm.expect(datos.idEstablecimiento).to.be.a('number').above(0);",
+              "  pm.expect(String(datos.rol).replace('ROLE_', '')).to.eql('ADMINISTRADOR');",
+              "  if ('admin' === 'admin_otro') pm.expect(datos.idEstablecimiento).to.not.eql(numero('establecimiento_admin'));",
+              "  if (!['admin', 'admin_otro'].includes('admin')) pm.expect(datos.idEstablecimiento).to.eql(numero('establecimiento_admin'));",
+              "});",
+              "guardar('establecimiento_admin', datos.idEstablecimiento);",
+              "guardar('token_admin', datos.token);",
+              "guardar('id_admin', datos.usuarioId);"
+            ]
           }
         }
       ]
     },
     {
-      "name": "2. MS Alumnos y Saldos (8092)",
-      "item": [
-        {
-          "name": "Listar Alumnos y Saldos",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{gateway}}/api/alumnos",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "alumnos"
-              ]
+      "name": "Iniciar sesión: admin_otro",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/auth/login",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identificador\": \"{{admin_otro_usuario}}\", \"password\": \"{{admin_otro_password}}\"}",
+          "options": {
+            "raw": {
+              "language": "json"
             }
           }
-        },
+        }
+      },
+      "event": [
         {
-          "name": "Abonar Saldo Webpay (Simulación)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"apoderadoId\": 4,\n  \"monto\": 10000,\n  \"idempotencyKey\": \"KEY-ABONO-POSTMAN-01\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/saldos/1/abonar",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "saldos",
-                "1",
-                "abonar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Comprometer Saldo por Reserva",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"monto\": 2500,\n  \"reservaId\": 101,\n  \"usuarioId\": 4,\n  \"idempotencyKey\": \"KEY-COMP-POSTMAN-01\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/saldos/1/comprometer",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "saldos",
-                "1",
-                "comprometer"
-              ]
-            }
-          }
-        },
-        {
-          "name": "EDGE CASE: Rechazo Saldo Insuficiente",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"monto\": 9999999,\n  \"reservaId\": 999,\n  \"usuarioId\": 4,\n  \"idempotencyKey\": \"KEY-FAIL-POSTMAN\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/saldos/1/comprometer",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "saldos",
-                "1",
-                "comprometer"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Finalizar Reserva Atómicamente (Entrega)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"monto\": 2500,\n  \"reservaId\": 101,\n  \"ventaId\": 501,\n  \"usuarioId\": 2,\n  \"idempotencyKey\": \"KEY-FIN-POSTMAN-01\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/saldos/1/finalizar-reserva",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "saldos",
-                "1",
-                "finalizar-reserva"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Listar Historial de Movimientos de Saldo",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{gateway}}/api/saldos/1/movimientos",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "saldos",
-                "1",
-                "movimientos"
-              ]
-            }
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Sesión corresponde al rol solicitado', () => {",
+              "  pm.expect(datos.token).to.be.a('string').and.not.empty;",
+              "  pm.expect(datos.usuarioId).to.be.a('number').above(0);",
+              "  pm.expect(datos.idEstablecimiento).to.be.a('number').above(0);",
+              "  pm.expect(String(datos.rol).replace('ROLE_', '')).to.eql('ADMINISTRADOR');",
+              "  if ('admin_otro' === 'admin_otro') pm.expect(datos.idEstablecimiento).to.not.eql(numero('establecimiento_admin'));",
+              "  if (!['admin', 'admin_otro'].includes('admin_otro')) pm.expect(datos.idEstablecimiento).to.eql(numero('establecimiento_admin'));",
+              "});",
+              "guardar('establecimiento_admin_otro', datos.idEstablecimiento);",
+              "guardar('token_admin_otro', datos.token);",
+              "guardar('id_admin_otro', datos.usuarioId);"
+            ]
           }
         }
       ]
     },
     {
-      "name": "3. MS Productos e Inventario (8093)",
-      "item": [
-        {
-          "name": "Listar Catálogo y Existencias",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{gateway}}/api/productos",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "productos"
-              ]
+      "name": "Iniciar sesión: encargado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/auth/login",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identificador\": \"{{encargado_usuario}}\", \"password\": \"{{encargado_password}}\"}",
+          "options": {
+            "raw": {
+              "language": "json"
             }
           }
-        },
+        }
+      },
+      "event": [
         {
-          "name": "Crear Nuevo Producto en Catálogo",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"categoriaId\": 1,\n  \"sku\": \"CUAD-DIB-PRO-01\",\n  \"codigoBarras\": \"780999990001\",\n  \"nombre\": \"Cuaderno Dibujo Profesional\",\n  \"cursoNivel\": \"Ense\\u00f1anza Media\",\n  \"materia\": \"Artes\",\n  \"precioVenta\": 2200,\n  \"cpp\": 1500,\n  \"stockInicial\": 20,\n  \"stockCritico\": 4\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/productos",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "productos"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Reservar Stock",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cantidad\": 2,\n  \"referenciaId\": 101,\n  \"idempotencyKey\": \"KEY-STK-RES-01\",\n  \"usuarioId\": 4\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/inventario/101/reservar",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "inventario",
-                "101",
-                "reservar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "EDGE CASE: Rechazo Quiebre de Stock",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cantidad\": 9999,\n  \"referenciaId\": 101,\n  \"idempotencyKey\": \"KEY-STK-FAIL\",\n  \"usuarioId\": 4\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/inventario/101/reservar",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "inventario",
-                "101",
-                "reservar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Entrada por Compra (Recálculo CPP con IVA)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cantidad\": 10,\n  \"costoUnitarioConIva\": 1190,\n  \"recepcionId\": 1,\n  \"idempotencyKey\": \"KEY-BUY-RECALC-01\",\n  \"usuarioId\": 2\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/inventario/101/entrada-compra",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "inventario",
-                "101",
-                "entrada-compra"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Solicitar Ajuste por Merma (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"productoId\": 101,\n  \"cantidad\": -1,\n  \"motivo\": \"Da\\u00f1o por derrame de t\\u00e9mpera\",\n  \"solicitanteId\": 1\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/inventario/ajustes/solicitar",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "inventario",
-                "ajustes",
-                "solicitar"
-              ]
-            }
-          }
-        },
-        {
-          "name": "DOBLE FIRMA: Autorizar Ajuste (Autorizador)",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"autorizadorId\": 3,\n  \"aprobada\": true,\n  \"comentario\": \"Merma verificada y aprobada\"\n}"
-            },
-            "url": {
-              "raw": "{{gateway}}/api/inventario/ajustes/1/autorizar",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "inventario",
-                "ajustes",
-                "1",
-                "autorizar"
-              ]
-            }
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Sesión corresponde al rol solicitado', () => {",
+              "  pm.expect(datos.token).to.be.a('string').and.not.empty;",
+              "  pm.expect(datos.usuarioId).to.be.a('number').above(0);",
+              "  pm.expect(datos.idEstablecimiento).to.be.a('number').above(0);",
+              "  pm.expect(String(datos.rol).replace('ROLE_', '')).to.eql('ENCARGADO');",
+              "  if ('encargado' === 'admin_otro') pm.expect(datos.idEstablecimiento).to.not.eql(numero('establecimiento_admin'));",
+              "  if (!['admin', 'admin_otro'].includes('encargado')) pm.expect(datos.idEstablecimiento).to.eql(numero('establecimiento_admin'));",
+              "});",
+              "guardar('establecimiento_encargado', datos.idEstablecimiento);",
+              "guardar('token_encargado', datos.token);",
+              "guardar('id_encargado', datos.usuarioId);"
+            ]
           }
         }
       ]
     },
     {
-      "name": "4. MS Ventas y Reservas (8094)",
-      "item": [
+      "name": "Iniciar sesión: apoderado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/auth/login",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identificador\": \"{{apoderado_usuario}}\", \"password\": \"{{apoderado_password}}\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
         {
-          "name": "1. Crear Reserva Multilínea",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"alumnoId\": 1,\n  \"apoderadoId\": 4,\n  \"items\": [\n    {\n      \"productoId\": 101,\n      \"nombreProducto\": \"Cuaderno universitario\",\n      \"cantidad\": 2,\n      \"precioUnitario\": 1250\n    },\n    {\n      \"productoId\": 105,\n      \"nombreProducto\": \"L\\u00e1piz grafito HB\",\n      \"cantidad\": 1,\n      \"precioUnitario\": 450\n    }\n  ]\n}"
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Sesión corresponde al rol solicitado', () => {",
+              "  pm.expect(datos.token).to.be.a('string').and.not.empty;",
+              "  pm.expect(datos.usuarioId).to.be.a('number').above(0);",
+              "  pm.expect(datos.idEstablecimiento).to.be.a('number').above(0);",
+              "  pm.expect(String(datos.rol).replace('ROLE_', '')).to.eql('APODERADO');",
+              "  if ('apoderado' === 'admin_otro') pm.expect(datos.idEstablecimiento).to.not.eql(numero('establecimiento_admin'));",
+              "  if (!['admin', 'admin_otro'].includes('apoderado')) pm.expect(datos.idEstablecimiento).to.eql(numero('establecimiento_admin'));",
+              "});",
+              "guardar('establecimiento_apoderado', datos.idEstablecimiento);",
+              "guardar('token_apoderado', datos.token);",
+              "guardar('id_apoderado', datos.usuarioId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Iniciar sesión: alumno",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/auth/login",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identificador\": \"{{alumno_usuario}}\", \"password\": \"{{alumno_password}}\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Sesión corresponde al rol solicitado', () => {",
+              "  pm.expect(datos.token).to.be.a('string').and.not.empty;",
+              "  pm.expect(datos.usuarioId).to.be.a('number').above(0);",
+              "  pm.expect(datos.idEstablecimiento).to.be.a('number').above(0);",
+              "  pm.expect(String(datos.rol).replace('ROLE_', '')).to.eql('ALUMNO');",
+              "  if ('alumno' === 'admin_otro') pm.expect(datos.idEstablecimiento).to.not.eql(numero('establecimiento_admin'));",
+              "  if (!['admin', 'admin_otro'].includes('alumno')) pm.expect(datos.idEstablecimiento).to.eql(numero('establecimiento_admin'));",
+              "});",
+              "guardar('establecimiento_alumno', datos.idEstablecimiento);",
+              "guardar('token_alumno', datos.token);",
+              "guardar('id_alumno', datos.usuarioId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultar alumnos vinculados",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/usuarios/apoderados/{{id_apoderado}}/alumnos",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "usuarios",
+            "apoderados",
+            "{{id_apoderado}}",
+            "alumnos"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El alumno autenticado está vinculado al apoderado', () => {",
+              "  pm.expect(datos).to.be.an('array');",
+              "  pm.expect(datos.some(a => Number(a.id) === numero('id_alumno'))).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear categoría para esta ejecución",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/categorias",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "categorias"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"nombre\":\"Prueba {{marca}}\",\"descripcion\":\"Datos de prueba\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(201);",
+              "comprobar('Categoría creada con identificador', () => { pm.expect(datos.id).to.be.a('number').above(0); pm.expect(datos.nombre).to.include(pm.collectionVariables.get('marca')); });",
+              "guardar('id_categoria', datos.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear producto para esta ejecución",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/productos",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "productos"
+          ]
+        },
+        "description": "",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"categoriaId\":{{id_categoria}},\"sku\":\"TEST-{{marca}}\",\"nombre\":\"Cuaderno de prueba\",\"cursoNivel\":\"Todos\",\"precio\":1000,\"stockInicial\":5,\"stockCritico\":1}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(201);",
+              "comprobar('Producto creado con precio y existencias esperados', () => {",
+              " pm.expect(datos.id).to.be.a('number').above(0); pm.expect(datos.precio).to.eql(1000);",
+              " pm.expect(datos.stockFisico).to.eql(5); pm.expect(datos.stockReservado).to.eql(0);",
+              "});",
+              "guardar('id_producto', datos.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leer saldo inicial del alumno",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Saldo inicial y disponible coherentes', () => {",
+              " pm.expect(datos.alumnoId).to.eql(numero('id_alumno'));",
+              " pm.expect(datos.saldoActual).to.be.a('number'); pm.expect(datos.saldoComprometido).to.be.a('number');",
+              " pm.expect(datos.saldoDisponible).to.eql(datos.saldoActual-datos.saldoComprometido).and.to.be.at.least(0);",
+              "});",
+              "guardar('saldo_previo',datos.saldoActual); guardar('comprometido_previo',datos.saldoComprometido);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Iniciar abono simulado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/abonos/iniciar",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "abonos",
+            "iniciar"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"alumnoId\":{{id_alumno}},\"apoderadoId\":{{id_apoderado}},\"monto\":5000}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(201);",
+              "comprobar('Transacción iniciada', () => { pm.expect(datos.token).to.be.a('string').and.not.empty; }); guardar('token_abono',datos.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Confirmar abono",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/abonos/confirmar",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "abonos",
+            "confirmar"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"token\":\"{{token_abono}}\",\"resultadoSimulado\":\"APROBADO\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El abono queda aprobado para el alumno', () => { pm.expect(datos.estado).to.eql('APROBADO'); pm.expect(datos.alumnoId).to.eql(numero('id_alumno')); pm.expect(datos.monto).to.eql(5000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar acreditación",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El saldo creció exactamente por el monto aprobado', () => { pm.expect(datos.saldoActual).to.eql(numero('saldo_previo')+5000); pm.expect(datos.saldoComprometido).to.eql(numero('comprometido_previo')); }); guardar('saldo_abonado',datos.saldoActual);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Repetir confirmación de abono",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/abonos/confirmar",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "abonos",
+            "confirmar"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"token\":\"{{token_abono}}\",\"resultadoSimulado\":\"APROBADO\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El pago conserva su resultado', () => { pm.expect(datos.estado).to.eql('APROBADO'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar que no se duplicó la acreditación",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('La segunda confirmación no cambia el saldo', () => { pm.expect(datos.saldoActual).to.eql(numero('saldo_abonado')); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear reserva",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/reservas",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "reservas"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"alumnoId\":{{id_alumno}},\"items\":[{\"productoId\":{{id_producto}},\"cantidad\":1}]}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(201);",
+              "comprobar('Reserva registrada con precio del catálogo', () => { pm.expect(datos.id).to.be.a('number').above(0); pm.expect(datos.alumnoId).to.eql(numero('id_alumno')); pm.expect(datos.estado).to.eql('PENDIENTE'); pm.expect(datos.total).to.eql(1000); }); guardar('id_reserva',datos.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar saldo comprometido",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('La reserva compromete saldo sin cobrarlo', () => { pm.expect(datos.saldoActual).to.eql(numero('saldo_abonado')); pm.expect(datos.saldoComprometido).to.eql(numero('comprometido_previo')+1000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar stock reservado",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/productos/{{id_producto}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "{{id_producto}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('La reserva compromete una unidad', () => { pm.expect(datos.stockFisico).to.eql(5); pm.expect(datos.stockReservado).to.eql(1); pm.expect(datos.stockDisponible).to.eql(4); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cancelar reserva pendiente",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/reservas/{{id_reserva}}/cancelar",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "reservas",
+            "{{id_reserva}}",
+            "cancelar"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"motivo\":\"Cancelación de prueba\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('La reserva queda cancelada', () => pm.expect(datos.estado).to.eql('CANCELADA'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar saldo liberado",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('La cancelación libera el compromiso', () => { pm.expect(datos.saldoActual).to.eql(numero('saldo_abonado')); pm.expect(datos.saldoComprometido).to.eql(numero('comprometido_previo')); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar stock liberado",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/productos/{{id_producto}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "{{id_producto}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('La cancelación libera la unidad sin descontarla', () => { pm.expect(datos.stockFisico).to.eql(5); pm.expect(datos.stockReservado).to.eql(0); pm.expect(datos.stockDisponible).to.eql(5); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear reserva para retiro",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/reservas",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "reservas"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"alumnoId\":{{id_alumno}},\"items\":[{\"productoId\":{{id_producto}},\"cantidad\":1}]}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(201);",
+              "comprobar('Reserva pendiente', () => { pm.expect(datos.id).to.be.a('number').above(0); pm.expect(datos.estado).to.eql('PENDIENTE'); }); guardar('id_reserva',datos.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Preparar reserva",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/reservas/{{id_reserva}}/marcar-lista",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "reservas",
+            "{{id_reserva}}",
+            "marcar-lista"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_encargado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Preparación registra responsable y fecha', () => { pm.expect(datos.estado).to.eql('LISTA_PARA_RETIRO'); pm.expect(datos.preparadaPorId).to.eql(numero('id_encargado')); pm.expect(datos.fechaPreparacion).to.be.a('string').and.not.empty; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Apoderado no cancela reserva preparada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/reservas/{{id_reserva}}/cancelar",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "reservas",
+            "{{id_reserva}}",
+            "cancelar"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"motivo\":\"Intento de cancelación\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "comprobar('El rechazo corresponde a una transición no permitida', () => { pm.expect([409,422]).to.include(pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar reserva preparada",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/reservas/{{id_reserva}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "reservas",
+            "{{id_reserva}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El rechazo no cambió el estado', () => pm.expect(datos.estado).to.eql('LISTA_PARA_RETIRO'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entregar reserva preparada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/reservas/{{id_reserva}}/entregar",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "reservas",
+            "{{id_reserva}}",
+            "entregar"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_encargado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(201);",
+              "comprobar('Entrega registrada y vinculada a la reserva', () => { pm.expect(datos.id).to.be.a('number').above(0); pm.expect(datos.reservaId).to.eql(numero('id_reserva')); pm.expect(datos.origen).to.eql('RESERVA'); pm.expect(datos.items).to.be.an('array').with.lengthOf(1); pm.expect(datos.items[0].id).to.be.a('number').above(0); }); guardar('id_entrega',datos.id); guardar('id_detalle',datos.items[0].id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar cobro de entrega",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Se debita una unidad y se libera el compromiso', () => { pm.expect(datos.saldoActual).to.eql(numero('saldo_abonado')-1000); pm.expect(datos.saldoComprometido).to.eql(numero('comprometido_previo')); }); guardar('saldo_pre_entrega',datos.saldoActual);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar salida de inventario",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/productos/{{id_producto}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "{{id_producto}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('Se descontó una unidad física', () => { pm.expect(datos.stockFisico).to.eql(4); pm.expect(datos.stockReservado).to.eql(0); }); guardar('stock_pre_entrega',datos.stockFisico);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devolver la unidad entregada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/devoluciones",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "devoluciones"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_encargado}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"entregaId\":{{id_entrega}},\"motivo\":\"Devolución de prueba\",\"items\":[{\"detalleEntregaId\":{{id_detalle}},\"cantidad\":1}]}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(201);",
+              "comprobar('Devolución vinculada a la entrega', () => { pm.expect(datos.id).to.be.a('number').above(0); pm.expect(datos.entregaId).to.eql(numero('id_entrega')); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar reintegro",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El saldo se reintegra exactamente', () => pm.expect(datos.saldoActual).to.eql(numero('saldo_pre_entrega')+1000));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comprobar reingreso de inventario",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/productos/{{id_producto}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "{{id_producto}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El stock físico recupera una unidad', () => { pm.expect(datos.stockFisico).to.eql(numero('stock_pre_entrega')+1); pm.expect(datos.stockReservado).to.eql(0); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alumno consulta su saldo",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_alumno}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "const datos = jsonCorrecto(200);",
+              "comprobar('El saldo consultado pertenece al alumno autenticado', () => pm.expect(datos.alumnoId).to.eql(numero('id_alumno')));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Otro colegio no consulta saldo",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin_otro}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "comprobar('El administrador autenticado de otro colegio no puede acceder', () => pm.expect([403,404]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Apoderado no accede a auditoría",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/auditoria",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "auditoria"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_apoderado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "comprobar('El apoderado autenticado no accede a auditoría administrativa', () => pm.expect(pm.response.code).to.eql(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rechazar consulta anónima",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/cuenta/{{id_alumno}}",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "cuenta",
+            "{{id_alumno}}"
+          ]
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function comprobar(nombre, fn) {",
+              "  let fallo;",
+              "  pm.test(nombre, function () { try { fn(); } catch (error) { fallo = error; throw error; } });",
+              "  if (fallo) { pm.execution.setNextRequest(null); throw fallo; }",
+              "}",
+              "function jsonCorrecto(codigo) {",
+              "  comprobar('Código HTTP esperado', () => pm.expect(pm.response.code).to.eql(codigo));",
+              "  let datos;",
+              "  comprobar('Respuesta JSON válida', () => { datos = pm.response.json(); pm.expect(datos !== null && typeof datos === 'object').to.eql(true); });",
+              "  return datos;",
+              "}",
+              "function numero(nombre) {",
+              "  const texto = pm.collectionVariables.get(nombre);",
+              "  if (texto === undefined || texto === null || texto === '') throw new Error('Falta precondición: ' + nombre);",
+              "  const valor = Number(texto);",
+              "  if (!Number.isFinite(valor)) throw new Error('Falta precondición numérica: ' + nombre);",
+              "  return valor;",
+              "}",
+              "function guardar(nombre, valor) { pm.collectionVariables.set(nombre, String(valor)); }",
+              "",
+              "comprobar('La consulta sin sesión se rechaza', () => pm.expect(pm.response.code).to.eql(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Administrador consulta cuentas y movimientos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/reportes/cuentas?desde=2020-01-01&hasta=2030-12-31",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "reportes",
+            "cuentas"
+          ],
+          "query": [
+            {
+              "key": "desde",
+              "value": "2020-01-01"
             },
-            "url": {
-              "raw": "{{gateway}}/api/reservas",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "reservas"
-              ]
+            {
+              "key": "hasta",
+              "value": "2030-12-31"
             }
-          }
+          ]
         },
-        {
-          "name": "2. Iniciar Preparación en Bodega",
-          "request": {
-            "method": "PUT",
-            "url": {
-              "raw": "{{gateway}}/api/reservas/1/iniciar-preparacion?encargadoId=2",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "reservas",
-                "1",
-                "iniciar-preparacion"
-              ],
-              "query": [
-                {
-                  "key": "encargadoId",
-                  "value": "2"
-                }
-              ]
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
             }
-          }
-        },
+          ]
+        }
+      },
+      "event": [
         {
-          "name": "3. Generar Rótulo y Etiqueta Bolsa",
-          "request": {
-            "method": "PUT",
-            "url": {
-              "raw": "{{gateway}}/api/reservas/1/etiquetar",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "reservas",
-                "1",
-                "etiquetar"
-              ]
-            }
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Estado HTTP esperado\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Saldos y establecimiento coherentes\", () => {",
+              "  const cuentas = pm.response.json();",
+              "  pm.expect(cuentas).to.be.an(\"array\");",
+              "  for (const { cuenta, movimientos } of cuentas) {",
+              "    pm.expect(cuenta.idEstablecimiento).to.eql(1);",
+              "    pm.expect(cuenta.saldoDisponible).to.eql(cuenta.saldoActual - cuenta.saldoComprometido);",
+              "    pm.expect(movimientos).to.be.an(\"array\");",
+              "  }",
+              "});"
+            ]
           }
-        },
-        {
-          "name": "4. Marcar Lista para Retiro",
-          "request": {
-            "method": "PUT",
-            "url": {
-              "raw": "{{gateway}}/api/reservas/1/marcar-lista?encargadoId=2",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "reservas",
-                "1",
-                "marcar-lista"
-              ],
-              "query": [
-                {
-                  "key": "encargadoId",
-                  "value": "2"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "5. Entregar en Mesón (Venta Definitiva)",
-          "request": {
-            "method": "POST",
-            "url": {
-              "raw": "{{gateway}}/api/reservas/1/entregar?encargadoId=2",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "reservas",
-                "1",
-                "entregar"
-              ],
-              "query": [
-                {
-                  "key": "encargadoId",
-                  "value": "2"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Venta Presencial Directa (HU34 Alumno >= 12 años)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"alumnoId\": 2,\n  \"encargadoId\": 2,\n  \"items\": [\n    {\n      \"productoId\": 106,\n      \"nombreProducto\": \"Goma de borrar\",\n      \"cantidad\": 1,\n      \"precioUnitario\": 350\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Encargado no consulta reporte institucional",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/reportes/cuentas?desde=2020-01-01&hasta=2030-12-31",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "reportes",
+            "cuentas"
+          ],
+          "query": [
+            {
+              "key": "desde",
+              "value": "2020-01-01"
             },
-            "url": {
-              "raw": "{{gateway}}/api/ventas/directa",
-              "host": [
-                "{{gateway}}"
-              ],
-              "path": [
-                "api",
-                "ventas",
-                "directa"
-              ]
+            {
+              "key": "hasta",
+              "value": "2030-12-31"
             }
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_encargado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Estado HTTP esperado\", () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Administrador consulta constancias de saldo",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/constancias",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "constancias"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Estado HTTP esperado\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Lista de constancias válida\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Encargado no consulta constancias de saldo",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway}}/api/saldos/constancias",
+          "host": [
+            "{{gateway}}"
+          ],
+          "path": [
+            "api",
+            "saldos",
+            "constancias"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_encargado}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Estado HTTP esperado\", () => pm.response.to.have.status(403));"
+            ]
           }
         }
       ]

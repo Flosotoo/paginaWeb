@@ -1,389 +1,228 @@
-# =============================================================================
-# Propósito: Control del ciclo de vida de los 4 microservicios Spring Boot y el
-#            API Gateway. Multiplataforma (Windows, Linux, macOS).
-#
-# Modos de uso:
-#   1. Arrancar y monitorear logs en vivo:
-#      python scripts/2_arrancar_servicios.py
-#   2. Arrancar en segundo plano (para CI/CD o pruebas automáticas):
-#      python scripts/2_arrancar_servicios.py --detached
-#   3. Detener todos los servicios y liberar puertos 8090..8094:
-#      python scripts/2_arrancar_servicios.py --stop
-# =============================================================================
-
+import argparse
 import json
 import os
+from pathlib import Path
 import platform
-import signal
 import secrets
+import signal
+import socket
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
 
-# Reconfigurar stdout/stderr con UTF-8 y sustitución de caracteres para Windows
-try:
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    if hasattr(sys.stderr, "reconfigure"):
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-except Exception:
-    pass
+ROOT = Path(__file__).resolve().parent.parent
+BACKEND = ROOT / 'backend'
+SERVICES = (
+    ('edusaldo-ms-auth-usuarios', 8091, 'db_usuarios'),
+    ('edusaldo-ms-alumnos-saldos', 8092, 'db_saldos'),
+    ('edusaldo-ms-productos-inventario', 8093, 'db_inventario'),
+    ('edusaldo-ms-ventas-reservas', 8094, 'db_reservas'),
+    ('edusaldo-api-gateway', 8090, None),
+)
+PID_FILE = ROOT / 'services_pids.json'
+KEY_FILE = ROOT / '.agents/notas/servicios.key'
 
-# Activar soporte de colores ANSI en terminales Windows
-try:
-    import ctypes
 
-    kernel32 = ctypes.windll.kernel32
-    kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-except Exception:
-    pass
+def java_environment():
+    environment = os.environ.copy()
+    candidates = [os.environ.get('EDUSALDO_JAVA_HOME'), os.environ.get('JAVA_HOME'),
+                  '/usr/lib/jvm/java-17-openjdk']
+    for candidate in candidates:
+        if not candidate:
+            continue
+        executable = Path(candidate) / 'bin' / ('java.exe' if os.name == 'nt' else 'java')
+        if not executable.is_file():
+            continue
+        result = subprocess.run([str(executable), '-version'], capture_output=True, text=True)
+        if result.returncode == 0 and 'version "17.' in result.stderr:
+            environment['JAVA_HOME'] = str(candidate)
+            environment['PATH'] = str(executable.parent) + os.pathsep + environment.get('PATH', '')
+            return environment
+    result = subprocess.run(['java', '-version'], capture_output=True, text=True)
+    if result.returncode == 0 and 'version "17.' in result.stderr:
+        return environment
+    raise RuntimeError('Se requiere Java 17. Configura EDUSALDO_JAVA_HOME con la instalación local.')
 
-PORTS = [8090, 8091, 8092, 8093, 8094]
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
-BACKEND_DIR = os.path.join(ROOT_DIR, "backend") if os.path.exists(os.path.join(ROOT_DIR, "backend")) else ROOT_DIR
-PID_FILE = os.path.join(ROOT_DIR, "services_pids.json")
 
-services = [
-    ("edusaldo-ms-auth-usuarios", 8091, "\033[94m[AUTH 8091]\033[0m "),
-    ("edusaldo-ms-alumnos-saldos", 8092, "\033[92m[SALDOS 8092]\033[0m "),
-    ("edusaldo-ms-productos-inventario", 8093, "\033[93m[INVENTARIO 8093]\033[0m "),
-    ("edusaldo-ms-ventas-reservas", 8094, "\033[95m[RESERVAS 8094]\033[0m "),
-    ("edusaldo-api-gateway", 8090, "\033[96m[GATEWAY 8090]\033[0m "),
-]
+def ready(port, key=None, timeout=2):
+    path = '/salud' if port == 8090 else '/internal/salud'
+    headers = {'X-Internal-Key': key} if key else {}
+    request = urllib.request.Request(f'http://127.0.0.1:{port}{path}', headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = json.load(response)
+            return response.status == 200 and isinstance(body, dict) and body.get('status') == 'UP'
+    except urllib.error.HTTPError as error:
+        error.close()
+        return False
+    except (OSError, ValueError):
+        return False
 
 
 def kill_process(pid):
     try:
-        if platform.system() == "Windows":
-            subprocess.run(
-                ["taskkill", "/F", "/PID", str(pid)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        else:
-            os.kill(pid, signal.SIGKILL)
+        if platform.system() == 'Windows':
+            result = subprocess.run(['taskkill', '/F', '/PID', str(pid)],
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return result.returncode == 0
+        os.kill(pid, signal.SIGTERM)
+        for _ in range(30):
+            if not Path(f'/proc/{pid}').exists():
+                return True
+            time.sleep(0.1)
+        os.kill(pid, signal.SIGKILL)
         return True
-    except Exception:
+    except ProcessLookupError:
+        return True
+    except OSError:
         return False
 
 
-def get_pids_for_port(port):
-    pids = set()
-    if platform.system() == "Windows":
-        try:
-            output = subprocess.check_output(
-                "netstat -ano -p tcp",
-                shell=True,
-                text=True,
-                stderr=subprocess.DEVNULL,
-            )
-            for line in output.splitlines():
-                line_clean = line.strip()
-                if f":{port} " in line_clean and "LISTENING" in line_clean:
-                    parts = line_clean.split()
-                    if parts:
-                        pid = int(parts[-1])
-                        if pid > 0:
-                            pids.add(pid)
-        except Exception:
-            pass
-    else:
-        try:
-            output = subprocess.check_output(
-                ["lsof", "-t", f"-i:{port}"],
-                text=True,
-                stderr=subprocess.DEVNULL,
-            )
-            for line in output.splitlines():
-                line = line.strip()
-                if line.isdigit():
-                    pids.add(int(line))
-        except Exception:
-            pass
-    return pids
+def owned_process(pid, jar):
+    try:
+        if platform.system() == 'Windows':
+            result = subprocess.run(['powershell', '-NoProfile', '-Command',
+                f'(Get-CimInstance Win32_Process -Filter "ProcessId={int(pid)}").CommandLine'],
+                text=True, capture_output=True, check=True)
+            command = result.stdout
+        elif Path('/proc').is_dir():
+            command = Path(f'/proc/{int(pid)}/cmdline').read_bytes().replace(b'\0', b' ').decode()
+        else:
+            command = subprocess.run(['ps', '-p', str(int(pid)), '-o', 'command='],
+                                     text=True, capture_output=True, check=True).stdout
+        return 'java' in command and str(jar) in command
+    except (OSError, ValueError, subprocess.CalledProcessError):
+        return False
+
+
+def port_busy(port):
+    with socket.socket() as connection:
+        connection.settimeout(0.3)
+        return connection.connect_ex(('127.0.0.1', port)) == 0
 
 
 def stop_all_services(quiet=False):
-    stopped_count = 0
-    killed_pids = set()
-
-    # 1. Detener procesos registrados en PID_FILE
-    if os.path.exists(PID_FILE):
-        try:
-            with open(PID_FILE, "r", encoding="utf-8") as f:
-                pids_data = json.load(f)
-            for name, info in pids_data.items():
-                pid = info.get("pid")
-                port = info.get("port")
-                if pid:
-                    if not quiet:
-                        print(
-                            f"  \033[93m[STOP]\033[0m Deteniendo {name} (PID: {pid}) en puerto {port}..."
-                        )
-                    if kill_process(pid):
-                        killed_pids.add(pid)
-                        stopped_count += 1
-            os.remove(PID_FILE)
-        except Exception as e:
+    if not PID_FILE.exists():
+        return 0
+    records = json.loads(PID_FILE.read_text())
+    remaining = {}
+    stopped = 0
+    for name, info in records.items():
+        pid, jar = info.get('pid'), info.get('jar')
+        # Un PID puede reutilizarse; el registro por sí solo no autoriza a terminar otro programa.
+        if not pid or not jar or not owned_process(pid, jar):
             if not quiet:
-                print(f"  \033[91m[WARN]\033[0m Error procesando {PID_FILE}: {e}")
-
-    # 2. Inspeccionar puertos 8090..8094 por procesos huérfanos
-    for port in PORTS:
-        pids = get_pids_for_port(port)
-        for pid in pids:
-            if pid not in killed_pids:
-                if not quiet:
-                    print(
-                        f"  \033[93m[STOP]\033[0m Deteniendo proceso huérfano (PID: {pid}) en puerto {port}..."
-                    )
-                if kill_process(pid):
-                    killed_pids.add(pid)
-                    stopped_count += 1
-
-    return stopped_count
+                print(f'[AVISO] No se detiene {name}: no se verificó su identidad.')
+            continue
+        if kill_process(pid):
+            stopped += 1
+        else:
+            remaining[name] = info
+    if remaining:
+        PID_FILE.write_text(json.dumps(remaining, indent=2))
+        raise RuntimeError('No se pudieron detener todos los procesos EduSaldo registrados.')
+    PID_FILE.unlink(missing_ok=True)
+    return stopped
 
 
-def check_port_online(port, timeout=1.0):
-    try:
-        req = urllib.request.Request(f"http://localhost:{port}/", method="HEAD")
-        try:
-            urllib.request.urlopen(req, timeout=timeout)
-            return True
-        except urllib.error.HTTPError:
-            return True
-    except Exception:
-        return False
+def internal_key():
+    value = os.environ.get('EDUSALDO_INTERNAL_KEY')
+    if value is not None:
+        if len(value) < 32:
+            raise RuntimeError('EDUSALDO_INTERNAL_KEY debe tener al menos 32 caracteres.')
+        return value
+    if KEY_FILE.exists():
+        value = KEY_FILE.read_text().strip()
+        if len(value) >= 32:
+            return value
+    return secrets.token_urlsafe(48)
+
+
+def check_port_online(port, timeout=2):
+    key = os.environ.get('EDUSALDO_INTERNAL_KEY')
+    if not key and KEY_FILE.exists():
+        key = KEY_FILE.read_text().strip()
+    return ready(port, key, timeout)
 
 
 def main():
-    args = set(sys.argv[1:])
-
-    # Modo Detener
-    if any(arg in args for arg in ["--stop", "--detener", "-s", "stop"]):
-        print(
-            "============================================================================="
-        )
-        print("  EDUSALDO - DETENIENDO MICROSERVICIOS Y GATEWAY")
-        print(
-            "============================================================================="
-        )
-        stopped = stop_all_services(quiet=False)
-        if stopped == 0:
-            print(
-                "  \033[90m[INFO] No habia procesos activos en los puertos 8090..8094.\033[0m"
-            )
-        else:
-            print(
-                f"  \033[92m[OK] Se detuvieron {stopped} procesos correctamente. Puertos liberados.\033[0m"
-            )
-        sys.exit(0)
-
-    detached_mode = any(
-        arg in args for arg in ["--detached", "-d", "--background"]
-    )
-
-    print(
-        "============================================================================="
-    )
-    print("  EDUSALDO - ARRANQUE Y MONITOREO DE 4 MICROSERVICIOS Y GATEWAY")
-    print(
-        "============================================================================="
-    )
-    print(f"Directorio backend detectado: {BACKEND_DIR}\n")
-
-    jars = {}
-    for name, _, _ in services:
-        target_dir = os.path.join(BACKEND_DIR, name, "target")
-        candidates = sorted(f for f in os.listdir(target_dir) if f.endswith(".jar") and not f.endswith(".original")) if os.path.isdir(target_dir) else []
-        if candidates:
-            jars[name] = os.path.join(target_dir, candidates[0])
-        else:
-            print(f"[ERROR] No se encontro el archivo JAR en {target_dir}. Compila primero.")
-    if len(jars) != len(services):
-        print("[ERROR] Arranque cancelado: faltan archivos JAR.")
-        return 1
-
-    if os.environ.get("EDUSALDO_INTERNAL_KEY") and len(os.environ["EDUSALDO_INTERNAL_KEY"]) < 32:
-        print("[ERROR] EDUSALDO_INTERNAL_KEY debe tener al menos 32 caracteres.")
-        return 1
-
-    # 1. Comprobar y liberar puertos ocupados previamente
-    print("[1/3] Verificando estado inicial de puertos y liberando conflictos...")
-    pre_cleaned = stop_all_services(quiet=True)
-    if pre_cleaned > 0:
-        print(
-            f"      Se liberaron {pre_cleaned} procesos previos en los puertos 8090..8094."
-        )
-    else:
-        print("      Puertos 8090..8094 verificados y libres.")
-
-    logs_dir = os.path.join(BACKEND_DIR, "logs")
-    os.makedirs(logs_dir, exist_ok=True)
-
-    os.environ.setdefault("EDUSALDO_INTERNAL_KEY", secrets.token_urlsafe(48))
-
-    spawned_processes = []
-    log_handles = []
-
-    for name, port, tag in services:
-        svc_dir = os.path.join(BACKEND_DIR, name)
-        jar_file = jars[name]
-
-        log_path = os.path.join(logs_dir, f"{name}.log")
-        log_fp = open(log_path, "w", encoding="utf-8")
-        log_handles.append(log_fp)
-
-        kwargs = {}
-        if platform.system() == "Windows":
-            kwargs["creationflags"] = (
-                subprocess.DETACHED_PROCESS
-                | subprocess.CREATE_NEW_PROCESS_GROUP
-            )
-        else:
-            kwargs["start_new_session"] = True
-
-        p = subprocess.Popen(
-            ["java", "-jar", jar_file],
-            cwd=svc_dir,
-            stdout=log_fp,
-            stderr=log_fp,
-            **kwargs,
-        )
-        spawned_processes.append((name, port, p, log_path, tag))
-        print(f"  [START] {name} (PID: {p.pid}) -> Puerto {port}")
-
-    # Guardar PIDs de los servicios activos
-    pids_data = {
-        name: {"pid": p.pid, "port": port}
-        for name, port, p, _, _ in spawned_processes
-    }
-    with open(PID_FILE, "w", encoding="utf-8") as f:
-        json.dump(pids_data, f, indent=2)
-
-    # 2. Esperar disponibilidad de puertos
-    print("\n[2/3] Esperando que los puertos abran...")
-    timeout = 60
-    t0 = time.time()
-    ports_to_check = {port: name for name, port, _, _, _ in spawned_processes}
-
-    while ports_to_check and (time.time() - t0) < timeout:
-        for port in list(ports_to_check.keys()):
-            name = ports_to_check[port]
-            if check_port_online(port, timeout=1.0):
-                print(
-                    f"  [ONLINE] {name} escuchando en puerto {port} ({time.time()-t0:.1f}s)"
-                )
-                del ports_to_check[port]
-        if ports_to_check:
-            time.sleep(1.2)
-
-    # 3. Estado del sistema
-    print("\n[3/3] Estado del sistema:")
-    if ports_to_check:
-        print(
-            "  \033[91m[ALERTA] Algunos servicios aun no responden en sus puertos:\033[0m",
-            ports_to_check,
-        )
-        print("  [ERROR] Arranque incompleto; revisa los logs en backend/logs.")
-        stop_all_services(quiet=False)
-        for fp in log_handles:
-            fp.close()
-        return 1
-    else:
-        print(
-            "  \033[92m[OK] Los 4 microservicios y el gateway responden en sus puertos.\033[0m"
-        )
-
-    print("\n" + "=" * 77)
-    print("  GATEWAY Y PUERTOS INTERNOS:")
-    print("  * API Gateway Central:       http://localhost:8090")
-    print(
-        "  * MS Usuarios y Auth:        http://localhost:8091 (acceso interno protegido)"
-    )
-    print(
-        "  * MS Alumnos y Saldos:       http://localhost:8092 (acceso interno protegido)"
-    )
-    print(
-        "  * MS Productos e Inventario: http://localhost:8093 (acceso interno protegido)"
-    )
-    print(
-        "  * MS Reservas y Entregas:    http://localhost:8094 (acceso interno protegido)"
-    )
-    print("=" * 77)
-
-    if detached_mode:
-        print(
-            "  Modo segundo plano activado (--detached). Servicios ejecutándose."
-        )
-        print("  Para detenerlos: python scripts/2_arrancar_servicios.py --stop")
-        print("=" * 77 + "\n")
-        return
-
-    print(
-        "  MONITOR DE LOGS EN VIVO (Presiona Ctrl+C en cualquier momento para detener)"
-    )
-    print("=" * 77 + "\n")
-
-    # Monitoreo de logs en vivo
-    readers = {}
-    for name, port, p, log_path, tag in spawned_processes:
-        try:
-            rfp = open(log_path, "r", encoding="utf-8", errors="replace")
-            readers[name] = (rfp, tag)
-        except Exception:
-            pass
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--stop', action='store_true')
+    parser.add_argument('--detached', '-d', action='store_true')
+    args = parser.parse_args()
+    handles, processes = [], []
     try:
-        while True:
-            had_line = False
-            for name, (rfp, tag) in readers.items():
-                line = rfp.readline()
-                while line:
-                    had_line = True
-                    cleaned = line.rstrip()
-                    if cleaned:
-                        try:
-                            print(f"{tag}{cleaned}")
-                        except Exception:
-                            try:
-                                safe_line = cleaned.encode(
-                                    "ascii", errors="replace"
-                                ).decode("ascii")
-                                print(f"{tag}{safe_line}")
-                            except Exception:
-                                pass
-                    line = rfp.readline()
-            if not had_line:
-                time.sleep(0.3)
+        if args.stop:
+            count = stop_all_services()
+            print(f'[OK] Procesos EduSaldo verificados detenidos: {count}.')
+            return 0
+        environment = java_environment()
+        key = internal_key()
+        jars = {}
+        for name, _, _ in SERVICES:
+            candidates = sorted((BACKEND / name / 'target').glob('*.jar'))
+            if len(candidates) != 1:
+                raise RuntimeError(f'{name}: se requiere exactamente un JAR compilado, encontrados {len(candidates)}.')
+            jars[name] = candidates[0].resolve()
+        stop_all_services()
+        occupied = [port for _, port, _ in SERVICES if port_busy(port)]
+        if occupied:
+            raise RuntimeError(f'Puertos ocupados por procesos ajenos o no registrados: {occupied}. No se terminaron esos procesos.')
+        KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        KEY_FILE.write_text(key)
+        if os.name != 'nt':
+            KEY_FILE.chmod(0o600)
+        environment['EDUSALDO_INTERNAL_KEY'] = key
+        environment['EDUSALDO_ALLOWED_ORIGINS'] = os.environ.get('EDUSALDO_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:4173')
+        log_dir = BACKEND / 'logs'
+        log_dir.mkdir(exist_ok=True)
+        records = {}
+        for name, port, database in SERVICES:
+            output = (log_dir / f'{name}.log').open('w', encoding='utf-8')
+            handles.append(output)
+            service_env = environment.copy()
+            if database:
+                service_env['SPRING_DATASOURCE_URL'] = ('jdbc:mysql://' + os.environ.get('EDUSALDO_DB_HOST', '127.0.0.1') + ':' + os.environ.get('EDUSALDO_DB_PORT', '3306') + '/' + database + '?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC')
+                service_env['SPRING_DATASOURCE_USERNAME'] = os.environ.get('EDUSALDO_DB_USER', 'root')
+                service_env['SPRING_DATASOURCE_PASSWORD'] = os.environ.get('EDUSALDO_DB_PASSWORD', '')
+            kwargs = {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session': True}
+            process = subprocess.Popen(['java', '-jar', str(jars[name])], cwd=BACKEND / name,
+                                       env=service_env, stdout=output, stderr=output, **kwargs)
+            processes.append(process)
+            records[name] = {'pid': process.pid, 'port': port, 'jar': str(jars[name])}
+            PID_FILE.write_text(json.dumps(records, indent=2))
+            print(f'[START] {name}: {process.pid}')
+        deadline = time.monotonic() + 90
+        waiting = {port for _, port, _ in SERVICES}
+        while waiting and time.monotonic() < deadline:
+            if any(process.poll() is not None for process in processes):
+                raise RuntimeError('Un servicio terminó antes de estar disponible. Revisa backend/logs.')
+            waiting = {port for port in waiting if not ready(port, key)}
+            if waiting:
+                time.sleep(0.5)
+        if waiting:
+            raise RuntimeError(f'No superaron la comprobación de salud: {sorted(waiting)}.')
+        print('[OK] Gateway y cuatro servicios listos. Entrada pública: http://localhost:8090')
+        if args.detached:
+            return 0
+        print('Ctrl+C para detener los procesos registrados. Logs: backend/logs')
+        while all(process.poll() is None for process in processes):
+            time.sleep(0.5)
+        raise RuntimeError('Un servicio terminó durante la ejecución.')
     except KeyboardInterrupt:
-        print(
-            "\n\n[DETENIENDO] Cerrando los 4 microservicios y el API Gateway..."
-        )
-        stop_all_services(quiet=False)
-        print("[OK] Todos los procesos fueron detenidos limpiamente.")
+        stop_all_services()
+        return 0
+    except (OSError, RuntimeError, ValueError) as error:
+        print(f'[ERROR] {error}', file=sys.stderr)
+        if processes:
+            stop_all_services()
+        return 1
     finally:
-        for fp in log_handles:
-            try:
-                fp.close()
-            except Exception:
-                pass
-        for rfp, _ in readers.values():
-            try:
-                rfp.close()
-            except Exception:
-                pass
-        if sys.stdin.isatty():
-            print("\nPresiona Enter para cerrar esta consola...")
-            try:
-                input()
-            except Exception:
-                pass
+        for output in handles:
+            output.close()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
