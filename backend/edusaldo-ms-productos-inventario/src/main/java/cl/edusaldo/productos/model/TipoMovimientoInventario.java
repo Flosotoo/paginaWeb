@@ -6,5 +6,6 @@ public enum TipoMovimientoInventario {
     LIBERACION,
     ENTREGA,
     DEVOLUCION,
+    COMPENSACION,
     AJUSTE
 }

@@ -10,61 +10,111 @@ import jakarta.validation.constraints.NotNull;
 
 public class DescontarStockDTO {
 
-    @NotNull(message = "El ID de producto es obligatorio")
-    private Long productoId;
+  private Long reservaId;
 
-    @Min(value = 1, message = "La cantidad a descontar debe ser al menos 1")
-    private int cantidad;
+  public Long getReservaId() {
+    return reservaId;
+  }
 
-    @JsonAlias({"referenciaId"})
-    private Long entregaId;
-    @JsonIgnore
-    @Hidden
-    private Long referenciaId;
+  public void setReservaId(Long value) {
+    this.reservaId = value;
+  }
 
-    private boolean vieneDeReserva = true;
+  @NotNull(message = "El ID de producto es obligatorio")
+  private Long productoId;
 
-    @NotNull(message = "El ID de usuario es obligatorio")
-    @JsonAlias({"responsableId"})
-    private Long usuarioId;
+  @Min(value = 1, message = "La cantidad a descontar debe ser al menos 1")
+  private int cantidad;
 
-    @Schema(description = "Referencia o código único de la operación para evitar registros duplicados")
-    @JsonProperty("referenciaUnica")
-    @JsonAlias({"idempotencyKey", "claveOperacion", "referencia"})
-    private String referenciaUnica;
+  @JsonAlias({"referenciaId"})
+  private Long entregaId;
 
-    public DescontarStockDTO() {}
+  @JsonIgnore @Hidden private Long referenciaId;
 
-    public DescontarStockDTO(Long productoId, int cantidad, Long entregaId, boolean vieneDeReserva, Long usuarioId) {
-        this.productoId = productoId;
-        this.cantidad = cantidad;
-        this.entregaId = entregaId;
-        this.referenciaId = entregaId;
-        this.vieneDeReserva = vieneDeReserva;
-        this.usuarioId = usuarioId;
+  private boolean vieneDeReserva = true;
+
+  @NotNull(message = "El ID de usuario es obligatorio")
+  @JsonAlias({"responsableId"})
+  private Long usuarioId;
+
+  @Schema(
+      description = "Referencia o código único de la operación para evitar registros duplicados")
+  @JsonProperty("referenciaUnica")
+  @JsonAlias({"idempotencyKey", "claveOperacion", "referencia"})
+  private String referenciaUnica;
+
+  public DescontarStockDTO() {}
+
+  public DescontarStockDTO(
+      Long productoId, int cantidad, Long entregaId, boolean vieneDeReserva, Long usuarioId) {
+    this.productoId = productoId;
+    this.cantidad = cantidad;
+    this.entregaId = entregaId;
+    this.referenciaId = entregaId;
+    this.vieneDeReserva = vieneDeReserva;
+    this.usuarioId = usuarioId;
+  }
+
+  public Long getProductoId() {
+    return productoId;
+  }
+
+  public void setProductoId(Long productoId) {
+    this.productoId = productoId;
+  }
+
+  public int getCantidad() {
+    return cantidad;
+  }
+
+  public void setCantidad(int cantidad) {
+    this.cantidad = cantidad;
+  }
+
+  public Long getEntregaId() {
+    return entregaId != null ? entregaId : referenciaId;
+  }
+
+  public void setEntregaId(Long entregaId) {
+    this.entregaId = entregaId;
+  }
+
+  @JsonIgnore
+  @Hidden
+  public Long getReferenciaId() {
+    return getEntregaId();
+  }
+
+  @JsonIgnore
+  @Hidden
+  public void setReferenciaId(Long referenciaId) {
+    this.referenciaId = referenciaId;
+    if (this.entregaId == null) {
+      this.entregaId = referenciaId;
     }
+  }
 
-    public Long getProductoId() { return productoId; }
-    public void setProductoId(Long productoId) { this.productoId = productoId; }
-    public int getCantidad() { return cantidad; }
-    public void setCantidad(int cantidad) { this.cantidad = cantidad; }
-    public Long getEntregaId() { return entregaId != null ? entregaId : referenciaId; }
-    public void setEntregaId(Long entregaId) { this.entregaId = entregaId; }
-    @JsonIgnore
-    @Hidden
-    public Long getReferenciaId() { return getEntregaId(); }
-    @JsonIgnore
-    @Hidden
-    public void setReferenciaId(Long referenciaId) {
-        this.referenciaId = referenciaId;
-        if (this.entregaId == null) {
-            this.entregaId = referenciaId;
-        }
-    }
-    public boolean isVieneDeReserva() { return vieneDeReserva; }
-    public void setVieneDeReserva(boolean vieneDeReserva) { this.vieneDeReserva = vieneDeReserva; }
-    public Long getUsuarioId() { return usuarioId; }
-    public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
-    public String getReferenciaUnica() { return referenciaUnica; }
-    public void setReferenciaUnica(String referenciaUnica) { this.referenciaUnica = referenciaUnica; }
+  public boolean isVieneDeReserva() {
+    return vieneDeReserva;
+  }
+
+  public void setVieneDeReserva(boolean vieneDeReserva) {
+    this.vieneDeReserva = vieneDeReserva;
+  }
+
+  public Long getUsuarioId() {
+    return usuarioId;
+  }
+
+  public void setUsuarioId(Long usuarioId) {
+    this.usuarioId = usuarioId;
+  }
+
+  public String getReferenciaUnica() {
+    return referenciaUnica;
+  }
+
+  public void setReferenciaUnica(String referenciaUnica) {
+    this.referenciaUnica = referenciaUnica;
+  }
 }

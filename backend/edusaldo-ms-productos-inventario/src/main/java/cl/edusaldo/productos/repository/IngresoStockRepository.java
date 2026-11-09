@@ -1,12 +1,15 @@
 package cl.edusaldo.productos.repository;
 
 import cl.edusaldo.productos.model.IngresoStock;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface IngresoStockRepository extends JpaRepository<IngresoStock, Long> {
-    List<IngresoStock> findByEncargadoIdOrderByFechaDesc(Long encargadoId);
+  java.util.Optional<IngresoStock> findByIdAndIdEstablecimiento(Long id, Long idEstablecimiento);
+
+  java.util.List<IngresoStock> findAllByIdEstablecimiento(Long idEstablecimiento);
+
+  List<IngresoStock> findByEncargadoIdOrderByFechaDesc(Long encargadoId);
 }

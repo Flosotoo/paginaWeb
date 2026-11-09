@@ -27,9 +27,10 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE categorias (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
-    nombre VARCHAR(100) NOT NULL UNIQUE,
+    nombre VARCHAR(100) NOT NULL,
     descripcion VARCHAR(255) NULL,
     estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVO',
+    CONSTRAINT uq_categoria_nombre_establecimiento UNIQUE (id_establecimiento, nombre),
     INDEX idx_categorias_establecimiento (id_establecimiento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -38,7 +39,7 @@ CREATE TABLE productos (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
     categoria_id BIGINT NOT NULL,
-    sku VARCHAR(50) NOT NULL UNIQUE,
+    sku VARCHAR(50) NOT NULL,
     nombre VARCHAR(150) NOT NULL,
     descripcion VARCHAR(255) NULL,
     curso_nivel VARCHAR(100) NOT NULL,
@@ -48,9 +49,12 @@ CREATE TABLE productos (
     stock_critico INT NOT NULL DEFAULT 5,
     version BIGINT NOT NULL DEFAULT 0,
     estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVO',
+    CONSTRAINT chk_producto_precio CHECK (precio > 0),
+    CONSTRAINT chk_producto_stock CHECK (stock_fisico >= stock_reservado AND stock_reservado >= 0 AND stock_critico >= 0),
     CONSTRAINT fk_producto_categoria
         FOREIGN KEY (categoria_id) REFERENCES categorias(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT uq_producto_sku_establecimiento UNIQUE (id_establecimiento, sku),
     INDEX idx_productos_establecimiento (id_establecimiento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -93,6 +97,7 @@ CREATE TABLE detalles_reserva_stock (
     reserva_stock_id BIGINT NOT NULL,
     producto_id BIGINT NOT NULL,
     cantidad INT NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'COMPROMETIDO',
     CONSTRAINT fk_det_res_stock_cabecera
         FOREIGN KEY (reserva_stock_id) REFERENCES reservas_stock(id)
         ON DELETE CASCADE ON UPDATE CASCADE,
@@ -146,6 +151,9 @@ CREATE TABLE solicitudes_ajuste_stock (
 
 -- 10. Tabla: movimientos_inventario (Espejo Mermaid: MovimientoInventario)
 CREATE TABLE movimientos_inventario (
+    entrega_id BIGINT NULL,
+    devolucion_id BIGINT NULL,
+    operacion_compensacion_id BIGINT NULL,
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
     producto_id BIGINT NOT NULL,
@@ -175,7 +183,7 @@ INSERT INTO categorias (id, id_establecimiento, nombre, descripcion, estado) VAL
 (3, 2, 'Textos y Cuadernos San Agustín', 'Materiales exclusivos Colegio San Agustín', 'ACTIVO');
 
 INSERT INTO productos (id, id_establecimiento, categoria_id, sku, nombre, descripcion, curso_nivel, precio, stock_fisico, stock_reservado, stock_critico, version, estado) VALUES
-(1, 1, 1, 'CUAD-MAT-100', 'Cuaderno Universitario Matemática 100 Hojas', 'Cuaderno cuadriculado 7mm espiral doble', 'Todos', 1500, 50, 0, 10, 0, 'ACTIVO'),
+(1, 1, 1, 'CUAD-MAT-100', 'Cuaderno Universitario Matemática 100 Hojas', 'Cuaderno cuadriculado 7mm espiral doble', 'Todos', 1500, 48, 0, 10, 0, 'ACTIVO'),
 (2, 1, 2, 'LAP-GRAF-2B', 'Lápiz Grafito HB N°2', 'Lápiz hexagonal de madera', 'Todos', 500, 100, 0, 20, 0, 'ACTIVO'),
 (3, 1, 2, 'REG-ACR-30', 'Regla Acrílica 30 cm', 'Regla transparente graduada', 'Todos', 800, 40, 0, 8, 0, 'ACTIVO'),
 (4, 2, 3, 'LIBRO-ING-CSA', 'Libro de Inglés San Agustín 1° Medio', 'Texto institucional exclusivo San Agustín', '1° Medio', 12000, 30, 0, 5, 0, 'ACTIVO');
@@ -195,6 +203,7 @@ INSERT INTO reservas_stock (id, id_establecimiento, reserva_id, estado, fecha_cr
 
 INSERT INTO detalles_reserva_stock (id, reserva_stock_id, producto_id, cantidad) VALUES
 (1, 1, 1, 2);
+UPDATE detalles_reserva_stock SET estado = 'CONSUMIDO' WHERE reserva_stock_id = 1;
 
 INSERT INTO conteos_fisicos (id, id_establecimiento, encargado_id, fecha_conteo, observaciones) VALUES
 (1, 1, 2, NOW(), 'Conteo físico inicial sin diferencias');
@@ -207,3 +216,7 @@ INSERT INTO movimientos_inventario (id, id_establecimiento, producto_id, solicit
 (2, 1, 2, NULL, 'INGRESO', 100, 0, 100, 2, 'SEED-ING-2', NOW()),
 (3, 1, 3, NULL, 'INGRESO', 40, 0, 40, 2, 'SEED-ING-3', NOW()),
 (4, 2, 4, NULL, 'INGRESO', 30, 0, 30, 7, 'SEED-ING-4', NOW());
+
+INSERT INTO movimientos_inventario (id_establecimiento, producto_id, tipo, variacion_fisica, variacion_reservada, stock_resultante, responsable_id, referencia_unica, entrega_id, fecha) VALUES
+(1, 1, 'RESERVA', 0, 2, 48, 3, 'HOLD-1-1', NULL, NOW()),
+(1, 1, 'ENTREGA', -2, -2, 48, 2, 'CHARGE-1-1', 1, NOW());

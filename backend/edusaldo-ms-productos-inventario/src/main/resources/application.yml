@@ -5,12 +5,12 @@ spring:
   application:
     name: ms-productos-inventario
   datasource:
-    url: jdbc:mysql://localhost:3306/db_inventario?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/db_inventario?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: ""
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:

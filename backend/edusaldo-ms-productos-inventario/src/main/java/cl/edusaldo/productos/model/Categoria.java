@@ -3,60 +3,93 @@ package cl.edusaldo.productos.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "categorias", indexes = {
-        @Index(name = "idx_categorias_establecimiento", columnList = "id_establecimiento")
-})
+@Table(
+    name = "categorias",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uq_categoria_nombre_establecimiento",
+            columnNames = {"id_establecimiento", "nombre"}),
+    indexes = {@Index(name = "idx_categorias_establecimiento", columnList = "id_establecimiento")})
 public class Categoria {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "id_establecimiento", nullable = false)
-    private Long idEstablecimiento = 1L;
+  @Column(name = "id_establecimiento", nullable = false)
+  private Long idEstablecimiento = 1L;
 
-    @Column(name = "nombre", nullable = false, unique = true, length = 100)
-    private String nombre;
+  @Column(name = "nombre", nullable = false, length = 100)
+  private String nombre;
 
-    @Column(name = "descripcion")
-    private String descripcion;
+  @Column(name = "descripcion")
+  private String descripcion;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "estado", nullable = false, length = 30)
-    private EstadoRegistro estado = EstadoRegistro.ACTIVO;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "estado", nullable = false, length = 30)
+  private EstadoRegistro estado = EstadoRegistro.ACTIVO;
 
-    public Categoria() {
-        this.idEstablecimiento = 1L;
-    }
+  public Categoria() {
+    this.idEstablecimiento = 1L;
+  }
 
-    public Categoria(String nombre, String descripcion) {
-        this.idEstablecimiento = 1L;
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.estado = EstadoRegistro.ACTIVO;
-    }
+  public Categoria(String nombre, String descripcion) {
+    this.idEstablecimiento = 1L;
+    this.nombre = nombre;
+    this.descripcion = descripcion;
+    this.estado = EstadoRegistro.ACTIVO;
+  }
 
-    public void editar(String nombre, String descripcion) {
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-    }
+  public void editar(String nombre, String descripcion) {
+    this.nombre = nombre;
+    this.descripcion = descripcion;
+  }
 
-    public void activar() { 
-        this.estado = EstadoRegistro.ACTIVO; 
-    }
+  public void activar() {
+    this.estado = EstadoRegistro.ACTIVO;
+  }
 
-    public void inactivar() { 
-        this.estado = EstadoRegistro.INACTIVO; 
-    }
+  public void inactivar() {
+    this.estado = EstadoRegistro.INACTIVO;
+  }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
-    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    public EstadoRegistro getEstado() { return estado; }
-    public void setEstado(EstadoRegistro estado) { this.estado = estado; }
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getIdEstablecimiento() {
+    return idEstablecimiento != null ? idEstablecimiento : 1L;
+  }
+
+  public void setIdEstablecimiento(Long idEstablecimiento) {
+    this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L;
+  }
+
+  public String getNombre() {
+    return nombre;
+  }
+
+  public void setNombre(String nombre) {
+    this.nombre = nombre;
+  }
+
+  public String getDescripcion() {
+    return descripcion;
+  }
+
+  public void setDescripcion(String descripcion) {
+    this.descripcion = descripcion;
+  }
+
+  public EstadoRegistro getEstado() {
+    return estado;
+  }
+
+  public void setEstado(EstadoRegistro estado) {
+    this.estado = estado;
+  }
 }
