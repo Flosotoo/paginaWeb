@@ -92,11 +92,22 @@ export function usePortalFamilia() {
         productos.recargar(),
       ]);
     });
+  const MIN_ABONO = 100;
+  const MAX_ABONO = 500000;
+
   const iniciarPago = () =>
     ejecutar(async () => {
       const valor = Number(monto);
       if (!Number.isSafeInteger(valor) || valor <= 0) {
         setAviso("Ingresa un monto entero mayor que cero.");
+        return;
+      }
+      if (valor < MIN_ABONO) {
+        setAviso(`El monto mínimo para abonar es $${MIN_ABONO.toLocaleString("es-CL")} CLP.`);
+        return;
+      }
+      if (valor > MAX_ABONO) {
+        setAviso(`El monto máximo permitido por abono es $${MAX_ABONO.toLocaleString("es-CL")} CLP.`);
         return;
       }
       const pago = await familiaService.iniciarAbono(
@@ -118,8 +129,8 @@ export function usePortalFamilia() {
           ? "Abono registrado."
           : "Pago rechazado sin abonar saldo.",
       );
+      await cuenta.recargar();
       await Promise.all([
-        cuenta.recargar(),
         movimientos.recargar(),
         notificaciones.recargar(),
         abonos.recargar(),

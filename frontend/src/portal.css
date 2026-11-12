@@ -464,6 +464,29 @@
   box-sizing: border-box;
 }
 
+/* Banners de feedback no intrusivos */
+.form-feedback {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #eef6f0;
+  border: 1px solid #badfc6;
+  color: #18543c;
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin: 12px 0 16px;
+  box-shadow: 0 4px 14px rgba(24, 84, 60, 0.06);
+}
+
+.form-feedback.error,
+.form-feedback:has([role="alert"]) {
+  background: #fef3f2;
+  border-color: #fecdca;
+  color: #b42318;
+}
+
 input, select, button {
   max-width: 100%;
   box-sizing: border-box;

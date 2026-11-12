@@ -74,9 +74,54 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
   return (
     <main className="dashboard family-dashboard">
       {aviso && (
-        <p role="status" className="form-feedback">
-          {aviso}
-        </p>
+        <div
+          role="status"
+          className={`form-feedback ${
+            aviso.toLowerCase().includes("error") ||
+            aviso.toLowerCase().includes("rechazad") ||
+            aviso.toLowerCase().includes("no se pudo")
+              ? "error"
+              : ""
+          }`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "12px 18px",
+            borderRadius: "12px",
+            marginBottom: "16px",
+            background:
+              aviso.toLowerCase().includes("error") ||
+              aviso.toLowerCase().includes("rechazad") ||
+              aviso.toLowerCase().includes("no se pudo")
+                ? "#fef3f2"
+                : "#eef6f0",
+            border: `1px solid ${
+              aviso.toLowerCase().includes("error") ||
+              aviso.toLowerCase().includes("rechazad") ||
+              aviso.toLowerCase().includes("no se pudo")
+                ? "#fecdca"
+                : "#bcdfc6"
+            }`,
+            color:
+              aviso.toLowerCase().includes("error") ||
+              aviso.toLowerCase().includes("rechazad") ||
+              aviso.toLowerCase().includes("no se pudo")
+                ? "#b42318"
+                : "#18543c",
+            fontWeight: 600,
+            fontSize: "0.92rem",
+          }}
+        >
+          <span>
+            {aviso.toLowerCase().includes("error") ||
+            aviso.toLowerCase().includes("rechazad") ||
+            aviso.toLowerCase().includes("no se pudo")
+              ? "⚠️"
+              : "✓"}
+          </span>
+          <span>{aviso}</span>
+        </div>
       )}
       {alumnos.error && <p role="alert">{alumnos.error}</p>}
 
@@ -165,53 +210,113 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 </div>
 
                 <div className="card" style={{ padding: "20px" }}>
-                  {usuario?.rol === "APODERADO" && alumno > 0 && (
-                    <>
-                      <span className="eyebrow">ABONO DE SALDO</span>
-                      <h3 style={{ margin: "5px 0 12px" }}>Pasarela Simulada (Webpay)</h3>
-                      <label htmlFor="monto-abono">Monto del abono simulado</label>
-                      <div style={{ display: "flex", gap: "10px", marginTop: "8px", flexWrap: "wrap" }}>
-                        <input
-                          id="monto-abono"
-                          className="input"
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={monto}
-                          onChange={(e) => setMonto(e.target.value)}
-                          disabled={!!tokenPago}
-                          style={{ maxWidth: "180px" }}
-                        />
-                        {!tokenPago ? (
-                          <button
-                            className="btn"
-                            disabled={procesando}
-                            onClick={iniciarPago}
-                          >
-                            Iniciar abono
-                          </button>
-                        ) : (
-                          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  {usuario?.rol === "APODERADO" && alumno > 0 && (() => {
+                    const MIN_ABONO = 100;
+                    const MAX_ABONO = 500000;
+                    const montoNum = Number(monto);
+                    const errorMontoAbono =
+                      monto !== "" && (!Number.isSafeInteger(montoNum) || montoNum < MIN_ABONO
+                        ? `El monto mínimo para abonar es $${MIN_ABONO.toLocaleString("es-CL")} CLP.`
+                        : montoNum > MAX_ABONO
+                        ? `El monto máximo permitido por abono es $${MAX_ABONO.toLocaleString("es-CL")} CLP.`
+                        : null);
+
+                    return (
+                      <>
+                        <span className="eyebrow">ABONO DE SALDO</span>
+                        <h3 style={{ margin: "5px 0 12px" }}>Pasarela Simulada (Webpay)</h3>
+                        <label htmlFor="monto-abono">Monto del abono simulado</label>
+                        <div style={{ display: "flex", gap: "10px", marginTop: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
+                          <div>
+                            <input
+                              id="monto-abono"
+                              className="input"
+                              type="number"
+                              min={MIN_ABONO}
+                              max={MAX_ABONO}
+                              step="1"
+                              placeholder="Ej: 10000"
+                              value={monto}
+                              onChange={(e) => setMonto(e.target.value)}
+                              disabled={!!tokenPago}
+                              style={{
+                                maxWidth: "180px",
+                                borderColor: errorMontoAbono ? "#b42318" : undefined,
+                              }}
+                            />
+                            <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--muted)" }}>
+                              Mínimo ${MIN_ABONO.toLocaleString("es-CL")} · Máximo ${MAX_ABONO.toLocaleString("es-CL")} CLP
+                            </p>
+                          </div>
+                          {!tokenPago ? (
                             <button
                               className="btn"
-                              disabled={procesando}
-                              onClick={() => confirmarPago("APROBADO")}
+                              disabled={procesando || Boolean(errorMontoAbono) || !monto}
+                              onClick={iniciarPago}
                             >
-                              Simular aprobación
+                              Iniciar abono
                             </button>
-                            <button
-                              className="btn secondary"
-                              disabled={procesando}
-                              onClick={() => confirmarPago("RECHAZADO")}
-                            >
-                              Simular rechazo
-                            </button>
+                          ) : (
+                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                              <button
+                                className="btn"
+                                disabled={procesando}
+                                onClick={() => confirmarPago("APROBADO")}
+                              >
+                                Simular aprobación
+                              </button>
+                              <button
+                                className="btn secondary"
+                                disabled={procesando}
+                                onClick={() => confirmarPago("RECHAZADO")}
+                              >
+                                Simular rechazo
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {errorMontoAbono && (
+                          <p
+                            role="alert"
+                            style={{
+                              margin: "8px 0 0",
+                              color: "#b42318",
+                              fontSize: "0.85rem",
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <span>⚠️</span> {errorMontoAbono}
+                          </p>
+                        )}
+
+                        {tokenPago && (
+                          <div
+                            style={{
+                              marginTop: "12px",
+                              padding: "10px 14px",
+                              background: "#eef6f0",
+                              border: "1px solid #bcdfc6",
+                              borderRadius: "10px",
+                              fontSize: "0.86rem",
+                              color: "#18543c",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            <span>💳</span>
+                            <span>Transacción Webpay iniciada ({tokenPago.slice(0, 8)}...). Simula el resultado para acreditar.</span>
                           </div>
                         )}
-                      </div>
-                      <hr style={{ margin: "20px 0 15px", border: "0", borderTop: "1px solid #e8e4da" }} />
-                    </>
-                  )}
+                        <hr style={{ margin: "20px 0 15px", border: "0", borderTop: "1px solid #e8e4da" }} />
+                      </>
+                    );
+                  })()}
                   <span className="eyebrow">ACCIONES RÁPIDAS</span>
                   <div style={{ display: "flex", gap: "10px", marginTop: "8px", flexWrap: "wrap" }}>
                     <button

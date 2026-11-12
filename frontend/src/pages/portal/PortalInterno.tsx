@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Reserva } from "../../services/reservas";
 import { HistorialOperativo } from "./HistorialOperativo";
 import { CancelacionReserva } from "./CancelacionReserva";
 import { Administracion } from "./Administracion";
@@ -100,6 +101,254 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
     if (verificacionManual[reservaId]) return true;
     if (!items || items.length === 0) return true;
     return items.every((i) => (conteoPistoleo[reservaId]?.[i.productoId] ?? 0) >= i.cantidad);
+  };
+
+  const abrirEtiquetaImprimible = (r: Reserva) => {
+    const popup = window.open("", "_blank", "width=640,height=720");
+    if (!popup) return;
+
+    const itemsHtml = r.items
+      .map(
+        (i) => `
+        <tr>
+          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">
+            <strong>${i.nombreProducto}</strong>
+          </td>
+          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold;">
+            ${i.cantidad}
+          </td>
+          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">
+            $${(i.precioUnitario ?? 0).toLocaleString("es-CL")}
+          </td>
+          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">
+            $${((i.precioUnitario ?? 0) * i.cantidad).toLocaleString("es-CL")}
+          </td>
+        </tr>`
+      )
+      .join("");
+
+    popup.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Etiqueta de Bolsa - BOL-${r.codigo}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .ticket-container {
+      background: #ffffff;
+      width: 100%;
+      max-width: 500px;
+      border: 2px dashed #64748b;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+    .school-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #18543c;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .main-heading {
+      font-size: 19px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 10px;
+    }
+    .bag-badge {
+      display: inline-block;
+      background: #173b31;
+      color: #ffffff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #f1f5f9;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .meta-item strong {
+      display: block;
+      color: #64748b;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    th {
+      background: #f8fafc;
+      border-bottom: 2px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #475569;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .total-price {
+      font-size: 20px;
+      color: #18543c;
+    }
+    .footer-instructions {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+    .btn-bar {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .print-btn {
+      background: #18543c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .close-btn {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .ticket-container {
+        border: 1px dashed #000;
+        box-shadow: none;
+        max-width: 100%;
+        padding: 10px;
+      }
+      .btn-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ticket-container">
+    <div class="header">
+      <div class="school-title">EduSaldo · Librería Escolar</div>
+      <h1 class="main-heading">Comprobante de Bolsa de Reserva</h1>
+      <div class="bag-badge">BOL-${r.codigo}</div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <strong>Código de Reserva</strong>
+        <span>${r.codigo}</span>
+      </div>
+      <div class="meta-item">
+        <strong>Identificador Alumno</strong>
+        <span>Alumno N° ${r.alumnoId}</span>
+      </div>
+      <div class="meta-item">
+        <strong>Fecha de Emisión</strong>
+        <span>${new Date().toLocaleDateString("es-CL")}</span>
+      </div>
+      <div class="meta-item">
+        <strong>Hora de Emisión</strong>
+        <span>${new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Material / Artículo</th>
+          <th style="text-align: center;">Cant.</th>
+          <th style="text-align: right;">Unitario</th>
+          <th style="text-align: right;">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHtml}
+      </tbody>
+    </table>
+
+    <div class="total-row">
+      <span>Total reservado:</span>
+      <span class="total-price">$${r.total.toLocaleString("es-CL")}</span>
+    </div>
+
+    <p class="footer-instructions">
+      📌 Adherir esta etiqueta a la bolsa antes de ubicarla en el estante de retiro presencial.
+    </p>
+
+    <div class="btn-bar">
+      <button class="print-btn" onclick="window.print()">🖨️ Imprimir etiqueta</button>
+      <button class="close-btn" onclick="window.close()">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener("load", function() {
+      setTimeout(function() {
+        window.print();
+      }, 350);
+    });
+  </script>
+</body>
+</html>`);
+    popup.document.close();
   };
 
   // Filtros y paginación para Inventario
@@ -607,9 +856,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                         type="button"
                         className="btn secondary"
                         style={{ fontSize: "12px", padding: "4px 10px" }}
-                        onClick={() => {
-                          window.alert(`ETIQUETA DE BOLSA EDU-SALDO\n===========================\nCódigo: BOL-${r.codigo}\nReserva: ${r.codigo}\nAlumno ID: ${r.alumnoId}\nTotal: $${r.total.toLocaleString("es-CL")}\nItems: ${r.items.map(i => `${i.nombreProducto} x${i.cantidad}`).join(", ")}`);
-                        }}
+                        onClick={() => abrirEtiquetaImprimible(r)}
                       >
                         🏷 Ver / Imprimir etiqueta
                       </button>
