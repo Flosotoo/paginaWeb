@@ -4,6 +4,7 @@
 # =============================================================================
 
 import os
+import shutil
 import subprocess
 import sys
 
@@ -24,6 +25,13 @@ print("=========================================================================
 print("  EDUSALDO - INICIANDO FRONTEND WEB (REACT + VITE)")
 print("=============================================================================")
 print(f"Directorio: {FRONTEND_DIR}\n")
+
+# Verificar si npm está disponible en el sistema
+npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
+if not shutil.which(npm_cmd) and not shutil.which("npm"):
+    print("[ERROR] No se encontró 'npm' en el PATH del sistema.")
+    print("Asegúrate de instalar Node.js (versión 18 o superior) desde https://nodejs.org/")
+    sys.exit(1)
 
 os.chdir(FRONTEND_DIR)
 

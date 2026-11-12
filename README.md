@@ -19,9 +19,12 @@ La plataforma está construida bajo una **arquitectura de microservicios en Spri
 
 ```text
 EduSaldo/
+├── iniciar_proyecto.bat                   <- [Windows] Doble clic para arrancar todo automáticamente
+├── iniciar_proyecto.sh                    <- [Linux/macOS] Script de arranque rápido
 ├── scripts/                               <- Herramientas operativas centralizadas (Multiplataforma)
+│   ├── arrancar_todo.py                   <- Orquestador unificado (BD + Backend + Frontend en navegador)
 │   ├── 1_reset_bases_datos.py             <- Borrado y recreación limpia de las 4 BDs con seeds
-│   ├── 2_arrancar_servicios.py            <- Arranque concurrente de los 5 servicios (con --stop)
+│   ├── 2_arrancar_servicios.py            <- Arranque concurrente de los 5 servicios (auto-compila y --stop)
 │   ├── 3_arrancar_frontend.py             <- Servidor de desarrollo Vite en http://localhost:5173
 │   ├── 4_pruebas_http_automaticas.py      <- Pruebas HTTP de integración, borde y seguridad
 │   └── pruebas_postman_coleccion.json     <- Colección Postman preconfigurada
@@ -59,41 +62,126 @@ EduSaldo/
 
 ---
 
-## 🚀 Guía Rápida de Puesta en Marcha (Quick Start)
+## 🚀 Guía de Puesta en Marcha (Paso a Paso y Alternativas)
 
-### Prerrequisitos
-- **Java 17+** y **Maven 3.8+**
-- **Node.js 22.12 o superior** y **npm**
-- **Python 3.10+**
-- **MySQL 8.0** o **XAMPP MySQL** corriendo en el puerto 3306
-
----
-
-### Paso 1: Configurar las Bases de Datos MySQL (Fresh Start)
-Recrea los 4 esquemas canónicos limpios con sus tablas y datos iniciales de prueba:
-```bash
-python scripts/1_reset_bases_datos.py
-```
+### Prerrequisitos Básicos
+- **MySQL 8.0** o **MariaDB / XAMPP** con el servicio MySQL activo en el puerto `3306`.
+- **Java 17 o superior** (Java 17, 21, etc.).
+- **Node.js 18+ o 22+** y **npm**.
+- **Python 3.10+** (para ejecución automatizada).
+- **Apache Maven 3.8+** (necesario si se compila el backend desde código fuente).
 
 ---
 
-### Paso 2: Levantar el Backend (Gateway + 4 Microservicios)
-Compila los cinco módulos con Maven y luego levanta los servicios con monitor de logs en vivo:
-```bash
-(for modulo in backend/edusaldo-*/pom.xml; do mvn -f "$modulo" package -DskipTests || exit 1; done) && python scripts/2_arrancar_servicios.py
-```
+### Método 1: Lanzador Todo en Uno (Recomendado para la Presentación)
+
+Este método realiza automáticamente la configuración de base de datos con seeds, compila los JARs de Spring Boot si no existen, levanta los 5 microservicios en segundo plano, arranca el frontend e inicia el navegador en `http://localhost:5173`:
+
+- **En Windows:**  
+  Haz doble clic en el archivo **`iniciar_proyecto.bat`** (o ejecuta en CMD/PowerShell: `python scripts\arrancar_todo.py`).
+- **En Linux / macOS:**  
+  Ejecuta en terminal:  
+  ```bash
+  ./iniciar_proyecto.sh
+  # o directamente:
+  python3 scripts/arrancar_todo.py
+  ```
+
 > [!TIP]
-> Si deseas detener los servicios y liberar los puertos `8090..8094`:
+> **Detención Rápida**: Para detener todos los procesos del proyecto y liberar los puertos `8090..8094`, simplemente presiona `Ctrl+C` en la terminal o ejecuta:
 > ```bash
-> python scripts/2_arrancar_servicios.py --stop
+> python scripts/arrancar_todo.py --stop
 > ```
 
 ---
 
-### Paso 3: Levantar el Frontend Web
-En una nueva terminal, arranca el servidor de desarrollo Vite:
+### Método 2: Ejecución Modular Paso a Paso con Scripts
+
+Si prefieres controlar cada etapa manualmente o ejecutar en terminales separadas:
+
+#### Paso 1: Reconstrucción Limpia de Base de Datos y Carga de Seeds
+Recrea los 4 esquemas limpios (`db_usuarios`, `db_saldos`, `db_inventario`, `db_reservas`) con sus tablas, llaves foráneas y datos iniciales de prueba:
+```bash
+python scripts/1_reset_bases_datos.py
+```
+
+#### Paso 2: Compilación y Arranque del Backend (Gateway + 4 Microservicios)
+Si es la primera vez que se ejecuta en el equipo o no existen los archivos JAR en las carpetas `target/`, el script compilará automáticamente con Maven antes de iniciar:
+```bash
+python scripts/2_arrancar_servicios.py
+```
+> [!NOTE]
+> - Para forzar una recompilación limpia con Maven: `python scripts/2_arrancar_servicios.py --build`
+> - Para arrancar los servicios en segundo plano y liberar la consola: `python scripts/2_arrancar_servicios.py --detached`
+> - Para detener los servicios en cualquier momento: `python scripts/2_arrancar_servicios.py --stop`
+
+#### Paso 3: Arranque del Frontend Web (React + Vite)
+En una nueva terminal, inicia el servidor de desarrollo web (instalará dependencias automáticamente si falta `node_modules`):
 ```bash
 python scripts/3_arrancar_frontend.py
+```
+Abre en el navegador: **`http://localhost:5173`**
+
+---
+
+### Método 3: Procedimiento 100% Manual de Respaldo (Sin Scripts Python)
+
+Si por restricciones del equipo en DUOC no se pueden ejecutar scripts en Python, sigue este procedimiento manual:
+
+#### 1. Ubicación de los Archivos SQL de Seeds y Creación Manual en phpMyAdmin
+Cada microservicio contiene su archivo `schema.sql` canónico con la creación de tablas, llaves foráneas y los datos iniciales de prueba (seeds). Las ubicaciones exactas dentro del proyecto son:
+
+| Microservicio | Base de Datos | Ubicación Exacta del Archivo SQL (Seeds) |
+| :--- | :--- | :--- |
+| **Auth y Usuarios** | `db_usuarios` | [`backend/edusaldo-ms-auth-usuarios/src/main/resources/schema.sql`](backend/edusaldo-ms-auth-usuarios/src/main/resources/schema.sql) |
+| **Alumnos y Saldos** | `db_saldos` | [`backend/edusaldo-ms-alumnos-saldos/src/main/resources/schema.sql`](backend/edusaldo-ms-alumnos-saldos/src/main/resources/schema.sql) |
+| **Productos e Inventario** | `db_inventario` | [`backend/edusaldo-ms-productos-inventario/src/main/resources/schema.sql`](backend/edusaldo-ms-productos-inventario/src/main/resources/schema.sql) |
+| **Ventas y Reservas** | `db_reservas` | [`backend/edusaldo-ms-ventas-reservas/src/main/resources/schema.sql`](backend/edusaldo-ms-ventas-reservas/src/main/resources/schema.sql) |
+
+**Pasos para poblar manualmente en phpMyAdmin (`http://localhost/phpmyadmin`):**
+1. En la pestaña **SQL** de phpMyAdmin, ejecuta la creación de los 4 esquemas:
+   ```sql
+   DROP DATABASE IF EXISTS `db_usuarios`; CREATE DATABASE `db_usuarios` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   DROP DATABASE IF EXISTS `db_saldos`; CREATE DATABASE `db_saldos` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   DROP DATABASE IF EXISTS `db_inventario`; CREATE DATABASE `db_inventario` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   DROP DATABASE IF EXISTS `db_reservas`; CREATE DATABASE `db_reservas` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+2. Selecciona la base de datos `db_usuarios` en el menú izquierdo, ve a la pestaña **Importar**, selecciona el archivo `backend/edusaldo-ms-auth-usuarios/src/main/resources/schema.sql` y presiona **Continuar**.
+3. Repite el proceso para `db_saldos`, `db_inventario` y `db_reservas` seleccionando su respectivo archivo `schema.sql`.
+
+#### 2. Compilación y Arranque Manual del Backend
+Compila los 5 módulos con Maven (ejecuta en la raíz del repositorio o dentro de cada carpeta):
+```bash
+mvn -f backend/edusaldo-api-gateway/pom.xml clean package -DskipTests
+mvn -f backend/edusaldo-ms-auth-usuarios/pom.xml clean package -DskipTests
+mvn -f backend/edusaldo-ms-alumnos-saldos/pom.xml clean package -DskipTests
+mvn -f backend/edusaldo-ms-productos-inventario/pom.xml clean package -DskipTests
+mvn -f backend/edusaldo-ms-ventas-reservas/pom.xml clean package -DskipTests
+```
+Una vez compilados, puedes arrancar cada microservicio en una terminal distinta con Java:
+```bash
+# Terminal 1: Auth y Usuarios (8091)
+java -jar backend/edusaldo-ms-auth-usuarios/target/ms-auth-usuarios-2.0.0.jar
+
+# Terminal 2: Alumnos y Saldos (8092)
+java -jar backend/edusaldo-ms-alumnos-saldos/target/ms-alumnos-saldos-2.0.0.jar
+
+# Terminal 3: Productos e Inventario (8093)
+java -jar backend/edusaldo-ms-productos-inventario/target/ms-productos-inventario-2.0.0.jar
+
+# Terminal 4: Ventas y Reservas (8094)
+java -jar backend/edusaldo-ms-ventas-reservas/target/ms-ventas-reservas-2.0.0.jar
+
+# Terminal 5: API Gateway (8090)
+java -jar backend/edusaldo-api-gateway/target/api-gateway-2.0.0.jar
+```
+
+#### 3. Arranque Manual del Frontend
+En una terminal en la carpeta `frontend/`:
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 Abre tu navegador en: **`http://localhost:5173`**
 

@@ -43,15 +43,14 @@ python scripts/1_reset_bases_datos.py
 ```
 
 ### 2. Arranque Concurrente del Backend
-Levanta concurrentemente el API Gateway y los 4 microservicios con monitoreo de logs en vivo:
+Levanta concurrentemente el API Gateway y los 4 microservicios con monitoreo de logs en vivo (compila automáticamente con Maven si faltan los JARs):
 ```bash
 python scripts/2_arrancar_servicios.py
 ```
 > [!TIP]
-> Para detener los servicios y liberar los puertos `8090..8094` en cualquier momento:
-> ```bash
-> python scripts/2_arrancar_servicios.py --stop
-> ```
+> - Para forzar una recompilación limpia de los 5 módulos: `python scripts/2_arrancar_servicios.py --build`
+> - Para arrancar en segundo plano y liberar la terminal: `python scripts/2_arrancar_servicios.py --detached`
+> - Para detener los servicios y liberar los puertos `8090..8094` en cualquier momento: `python scripts/2_arrancar_servicios.py --stop`
 
 ### 3. Batería de Pruebas Automatizadas E2E y Casos de Borde
 Ejecuta casos de integración, controles de borde y pruebas adicionales de negocio y seguridad contra el Gateway (`http://localhost:8090`). Requiere los datos semilla y modifica registros:

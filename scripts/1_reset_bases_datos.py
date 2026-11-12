@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import socket
 import subprocess
 import sys
 
@@ -17,27 +18,67 @@ SERVICES = (
 )
 
 
+def check_mysql_connection(host='127.0.0.1', port=3306, timeout=2):
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
 def mysql_binary():
     explicit = os.environ.get('EDUSALDO_MYSQL')
-    candidates = [explicit] if explicit else ['/opt/lampp/bin/mysql', r'C:\xampp\mysql\bin\mysql.exe', 'mysql']
-    for candidate in candidates:
-        found = shutil.which(candidate)
+    if explicit:
+        found = shutil.which(explicit) or (Path(explicit).is_file() and explicit)
+        if found:
+            return str(found)
+
+    # 1. Búsqueda en PATH del sistema (comportamiento estándar agnóstico al OS)
+    for cmd in ('mysql', 'mariadb'):
+        found = shutil.which(cmd)
         if found:
             return found
-    raise RuntimeError('No se encontró el cliente XAMPP. Configura EDUSALDO_MYSQL con su ubicación.')
+
+    # 2. Respaldo silencioso en ubicaciones típicas si no está en PATH
+    common_candidates = [
+        r'C:\xampp\mysql\bin\mysql.exe',
+        r'D:\xampp\mysql\bin\mysql.exe',
+        '/opt/lampp/bin/mysql',
+        '/usr/bin/mysql',
+        '/usr/local/bin/mysql',
+        '/usr/local/mysql/bin/mysql',
+    ]
+    for candidate in common_candidates:
+        if Path(candidate).is_file():
+            return candidate
+
+    raise RuntimeError(
+        "No se encontró el cliente 'mysql' o 'mariadb'. "
+        "Asegúrate de que MySQL esté instalado y en el PATH del sistema, "
+        "o define la variable de entorno EDUSALDO_MYSQL con su ruta."
+    )
 
 
 def mysql(sql, database=None):
-    command = [mysql_binary(), '--host=' + os.environ.get('EDUSALDO_DB_HOST', '127.0.0.1'),
-               '--port=' + os.environ.get('EDUSALDO_DB_PORT', '3306'),
-               '--user=' + os.environ.get('EDUSALDO_DB_USER', 'root'), '--batch', '--skip-column-names']
+    host = os.environ.get('EDUSALDO_DB_HOST', '127.0.0.1')
+    port = os.environ.get('EDUSALDO_DB_PORT', '3306')
+    user = os.environ.get('EDUSALDO_DB_USER', 'root')
+    command = [
+        mysql_binary(),
+        f'--host={host}',
+        f'--port={port}',
+        f'--user={user}',
+        '--default-character-set=utf8mb4',
+        '--batch',
+        '--skip-column-names'
+    ]
     if database:
         command.append(database)
     environment = os.environ.copy()
     if os.environ.get('EDUSALDO_DB_PASSWORD'):
         environment['MYSQL_PWD'] = os.environ['EDUSALDO_DB_PASSWORD']
     return subprocess.run(command, input=sql, text=True, capture_output=True,
-                          env=environment, check=True)
+                          env=environment, check=True, encoding='utf-8')
 
 
 def configura_validacion(config):
@@ -108,6 +149,13 @@ def main():
     schemas = [(db, BACKEND / name / 'src/main/resources/schema.sql')
                for name, _, db in SERVICES if db]
     try:
+        host = os.environ.get('EDUSALDO_DB_HOST', '127.0.0.1')
+        port = os.environ.get('EDUSALDO_DB_PORT', '3306')
+        if not check_mysql_connection(host, port):
+            raise RuntimeError(
+                f"No se pudo conectar a MySQL en {host}:{port}. "
+                f"Por favor verifica que MySQL esté encendido (ej. en el panel de control de XAMPP)."
+            )
         mysql_binary()
         missing = [str(path) for _, path in schemas if not path.is_file()]
         if missing:

@@ -1,9 +1,12 @@
 import argparse
+import glob
 import json
 import os
 from pathlib import Path
 import platform
+import re
 import secrets
+import shutil
 import signal
 import socket
 import subprocess
@@ -25,25 +28,60 @@ PID_FILE = ROOT / 'services_pids.json'
 KEY_FILE = ROOT / '.agents/notas/servicios.key'
 
 
+def check_java_version(executable):
+    try:
+        result = subprocess.run([str(executable), '-version'], capture_output=True, text=True)
+        if result.returncode != 0:
+            return False
+        output = (result.stderr or '') + '\n' + (result.stdout or '')
+        match = re.search(r'version "(?:1\.)?(\d+)', output)
+        if match:
+            major = int(match.group(1))
+            return major >= 17
+        return False
+    except OSError:
+        return False
+
+
 def java_environment():
     environment = os.environ.copy()
-    candidates = [os.environ.get('EDUSALDO_JAVA_HOME'), os.environ.get('JAVA_HOME'),
-                  '/usr/lib/jvm/java-17-openjdk']
-    for candidate in candidates:
-        if not candidate:
-            continue
-        executable = Path(candidate) / 'bin' / ('java.exe' if os.name == 'nt' else 'java')
-        if not executable.is_file():
-            continue
-        result = subprocess.run([str(executable), '-version'], capture_output=True, text=True)
-        if result.returncode == 0 and 'version "17.' in result.stderr:
-            environment['JAVA_HOME'] = str(candidate)
-            environment['PATH'] = str(executable.parent) + os.pathsep + environment.get('PATH', '')
-            return environment
-    result = subprocess.run(['java', '-version'], capture_output=True, text=True)
-    if result.returncode == 0 and 'version "17.' in result.stderr:
+
+    # 1. Comprobar 'java' disponible directamente en el PATH
+    which_java = shutil.which('java')
+    if which_java and check_java_version(which_java):
         return environment
-    raise RuntimeError('Se requiere Java 17. Configura EDUSALDO_JAVA_HOME con la instalación local.')
+
+    # 2. Variables de entorno explícitas
+    for var in ('EDUSALDO_JAVA_HOME', 'JAVA_HOME'):
+        val = os.environ.get(var)
+        if val:
+            exe = Path(val) / 'bin' / ('java.exe' if os.name == 'nt' else 'java')
+            if exe.is_file() and check_java_version(exe):
+                environment['JAVA_HOME'] = str(val)
+                environment['PATH'] = str(exe.parent) + os.pathsep + environment.get('PATH', '')
+                return environment
+
+    # 3. Ubicaciones estándar habituales por sistema operativo
+    system_candidates = []
+    if os.name == 'nt':
+        for pattern in (r'C:\Program Files\Java\*', r'C:\Program Files\Eclipse Adoptium\*'):
+            system_candidates.extend(sorted(glob.glob(pattern), reverse=True))
+    elif platform.system() == 'Darwin':
+        system_candidates.extend(sorted(glob.glob('/Library/Java/JavaVirtualMachines/*/Contents/Home'), reverse=True))
+    else:
+        system_candidates.extend(sorted(glob.glob('/usr/lib/jvm/*'), reverse=True))
+
+    for candidate in system_candidates:
+        exe = Path(candidate) / 'bin' / ('java.exe' if os.name == 'nt' else 'java')
+        if exe.is_file() and check_java_version(exe):
+            environment['JAVA_HOME'] = str(candidate)
+            environment['PATH'] = str(exe.parent) + os.pathsep + environment.get('PATH', '')
+            return environment
+
+    raise RuntimeError(
+        "Se requiere Java 17 o superior. Asegúrate de tener Java 17+ instalado y en el PATH, "
+        "o configura la variable de entorno JAVA_HOME."
+    )
 
 
 def ready(port, key=None, timeout=2):
@@ -92,9 +130,63 @@ def owned_process(pid, jar):
         else:
             command = subprocess.run(['ps', '-p', str(int(pid)), '-o', 'command='],
                                      text=True, capture_output=True, check=True).stdout
-        return 'java' in command and str(jar) in command
+        jar_name = Path(jar).name.lower()
+        return 'java' in command.lower() and jar_name in command.lower()
     except (OSError, ValueError, subprocess.CalledProcessError):
         return False
+
+
+def find_maven():
+    explicit = os.environ.get('M2_HOME') or os.environ.get('MAVEN_HOME')
+    if explicit:
+        exe = Path(explicit) / 'bin' / ('mvn.cmd' if os.name == 'nt' else 'mvn')
+        if exe.is_file():
+            return str(exe)
+    for cmd in ('mvn', 'mvn.cmd'):
+        found = shutil.which(cmd)
+        if found:
+            return found
+    return None
+
+
+def find_jars():
+    jars = {}
+    missing = []
+    for name, _, _ in SERVICES:
+        target_dir = BACKEND / name / 'target'
+        candidates = []
+        if target_dir.is_dir():
+            candidates = [
+                j for j in sorted(target_dir.glob('*.jar'))
+                if not j.name.endswith('.original')
+                and not j.name.endswith('-sources.jar')
+                and not j.name.endswith('-javadoc.jar')
+            ]
+        if candidates:
+            jars[name] = candidates[0].resolve()
+        else:
+            missing.append(name)
+    return jars, missing
+
+
+def compile_modules(modules, environment):
+    mvn = find_maven()
+    if not mvn:
+        raise RuntimeError(
+            f"Faltan los JARs compilados para: {', '.join(modules)} y no se encontró 'mvn' en el PATH. "
+            f"Por favor instala Apache Maven (3.8+) o compila previamente con 'mvn package -DskipTests'."
+        )
+    print(f"[BUILD] Compilando {len(modules)} módulo(s) con Maven ({mvn})...")
+    for name in modules:
+        pom_path = BACKEND / name / 'pom.xml'
+        print(f"[BUILD] Compilando {name}...")
+        cmd = [mvn, '-f', str(pom_path), 'clean', 'package', '-DskipTests']
+        res = subprocess.run(cmd, env=environment, capture_output=True, text=True)
+        if res.returncode != 0:
+            print(res.stdout, file=sys.stderr)
+            print(res.stderr, file=sys.stderr)
+            raise RuntimeError(f"Error al compilar el módulo {name} con Maven.")
+        print(f"[OK] {name} compilado exitosamente.")
 
 
 def port_busy(port):
@@ -149,8 +241,9 @@ def check_port_online(port, timeout=2):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--stop', action='store_true')
-    parser.add_argument('--detached', '-d', action='store_true')
+    parser.add_argument('--stop', action='store_true', help='Detener los servicios en ejecución')
+    parser.add_argument('--detached', '-d', action='store_true', help='Iniciar servicios en segundo plano y salir')
+    parser.add_argument('--build', action='store_true', help='Compilar los módulos con Maven antes de iniciar')
     args = parser.parse_args()
     handles, processes = [], []
     try:
@@ -160,12 +253,16 @@ def main():
             return 0
         environment = java_environment()
         key = internal_key()
-        jars = {}
-        for name, _, _ in SERVICES:
-            candidates = sorted((BACKEND / name / 'target').glob('*.jar'))
-            if len(candidates) != 1:
-                raise RuntimeError(f'{name}: se requiere exactamente un JAR compilado, encontrados {len(candidates)}.')
-            jars[name] = candidates[0].resolve()
+
+        # Comprobar JARs o compilar con Maven si faltan
+        jars, missing = find_jars()
+        if args.build or missing:
+            to_build = [name for name, _, _ in SERVICES] if args.build else missing
+            compile_modules(to_build, environment)
+            jars, missing = find_jars()
+            if missing:
+                raise RuntimeError(f'No se encontraron los JARs compilados tras la compilación: {missing}')
+
         stop_all_services()
         occupied = [port for _, port, _ in SERVICES if port_busy(port)]
         if occupied:
