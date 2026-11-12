@@ -53,6 +53,7 @@ function Aplicacion() {
   };
 
   const [seccion, setSeccionState] = useState<string>("inicio");
+  const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
 
   useEffect(() => {
     if (usuario) {
@@ -146,21 +147,34 @@ function Aplicacion() {
           </button>
 
           {usuario.estado !== "PRIMER_ACCESO" && (
-            <nav className="header-nav" aria-label="Secciones principales">
-              {menuItems.map(([id, texto]) => (
-                <a
-                  key={id}
-                  href={`#${id}`}
-                  className={seccion === id ? "active" : ""}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSeccion(id);
-                  }}
-                >
-                  {texto}
-                </a>
-              ))}
-            </nav>
+            <>
+              <button
+                type="button"
+                className="mobile-nav-toggle"
+                aria-expanded={menuAbierto}
+                aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
+                onClick={() => setMenuAbierto(!menuAbierto)}
+              >
+                <span aria-hidden="true">{menuAbierto ? "✕" : "☰"}</span> Menú
+              </button>
+
+              <nav className={`header-nav ${menuAbierto ? "is-open" : ""}`} aria-label="Secciones principales">
+                {menuItems.map(([id, texto]) => (
+                  <a
+                    key={id}
+                    href={`#${id}`}
+                    className={seccion === id ? "active" : ""}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSeccion(id);
+                      setMenuAbierto(false);
+                    }}
+                  >
+                    {texto}
+                  </a>
+                ))}
+              </nav>
+            </>
           )}
 
           <div className="header-account">

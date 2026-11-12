@@ -32,6 +32,35 @@
   gap: 6px;
 }
 
+@media (max-width: 1050px) {
+  .site-header .header-nav {
+    display: none;
+  }
+  .site-header .header-nav.is-open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  .site-header .mobile-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
 .site-header .header-nav a {
   padding: 8px 16px;
   border-radius: 20px;
@@ -76,13 +105,189 @@
   padding: 6px 12px;
   font-size: 13px;
   font-weight: 700;
-  color: #24443e;
+  color: #24443e !important;
   cursor: pointer;
   margin-bottom: 16px;
 }
 
 .staff-small:hover {
   background: #e4dfd4;
+  color: #173b31 !important;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #24443e !important;
+  color: #ffffff !important;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: all 0.2s ease;
+  margin: 6px 0 16px;
+}
+
+.back-link:hover {
+  background: #173b31 !important;
+  color: #ffffff !important;
+  text-decoration: none;
+}
+
+.back-link.secondary {
+  background: #f1ede4 !important;
+  color: #24443e !important;
+  border: 1px solid #dcd5c7;
+}
+
+.back-link.secondary:hover {
+  background: #e4dfd4 !important;
+  color: #173b31 !important;
+}
+
+/* Sub-navegación por tarjetas modulares */
+.subnav-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.subnav-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #fbf9f5;
+  border: 2px solid #e2ddd3;
+  color: #173b31;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.subnav-card:hover {
+  background: #f4efe7;
+  border-color: #24443e;
+  transform: translateY(-2px);
+}
+
+.subnav-card.active {
+  background: #ffffff;
+  border-color: #24443e;
+  box-shadow: 0 4px 14px rgba(36, 68, 62, 0.12);
+}
+
+.subnav-card strong {
+  font-size: 0.95rem;
+  color: #173b31;
+}
+
+.subnav-card span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Barra de paginación accesible */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: #fbf9f5;
+  border: 1px solid #e9e3d8;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  color: #43524b;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-controls button {
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: #f1ede4;
+  border: 1px solid #dcd5c7;
+  color: #24443e;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-controls button:not(:disabled):hover {
+  background: #e4dfd4;
+}
+
+/* Evitar recorte inferior en tarjetas de alumnos */
+.family-dashboard .child-choice {
+  overflow: visible;
+  padding-bottom: 22px;
+}
+
+.family-dashboard .child-choice .choice-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 10px;
+}
+
+.family-dashboard .child-choice .choice-bottom .link-like {
+  white-space: nowrap;
+  font-weight: 700;
+  color: #18543c;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Chips de categorías en Catálogo */
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+
+.category-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #f1ede4;
+  border: 1px solid #dcd5c7;
+  color: #24443e;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.category-chip:hover {
+  background: #e4dfd4;
+  border-color: #24443e;
+}
+
+.category-chip.active {
+  background: #24443e;
+  color: #ffffff;
+  border-color: #24443e;
+  box-shadow: 0 2px 8px rgba(36, 68, 62, 0.2);
 }
 
 .account-section {

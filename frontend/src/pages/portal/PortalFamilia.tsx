@@ -14,6 +14,7 @@ const pesos = (valor: number) => `$${valor.toLocaleString("es-CL")}`;
 
 export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
   const [busqueda, setBusqueda] = useState("");
+  const [categoriaSel, setCategoriaSel] = useState("Todos");
   const {
     usuario,
     alumno,
@@ -41,12 +42,24 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
 
   const alumnoSeleccionado = alumnos.datos?.find((a) => a.id === alumno);
 
-  const productosVisibles = productos.datos?.filter((p) =>
-    p.estado === "ACTIVO" &&
-    `${p.nombre} ${p.categoria ?? ""}`
+  const categoriasDisponibles = [
+    "Todos",
+    ...Array.from(
+      new Set(
+        (productos.datos ?? [])
+          .map((p) => p.categoria)
+          .filter((c): c is string => Boolean(c)),
+      ),
+    ),
+  ];
+
+  const productosVisibles = productos.datos?.filter((p) => {
+    if (p.estado !== "ACTIVO") return false;
+    if (categoriaSel !== "Todos" && p.categoria !== categoriaSel) return false;
+    return `${p.nombre} ${p.categoria ?? ""} ${p.sku ?? ""}`
       .toLocaleLowerCase("es-CL")
-      .includes(busqueda.trim().toLocaleLowerCase("es-CL")),
-  );
+      .includes(busqueda.trim().toLocaleLowerCase("es-CL"));
+  });
 
   const seleccion =
     productos.datos?.filter((p) => (carrito[p.id] ?? 0) > 0) ?? [];
@@ -71,7 +84,6 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
         <>
           <section className="family-intro">
             <div>
-              <span className="eyebrow">TU ESPACIO FAMILIAR</span>
               <h1>
                 Hola, <span>{usuario?.nombreCompleto}</span>.
               </h1>
@@ -89,8 +101,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             <section className="family-section">
               <div className="section-heading">
                 <div>
-                  <span className="eyebrow">MIS ALUMNOS</span>
-                  <h2>Sus cuentas, en un solo lugar</h2>
+                  <h2>Mis alumnos</h2>
                 </div>
                 <span className="count-pill">{alumnos.datos?.length ?? 0} estudiantes</span>
               </div>
@@ -107,17 +118,12 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                   >
                     <div className="child-top">
                       <span className="child-avatar">{a.nombreCompleto.charAt(0)}</span>
-                      <span className="choice-state">Cuenta activa</span>
+                      <span className="choice-state">{alumno === a.id ? "✓ Cuenta activa" : "Activa"}</span>
                     </div>
                     <strong>{a.nombreCompleto}</strong>
                     <small>{a.curso} · RUT {a.rut}</small>
                     <div className="choice-bottom">
-                      <div>
-                        <small>Saldo disponible</small>
-                        <br />
-                        <b>{cuenta.datos && alumno === a.id ? pesos(cuenta.datos.saldoDisponible) : "Ver cuenta"}</b>
-                      </div>
-                      <span className="link-like">Seleccionar →</span>
+                      <span className="link-like">{alumno === a.id ? "Seleccionado" : "Seleccionar →"}</span>
                     </div>
                   </button>
                 ))}
@@ -149,8 +155,11 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 <div className="balance-panel">
                   <span>SALDO DISPONIBLE</span>
                   <strong>{pesos(cuenta.datos.saldoDisponible)}</strong>
-                  <p>
-                    Saldo total en cuenta: {pesos(cuenta.datos.saldoActual)} · Comprometido {pesos(cuenta.datos.saldoComprometido)}
+                  <p style={{ margin: "6px 0 2px" }}>
+                    Saldo total en cuenta: {pesos(cuenta.datos.saldoActual)}
+                  </p>
+                  <p style={{ margin: "2px 0 0", color: "#f3eee7" }}>
+                    Comprometido {pesos(cuenta.datos.saldoComprometido)}
                   </p>
                   <span className="balance-decoration">$</span>
                 </div>
@@ -225,6 +234,92 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             )}
           </section>
 
+          {/* Últimos movimientos del alumno en portada */}
+          <section className="family-activity" style={{ marginTop: "24px" }}>
+            <div className="section-heading">
+              <div>
+                <h2>Últimos movimientos</h2>
+              </div>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setSeccion("movimientos")}
+                style={{ fontSize: "13px" }}
+              >
+                Ver cartola completa →
+              </button>
+            </div>
+            {movimientos.cargando && <p>Cargando movimientos…</p>}
+            {movimientos.error && <p role="alert">{movimientos.error}</p>}
+            {movimientos.datos && movimientos.datos.length > 0 ? (
+              <div className="family-movement-list" style={{ display: "grid", gap: "8px", marginTop: "12px" }}>
+                {movimientos.datos.slice(0, 5).map((m) => {
+                  const esIngreso = m.tipo === "ABONO" || m.tipo === "DEVOLUCION" || m.tipo === "LIBERACION_RESERVA";
+                  return (
+                    <div
+                      key={m.id}
+                      className="family-movement"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 16px",
+                        background: "#ffffff",
+                        borderRadius: "12px",
+                        border: "1px solid #e2ddd3",
+                        gap: "12px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <span
+                          className={`movement-icon ${esIngreso ? "credit" : "debit"}`}
+                          style={{
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "10px",
+                            display: "grid",
+                            placeItems: "center",
+                            fontWeight: "bold",
+                            background: esIngreso ? "#dcebdc" : "#f4dfd2",
+                            color: esIngreso ? "#1b6238" : "#993a20",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {esIngreso ? "+$" : "-$"}
+                        </span>
+                        <div>
+                          <strong style={{ fontSize: "14px", color: "#173b31" }}>
+                            {m.descripcion || m.tipo}
+                          </strong>
+                          <br />
+                          <small className="muted" style={{ fontSize: "12px" }}>
+                            {new Date(m.fecha).toLocaleDateString("es-CL")}
+                          </small>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <strong style={{ color: esIngreso ? "#1b6238" : "#242b28", fontSize: "15px" }}>
+                          {esIngreso ? "+" : "-"}{pesos(m.monto)}
+                        </strong>
+                        <br />
+                        <small className="muted" style={{ fontSize: "12px" }}>
+                          Saldo {pesos(m.saldoResultante)}
+                        </small>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              !movimientos.cargando && (
+                <p className="muted" style={{ marginTop: "10px" }}>
+                  No hay movimientos registrados para esta cuenta.
+                </p>
+              )
+            )}
+          </section>
+
           {notificaciones.datos && notificaciones.datos.some((n) => n.alumnoId === alumno && n.estado === "SIMULADA") && (
             <section className="account-section" style={{ marginTop: "20px" }}>
               <span className="eyebrow">ALERTAS</span>
@@ -243,31 +338,73 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
 
       {seccion === "catalogo" && (
         <section className="family-section">
-          <button
-            type="button"
-            className="staff-small"
-            onClick={() => setSeccion("cuenta")}
+          {/* Franja compacta del alumno con saldo */}
+          <div
+            className="reserva-student-strip"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "#f4eee3",
+              border: "1px solid #ddd5c7",
+              padding: "14px 20px",
+              borderRadius: "16px",
+              marginBottom: "20px",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
           >
-            ← Volver a Mi Cuenta
-          </button>
-          <div className="section-heading">
             <div>
-              <span className="eyebrow">CATÁLOGO Y RESERVAS</span>
-              <h2 id="catalogo">Catálogo</h2>
+              <small style={{ textTransform: "uppercase", fontWeight: 700, color: "#65756c", fontSize: "11px", letterSpacing: "0.5px" }}>
+                Alumno seleccionado
+              </small>
+              <h3 style={{ margin: "2px 0 0", color: "#173b31", fontSize: "1.15rem" }}>
+                {alumnoSeleccionado?.nombreCompleto || "Estudiante"} {alumnoSeleccionado?.curso ? `· ${alumnoSeleccionado.curso}` : ""}
+              </h3>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <small style={{ textTransform: "uppercase", fontWeight: 700, color: "#65756c", fontSize: "11px", letterSpacing: "0.5px" }}>
+                Saldo disponible para reservas
+              </small>
+              <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#18543c" }}>
+                {pesos(cuenta.datos?.saldoDisponible ?? 0)}
+              </div>
             </div>
           </div>
 
+          <div className="section-heading" style={{ marginBottom: "14px" }}>
+            <div>
+              <h2 id="catalogo">Catálogo de materiales</h2>
+            </div>
+          </div>
+
+          {/* Buscador y Filtros por Categoría */}
           <div style={{ marginBottom: "16px" }}>
             <label htmlFor="busqueda-prod">Buscar por nombre o categoría</label>
             <input
               id="busqueda-prod"
               className="input"
-              style={{ maxWidth: "420px", marginTop: "6px" }}
-              placeholder="Ej: cuaderno, lápiz..."
+              style={{ maxWidth: "460px", marginTop: "6px" }}
+              placeholder="Ej: cuaderno, lápiz, regla..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
+
+          {categoriasDisponibles.length > 1 && (
+            <div className="category-list" aria-label="Filtrar por categoría">
+              {categoriasDisponibles.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`category-chip ${categoriaSel === cat ? "active" : ""}`}
+                  onClick={() => setCategoriaSel(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
 
           {productos.cargando && <p>Cargando catálogo…</p>}
           {productos.error && <p role="alert">{productos.error}</p>}
@@ -275,109 +412,223 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             <p>No hay productos para la búsqueda.</p>
           )}
 
-          <div style={{ display: "grid", gap: "16px", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-            {productosVisibles?.map((p) => {
-              const disp = p.stockDisponible;
-              const enCarrito = carrito[p.id] ?? 0;
-              return (
-                <article key={p.id} className="product-card" data-testid={`product-card-${p.id}`}>
-                  <div style={{ flex: 1 }}>
-                    <small>{p.categoria || "Material"} · SKU {p.sku || p.id}</small>
-                    <h3>{p.nombre}</h3>
-                    <strong>{pesos(p.precio)}</strong>
-                    <p className="product-stock">
-                      {disp <= 0 ? (
-                        <span style={{ color: "#b91c1c", fontWeight: 700 }}>Agotado (0 disp.)</span>
-                      ) : disp <= (p.stockCritico || 5) ? (
-                        <span style={{ color: "#b45309", fontWeight: 700 }}>⚠ Últimas {disp} unid. disponibles</span>
-                      ) : (
-                        <span>{disp} disponibles · Stock físico {p.stockFisico}</span>
-                      )}
-                    </p>
-                    {p.descripcion && (
-                      <p style={{ fontSize: "12px", color: "var(--muted)", margin: "4px 0 0" }}>
-                        {p.descripcion}
+          {/* Grilla / Lista con Resumen a la derecha */}
+          <div className="reserva-layout">
+            <div className="product-list">
+              {productosVisibles?.map((p) => {
+                const disp = p.stockDisponible;
+                const enCarrito = carrito[p.id] ?? 0;
+                return (
+                  <article key={p.id} className="product-card" data-testid={`product-card-${p.id}`}>
+                    <div style={{ flex: 1 }}>
+                      <small>{p.categoria || "Material"} · SKU {p.sku || p.id}</small>
+                      <h3>{p.nombre}</h3>
+                      <strong>{pesos(p.precio)}</strong>
+                      <p className="product-stock">
+                        {disp <= 0 ? (
+                          <span style={{ color: "#b91c1c", fontWeight: 700 }}>Agotado (0 disp.)</span>
+                        ) : disp <= (p.stockCritico || 5) ? (
+                          <span style={{ color: "#b45309", fontWeight: 700 }}>⚠ Últimas {disp} unid. disponibles</span>
+                        ) : (
+                          <span>{disp} disponibles · Stock físico {p.stockFisico}</span>
+                        )}
                       </p>
-                    )}
-                  </div>
-                  <div className="product-controls">
-                    <label htmlFor={`cant-${p.id}`}>
-                      Cantidad de {p.nombre}
-                    </label>
-                    <input
-                      id={`cant-${p.id}`}
-                      aria-label={`Cantidad de ${p.nombre}`}
-                      className="input"
-                      type="number"
-                      min="0"
-                      max={disp}
-                      disabled={disp <= 0}
-                      value={enCarrito || ""}
-                      placeholder="0"
-                      onChange={(e) =>
-                        setCarrito({
-                          ...carrito,
-                          [p.id]: Math.max(
-                            0,
-                            Math.min(
-                              disp,
-                              Math.floor(Number(e.target.value)) || 0,
-                            ),
-                          ),
-                        })
-                      }
-                    />
-                    {enCarrito > 0 && (
-                      <button
-                        type="button"
-                        className="btn secondary"
-                        style={{ fontSize: "11px", padding: "4px 8px" }}
-                        disabled={procesando}
-                        onClick={() => setCarrito({ ...carrito, [p.id]: 0 })}
-                      >
-                        Quitar {p.nombre}
-                      </button>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-
-          <div className="card" style={{ marginTop: "24px", padding: "20px", background: "#f5fbf7", border: "2px solid #bcd1b9" }}>
-            <span className="eyebrow">RESUMEN DE RESERVA</span>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginTop: "8px" }}>
-              <div>
-                <p style={{ margin: 0, fontSize: "18px", fontWeight: 800 }}>Total selección: {pesos(totalSeleccion)}</p>
-                {seleccion.length > 0 && (
-                  <div style={{ marginTop: "8px" }}>
-                    {seleccion.map((p) => (
-                      <p key={p.id} style={{ margin: "4px 0", fontSize: "13px" }}>
-                        Selección: {p.nombre} · {carrito[p.id]} x {pesos(p.precio)} ={" "}
-                        {pesos(p.precio * (carrito[p.id] ?? 0))}{" "}
+                      {p.descripcion && (
+                        <p style={{ fontSize: "12px", color: "var(--muted)", margin: "4px 0 0" }}>
+                          {p.descripcion}
+                        </p>
+                      )}
+                    </div>
+                    <div className="product-controls" style={{ minWidth: "165px", minHeight: "82px", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-end" }}>
+                      <label htmlFor={`cant-${p.id}`} style={{ fontSize: "12px", marginBottom: "4px", textAlign: "right", width: "100%" }}>
+                        Cantidad de {p.nombre}
+                      </label>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                         <button
                           type="button"
                           className="btn secondary"
-                          style={{ fontSize: "10px", padding: "2px 6px", marginLeft: "6px" }}
+                          style={{ width: "32px", minHeight: "36px", padding: 0, fontSize: "16px", fontWeight: "bold" }}
+                          disabled={enCarrito <= 0 || procesando}
+                          onClick={() => setCarrito({ ...carrito, [p.id]: Math.max(0, enCarrito - 1) })}
+                          aria-label={`Disminuir ${p.nombre}`}
+                        >
+                          -
+                        </button>
+                        <input
+                          id={`cant-${p.id}`}
+                          aria-label={`Cantidad de ${p.nombre}`}
+                          className="input"
+                          type="number"
+                          min="0"
+                          max={disp}
+                          disabled={disp <= 0}
+                          value={enCarrito || ""}
+                          placeholder="0"
+                          style={{ width: "70px", textAlign: "center", padding: "6px 8px" }}
+                          onChange={(e) =>
+                            setCarrito({
+                              ...carrito,
+                              [p.id]: Math.max(
+                                0,
+                                Math.min(
+                                  disp,
+                                  Math.floor(Number(e.target.value)) || 0,
+                                ),
+                              ),
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="btn secondary"
+                          style={{ width: "32px", minHeight: "36px", padding: 0, fontSize: "16px", fontWeight: "bold" }}
+                          disabled={enCarrito >= disp || disp <= 0 || procesando}
+                          onClick={() => setCarrito({ ...carrito, [p.id]: Math.min(disp, enCarrito + 1) })}
+                          aria-label={`Aumentar ${p.nombre}`}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div style={{ minHeight: "22px", marginTop: "4px", textAlign: "right", width: "100%" }}>
+                        <button
+                          type="button"
+                          style={{
+                            visibility: enCarrito > 0 ? "visible" : "hidden",
+                            background: "none",
+                            border: "none",
+                            color: "#b91c1c",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            padding: 0,
+                            fontWeight: 600,
+                          }}
                           disabled={procesando}
                           onClick={() => setCarrito({ ...carrito, [p.id]: 0 })}
                         >
-                          Quitar {p.nombre}
+                          Quitar del pedido
                         </button>
-                      </p>
-                    ))}
-                  </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            {/* Columna Derecha Fija: Mi Reserva */}
+            <aside className="reserva-aside">
+              <span className="eyebrow">MI PEDIDO</span>
+              <h3 style={{ margin: "4px 0 14px", fontSize: "1.45rem", color: "#173b31" }}>Mi reserva</h3>
+              {seleccion.length === 0 ? (
+                <p className="muted" style={{ fontSize: "13px", margin: "10px 0 16px" }}>
+                  Aún no has agregado materiales. Ajusta las cantidades en la lista para armar tu pedido.
+                </p>
+              ) : (
+                <div style={{ marginBottom: "16px", maxHeight: "320px", overflowY: "auto" }}>
+                  {seleccion.map((p) => (
+                    <div key={p.id} className="cart-line" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "8px 0", borderBottom: "1px solid #e8e4da" }}>
+                      <div style={{ flex: 1 }}>
+                        <strong>{p.nombre}</strong>
+                        <small style={{ display: "block", color: "var(--muted)", fontSize: "12px" }}>
+                          {pesos(p.precio)} c/u · Total: {pesos(p.precio * (carrito[p.id] ?? 0))}
+                        </small>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <button
+                          type="button"
+                          className="btn secondary"
+                          style={{ width: "26px", minHeight: "26px", padding: 0, borderRadius: "6px", fontSize: "14px", fontWeight: "bold" }}
+                          aria-label={`Disminuir ${p.nombre}`}
+                          disabled={procesando}
+                          onClick={() => setCarrito({ ...carrito, [p.id]: Math.max(0, (carrito[p.id] ?? 1) - 1) })}
+                        >
+                          -
+                        </button>
+                        <span style={{ fontWeight: 800, minWidth: "22px", textAlign: "center", fontSize: "13px" }}>
+                          {carrito[p.id]}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn secondary"
+                          style={{ width: "26px", minHeight: "26px", padding: 0, borderRadius: "6px", fontSize: "14px", fontWeight: "bold" }}
+                          aria-label={`Aumentar ${p.nombre}`}
+                          disabled={(carrito[p.id] ?? 0) >= p.stockDisponible || procesando}
+                          onClick={() => setCarrito({ ...carrito, [p.id]: Math.min(p.stockDisponible, (carrito[p.id] ?? 0) + 1) })}
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          style={{ background: "none", border: "none", color: "#b91c1c", fontSize: "18px", cursor: "pointer", marginLeft: "4px", lineHeight: 1 }}
+                          aria-label={`Quitar ${p.nombre}`}
+                          onClick={() => setCarrito({ ...carrito, [p.id]: 0 })}
+                          title="Quitar de la reserva"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(cuenta.datos?.saldoComprometido ?? 0) > 0 && (
+                <div className="reserva-amount" style={{ color: "#6a5749" }}>
+                  <span>Saldo comprometido en otras reservas</span>
+                  <strong>{pesos(cuenta.datos?.saldoComprometido ?? 0)}</strong>
+                </div>
+              )}
+
+              <div className="reserva-amount">
+                <strong style={{ fontSize: "1.1rem" }}>Total selección: {pesos(totalSeleccion)}</strong>
+              </div>
+
+              <div
+                style={{
+                  background: totalSeleccion > (cuenta.datos?.saldoDisponible ?? 0) ? "#fde8e5" : "#eef6f0",
+                  border: `1px solid ${totalSeleccion > (cuenta.datos?.saldoDisponible ?? 0) ? "#f5c2bc" : "#badfc6"}`,
+                  borderRadius: "14px",
+                  padding: "12px 14px",
+                  margin: "14px 0",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    color: totalSeleccion > (cuenta.datos?.saldoDisponible ?? 0) ? "#9c2e22" : "#1b5a3e",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  Saldo disponible después de reservar
+                </span>
+                <div
+                  style={{
+                    fontSize: "1.25rem",
+                    fontWeight: 800,
+                    color: totalSeleccion > (cuenta.datos?.saldoDisponible ?? 0) ? "#9c2e22" : "#173b31",
+                    marginTop: "2px",
+                  }}
+                >
+                  {pesos((cuenta.datos?.saldoDisponible ?? 0) - totalSeleccion)}
+                </div>
+                {totalSeleccion > (cuenta.datos?.saldoDisponible ?? 0) && (
+                  <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#9c2e22", fontWeight: 600 }}>
+                    ⚠ El total supera el saldo disponible. Realiza un abono o disminuye las unidades.
+                  </p>
                 )}
               </div>
+
               <button
+                type="button"
                 className="btn btn-wide"
-                style={{ maxWidth: "260px" }}
-                disabled={procesando || !alumno || totalSeleccion <= 0}
+                style={{ width: "100%", marginTop: "8px" }}
+                disabled={procesando || !alumno || totalSeleccion <= 0 || totalSeleccion > (cuenta.datos?.saldoDisponible ?? 0)}
                 onClick={reservar}
               >
                 {procesando ? "Procesando…" : "Confirmar reserva"}
               </button>
-            </div>
+            </aside>
           </div>
         </section>
       )}
@@ -386,7 +637,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
         <section className="account-section">
           <button
             type="button"
-            className="staff-small"
+            className="back-link secondary"
             onClick={() => setSeccion("cuenta")}
           >
             ← Volver a Mi Cuenta
@@ -468,7 +719,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
         <section className="account-section">
           <button
             type="button"
-            className="staff-small"
+            className="back-link secondary"
             onClick={() => setSeccion("cuenta")}
           >
             ← Volver a Mi Cuenta
@@ -516,7 +767,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
         <section className="account-section">
           <button
             type="button"
-            className="staff-small"
+            className="back-link secondary"
             onClick={() => setSeccion("cuenta")}
           >
             ← Volver a Mi Cuenta
@@ -529,7 +780,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
         <section className="account-section">
           <button
             type="button"
-            className="staff-small"
+            className="back-link secondary"
             onClick={() => setSeccion("cuenta")}
           >
             ← Volver a Mi Cuenta

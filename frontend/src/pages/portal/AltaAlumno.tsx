@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import type { AltaAlumno } from "../../services/usuarios";
+import type { AltaAlumno, Usuario } from "../../services/usuarios";
 type Datos = Omit<AltaAlumno, "idEstablecimiento">;
 const inicial: Datos = {
   rutAlumno: "",
@@ -17,11 +17,36 @@ const inicial: Datos = {
 export function AltaAlumnoForm({
   crear,
   procesando,
+  apoderados = [],
 }: {
   crear: (datos: Datos) => Promise<void>;
   procesando: boolean;
+  apoderados?: Usuario[];
 }) {
   const [datos, setDatos] = useState<Datos>(inicial);
+  const [apoderadoSelId, setApoderadoSelId] = useState("");
+
+  const apoderadosActivos = apoderados.filter(
+    (u) =>
+      u.rol.replace("ROLE_", "") === "APODERADO" &&
+      u.estado !== "INACTIVA",
+  );
+
+  const seleccionarApoderado = (idStr: string) => {
+    setApoderadoSelId(idStr);
+    const encontrado = apoderadosActivos.find((a) => String(a.id) === idStr);
+    if (encontrado) {
+      const partes = encontrado.nombreCompleto.split(" ");
+      setDatos((d) => ({
+        ...d,
+        rutApoderado: encontrado.rut,
+        primerNombreApoderado: partes[0] || "",
+        primerApellidoApoderado: partes.slice(1).join(" ") || "",
+        correoApoderado: encontrado.correo,
+      }));
+    }
+  };
+
   const enviar = (e: FormEvent) => {
     e.preventDefault();
     void crear(datos);
@@ -90,13 +115,56 @@ export function AltaAlumnoForm({
 
         <div style={{ marginBottom: "16px", borderTop: "1px solid #eee8df", paddingTop: "14px" }}>
           <span className="eyebrow" style={{ color: "var(--forest)", fontSize: "10px" }}>DATOS DEL APODERADO RESPONSABLE</span>
+
+          {apoderadosActivos.length > 0 && (
+            <div style={{ margin: "10px 0 14px", padding: "12px 14px", background: "#fbf9f5", border: "1px dashed #dcd5c7", borderRadius: "10px" }}>
+              <label htmlFor="selector-apoderado-existente" style={{ fontSize: "0.85rem", color: "#173b31", fontWeight: 700, margin: 0 }}>
+                ¿El apoderado ya está registrado en el colegio? (Opcional)
+              </label>
+              <select
+                id="selector-apoderado-existente"
+                aria-label="Seleccionar apoderado existente"
+                className="input"
+                style={{ marginTop: "6px" }}
+                value={apoderadoSelId}
+                onChange={(e) => seleccionarApoderado(e.target.value)}
+              >
+                <option value="">Digitar datos manualmente o seleccionar un apoderado de la lista...</option>
+                {apoderadosActivos.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nombreCompleto} · RUT {a.rut} · {a.correo}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="form-grid-3" style={{ marginTop: "6px" }}>
             <label>
               RUT apoderado
               <input
                 className="input"
                 value={datos.rutApoderado}
-                onChange={(e) => setDatos({ ...datos, rutApoderado: e.target.value })}
+                onChange={(e) => {
+                  const valor = e.target.value;
+                  const coincidencias = apoderadosActivos.find(
+                    (a) =>
+                      a.rut.replace(/[\.\-\s]/g, "").toUpperCase() ===
+                      valor.replace(/[\.\-\s]/g, "").toUpperCase(),
+                  );
+                  if (coincidencias) {
+                    const partes = coincidencias.nombreCompleto.split(" ");
+                    setDatos((d) => ({
+                      ...d,
+                      rutApoderado: valor,
+                      primerNombreApoderado: partes[0] || "",
+                      primerApellidoApoderado: partes.slice(1).join(" ") || "",
+                      correoApoderado: coincidencias.correo,
+                    }));
+                  } else {
+                    setDatos({ ...datos, rutApoderado: valor });
+                  }
+                }}
                 required
               />
             </label>
