@@ -9,7 +9,6 @@ export const LibreriaReservasPage: React.FC = () => {
   const {
     reservas,
     productos,
-    alumnos,
     cancelarReserva,
     escanearArticuloReserva,
     generarEtiquetaReserva,
@@ -370,9 +369,10 @@ export const LibreriaReservasPage: React.FC = () => {
                               onClick={() => {
                                 setSelectedReservaId(r.id);
                                 setDeliveryFeedback(null);
-                                setBagInput(r.codigoBolsa || '');
-                                const al = alumnos.find((a) => a.id === r.alumnoId);
-                                setStudentInput(al?.rut || '');
+                                // No se autocompleta: el encargado debe pistolear/ingresar
+                                // la bolsa y la credencial reales para que la validación tenga sentido.
+                                setBagInput('');
+                                setStudentInput('');
                               }}
                               style={{ width: '100%', textAlign: 'left' }}
                             >

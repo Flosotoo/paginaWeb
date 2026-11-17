@@ -2,6 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Producto, ItemCarrito, Alumno, Reserva, EstadoReserva } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_STUDENTS } from '../data/mockData';
 
+export interface LineaEntrega {
+  productoId: number;
+  cant: number;
+}
+
+type OpResult = { success: boolean; message: string };
+
 interface CartContextType {
   items: ItemCarrito[];
   productos: Producto[];
@@ -22,9 +29,18 @@ interface CartContextType {
   generarEtiquetaReserva: (reservaId: string) => string;
   marcarListaRetiro: (reservaId: string) => void;
   entregarReservaConValidacion: (reservaId: string, bagCode: string, studentCode: string) => { success: boolean; message: string };
+  // Operaciones que antes eran cosméticas y ahora mutan y persisten el estado:
+  aportarSaldo: (alumnoId: number, monto: number) => OpResult;
+  entregaDirecta: (alumnoId: number, lineas: LineaEntrega[]) => OpResult & { total?: number };
+  registrarDevolucion: (alumnoId: number, productoId: number, monto: number, motivo: string, cant?: number) => OpResult;
+  recepcionStock: (productoId: number, cantidad: number, netoUnit: number) => OpResult;
+  crearAlumno: (alumno: Alumno) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+// disponible = saldo total en cuenta (balance) - comprometido en reservas
+const calcDisponible = (balance: number, comprometido: number) => Math.max(0, balance - Math.max(0, comprometido));
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [productos, setProductos] = useState<Producto[]>(() => {
@@ -152,7 +168,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
-    // Invariante: comprometer saldo y stock
+    const itemsReserva = items.map((i) => ({
+      id: i.producto.id,
+      name: i.producto.nombre,
+      qty: i.cantidad,
+      price: i.producto.precioVenta,
+    }));
+
     const nuevaReserva: Reserva = {
       id: `RES-${Date.now()}`,
       codigo: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -163,42 +185,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       total,
       estado: 'PENDIENTE',
       fechaCreacion: new Date().toISOString(),
-      items: items.map((i) => ({
-        id: i.producto.id,
-        name: i.producto.nombre,
-        qty: i.cantidad,
-        price: i.producto.precioVenta,
-      })),
+      items: itemsReserva,
     };
 
-    // Actualizar alumno (saldo comprometido aumenta, disponible baja)
-    setAlumnos(
-      alumnos.map((a) =>
-        a.id === alumnoId
-          ? {
-              ...a,
-              saldoComprometido: a.saldoComprometido + total,
-              saldoDisponible: a.balance - (a.saldoComprometido + total),
-            }
-          : a
-      )
-    );
-
-    // Actualizar stock reservado de los productos
-    setProductos(
-      productos.map((p) => {
-        const itemEnCarrito = items.find((i) => i.producto.id === p.id);
-        if (itemEnCarrito) {
-          return {
-            ...p,
-            stockReservado: p.stockReservado + itemEnCarrito.cantidad,
-          };
-        }
-        return p;
+    // Comprometer saldo del alumno (updater funcional)
+    setAlumnos((prev) =>
+      prev.map((a) => {
+        if (a.id !== alumnoId) return a;
+        const comprometido = a.saldoComprometido + total;
+        return { ...a, saldoComprometido: comprometido, saldoDisponible: calcDisponible(a.balance, comprometido) };
       })
     );
 
-    setReservas([nuevaReserva, ...reservas]);
+    // Comprometer stock reservado
+    setProductos((prev) =>
+      prev.map((p) => {
+        const itemEnCarrito = itemsReserva.find((i) => i.id === p.id);
+        return itemEnCarrito ? { ...p, stockReservado: p.stockReservado + itemEnCarrito.qty } : p;
+      })
+    );
+
+    setReservas((prev) => [nuevaReserva, ...prev]);
     vaciarCarrito();
 
     return {
@@ -214,43 +221,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
 
-    // Liberar saldo del alumno
-    setAlumnos(
-      alumnos.map((a) =>
-        a.id === res.alumnoId
-          ? {
-              ...a,
-              saldoComprometido: Math.max(0, a.saldoComprometido - res.total),
-              saldoDisponible: a.balance - Math.max(0, a.saldoComprometido - res.total),
-            }
-          : a
-      )
-    );
-
-    // Liberar stock reservado
-    setProductos(
-      productos.map((p) => {
-        const itemRes = res.items.find((i) => i.id === p.id);
-        if (itemRes) {
-          return {
-            ...p,
-            stockReservado: Math.max(0, p.stockReservado - itemRes.qty),
-          };
-        }
-        return p;
+    // Liberar saldo comprometido
+    setAlumnos((prev) =>
+      prev.map((a) => {
+        if (a.id !== res.alumnoId) return a;
+        const comprometido = Math.max(0, a.saldoComprometido - res.total);
+        return { ...a, saldoComprometido: comprometido, saldoDisponible: calcDisponible(a.balance, comprometido) };
       })
     );
 
-    setReservas(
-      reservas.map((r) => (r.id === reservaId ? { ...r, estado: 'CANCELADA' } : r))
+    // Liberar stock reservado
+    setProductos((prev) =>
+      prev.map((p) => {
+        const itemRes = res.items.find((i) => i.id === p.id);
+        return itemRes ? { ...p, stockReservado: Math.max(0, p.stockReservado - itemRes.qty) } : p;
+      })
     );
+
+    setReservas((prev) => prev.map((r) => (r.id === reservaId ? { ...r, estado: 'CANCELADA' } : r)));
     return true;
   };
 
   const avanzarEstadoReserva = (reservaId: string, nuevoEstado: EstadoReserva): boolean => {
-    setReservas(
-      reservas.map((r) => (r.id === reservaId ? { ...r, estado: nuevoEstado } : r))
-    );
+    setReservas((prev) => prev.map((r) => (r.id === reservaId ? { ...r, estado: nuevoEstado } : r)));
     return true;
   };
 
@@ -293,11 +286,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           complete: isComplete,
         };
 
-        return {
-          ...r,
-          scanned: updatedScanned,
-          estado: 'EN_PREPARACION',
-        };
+        return { ...r, scanned: updatedScanned, estado: 'EN_PREPARACION' };
       })
     );
 
@@ -310,20 +299,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       prev.map((r) => {
         if (r.id !== reservaId) return r;
         bagCode = r.codigoBolsa || `BOL-${r.codigo.replace('RES-', '')}`;
-        return {
-          ...r,
-          codigoBolsa: bagCode,
-          estado: 'ETIQUETA_PENDIENTE',
-        };
+        return { ...r, codigoBolsa: bagCode, estado: 'ETIQUETA_PENDIENTE' };
       })
     );
     return bagCode;
   };
 
   const marcarListaRetiro = (reservaId: string) => {
-    setReservas((prev) =>
-      prev.map((r) => (r.id === reservaId ? { ...r, estado: 'LISTA_PARA_RETIRO' } : r))
-    );
+    setReservas((prev) => prev.map((r) => (r.id === reservaId ? { ...r, estado: 'LISTA_PARA_RETIRO' } : r)));
   };
 
   const entregarReservaConValidacion = (
@@ -355,40 +338,133 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     setAlumnos((prev) =>
-      prev.map((a) =>
-        a.id === r.alumnoId
-          ? {
-              ...a,
-              saldoComprometido: Math.max(0, a.saldoComprometido - r.total),
-              balance: Math.max(0, a.balance - r.total),
-              saldoDisponible: Math.max(0, a.balance - r.total) - Math.max(0, a.saldoComprometido - r.total),
-            }
-          : a
-      )
+      prev.map((a) => {
+        if (a.id !== r.alumnoId) return a;
+        const balance = Math.max(0, a.balance - r.total);
+        const comprometido = Math.max(0, a.saldoComprometido - r.total);
+        return { ...a, balance, saldoComprometido: comprometido, saldoDisponible: calcDisponible(balance, comprometido) };
+      })
     );
 
     setProductos((prev) =>
       prev.map((p) => {
         const itemRes = r.items.find((it) => it.id === p.id);
-        if (itemRes) {
-          return {
-            ...p,
-            stockReservado: Math.max(0, p.stockReservado - itemRes.qty),
-            stockFisico: Math.max(0, p.stockFisico - itemRes.qty),
-          };
-        }
-        return p;
+        return itemRes
+          ? {
+              ...p,
+              stockReservado: Math.max(0, p.stockReservado - itemRes.qty),
+              stockFisico: Math.max(0, p.stockFisico - itemRes.qty),
+            }
+          : p;
       })
     );
 
-    setReservas((prev) =>
-      prev.map((res) => (res.id === reservaId ? { ...res, estado: 'ENTREGADA' } : res))
-    );
+    setReservas((prev) => prev.map((res) => (res.id === reservaId ? { ...res, estado: 'ENTREGADA' } : res)));
 
     return {
       success: true,
       message: `✓ Entrega completada con éxito. Venta generada y bolsa ${expectedBag} retirada.`,
     };
+  };
+
+  // ---- Operaciones nuevas: ahora mutan y persisten de verdad ----
+
+  const aportarSaldo = (alumnoId: number, monto: number): OpResult => {
+    const alumno = alumnos.find((a) => a.id === alumnoId);
+    if (!alumno) return { success: false, message: 'Alumno no encontrado.' };
+    if (!Number.isFinite(monto) || monto < 1000) {
+      return { success: false, message: 'El monto mínimo para recargar es de $1.000 CLP.' };
+    }
+    setAlumnos((prev) =>
+      prev.map((a) => {
+        if (a.id !== alumnoId) return a;
+        const balance = a.balance + monto;
+        return { ...a, balance, saldoDisponible: calcDisponible(balance, a.saldoComprometido) };
+      })
+    );
+    return { success: true, message: `✓ Se acreditaron $${monto.toLocaleString('es-CL')} al saldo de ${alumno.nombre}.` };
+  };
+
+  const entregaDirecta = (alumnoId: number, lineas: LineaEntrega[]): OpResult & { total?: number } => {
+    const alumno = alumnos.find((a) => a.id === alumnoId);
+    if (!alumno) return { success: false, message: 'Alumno no encontrado.' };
+    if (lineas.length === 0) return { success: false, message: 'No hay materiales para entregar.' };
+
+    let total = 0;
+    for (const l of lineas) {
+      const p = productos.find((pr) => pr.id === l.productoId);
+      if (!p) return { success: false, message: 'Producto no encontrado en el catálogo.' };
+      const disp = p.stockFisico - p.stockReservado;
+      if (l.cant > disp) return { success: false, message: `Stock insuficiente de ${p.nombre} (disponible: ${disp}).` };
+      total += l.cant * p.precioVenta;
+    }
+
+    if (alumno.saldoDisponible < total) {
+      return { success: false, message: 'Saldo disponible insuficiente para completar la entrega directa.' };
+    }
+
+    setAlumnos((prev) =>
+      prev.map((a) => {
+        if (a.id !== alumnoId) return a;
+        const balance = Math.max(0, a.balance - total);
+        return { ...a, balance, saldoDisponible: calcDisponible(balance, a.saldoComprometido) };
+      })
+    );
+    setProductos((prev) =>
+      prev.map((p) => {
+        const l = lineas.find((x) => x.productoId === p.id);
+        return l ? { ...p, stockFisico: Math.max(0, p.stockFisico - l.cant) } : p;
+      })
+    );
+
+    return { success: true, message: `✓ Entrega directa confirmada para ${alumno.nombre}. Total debitado: $${total.toLocaleString('es-CL')}`, total };
+  };
+
+  const registrarDevolucion = (
+    alumnoId: number,
+    productoId: number,
+    monto: number,
+    motivo: string,
+    cant = 1
+  ): OpResult => {
+    const alumno = alumnos.find((a) => a.id === alumnoId);
+    if (!alumno) return { success: false, message: 'Alumno no encontrado.' };
+    if (!motivo.trim()) return { success: false, message: 'Indica un motivo obligatorio para registrar la devolución.' };
+
+    setAlumnos((prev) =>
+      prev.map((a) => {
+        if (a.id !== alumnoId) return a;
+        const balance = a.balance + monto;
+        return { ...a, balance, saldoDisponible: calcDisponible(balance, a.saldoComprometido) };
+      })
+    );
+    setProductos((prev) =>
+      prev.map((p) => (p.id === productoId ? { ...p, stockFisico: p.stockFisico + cant } : p))
+    );
+    return { success: true, message: `✓ Devolución registrada: se reintegraron $${monto.toLocaleString('es-CL')} al saldo de ${alumno.nombre}. Motivo: ${motivo}` };
+  };
+
+  const recepcionStock = (productoId: number, cantidad: number, netoUnit: number): OpResult => {
+    const p = productos.find((pr) => pr.id === productoId);
+    if (!p) return { success: false, message: 'Producto no encontrado.' };
+    if (cantidad <= 0) return { success: false, message: 'La cantidad recibida debe ser mayor a 0.' };
+
+    setProductos((prev) =>
+      prev.map((pr) => {
+        if (pr.id !== productoId) return pr;
+        const nuevoStock = pr.stockFisico + cantidad;
+        // CPP ponderado por el nuevo ingreso
+        const cpp = nuevoStock > 0
+          ? Math.round((pr.cpp * pr.stockFisico + netoUnit * cantidad) / nuevoStock)
+          : pr.cpp;
+        return { ...pr, stockFisico: nuevoStock, cpp };
+      })
+    );
+    return { success: true, message: `✓ Recepción conforme: +${cantidad} unidades de ${p.nombre}. Stock y CPP actualizados.` };
+  };
+
+  const crearAlumno = (alumno: Alumno) => {
+    setAlumnos((prev) => [...prev, alumno]);
   };
 
   return (
@@ -413,6 +489,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         generarEtiquetaReserva,
         marcarListaRetiro,
         entregarReservaConValidacion,
+        aportarSaldo,
+        entregaDirecta,
+        registrarDevolucion,
+        recepcionStock,
+        crearAlumno,
       }}
     >
       {children}

@@ -1,51 +1,16 @@
 import React, { createContext, useContext, useState } from 'react';
+import { loginRequest } from '../services/authApi';
+import type { LoginResult, SessionUser } from '../services/authApi';
 
-export type UserRole = 'apoderado' | 'libreria' | 'administrador' | 'autorizador';
-
-export interface SessionUser {
-  name: string;
-  role: UserRole;
-  mail: string;
-  initial: string;
-}
+// Re-export para que los consumidores sigan importando desde el contexto.
+export type { UserRole, SessionUser, EstadoCuenta } from '../services/authApi';
 
 interface AuthContextType {
   user: SessionUser | null;
-  login: (mail: string, pass: string) => { success: boolean; message?: string; role?: UserRole };
+  /** Inicia sesión con RUT o correo (campo `identificador`). */
+  login: (identificador: string, pass: string) => LoginResult;
   logout: () => void;
-  setRoleSimulado: (role: UserRole) => void;
 }
-
-const DEMO_USERS: Record<string, SessionUser & { pass: string }> = {
-  'apoderado@edusaldo.cl': {
-    name: 'Carlos Pérez',
-    role: 'apoderado',
-    mail: 'apoderado@edusaldo.cl',
-    initial: 'CP',
-    pass: '1234',
-  },
-  'encargado@edusaldo.cl': {
-    name: 'Encargado',
-    role: 'libreria',
-    mail: 'encargado@edusaldo.cl',
-    initial: 'E',
-    pass: '1234',
-  },
-  'admin@edusaldo.cl': {
-    name: 'Administrador 1',
-    role: 'administrador',
-    mail: 'admin@edusaldo.cl',
-    initial: 'A',
-    pass: '1234',
-  },
-  'admin2@edusaldo.cl': {
-    name: 'Administrador 2',
-    role: 'autorizador',
-    mail: 'admin2@edusaldo.cl',
-    initial: 'A',
-    pass: '1234',
-  },
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -55,31 +20,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
       const saved = sessionStorage.getItem(KEY);
-      return saved ? JSON.parse(saved) : null;
+      return saved ? (JSON.parse(saved) as SessionUser) : null;
     } catch {
       return null;
     }
   });
 
-  const login = (mail: string, pass: string) => {
-    const cleanMail = mail.trim().toLowerCase();
-    const candidate = DEMO_USERS[cleanMail];
-
-    if (!candidate || candidate.pass !== pass) {
-      return { success: false, message: 'Revisa el correo y la contraseña.' };
+  const login = (identificador: string, pass: string): LoginResult => {
+    const res = loginRequest(identificador, pass);
+    if (res.success && res.user) {
+      sessionStorage.setItem(KEY, JSON.stringify(res.user));
+      setUser(res.user);
     }
-
-    const sessionData: SessionUser = {
-      name: candidate.name,
-      role: candidate.role,
-      mail: candidate.mail,
-      initial: candidate.initial,
-    };
-
-    sessionStorage.setItem(KEY, JSON.stringify(sessionData));
-    setUser(sessionData);
-
-    return { success: true, role: candidate.role };
+    return res;
   };
 
   const logout = () => {
@@ -87,23 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const setRoleSimulado = (role: UserRole) => {
-    const targetMail = Object.keys(DEMO_USERS).find((k) => DEMO_USERS[k].role === role);
-    if (targetMail) {
-      const candidate = DEMO_USERS[targetMail];
-      const sessionData: SessionUser = {
-        name: candidate.name,
-        role: candidate.role,
-        mail: candidate.mail,
-        initial: candidate.initial,
-      };
-      sessionStorage.setItem(KEY, JSON.stringify(sessionData));
-      setUser(sessionData);
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, login, logout, setRoleSimulado }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

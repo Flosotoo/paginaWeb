@@ -104,7 +104,14 @@ export const CarritoPage: React.FC = () => {
                               <button
                                 type="button"
                                 className="staff-history-toggle"
-                                onClick={() => actualizarCantidad(it.producto.id, it.cantidad + 1)}
+                                onClick={() => {
+                                  const ok = actualizarCantidad(it.producto.id, it.cantidad + 1);
+                                  if (!ok) {
+                                    setFeedback({ type: 'err', msg: `No hay más stock disponible de ${it.producto.nombre}.` });
+                                  } else {
+                                    setFeedback(null);
+                                  }
+                                }}
                                 data-testid={`inc-btn-${it.producto.id}`}
                               >
                                 +

@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Navbar } from '../../components/layout/Navbar';
+import { useCart } from '../../context/CartContext';
+
+// Producto demo de la Orden de Compra OC-1001.
+const OC_PRODUCTO_ID = 101;
+const OC_NETO_UNIT = 1000;
+const OC_PEDIDO = 10;
 
 export const LibreriaRecepcionPage: React.FC = () => {
+  const { recepcionStock } = useCart();
   const [facturaNumero, setFacturaNumero] = useState('');
   const [totalFactura, setTotalFactura] = useState('');
+  const [recibido, setRecibido] = useState<number>(OC_PEDIDO);
   const [feedback, setFeedback] = useState<{ tipo: 'ok' | 'err'; msg: string } | null>(null);
 
   const handleConfirmar = (e: React.FormEvent) => {
@@ -14,12 +22,19 @@ export const LibreriaRecepcionPage: React.FC = () => {
       return;
     }
 
+    const res = recepcionStock(OC_PRODUCTO_ID, recibido, OC_NETO_UNIT);
+    if (!res.success) {
+      setFeedback({ tipo: 'err', msg: res.message });
+      return;
+    }
+
     setFeedback({
       tipo: 'ok',
-      msg: `✓ Recepción conforme registrada. Factura #${facturaNumero} enviada a Finanzas para pago. Stock físico actualizado y CPP recalculado con IVA.`
+      msg: `${res.message} Factura #${facturaNumero} enviada a Finanzas para pago.`,
     });
     setFacturaNumero('');
     setTotalFactura('');
+    setRecibido(OC_PEDIDO);
   };
 
   return (
@@ -101,9 +116,10 @@ export const LibreriaRecepcionPage: React.FC = () => {
                       <td>
                         <input
                           type="number"
-                          defaultValue={10}
+                          value={recibido}
                           min={0}
-                          max={10}
+                          max={OC_PEDIDO}
+                          onChange={(e) => setRecibido(Math.max(0, Math.min(OC_PEDIDO, Number(e.target.value) || 0)))}
                           className="input"
                           style={{ width: '80px', padding: '4px' }}
                         />

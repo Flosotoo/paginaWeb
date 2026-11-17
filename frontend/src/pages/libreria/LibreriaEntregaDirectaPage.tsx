@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../../components/layout/Navbar';
 import { useCart } from '../../context/CartContext';
 import { Alumno, Producto } from '../../types';
+import { rutEsValido, mensajeRut, mismoRut } from '../../utils/rut';
 
 export const LibreriaEntregaDirectaPage: React.FC = () => {
-  const { alumnos, productos } = useCart();
+  const { alumnos, productos, entregaDirecta } = useCart();
   const [rut, setRut] = useState('');
   const [alumno, setAlumno] = useState<Alumno | null>(null);
   const [error, setError] = useState('');
@@ -15,8 +16,12 @@ export const LibreriaEntregaDirectaPage: React.FC = () => {
   const handleBuscar = () => {
     setError('');
     setFeedback(null);
-    const cleanRut = rut.trim();
-    const found = alumnos.find((a) => a.rut === cleanRut);
+    if (!rutEsValido(rut)) {
+      setError(mensajeRut(rut) || 'El RUT ingresado no es válido.');
+      setAlumno(null);
+      return;
+    }
+    const found = alumnos.find((a) => mismoRut(a.rut, rut));
     if (!found) {
       setError('No se encontró un alumno con ese RUT.');
       setAlumno(null);
@@ -43,12 +48,24 @@ export const LibreriaEntregaDirectaPage: React.FC = () => {
 
   const handleConfirmar = () => {
     if (!alumno) return;
-    if (alumno.saldoDisponible < total) {
-      setError('Saldo disponible insuficiente para completar la entrega directa.');
+    setError('');
+    const res = entregaDirecta(
+      alumno.id,
+      cart.map((i) => ({ productoId: i.producto.id, cant: i.cant }))
+    );
+    if (!res.success) {
+      setError(res.message);
       return;
     }
-    setFeedback(`✓ Entrega directa confirmada para ${alumno.nombre}. Total debitado: $${total.toLocaleString('es-CL')}`);
+    const t = res.total || 0;
+    setFeedback(res.message);
     setCart([]);
+    // Refleja el débito en la ficha mostrada (la fuente de verdad es el store).
+    setAlumno((prev) =>
+      prev
+        ? { ...prev, balance: Math.max(0, prev.balance - t), saldoDisponible: Math.max(0, prev.saldoDisponible - t) }
+        : prev
+    );
   };
 
   return (

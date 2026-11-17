@@ -4,7 +4,7 @@ import { Navbar } from '../../components/layout/Navbar';
 import { useCart } from '../../context/CartContext';
 
 export const AportarSaldoPage: React.FC = () => {
-  const { alumnos } = useCart();
+  const { alumnos, aportarSaldo } = useCart();
   const [alumnoId, setAlumnoId] = useState<number>(alumnos[0]?.id || 1);
   const [monto, setMonto] = useState<string>('10000');
   const [confirmado, setConfirmado] = useState(false);
@@ -32,9 +32,11 @@ export const AportarSaldoPage: React.FC = () => {
   };
 
   const handleAprobarWebpay = () => {
-    if (alumno) {
-      alumno.balance += montoNum;
-      alumno.saldoDisponible += montoNum;
+    const res = aportarSaldo(alumnoId, montoNum);
+    if (!res.success) {
+      setError(res.message);
+      setStep('formulario');
+      return;
     }
     setStep('exito');
   };

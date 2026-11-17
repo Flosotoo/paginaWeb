@@ -1,43 +1,57 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { recuperarPasswordRequest } from '../services/authApi';
 
 export const LoginPage: React.FC = () => {
   const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
   const [error, setError] = useState('');
+  const [recoveryMsg, setRecoveryMsg] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setRecoveryMsg('');
     if (!correo.trim() || !clave.trim()) {
       setError('Por favor completa todos los campos.');
       return;
     }
 
     const res = login(correo, clave);
-    if (!res.success) {
-      setError(res.message || 'Revisa el correo y la contraseña.');
+    if (!res.success || !res.user) {
+      setError(res.message || 'Revisa tus credenciales (correo o RUT) y la contraseña.');
       return;
     }
 
-    if (res.role === 'libreria') {
-      navigate('/libreria');
-    } else if (res.role === 'administrador') {
-      navigate('/admin');
-    } else if (res.role === 'autorizador') {
-      navigate('/autorizador');
-    } else {
-      navigate('/');
+    switch (res.user.role) {
+      case 'libreria':
+        navigate('/libreria');
+        break;
+      case 'administrador':
+        navigate('/admin');
+        break;
+      case 'autorizador':
+        navigate('/autorizador');
+        break;
+      default:
+        navigate('/');
     }
+  };
+
+  const handleRecuperar = () => {
+    setError('');
+    const r = recuperarPasswordRequest(correo);
+    setRecoveryMsg(r.message);
   };
 
   const handleSelectDemo = (email: string, pass: string) => {
     setCorreo(email);
     setClave(pass);
     setError('');
+    setRecoveryMsg('');
   };
 
   return (
@@ -77,12 +91,12 @@ export const LoginPage: React.FC = () => {
 
           <form id="login-form" onSubmit={handleLogin}>
             <div className="field">
-              <label htmlFor="correo">Correo electrónico</label>
+              <label htmlFor="correo">Correo o RUT</label>
               <input
                 id="correo"
                 className="input"
-                type="email"
-                placeholder="nombre@correo.cl"
+                type="text"
+                placeholder="nombre@correo.cl o 12.345.678-5"
                 autoComplete="username"
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value)}
@@ -105,13 +119,14 @@ export const LoginPage: React.FC = () => {
             </div>
 
             {error && <div className="alert" role="alert">{error}</div>}
+            {recoveryMsg && <div className="form-feedback physical-success" role="status">{recoveryMsg}</div>}
 
             <button className="btn btn-wide" type="submit">
               Ingresar a mi cuenta <span aria-hidden="true">→</span>
             </button>
           </form>
 
-          <button id="recovery-open" className="account-text-button" type="button">
+          <button id="recovery-open" className="account-text-button" type="button" onClick={handleRecuperar}>
             ¿Olvidaste tu contraseña?
           </button>
 

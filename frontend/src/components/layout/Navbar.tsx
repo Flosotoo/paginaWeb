@@ -135,8 +135,8 @@ export const Navbar: React.FC = () => {
         </nav>
 
         <div className="header-account">
-          <span className="user-bubble">{user?.initial || 'CP'}</span>
-          <span className="user-name">{user?.name || 'Carlos Pérez'}</span>
+          <span className="user-bubble">{user?.initial || '·'}</span>
+          <span className="user-name">{user?.name || ''}</span>
           <button className="logout" id="logout" type="button" onClick={handleLogout}>
             Salir ↗
           </button>

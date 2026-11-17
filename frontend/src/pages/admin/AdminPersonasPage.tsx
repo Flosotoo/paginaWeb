@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../../components/layout/Navbar';
 import { useCart } from '../../context/CartContext';
 import { Alumno } from '../../types';
+import { rutEsValido, mensajeRut } from '../../utils/rut';
 
 export const AdminPersonasPage: React.FC = () => {
-  const { alumnos } = useCart();
-  const [listaAlumnos, setListaAlumnos] = useState<Alumno[]>(alumnos);
+  const { alumnos, crearAlumno } = useCart();
   const [apoderadoRut, setApoderadoRut] = useState('');
   const [apoderadoNombre, setApoderadoNombre] = useState('');
   const [apoderadoApellido, setApoderadoApellido] = useState('');
@@ -18,9 +18,16 @@ export const AdminPersonasPage: React.FC = () => {
   const [alumnoEdad, setAlumnoEdad] = useState('10');
 
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCrearApoderado = (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
+    setError(null);
+    if (!rutEsValido(apoderadoRut)) {
+      setError(`RUT de apoderado inválido: ${mensajeRut(apoderadoRut)}`);
+      return;
+    }
     const tempPass = 'Edu' + Math.floor(100000 + Math.random() * 900000);
     setFeedback(`✓ Cuenta de apoderado creada para ${apoderadoNombre} ${apoderadoApellido}. Contraseña temporal de demostración: ${tempPass}`);
     setApoderadoRut('');
@@ -31,18 +38,26 @@ export const AdminPersonasPage: React.FC = () => {
 
   const handleCrearAlumno = (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
+    setError(null);
+    if (!rutEsValido(alumnoRut)) {
+      setError(`RUT de alumno inválido: ${mensajeRut(alumnoRut)}`);
+      return;
+    }
+    const edad = Number(alumnoEdad);
     const nuevo: Alumno = {
       id: Date.now(),
       rut: alumnoRut,
       nombre: alumnoNombre,
       curso: alumnoCurso,
-      edad: Number(alumnoEdad),
+      edad,
+      age: edad,
       balance: 0,
       saldoComprometido: 0,
       saldoDisponible: 0,
       activo: true,
     };
-    setListaAlumnos([...listaAlumnos, nuevo]);
+    crearAlumno(nuevo);
     setFeedback(`✓ Alumno ${alumnoNombre} (${alumnoCurso}) registrado con éxito.`);
     setAlumnoRut('');
     setAlumnoNombre('');
@@ -67,6 +82,11 @@ export const AdminPersonasPage: React.FC = () => {
           Crea cuentas de apoderados, asocia estudiantes y carga nóminas masivas en formato CSV.
         </p>
 
+        {error && (
+          <p className="form-feedback feedback-error" style={{ marginBottom: '20px' }}>
+            {error}
+          </p>
+        )}
         {feedback && (
           <p className="form-feedback physical-success" style={{ marginBottom: '20px' }}>
             {feedback}
@@ -145,7 +165,7 @@ export const AdminPersonasPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {listaAlumnos.map((a) => (
+                {alumnos.map((a) => (
                   <tr key={a.id}>
                     <td><code>{a.rut}</code></td>
                     <td><strong>{a.nombre}</strong></td>

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export const HomePage: React.FC = () => {
   const { alumnos } = useCart();
+  const { user } = useAuth();
   const [selectedAlumnoId, setSelectedAlumnoId] = useState<number>(alumnos[0]?.id || 1);
 
   const selectedAlumno = alumnos.find((a) => a.id === selectedAlumnoId) || alumnos[0];
@@ -16,7 +18,7 @@ export const HomePage: React.FC = () => {
         <section className="family-intro">
           <div>
             <span className="eyebrow">TU ESPACIO FAMILIAR</span>
-            <h1>Hola, <span>Carlos Pérez</span>.</h1>
+            <h1>Hola, <span>{user?.name || 'apoderado'}</span>.</h1>
             <p>Selecciona un alumno para consultar su cuenta o reservar útiles escolares.</p>
           </div>
           <img

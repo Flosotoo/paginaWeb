@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../../components/layout/Navbar';
 import { useCart } from '../../context/CartContext';
 import { Alumno } from '../../types';
+import { rutEsValido, mensajeRut, mismoRut } from '../../utils/rut';
 
 export const LibreriaDevolucionesPage: React.FC = () => {
-  const { alumnos, productos } = useCart();
+  const { alumnos, productos, registrarDevolucion } = useCart();
   const [rut, setRut] = useState('');
   const [alumno, setAlumno] = useState<Alumno | null>(null);
   const [error, setError] = useState('');
@@ -15,8 +16,12 @@ export const LibreriaDevolucionesPage: React.FC = () => {
   const handleBuscar = () => {
     setError('');
     setFeedback(null);
-    const cleanRut = rut.trim();
-    const found = alumnos.find((a) => a.rut === cleanRut);
+    if (!rutEsValido(rut)) {
+      setError(mensajeRut(rut) || 'El RUT ingresado no es válido.');
+      setAlumno(null);
+      return;
+    }
+    const found = alumnos.find((a) => mismoRut(a.rut, rut));
     if (!found) {
       setError('No se encontró una cuenta de alumno asociada a ese RUT.');
       setAlumno(null);
@@ -25,13 +30,20 @@ export const LibreriaDevolucionesPage: React.FC = () => {
     setAlumno(found);
   };
 
-  const handleDevolver = (nombreProd: string, monto: number) => {
-    if (!motivo.trim()) {
-      setError('Por favor indica un motivo obligatorio para registrar la devolución.');
+  const handleDevolver = (productoId: number, _nombreProd: string, monto: number) => {
+    if (!alumno) return;
+    setError('');
+    const res = registrarDevolucion(alumno.id, productoId, monto, motivo);
+    if (!res.success) {
+      setError(res.message);
       return;
     }
-    setFeedback(`✓ Devolución registrada para ${nombreProd}: se reintegraron $${monto.toLocaleString('es-CL')} al saldo de ${alumno?.nombre}. Motivo: ${motivo}`);
+    setFeedback(res.message);
     setMotivo('');
+    // Refleja el reintegro en la ficha mostrada.
+    setAlumno((prev) =>
+      prev ? { ...prev, balance: prev.balance + monto, saldoDisponible: prev.saldoDisponible + monto } : prev
+    );
   };
 
   return (
@@ -107,7 +119,7 @@ export const LibreriaDevolucionesPage: React.FC = () => {
                             <button
                               type="button"
                               className="staff-history-toggle"
-                              onClick={() => handleDevolver(p.nombre, p.precioVenta)}
+                              onClick={() => handleDevolver(p.id, p.nombre, p.precioVenta)}
                             >
                               Devolver unidad
                             </button>
