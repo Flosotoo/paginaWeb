@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CuentaLibreria } from "./CuentaLibreria";
+import { GestionProveedores } from "./GestionProveedores";
 import type { Reserva } from "../../services/reservas";
 import { HistorialOperativo } from "./HistorialOperativo";
 import { CancelacionReserva } from "./CancelacionReserva";
@@ -523,7 +524,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
             {[
               { id: "cuenta-libreria", icono: "▤", titulo: "Cuenta Librería", descripcion: "Consulta y administración de la cuenta de la librería." },
               { id: "inventario", icono: "▦", titulo: "Inventario y Valorización", descripcion: "Existencias, stock crítico, valorización y control de inventario." },
-              { id: "gestion-compras", icono: "🛒", titulo: "Gestión de Compras", descripcion: "Registro y seguimiento de las compras y sus proveedores." },
+              { id: "gestion-compras", icono: "🛒", titulo: "Gestión de Compras", descripcion: "Consulta y administración de proveedores. Órdenes y recepciones pendientes de integrar." },
               { id: "pagos", icono: "💰", titulo: "Pagos", descripcion: "Consulta y seguimiento de pagos y movimientos." },
               { id: "personas", icono: "👥", titulo: "Usuarios y alumnos", descripcion: "Administración de usuarios, alumnos y sus vínculos." },
               { id: "configuracion", icono: "⚙", titulo: "Configuración del sistema", descripcion: "Parámetros, auditoría y herramientas de administración." },
@@ -557,8 +558,18 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </section>
       )}
 
-      {/* Áreas de la Etapa 38 pendientes de reconectar con su funcionalidad */}
-      {esAdmin && ["gestion-compras", "pagos"].includes(seccion) && (
+      {/* GESTIÓN DE COMPRAS: proveedores conectados al backend */}
+      {esAdmin && seccion === "gestion-compras" && (
+        <section className="account-section">
+          <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>
+            ← Volver al inicio de administración
+          </button>
+          <GestionProveedores esAdmin={esAdmin} />
+        </section>
+      )}
+
+      {/* Pagos permanece pendiente de integración */}
+      {esAdmin && seccion === "pagos" && (
         <section className="account-section">
           <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>
             ← Volver al inicio de administración
@@ -566,7 +577,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
           <div className="section-heading">
             <div>
               <span className="eyebrow">RECUPERACIÓN ETAPA 38</span>
-              <h2>{seccion === "cuenta-libreria" ? "Cuenta Librería" : seccion === "gestion-compras" ? "Gestión de Compras" : "Pagos"}</h2>
+              <h2>Pagos</h2>
             </div>
           </div>
           <p>Esta sección está identificada en la estructura original y pendiente de recuperar. Todavía no se han conectado sus funciones ni sus datos.</p>

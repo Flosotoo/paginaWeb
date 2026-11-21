@@ -136,7 +136,7 @@ CREATE TABLE operaciones_distribuidas (
     umbral_saldo_bajo VARCHAR(30) NULL,
     recuperada_por_id BIGINT NULL,
     direccion VARCHAR(20) NOT NULL DEFAULT 'CONTINUAR',
-    pasos_confirmados TEXT NOT NULL DEFAULT '|',
+    pasos_confirmados TEXT NOT NULL DEFAULT (''),
     usuario_id BIGINT NULL,
     rol VARCHAR(30) NULL,
     motivo VARCHAR(255) NULL,
