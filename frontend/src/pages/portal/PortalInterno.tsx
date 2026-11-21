@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CuentaLibreria } from "./CuentaLibreria";
 import type { Reserva } from "../../services/reservas";
 import { HistorialOperativo } from "./HistorialOperativo";
 import { CancelacionReserva } from "./CancelacionReserva";
@@ -506,99 +507,70 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </>
       )}
 
-      {/* VISTA INICIO PARA ADMINISTRADOR */}
+      {/* INICIO ADMINISTRADOR: estructura de recuperación Etapa 38 */}
       {esAdmin && seccion === "inicio" && (
         <>
           <section className="admin-welcome" style={{ marginBottom: "25px" }}>
             <div>
               <span className="eyebrow">CENTRO GENERAL DE PADRES</span>
-              <h2>Administración de la librería escolar</h2>
-              <p>Supervisa inventario, nómina de usuarios, auditoría y cartola general.</p>
+              <h2>Administración de EduSaldo</h2>
+              <p>Accede a las áreas de gestión de la librería escolar.</p>
             </div>
             <div className="admin-welcome-mark">e</div>
           </section>
 
           <div className="admin-home-grid" style={{ marginBottom: "30px" }}>
-            <button
-              type="button"
-              className="admin-home-card"
-              onClick={() => setSeccion("gestion-catalogo")}
-              style={{ textAlign: "left", background: "#fffcf7", border: "none", cursor: "pointer", width: "100%" }}
-            >
-              <span className="admin-card-icon">🛍</span>
-              <div>
-                <h3>Catálogo y Creación de Productos</h3>
-                <p>Precios, cálculo de utilidad, categorías y nuevos artículos.</p>
-              </div>
-              <b>→</b>
-            </button>
-            <button
-              type="button"
-              className="admin-home-card"
-              onClick={() => setSeccion("inventario")}
-              style={{ textAlign: "left", background: "#fffcf7", border: "none", cursor: "pointer", width: "100%" }}
-            >
-              <span className="admin-card-icon">▦</span>
-              <div>
-                <h3>Inventario y Solicitudes de Ajuste</h3>
-                <p>Stock físico, alertas críticas y aprobación de ajustes.</p>
-              </div>
-              <b>→</b>
-            </button>
-            <button
-              type="button"
-              className="admin-home-card"
-              onClick={() => setSeccion("personas")}
-              style={{ textAlign: "left", background: "#fffcf7", border: "none", cursor: "pointer", width: "100%" }}
-            >
-              <span className="admin-card-icon">👥</span>
-              <div>
-                <h3>Personas, Matrícula y Nómina</h3>
-                <p>Alta de apoderados y alumnos, carga masiva CSV y vínculos.</p>
-              </div>
-              <b>→</b>
-            </button>
-            <button
-              type="button"
-              className="admin-home-card"
-              onClick={() => setSeccion("reservas")}
-              style={{ textAlign: "left", background: "#fffcf7", border: "none", cursor: "pointer", width: "100%" }}
-            >
-              <span className="admin-card-icon">📋</span>
-              <div>
-                <h3>Reservas y Entregas</h3>
-                <p>Supervisión de pedidos, preparación y cancelaciones.</p>
-              </div>
-              <b>→</b>
-            </button>
-            <button
-              type="button"
-              className="admin-home-card"
-              onClick={() => setSeccion("auditoria")}
-              style={{ textAlign: "left", background: "#fffcf7", border: "none", cursor: "pointer", width: "100%" }}
-            >
-              <span className="admin-card-icon">💰</span>
-              <div>
-                <h3>Finanzas y Conciliación Webpay</h3>
-                <p>Abonos bancarios simulados, cartola contable y exportación.</p>
-              </div>
-              <b>→</b>
-            </button>
-            <button
-              type="button"
-              className="admin-home-card"
-              onClick={() => setSeccion("auditoria")}
-              style={{ textAlign: "left", background: "#fffcf7", border: "none", cursor: "pointer", width: "100%" }}
-            >
-              <span className="admin-card-icon">⚙</span>
-              <div>
-                <h3>Configuración y Auditoría</h3>
-                <p>Políticas de seguridad, log institucional y correos simulados.</p>
-              </div>
-              <b>→</b>
-            </button>
+            {[
+              { id: "cuenta-libreria", icono: "▤", titulo: "Cuenta Librería", descripcion: "Consulta y administración de la cuenta de la librería." },
+              { id: "inventario", icono: "▦", titulo: "Inventario y Valorización", descripcion: "Existencias, stock crítico, valorización y control de inventario." },
+              { id: "gestion-compras", icono: "🛒", titulo: "Gestión de Compras", descripcion: "Registro y seguimiento de las compras y sus proveedores." },
+              { id: "pagos", icono: "💰", titulo: "Pagos", descripcion: "Consulta y seguimiento de pagos y movimientos." },
+              { id: "personas", icono: "👥", titulo: "Usuarios y alumnos", descripcion: "Administración de usuarios, alumnos y sus vínculos." },
+              { id: "configuracion", icono: "⚙", titulo: "Configuración del sistema", descripcion: "Parámetros, auditoría y herramientas de administración." },
+            ].map((tarjeta) => (
+              <button
+                key={tarjeta.id}
+                type="button"
+                className="admin-home-card"
+                onClick={() => setSeccion(tarjeta.id)}
+                style={{ textAlign: "left", background: "#fffcf7", border: "none", cursor: "pointer", width: "100%" }}
+              >
+                <span className="admin-card-icon" aria-hidden="true">{tarjeta.icono}</span>
+                <div>
+                  <h3>{tarjeta.titulo}</h3>
+                  <p>{tarjeta.descripcion}</p>
+                </div>
+                <b aria-hidden="true">→</b>
+              </button>
+            ))}
           </div>
         </>
+      )}
+
+      {/* CUENTA LIBRERÍA: cartola financiera integrada */}
+      {esAdmin && seccion === "cuenta-libreria" && (
+        <section className="account-section">
+          <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>
+            ← Volver al inicio de administración
+          </button>
+          <CuentaLibreria />
+        </section>
+      )}
+
+      {/* Áreas de la Etapa 38 pendientes de reconectar con su funcionalidad */}
+      {esAdmin && ["gestion-compras", "pagos"].includes(seccion) && (
+        <section className="account-section">
+          <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>
+            ← Volver al inicio de administración
+          </button>
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">RECUPERACIÓN ETAPA 38</span>
+              <h2>{seccion === "cuenta-libreria" ? "Cuenta Librería" : seccion === "gestion-compras" ? "Gestión de Compras" : "Pagos"}</h2>
+            </div>
+          </div>
+          <p>Esta sección está identificada en la estructura original y pendiente de recuperar. Todavía no se han conectado sus funciones ni sus datos.</p>
+        </section>
       )}
 
       {/* MÓDULO: RESERVAS */}
@@ -1255,7 +1227,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
       )}
 
       {/* MÓDULO: AUDITORÍA Y PARÁMETROS (ADMIN) */}
-      {esAdmin && seccion === "auditoria" && (
+      {esAdmin && ["auditoria", "configuracion"].includes(seccion) && (
         <section className="account-section">
           <button
             type="button"

@@ -1,3 +1,4 @@
+
 server:
   port: 8090
 
@@ -22,7 +23,7 @@ spring:
         - id: ms-productos-inventario
           uri: http://localhost:8093
           predicates:
-            - Path=/api/productos/**, /api/categorias/**, /api/inventario/**
+            - Path=/api/productos/**, /api/categorias/**, /api/inventario/**, /api/proveedores/**
 
         - id: ms-ventas-reservas
           uri: http://localhost:8094

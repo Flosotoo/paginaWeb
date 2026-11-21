@@ -100,6 +100,20 @@ public class GatewayAuthorizationPolicy {
       return Mono.just(method.equals("POST"));
     }
     if (path.startsWith("/api/operaciones")) return Mono.just(staff(who));
+    // Proveedores: lectura para personal, modificaciones solo para administradores.
+    if (path.equals("/api/proveedores") || path.startsWith("/api/proveedores/")) {
+      if (method.equals("GET") || method.equals("HEAD")) {
+        return Mono.just(staff(who)
+            && (path.equals("/api/proveedores")
+                || path.matches("/api/proveedores/\\d+")));
+      }
+      return Mono.just(admin(who)
+          && ((method.equals("POST") && path.equals("/api/proveedores"))
+              || (method.equals("PUT") && path.matches("/api/proveedores/\\d+"))
+              || (method.equals("PATCH")
+                  && path.matches("/api/proveedores/\\d+/(activar|desactivar)"))));
+    }
+
     if (path.equals("/api/usuarios") && !admin(who)) return Mono.just(false);
     if (path.startsWith("/api/saldos/abonos/") && !who.path("rol").asText().equals("APODERADO"))
       return Mono.just(false);
