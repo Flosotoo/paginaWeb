@@ -18,7 +18,7 @@ public class GatewayCorsConfiguration {
     CorsConfiguration cors = new CorsConfiguration();
     cors.setAllowedOrigins(
         Arrays.stream(origins.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
-    cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     cors.setAllowCredentials(false);
     var source = new UrlBasedCorsConfigurationSource();

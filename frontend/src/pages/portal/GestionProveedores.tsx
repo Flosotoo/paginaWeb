@@ -147,21 +147,51 @@ export function GestionProveedores({ esAdmin }: Props) {
         </div>
         <p style={{ color: "var(--muted)", fontSize: 13 }}>{filtrados.length} proveedores encontrados</p>
         {cargando ? <p>Cargando proveedores…</p> : filtrados.length === 0 ? <p>No hay proveedores que coincidan con la búsqueda.</p> : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-              <thead><tr>{["Razón social", "RUT", "Contacto", "Teléfono", "Correo", "Estado", "Acciones"].map((h) => <th key={h} style={{ padding: 10, borderBottom: "1px solid #ddd" }}>{h}</th>)}</tr></thead>
-              <tbody>{filtrados.map((p) => <tr key={p.id}>
-                <td style={{ padding: 10, borderBottom: "1px solid #eee" }}><strong>{p.razonSocial}</strong></td>
-                <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{p.rut}</td>
-                <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{p.contacto || "—"}</td>
-                <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{p.telefono || "—"}</td>
-                <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{p.correo || "—"}</td>
-                <td style={{ padding: 10, borderBottom: "1px solid #eee" }}><span className={`staff-badge ${p.estado === "ACTIVO" ? "staff-stock-ok" : "staff-stock-warn"}`}>{p.estado}</span></td>
-                <td style={{ padding: 10, borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>{esAdmin ? <div style={{ display: "flex", gap: 6 }}>
-                  <button type="button" className="btn secondary" disabled={procesando} onClick={() => editar(p)}>Editar</button>
-                  <button type="button" className="btn secondary" disabled={procesando} onClick={() => void cambiarEstado(p)}>{p.estado === "ACTIVO" ? "Desactivar" : "Activar"}</button>
-                </div> : "Consulta"}</td>
-              </tr>)}</tbody>
+          <div style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", minWidth: 1120, borderCollapse: "collapse", textAlign: "left", tableLayout: "auto" }}>
+              <thead>
+                <tr>
+                  {[
+                    ["Razón social", 170], ["RUT", 115], ["Contacto", 155],
+                    ["Teléfono", 115], ["Correo", 200], ["Estado", 105], ["Acciones", 185],
+                  ].map(([titulo, ancho]) => (
+                    <th key={titulo} scope="col" style={{ padding: "12px 10px", minWidth: Number(ancho), borderBottom: "1px solid #ddd", whiteSpace: "nowrap" }}>
+                      {titulo}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtrados.map((p) => (
+                  <tr key={p.id}>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee", minWidth: 170 }}>
+                      <strong style={{ overflowWrap: "break-word" }}>{p.razonSocial}</strong>
+                    </td>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>{p.rut}</td>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee", minWidth: 155 }}>{p.contacto || "—"}</td>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>{p.telefono || "—"}</td>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>{p.correo || "—"}</td>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>
+                      <span
+                        className={`staff-badge ${p.estado === "ACTIVO" ? "staff-stock-ok" : "staff-stock-warn"}`}
+                        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap", minWidth: 76, padding: "5px 9px", lineHeight: 1.3, borderRadius: 999 }}
+                      >
+                        {p.estado}
+                      </span>
+                    </td>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee", whiteSpace: "nowrap" }}>
+                      {esAdmin ? (
+                        <div style={{ display: "flex", gap: 6, flexWrap: "nowrap" }}>
+                          <button type="button" className="btn secondary" disabled={procesando} onClick={() => editar(p)}>Editar</button>
+                          <button type="button" className="btn secondary" disabled={procesando} onClick={() => void cambiarEstado(p)}>
+                            {p.estado === "ACTIVO" ? "Desactivar" : "Activar"}
+                          </button>
+                        </div>
+                      ) : "Consulta"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         )}
