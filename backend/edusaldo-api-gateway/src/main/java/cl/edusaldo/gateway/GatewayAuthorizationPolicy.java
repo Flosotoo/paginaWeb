@@ -100,6 +100,17 @@ public class GatewayAuthorizationPolicy {
       return Mono.just(method.equals("POST"));
     }
     if (path.startsWith("/api/operaciones")) return Mono.just(staff(who));
+    // Ordenes de compra: el personal crea y consulta; solo el administrador aprueba.
+    if (path.equals("/api/ordenes-compra") || path.startsWith("/api/ordenes-compra/")) {
+      if ((method.equals("GET") || method.equals("HEAD"))
+          && (path.equals("/api/ordenes-compra") || path.matches("/api/ordenes-compra/\\d+")))
+        return Mono.just(staff(who));
+      if (method.equals("POST") && path.equals("/api/ordenes-compra"))
+        return Mono.just(staff(who));
+      if (method.equals("PATCH") && path.matches("/api/ordenes-compra/\\d+/aprobar"))
+        return Mono.just(admin(who));
+      return Mono.just(false);
+    }
     // Proveedores: lectura para personal, modificaciones solo para administradores.
     if (path.equals("/api/proveedores") || path.startsWith("/api/proveedores/")) {
       if (method.equals("GET") || method.equals("HEAD")) {

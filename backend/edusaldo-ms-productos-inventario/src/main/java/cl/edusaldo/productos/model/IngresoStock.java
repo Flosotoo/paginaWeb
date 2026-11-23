@@ -1,3 +1,4 @@
+
 package cl.edusaldo.productos.model;
 
 import jakarta.persistence.*;
@@ -29,25 +30,34 @@ public class IngresoStock {
     @Column(name = "observacion", length = 500)
     private String observacion;
 
+    @Column(name = "orden_compra_id")
+    private Long ordenCompraId;
+
     @OneToMany(mappedBy = "ingresoStock", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleIngresoStock> detalles = new ArrayList<>();
 
     public IngresoStock() {
         this.idEstablecimiento = 1L;
-        this.referenciaUnica = "ING-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        this.referenciaUnica =
+                "ING-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     public IngresoStock(Long encargadoId, String referenciaUnica, String observacion) {
         this.idEstablecimiento = 1L;
         this.encargadoId = encargadoId;
-        this.referenciaUnica = (referenciaUnica != null && !referenciaUnica.isBlank())
-                ? referenciaUnica
-                : "ING-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        this.referenciaUnica =
+                (referenciaUnica != null && !referenciaUnica.isBlank())
+                        ? referenciaUnica
+                        : "ING-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         this.observacion = observacion;
         this.fecha = LocalDateTime.now();
     }
 
-    public IngresoStock(Long encargadoId, String ignored1, String referenciaUnica, String observacion) {
+    public IngresoStock(
+            Long encargadoId,
+            String ignored1,
+            String referenciaUnica,
+            String observacion) {
         this(encargadoId, referenciaUnica, observacion);
     }
 
@@ -61,18 +71,68 @@ public class IngresoStock {
         this.detalles.add(detalle);
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Long getIdEstablecimiento() { return idEstablecimiento != null ? idEstablecimiento : 1L; }
-    public void setIdEstablecimiento(Long idEstablecimiento) { this.idEstablecimiento = idEstablecimiento != null ? idEstablecimiento : 1L; }
-    public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
-    public Long getEncargadoId() { return encargadoId; }
-    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
-    public String getReferenciaUnica() { return referenciaUnica; }
-    public void setReferenciaUnica(String referenciaUnica) { this.referenciaUnica = referenciaUnica; }
-    public String getObservacion() { return observacion; }
-    public void setObservacion(String observacion) { this.observacion = observacion; }
-    public List<DetalleIngresoStock> getDetalles() { return detalles; }
-    public void setDetalles(List<DetalleIngresoStock> detalles) { this.detalles = detalles; }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getIdEstablecimiento() {
+        return idEstablecimiento != null ? idEstablecimiento : 1L;
+    }
+
+    public void setIdEstablecimiento(Long idEstablecimiento) {
+        this.idEstablecimiento =
+                idEstablecimiento != null ? idEstablecimiento : 1L;
+    }
+
+    public LocalDateTime getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDateTime fecha) {
+        this.fecha = fecha;
+    }
+
+    public Long getEncargadoId() {
+        return encargadoId;
+    }
+
+    public void setEncargadoId(Long encargadoId) {
+        this.encargadoId = encargadoId;
+    }
+
+    public String getReferenciaUnica() {
+        return referenciaUnica;
+    }
+
+    public void setReferenciaUnica(String referenciaUnica) {
+        this.referenciaUnica = referenciaUnica;
+    }
+
+    public String getObservacion() {
+        return observacion;
+    }
+
+    public void setObservacion(String observacion) {
+        this.observacion = observacion;
+    }
+
+    public Long getOrdenCompraId() {
+        return ordenCompraId;
+    }
+
+    public void setOrdenCompraId(Long ordenCompraId) {
+        this.ordenCompraId = ordenCompraId;
+    }
+
+    public List<DetalleIngresoStock> getDetalles() {
+        return detalles;
+    }
+
+    public void setDetalles(List<DetalleIngresoStock> detalles) {
+        this.detalles = detalles;
+    }
 }

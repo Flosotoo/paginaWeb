@@ -970,34 +970,50 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
               </div>
             </div>
 
-            <div style={{ display: "grid", gap: "8px" }}>
-              {productosStockPaginados.map((p) => (
-                <div
-                  key={p.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "8px 12px",
-                    background: "#fbf9f5",
-                    borderRadius: "8px",
-                    border: "1px solid #eee8df",
-                    fontSize: "14px",
-                    flexWrap: "wrap",
-                    gap: "6px",
-                  }}
-                >
-                  <p style={{ margin: 0 }}>
-                    <strong>{p.nombre}:</strong> {p.stockFisico} físicos · {p.stockReservado} reservados ·{" "}
-                    <span style={{ fontWeight: 700, color: p.stockDisponible <= 0 ? "#9c2e22" : p.stockDisponible <= (p.stockCritico || 5) ? "#b45309" : "#18543c" }}>
-                      {p.stockDisponible} disponibles
-                    </span>
-                  </p>
-                  <span style={{ fontSize: "12px", color: "var(--muted)" }}>
-                    SKU {p.sku || p.id} · {p.categoria || "Material"}
-                  </span>
-                </div>
-              ))}
+            <div className="data-table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Producto</th>
+                    <th scope="col">SKU</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Físico</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Reservado</th>
+                    <th scope="col" style={{ textAlign: "right" }}>Disponible</th>
+                    <th scope="col">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productosStockPaginados.map((p) => {
+                    const agotado = p.stockDisponible <= 0;
+                    const critico = !agotado && p.stockDisponible <= (p.stockCritico || 5);
+                    return (
+                      <tr key={p.id}>
+                        <td><strong>{p.nombre}</strong></td>
+                        <td>{p.sku || `PROD-${p.id}`}</td>
+                        <td>{p.categoria || "Material"}</td>
+                        <td style={{ textAlign: "right" }}>{p.stockFisico}</td>
+                        <td style={{ textAlign: "right" }}>{p.stockReservado}</td>
+                        <td style={{ textAlign: "right", fontWeight: 700, color: agotado ? "#9c2e22" : critico ? "#b45309" : "#18543c" }}>
+                          {p.stockDisponible}
+                        </td>
+                        <td>
+                          <span className={`staff-badge ${agotado ? "staff-stock-bad" : critico ? "staff-stock-warn" : "staff-stock-ok"}`}>
+                            {agotado ? "Agotado" : critico ? "Crítico" : "Disponible"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {productosStockPaginados.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: "center", color: "var(--muted)" }}>
+                        No hay productos que coincidan con los filtros seleccionados.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
             {totalPaginasStock > 1 && (

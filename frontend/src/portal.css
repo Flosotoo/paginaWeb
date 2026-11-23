@@ -496,17 +496,38 @@ input, select, button {
   .site-header .header-inner {
     padding: 10px 14px;
   }
+
   .site-header .header-account {
     width: 100%;
     justify-content: space-between;
   }
+
   .staff-stats {
     grid-template-columns: 1fr 1fr;
   }
+
   .staff-grid {
     grid-template-columns: 1fr;
   }
+
   .admin-home-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Estados de la tabla de existencias */
+.data-table td:last-child {
+  min-width: 105px;
+  white-space: nowrap;
+}
+
+.data-table td:last-child .pill-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 85px;
+  width: auto;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
