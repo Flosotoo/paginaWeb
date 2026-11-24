@@ -88,6 +88,8 @@ Desktop.ini
 *.sln
 *.sw?
 # === Tests E2E y Reportes ===
+coverage/
+**/coverage/
 test-results/
 **/test-results/
 playwright-report/

@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jasmine", "vite/client"]
+  },
+  "include": ["src/specs/**/*.ts", "src/specs/**/*.tsx", "src/**/*.ts", "src/**/*.tsx"]
+}

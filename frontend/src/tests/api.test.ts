@@ -1,12 +1,13 @@
-import type { InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api, setSessionToken } from "../services/api";
+import { api, setSessionToken, setUnauthorizedHandler } from "../services/api";
 import { authService } from "../services/auth";
 const originalAdapter = api.defaults.adapter;
 
 describe("cliente del gateway", () => {
   afterEach(() => {
     setSessionToken(null);
+    setUnauthorizedHandler(null);
     api.defaults.adapter = originalAdapter;
     vi.restoreAllMocks();
   });
@@ -36,5 +37,28 @@ describe("cliente del gateway", () => {
       identificador: "persona@ejemplo.cl",
       password: "clave",
     });
+  });
+  it("notifica expiración cuando el gateway responde 401 con sesión activa", async () => {
+    const onUnauthorized = vi.fn();
+    setSessionToken("jwt-expirado");
+    setUnauthorizedHandler(onUnauthorized);
+    api.defaults.adapter = vi.fn(async (config: InternalAxiosRequestConfig) => {
+      throw new AxiosError(
+        "Unauthorized",
+        "ERR_BAD_REQUEST",
+        config,
+        undefined,
+        {
+          status: 401,
+          statusText: "Unauthorized",
+          data: { message: "Acceso no autorizado" },
+          headers: {},
+          config,
+        },
+      );
+    });
+    await expect(api.get("/api/productos")).rejects.toThrow();
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+    expect(axios.isAxiosError(new AxiosError("test"))).toBe(true);
   });
 });
