@@ -17,6 +17,7 @@ import {
   MENU_ADMINISTRADOR,
   MENU_ENCARGADO,
   MENU_FAMILIA,
+  SECCIONES_INVENTARIO,
   prefijoPortalPorRol,
 } from "./routes/LayoutPortal";
 import { RutaProtegida, rutaInicioPorRol } from "./routes/RutaProtegida";
@@ -26,7 +27,6 @@ import "./portal.css";
 const SECCIONES_ADMIN_ADICIONALES = [
   "personas",
   "reservas",
-  "gestion-catalogo",
   "auditoria",
   "correcciones",
   "privacidad",
@@ -36,8 +36,9 @@ export const SECCIONES_POR_ROL: Record<Rol, readonly string[]> = {
   ADMINISTRADOR: [
     ...MENU_ADMINISTRADOR.map(([id]) => id),
     ...SECCIONES_ADMIN_ADICIONALES,
+    ...SECCIONES_INVENTARIO.filter(id => id !== "inventario"),
   ],
-  ENCARGADO: MENU_ENCARGADO.map(([id]) => id),
+  ENCARGADO: [...MENU_ENCARGADO.map(([id]) => id), ...SECCIONES_INVENTARIO.filter(id => id !== "inventario")],
   APODERADO: MENU_FAMILIA.map(([id]) => id),
   ALUMNO: MENU_FAMILIA.map(([id]) => id),
 };

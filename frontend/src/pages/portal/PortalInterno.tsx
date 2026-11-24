@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { SECCIONES_INVENTARIO } from "../../routes/LayoutPortal";
 import { CuentaLibreria } from "./CuentaLibreria";
 import { GestionProveedores } from "./GestionProveedores";
 import { GestionOrdenesCompra } from "./GestionOrdenesCompra";
 import { PagosWebpayAdmin } from "./PagosWebpayAdmin";
 import type { Reserva } from "../../services/reservas";
-import { HistorialOperativo } from "./HistorialOperativo";
+import { HistorialOperativo, MovimientosInventario } from "./HistorialOperativo";
 import { CancelacionReserva } from "./CancelacionReserva";
 import { Administracion } from "./Administracion";
 import { CambiarClave } from "./CambiarClave";
@@ -494,8 +495,8 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
               style={{ textAlign: "left", cursor: "pointer", border: "none", width: "100%" }}
             >
               <span className="staff-symbol">▦</span>
-              <span style={{ display: "block", font: '400 29px "DM Serif Display", Georgia, serif', margin: "8px 0" }}>Existencias</span>
-              <p>Consulta existencias físicas y solicita ajustes de stock.</p>
+              <span style={{ display: "block", font: '400 29px "DM Serif Display", Georgia, serif', margin: "8px 0" }}>Inventario</span>
+              <p>Consulta existencias, catálogo, compras y ajustes de stock.</p>
               <b>Ver inventario →</b>
             </button>
             <button
@@ -528,10 +529,8 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
           <div className="admin-home-grid" style={{ marginBottom: "30px" }}>
             {[
               { id: "cuenta-libreria", icono: "▤", titulo: "Cuenta Librería", descripcion: "Consulta y administración de la cuenta de la librería." },
-              { id: "inventario", icono: "▦", titulo: "Inventario y Valorización", descripcion: "Existencias, stock crítico, valorización y control de inventario." },
-              { id: "gestion-catalogo", icono: "🏷", titulo: "Catálogo y stock", descripcion: "Alta, edición e ingresos de productos y categorías." },
+              { id: "inventario", icono: "▦", titulo: "Inventario", descripcion: "Existencias, stock crítico, valorización y control de inventario." },
               { id: "reservas", icono: "📦", titulo: "Reservas", descripcion: "Seguimiento, preparación y cancelación de reservas escolares." },
-              { id: "gestion-compras", icono: "🛒", titulo: "Gestión de Compras", descripcion: "Proveedores activos, órdenes de compra, aprobación y recepción en bodega." },
               { id: "pagos", icono: "💰", titulo: "Pagos", descripcion: "Consulta, conciliación y exportación de recargas electrónicas Webpay." },
               { id: "personas", icono: "👥", titulo: "Usuarios y alumnos", descripcion: "Administración de usuarios, alumnos y sus vínculos." },
               { id: "configuracion", icono: "⚙", titulo: "Configuración del sistema", descripcion: "Parámetros, auditoría y herramientas de administración." },
@@ -567,30 +566,37 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </section>
       )}
 
+      {SECCIONES_INVENTARIO.some(id => id === seccion) && (
+        <section className="account-section">
+          <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>← Volver al inicio</button>
+          <div className="section-heading"><h2>Inventario</h2></div>
+          <div className="subnav-cards" aria-label="Secciones de inventario">
+            {[
+              ["inventario", "Existencias", "Stock y conteo físico"],
+              ["gestion-catalogo", "Catálogo de productos", "Productos, categorías e ingresos"],
+              ["proveedores", "Proveedores", "Maestro de proveedores"],
+              ["ordenes", "Compras y recepción", "Órdenes de compra y mercadería"],
+              ["inventario-ajustes", "Ajustes de stock", "Solicitudes y control"],
+              ["inventario-movimientos", "Movimientos", "Libro de bodega"],
+            ].map(([id, titulo, descripcion]) => {
+              const activo = id === "proveedores" || id === "ordenes" ? seccion === "gestion-compras" && pestanaCompras === id : seccion === id;
+              return <button key={id} type="button" className={`subnav-card ${activo ? "active" : ""}`} aria-pressed={activo} onClick={() => {
+                if (id === "proveedores" || id === "ordenes") {
+                  setPestanaCompras(id);
+                  setSeccion("gestion-compras");
+                } else {
+                  if (id === "inventario-movimientos") void movimientos.recargar();
+                  setSeccion(id);
+                }
+              }}><strong>{titulo}</strong><span>{descripcion}</span></button>;
+            })}
+          </div>
+        </section>
+      )}
+
       {/* GESTIÓN DE COMPRAS: proveedores + órdenes de compra y recepción */}
       {seccion === "gestion-compras" && (
         <section className="account-section">
-          <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>
-            ← Volver al inicio {esAdmin ? "de administración" : "del encargado"}
-          </button>
-          <div className="subnav-cards mb-4">
-            <button
-              type="button"
-              className={`subnav-card ${pestanaCompras === "proveedores" ? "active" : ""}`}
-              onClick={() => setPestanaCompras("proveedores")}
-            >
-              <strong>1. Proveedores</strong>
-              <span>{esAdmin ? "Alta, edición y vigencia de proveedores" : "Consulta de proveedores activos"}</span>
-            </button>
-            <button
-              type="button"
-              className={`subnav-card ${pestanaCompras === "ordenes" ? "active" : ""}`}
-              onClick={() => setPestanaCompras("ordenes")}
-            >
-              <strong>2. Órdenes de Compra y Recepción</strong>
-              <span>{esAdmin ? "Emisión, aprobación y recepción de mercadería" : "Emisión de solicitudes y recepción en bodega"}</span>
-            </button>
-          </div>
           {pestanaCompras === "proveedores" ? (
             <GestionProveedores esAdmin={esAdmin} />
           ) : (
@@ -921,20 +927,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
       {/* MÓDULO: INVENTARIO */}
       {seccion === "inventario" && (
         <section className="account-section" id="inventario">
-          <button
-            type="button"
-            className="back-link secondary"
-            onClick={() => setSeccion("inicio")}
-          >
-            ← Volver al inicio {esAdmin ? "de administración" : "del encargado"}
-          </button>
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">EXISTENCIAS</span>
-              <h2 id="inventario">Inventario</h2>
-            </div>
-          </div>
-
+          <div className="section-heading"><h2>Existencias</h2></div>
           {productos.error && <p role="alert">{productos.error}</p>}
 
           {/* Alertas de Stock Crítico */}
@@ -1105,6 +1098,10 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
             </div>
           </div>
 
+        </section>
+      )}
+      {seccion === "inventario-ajustes" && (
+        <section className="account-section">
           {!esAdmin && (
             <div className="card" style={{ padding: "20px", marginBottom: "20px" }}>
               <span className="eyebrow">SOLICITUD DE MODIFICACIÓN</span>
@@ -1223,13 +1220,6 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
       {/* MÓDULO: CATÁLOGO Y STOCK */}
       {seccion === "gestion-catalogo" && (
         <section className="account-section">
-          <button
-            type="button"
-            className="back-link secondary"
-            onClick={() => setSeccion("inicio")}
-          >
-            ← Volver al inicio {esAdmin ? "de administración" : "del encargado"}
-          </button>
           <GestionCatalogo
             productos={productos.datos ?? []}
             actualizar={productos.recargar}
@@ -1237,6 +1227,9 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </section>
       )}
 
+      {seccion === "inventario-movimientos" && (
+        <section className="account-section"><MovimientosInventario movimientos={movimientos} /></section>
+      )}
       {/* MÓDULO: ENTREGA DIRECTA (ENCARGADO) */}
       {!esAdmin && seccion === "entregas" && (
         <section className="account-section">
@@ -1264,7 +1257,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
           >
             ← Volver al inicio del encargado
           </button>
-          <HistorialOperativo movimientos={movimientos} />
+          <HistorialOperativo />
         </section>
       )}
 

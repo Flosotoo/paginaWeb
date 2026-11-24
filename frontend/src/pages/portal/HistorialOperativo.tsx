@@ -4,7 +4,7 @@ import { catalogoService } from "../../services/catalogo";
 import { entregasService } from "../../services/entregas";
 import type { ConsultaMovimientos } from "../../hooks/usePortalInterno";
 
-export function HistorialOperativo({ movimientos }: { movimientos: ConsultaMovimientos }) {
+export function HistorialOperativo() {
   const cargarCriticos = useCallback(() => catalogoService.criticos(), []);
   const criticos = useConsulta(cargarCriticos);
   const cargarEntregas = useCallback(() => entregasService.historial(), []);
@@ -59,42 +59,6 @@ export function HistorialOperativo({ movimientos }: { movimientos: ConsultaMovim
             </table>
           </div>
         )}
-      </div>
-
-      <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
-          <div>
-            <span className="eyebrow">LIBRO DE BODEGA</span>
-            <h3 style={{ margin: "2px 0 4px" }}>Movimientos de inventario</h3>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>
-              Registro de ingresos, reservas, entregas y ajustes.
-            </p>
-          </div>
-          <button className="btn secondary" onClick={() => void movimientos.recargar()}>
-            Actualizar movimientos
-          </button>
-        </div>
-
-        {movimientos.error && <p role="alert">{movimientos.error}</p>}
-        {movimientos.datos?.length === 0 && <p>No hay movimientos.</p>}
-
-        <div className="audit-feed">
-          {movimientos.datos?.map((m) => (
-            <div key={m.id} className="audit-card">
-              <div className="audit-card-top">
-                <span className={`pill-state ${m.tipo === "INGRESO" ? "" : m.tipo === "AJUSTE" ? "warn" : "neutral"}`}>
-                  {m.tipo}
-                </span>
-                <span>{m.fecha}</span>
-                <span>Responsable: {m.responsableId ?? "no informado"}</span>
-              </div>
-              <strong>{m.nombreProducto}</strong>
-              <div style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-                Físico: {m.variacionFisica} · Reservado: {m.variacionReservada} · Stock resultante: {m.stockResultante}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
 
       <div className="card">
@@ -178,5 +142,45 @@ export function HistorialOperativo({ movimientos }: { movimientos: ConsultaMovim
         </div>
       </div>
     </section>
+  );
+}
+
+export function MovimientosInventario({ movimientos }: { movimientos: ConsultaMovimientos }) {
+  return (
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
+          <div>
+            <span className="eyebrow">LIBRO DE BODEGA</span>
+            <h3 style={{ margin: "2px 0 4px" }}>Movimientos de inventario</h3>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>
+              Registro de ingresos, reservas, entregas y ajustes.
+            </p>
+          </div>
+          <button className="btn secondary" onClick={() => void movimientos.recargar()}>
+            Actualizar movimientos
+          </button>
+        </div>
+
+        {movimientos.error && <p role="alert">{movimientos.error}</p>}
+        {movimientos.datos?.length === 0 && <p>No hay movimientos.</p>}
+
+        <div className="audit-feed">
+          {movimientos.datos?.map((m) => (
+            <div key={m.id} className="audit-card">
+              <div className="audit-card-top">
+                <span className={`pill-state ${m.tipo === "INGRESO" ? "" : m.tipo === "AJUSTE" ? "warn" : "neutral"}`}>
+                  {m.tipo}
+                </span>
+                <span>{m.fecha}</span>
+                <span>Responsable: {m.responsableId ?? "no informado"}</span>
+              </div>
+              <strong>{m.nombreProducto}</strong>
+              <div style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+                Físico: {m.variacionFisica} · Reservado: {m.variacionReservada} · Stock resultante: {m.stockResultante}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
   );
 }

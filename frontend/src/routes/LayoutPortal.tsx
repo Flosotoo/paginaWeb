@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useSesion } from "../context/SesionContext";
 import type { Rol } from "../services/auth";
 import { rutaInicioPorRol } from "./RutaProtegida";
@@ -8,7 +8,6 @@ export const MENU_ADMINISTRADOR: readonly [string, string][] = [
   ["inicio", "Inicio"],
   ["cuenta-libreria", "Cuenta Librería"],
   ["inventario", "Inventario"],
-  ["gestion-compras", "Gestión de Compras"],
   ["pagos", "Pagos"],
   ["configuracion", "Configuración"],
 ];
@@ -18,8 +17,6 @@ export const MENU_ENCARGADO: readonly [string, string][] = [
   ["reservas", "Reservas"],
   ["entregas", "Entrega directa"],
   ["inventario", "Inventario"],
-  ["gestion-catalogo", "Catálogo y stock"],
-  ["gestion-compras", "Compras y recepción"],
   ["historial", "Historial"],
   ["correcciones", "Mis datos"],
   ["privacidad", "Privacidad"],
@@ -34,6 +31,8 @@ export const MENU_FAMILIA: readonly [string, string][] = [
   ["privacidad", "Privacidad"],
 ];
 
+export const SECCIONES_INVENTARIO = ["inventario", "gestion-catalogo", "gestion-compras", "inventario-ajustes", "inventario-movimientos"] as const;
+
 export function obtenerMenuPorRol(rol: Rol): readonly [string, string][] {
   if (rol === "APODERADO" || rol === "ALUMNO") return MENU_FAMILIA;
   if (rol === "ADMINISTRADOR") return MENU_ADMINISTRADOR;
@@ -47,6 +46,7 @@ export function prefijoPortalPorRol(rol: Rol): "/familia" | "/interno" {
 export function LayoutPortal() {
   const { usuario, salir } = useSesion();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   if (!usuario) return null;
@@ -104,7 +104,7 @@ export function LayoutPortal() {
                   <NavLink
                     key={id}
                     to={`${prefijo}/${id}`}
-                    className={({ isActive }) => (isActive ? "active" : "")}
+                    className={({ isActive }) => (isActive || (id === "inventario" && SECCIONES_INVENTARIO.some(s => pathname === `/interno/${s}`)) ? "active" : "")}
                     onClick={() => setMenuAbierto(false)}
                   >
                     {texto}

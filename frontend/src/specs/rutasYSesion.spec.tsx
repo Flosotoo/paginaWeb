@@ -96,11 +96,13 @@ describe("RutaProtegida (<Outlet />), LayoutPortal y SesionContext con mocks", (
     expect(prefijoPortalPorRol("ENCARGADO")).toBe("/interno");
 
     expect(
-      obtenerMenuPorRol("ADMINISTRADOR").some(([id]) => id === "gestion-compras"),
+      obtenerMenuPorRol("ADMINISTRADOR").some(([id]) => id === "inventario"),
     ).toBeTrue();
     expect(
-      obtenerMenuPorRol("ENCARGADO").some(([id]) => id === "gestion-compras"),
+      obtenerMenuPorRol("ENCARGADO").some(([id]) => id === "inventario"),
     ).toBeTrue();
+    expect(obtenerMenuPorRol("ENCARGADO").some(([id]) => id === "gestion-compras")).toBeFalse();
+    expect(obtenerMenuPorRol("ADMINISTRADOR").some(([id]) => id === "gestion-compras")).toBeFalse();
     expect(
       obtenerMenuPorRol("ALUMNO").some(([id]) => id === "catalogo"),
     ).toBeTrue();

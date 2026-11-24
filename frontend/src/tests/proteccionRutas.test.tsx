@@ -31,6 +31,9 @@ describe("protección de rutas con React Router (<Outlet />) por sesión y rol",
     expect(resolverSeccionPermitida("ENCARGADO", "#auditoria")).toBe("inicio");
     expect(resolverSeccionPermitida("ENCARGADO", "#entregas")).toBe("entregas");
     expect(resolverSeccionPermitida("ENCARGADO", "#gestion-compras")).toBe("gestion-compras");
+    expect(resolverSeccionPermitida("ENCARGADO", "#inventario-ajustes")).toBe("inventario-ajustes");
+    expect(resolverSeccionPermitida("ADMINISTRADOR", "#inventario-movimientos")).toBe("inventario-movimientos");
+    expect(resolverSeccionPermitida("APODERADO", "#inventario-movimientos")).toBe("cuenta");
     expect(resolverSeccionPermitida("APODERADO", "#inventario")).toBe("cuenta");
     expect(resolverSeccionPermitida("APODERADO", "#catalogo")).toBe("catalogo");
     expect(resolverSeccionPermitida("ADMINISTRADOR", "#entregas")).toBe("inicio");
