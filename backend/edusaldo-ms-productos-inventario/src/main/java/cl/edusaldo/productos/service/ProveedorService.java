@@ -120,7 +120,7 @@ public class ProveedorService {
                 .findByIdAndIdEstablecimiento(
                         id, RequestContext.tenant())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new java.util.NoSuchElementException(
                                 "Proveedor no encontrado"));
     }
 
@@ -140,9 +140,39 @@ public class ProveedorService {
     }
 
     private String normalizarRut(String rut) {
-        return rut.trim()
-                .replace(".", "")
-                .toUpperCase(Locale.ROOT);
+        String limpio =
+                rut.trim()
+                        .replace('\u2013', '-')
+                        .replace('\u2014', '-')
+                        .replace('\u2212', '-')
+                        .replace(".", "")
+                        .replace(" ", "")
+                        .toUpperCase(Locale.ROOT);
+        String sinGuion = limpio.replace("-", "");
+        if (!sinGuion.matches("^[0-9]{7,8}[0-9K]$")) {
+            throw new IllegalArgumentException(
+                    "El RUT del proveedor no tiene un formato chileno válido.");
+        }
+        String cuerpo = sinGuion.substring(0, sinGuion.length() - 1).replaceFirst("^0+", "");
+        char dv = sinGuion.charAt(sinGuion.length() - 1);
+        long numero = Long.parseLong(cuerpo);
+        if (numero < 1_000_000L || numero > 99_999_999L) {
+            throw new IllegalArgumentException(
+                    "El RUT del proveedor está fuera del rango válido.");
+        }
+        int suma = 0;
+        int mult = 2;
+        for (int i = cuerpo.length() - 1; i >= 0; i--) {
+            suma += (cuerpo.charAt(i) - '0') * mult;
+            mult = mult == 7 ? 2 : mult + 1;
+        }
+        int resto = 11 - (suma % 11);
+        char esperado = resto == 11 ? '0' : (resto == 10 ? 'K' : (char) ('0' + resto));
+        if (dv != esperado) {
+            throw new IllegalArgumentException(
+                    "El dígito verificador del RUT del proveedor no es válido.");
+        }
+        return cuerpo + "-" + dv;
     }
 
     private void copiarDatosOpcionales(

@@ -1,7 +1,7 @@
 -- =============================================================================
 -- EduSaldo · MS Productos e Inventario (Puerto 8093)
--- Base de Datos: db_inventario (Espejo 1:1 con mermaid-ms-productos-inventario-8093.md)
--- 10 Tablas 100% Conectadas con Foreign Keys en InnoDB
+-- Base de Datos: db_inventario
+-- 13 Tablas 100% Conectadas con Foreign Keys en InnoDB
 -- =============================================================================
 
 CREATE DATABASE IF NOT EXISTS db_inventario
@@ -19,6 +19,9 @@ DROP TABLE IF EXISTS detalles_reserva_stock;
 DROP TABLE IF EXISTS reservas_stock;
 DROP TABLE IF EXISTS detalles_ingreso_stock;
 DROP TABLE IF EXISTS ingresos_stock;
+DROP TABLE IF EXISTS ordenes_compra_detalle;
+DROP TABLE IF EXISTS ordenes_compra;
+DROP TABLE IF EXISTS proveedores;
 DROP TABLE IF EXISTS productos;
 DROP TABLE IF EXISTS categorias;
 SET FOREIGN_KEY_CHECKS = 1;
@@ -58,14 +61,78 @@ CREATE TABLE productos (
     INDEX idx_productos_establecimiento (id_establecimiento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Tabla: ingresos_stock
+-- 3. Tabla: proveedores
+CREATE TABLE proveedores (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    razon_social VARCHAR(150) NOT NULL,
+    rut VARCHAR(15) NOT NULL,
+    telefono VARCHAR(30) NULL,
+    correo VARCHAR(150) NULL,
+    direccion VARCHAR(250) NULL,
+    contacto VARCHAR(150) NULL,
+    banco VARCHAR(100) NULL,
+    tipo_cuenta VARCHAR(50) NULL,
+    numero_cuenta VARCHAR(50) NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVO',
+    CONSTRAINT uq_proveedor_rut_establecimiento UNIQUE (id_establecimiento, rut),
+    INDEX idx_proveedores_establecimiento (id_establecimiento)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. Tabla: ordenes_compra
+CREATE TABLE ordenes_compra (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_establecimiento BIGINT NOT NULL DEFAULT 1,
+    proveedor_id BIGINT NOT NULL,
+    creada_por BIGINT NOT NULL,
+    aprobada_por BIGINT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE_APROBACION',
+    observacion VARCHAR(500) NULL,
+    total_neto BIGINT NOT NULL DEFAULT 0,
+    iva BIGINT NOT NULL DEFAULT 0,
+    total BIGINT NOT NULL DEFAULT 0,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_aprobacion DATETIME NULL,
+    CONSTRAINT fk_orden_compra_proveedor
+        FOREIGN KEY (proveedor_id) REFERENCES proveedores(id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_ordenes_compra_establecimiento (id_establecimiento),
+    INDEX idx_oc_estado (estado)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. Tabla: ordenes_compra_detalle
+CREATE TABLE ordenes_compra_detalle (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    orden_id BIGINT NOT NULL,
+    producto_id BIGINT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario BIGINT NOT NULL,
+    subtotal BIGINT NOT NULL,
+    CONSTRAINT fk_orden_compra_detalle_orden
+        FOREIGN KEY (orden_id) REFERENCES ordenes_compra(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_orden_compra_detalle_producto
+        FOREIGN KEY (producto_id) REFERENCES productos(id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT uq_oc_detalle_producto UNIQUE (orden_id, producto_id),
+    CONSTRAINT chk_oc_cantidad CHECK (cantidad > 0),
+    CONSTRAINT chk_oc_precio CHECK (precio_unitario >= 0),
+    CONSTRAINT chk_oc_subtotal CHECK (subtotal >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Tabla: ingresos_stock
 CREATE TABLE ingresos_stock (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_establecimiento BIGINT NOT NULL DEFAULT 1,
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     encargado_id BIGINT NOT NULL,
     referencia_unica VARCHAR(100) NOT NULL UNIQUE,
-    observacion VARCHAR(500) NULL
+    observacion VARCHAR(500) NULL,
+    orden_compra_id BIGINT NULL,
+    CONSTRAINT uq_ingresos_orden_compra UNIQUE (orden_compra_id),
+    CONSTRAINT fk_ingreso_stock_orden_compra
+        FOREIGN KEY (orden_compra_id) REFERENCES ordenes_compra(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Tabla: detalles_ingreso_stock
@@ -216,6 +283,10 @@ INSERT INTO productos (id, id_establecimiento, categoria_id, sku, nombre, descri
 (26, 1, 8, 'UTI-CAR-ACO', 'Carpeta con Acoclip Plástica Oficio', 'Tapa transparente polipropileno con presilla', 'Todos', 690, 50, 0, 15, 0, 'ACTIVO'),
 (27, 1, 7, 'TEC-PEN-32G', 'Pendrive USB 3.0 32 GB', 'Memoria portátil metálica de alta velocidad', 'Todos', 5990, 15, 0, 4, 0, 'ACTIVO'),
 (28, 1, 5, 'ART-DEL-ESC', 'Delantal Plástico para Arte y Pintura', 'Protector impermeable con mangas ajustables', '1° Básico a 6° Básico', 4990, 12, 0, 3, 0, 'ACTIVO');
+
+INSERT INTO proveedores (id, id_establecimiento, razon_social, rut, telefono, correo, direccion, contacto, banco, tipo_cuenta, numero_cuenta, estado) VALUES
+(1, 1, 'Distribuidora Escolar Aconcagua S.A.', '76111222-8', '+56223456789', 'ventas@aconcaguaescolar.cl', 'Av. Providencia 1234, Santiago', 'Andrea Fuentes', 'Banco Estado', 'Cuenta Corriente', '0012345678', 'ACTIVO'),
+(2, 1, 'Comercial Lápiz Azul Ltda.', '76333444-9', '+56229876543', 'contacto@lapizazul.cl', 'Av. Libertador 890, Santiago', 'Rodrigo Salinas', 'Banco de Chile', 'Cuenta Vista', '0098765432', 'ACTIVO');
 
 INSERT INTO ingresos_stock (id, id_establecimiento, fecha, encargado_id, referencia_unica, observacion) VALUES
 (1, 1, NOW(), 2, 'ING-INICIAL-001', 'Carga inicial de inventario escolar Colegio 1'),

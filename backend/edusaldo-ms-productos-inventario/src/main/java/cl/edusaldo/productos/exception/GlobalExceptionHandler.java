@@ -17,6 +17,19 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(403).body(Map.of("status", 403, "message", ex.getMessage()));
   }
 
+  @ExceptionHandler(java.util.NoSuchElementException.class)
+  public ResponseEntity<Map<String, Object>> handleNotFound(java.util.NoSuchElementException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(
+            Map.of(
+                "status",
+                404,
+                "error",
+                "Not Found",
+                "message",
+                ex.getMessage() != null ? ex.getMessage() : "Recurso no encontrado"));
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
     Map<String, Object> err = new HashMap<>();
