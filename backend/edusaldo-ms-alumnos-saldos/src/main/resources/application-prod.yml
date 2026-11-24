@@ -1,0 +1,6 @@
+# Perfil de producción: secreto interno obligatorio y Swagger cerrado.
+edusaldo:
+  internal:
+    key: ${EDUSALDO_INTERNAL_KEY}
+  swagger:
+    public: false

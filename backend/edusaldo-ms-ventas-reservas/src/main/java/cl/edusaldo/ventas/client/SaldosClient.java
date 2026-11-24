@@ -11,9 +11,12 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class SaldosClient {
 
+  @Value("${edusaldo.internal.key:${EDUSALDO_INTERNAL_KEY:}}")
+  private String internalKey = "";
+
   private final RestTemplate restTemplate = internalTemplate();
 
-  private static RestTemplate internalTemplate() {
+  private RestTemplate internalTemplate() {
     RestTemplate client = new RestTemplate();
     org.springframework.http.client.SimpleClientHttpRequestFactory factory =
         new org.springframework.http.client.SimpleClientHttpRequestFactory();
@@ -24,8 +27,9 @@ public class SaldosClient {
         .getInterceptors()
         .add(
             (request, body, execution) -> {
-              String key = System.getenv("EDUSALDO_INTERNAL_KEY");
-              if (key != null) request.getHeaders().set("X-Internal-Key", key);
+              if (internalKey != null && !internalKey.isBlank()) {
+                request.getHeaders().set("X-Internal-Key", internalKey);
+              }
               request.getHeaders().set("X-Internal-Caller", "ventas");
               for (String name :
                   java.util.List.of(

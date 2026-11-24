@@ -9,3 +9,13 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+
+edusaldo:
+  internal:
+    key: ${EDUSALDO_INTERNAL_KEY:edusaldo-test-internal-key-012345678901234567890123}
+  swagger:
+    public: true
+  jwt:
+    secret: ${EDUSALDO_JWT_SECRET:edusaldo-test-jwt-secret-0123456789012345678901234567}
+    expiration-seconds: 3600
+    issuer: edusaldo-auth

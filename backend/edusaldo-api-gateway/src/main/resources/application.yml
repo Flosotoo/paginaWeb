@@ -1,4 +1,3 @@
-
 server:
   port: 8090
 
@@ -23,9 +22,17 @@ spring:
         - id: ms-productos-inventario
           uri: http://localhost:8093
           predicates:
-            - Path=/api/productos/**, /api/categorias/**, /api/inventario/**, /api/proveedores/**
+            - Path=/api/productos/**, /api/categorias/**, /api/inventario/**, /api/proveedores/**, /api/ordenes-compra/**
 
         - id: ms-ventas-reservas
           uri: http://localhost:8094
           predicates:
             - Path=/api/reservas/**, /api/entregas/**, /api/devoluciones/**, /api/operaciones/**
+
+edusaldo:
+  internal:
+    key: ${EDUSALDO_INTERNAL_KEY:edusaldo-local-dev-internal-key-change-in-production-2026}
+  allowed-origins: ${EDUSALDO_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173,http://localhost:8091,http://localhost:8092,http://localhost:8093,http://localhost:8094}
+  jwt:
+    secret: ${EDUSALDO_JWT_SECRET:edusaldo-local-dev-jwt-secret-change-in-production-2026}
+    issuer: edusaldo-auth

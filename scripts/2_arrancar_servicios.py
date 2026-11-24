@@ -25,7 +25,12 @@ SERVICES = (
     ('edusaldo-api-gateway', 8090, None),
 )
 PID_FILE = ROOT / 'services_pids.json'
-KEY_FILE = ROOT / '.agents/notas/servicios.key'
+DEFAULT_INTERNAL_KEY = 'edusaldo-local-dev-internal-key-change-in-production-2026'
+DEFAULT_JWT_SECRET = 'edusaldo-local-dev-jwt-secret-change-in-production-2026'
+DEFAULT_ALLOWED_ORIGINS = (
+    'http://localhost:5173,http://localhost:4173,'
+    'http://localhost:8091,http://localhost:8092,http://localhost:8093,http://localhost:8094'
+)
 
 
 def check_java_version(executable):
@@ -136,7 +141,7 @@ def owned_process(pid, jar):
         return False
 
 
-def find_maven():
+def find_maven(module_dir=None):
     explicit = os.environ.get('M2_HOME') or os.environ.get('MAVEN_HOME')
     if explicit:
         exe = Path(explicit) / 'bin' / ('mvn.cmd' if os.name == 'nt' else 'mvn')
@@ -146,6 +151,10 @@ def find_maven():
         found = shutil.which(cmd)
         if found:
             return found
+    if module_dir is not None:
+        wrapper = Path(module_dir) / ('mvnw.cmd' if os.name == 'nt' else 'mvnw')
+        if wrapper.is_file():
+            return str(wrapper)
     return None
 
 
@@ -170,16 +179,17 @@ def find_jars():
 
 
 def compile_modules(modules, environment):
-    mvn = find_maven()
-    if not mvn:
-        raise RuntimeError(
-            f"Faltan los JARs compilados para: {', '.join(modules)} y no se encontró 'mvn' en el PATH. "
-            f"Por favor instala Apache Maven (3.8+) o compila previamente con 'mvn package -DskipTests'."
-        )
-    print(f"[BUILD] Compilando {len(modules)} módulo(s) con Maven ({mvn})...")
+    print(f"[BUILD] Compilando {len(modules)} módulo(s) con Maven...")
     for name in modules:
-        pom_path = BACKEND / name / 'pom.xml'
-        print(f"[BUILD] Compilando {name}...")
+        module_dir = BACKEND / name
+        mvn = find_maven(module_dir)
+        if not mvn:
+            raise RuntimeError(
+                f"Faltan los JARs compilados para: {', '.join(modules)} y no se encontró 'mvn' ni 'mvnw'. "
+                f"Instala Apache Maven (3.8+) o usa el wrapper ./mvnw."
+            )
+        pom_path = module_dir / 'pom.xml'
+        print(f"[BUILD] Compilando {name} ({Path(mvn).name})...")
         cmd = [mvn, '-f', str(pom_path), 'clean', 'package', '-DskipTests']
         res = subprocess.run(cmd, env=environment, capture_output=True, text=True)
         if res.returncode != 0:
@@ -225,18 +235,20 @@ def internal_key():
         if len(value) < 32:
             raise RuntimeError('EDUSALDO_INTERNAL_KEY debe tener al menos 32 caracteres.')
         return value
-    if KEY_FILE.exists():
-        value = KEY_FILE.read_text().strip()
-        if len(value) >= 32:
-            return value
-    return secrets.token_urlsafe(48)
+    return DEFAULT_INTERNAL_KEY
+
+
+def jwt_secret():
+    value = os.environ.get('EDUSALDO_JWT_SECRET')
+    if value is not None:
+        if len(value) < 32:
+            raise RuntimeError('EDUSALDO_JWT_SECRET debe tener al menos 32 caracteres.')
+        return value
+    return DEFAULT_JWT_SECRET
 
 
 def check_port_online(port, timeout=2):
-    key = os.environ.get('EDUSALDO_INTERNAL_KEY')
-    if not key and KEY_FILE.exists():
-        key = KEY_FILE.read_text().strip()
-    return ready(port, key, timeout)
+    return ready(port, internal_key(), timeout)
 
 
 def main():
@@ -267,12 +279,9 @@ def main():
         occupied = [port for _, port, _ in SERVICES if port_busy(port)]
         if occupied:
             raise RuntimeError(f'Puertos ocupados por procesos ajenos o no registrados: {occupied}. No se terminaron esos procesos.')
-        KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
-        KEY_FILE.write_text(key)
-        if os.name != 'nt':
-            KEY_FILE.chmod(0o600)
         environment['EDUSALDO_INTERNAL_KEY'] = key
-        environment['EDUSALDO_ALLOWED_ORIGINS'] = os.environ.get('EDUSALDO_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:4173')
+        environment['EDUSALDO_JWT_SECRET'] = jwt_secret()
+        environment['EDUSALDO_ALLOWED_ORIGINS'] = os.environ.get('EDUSALDO_ALLOWED_ORIGINS', DEFAULT_ALLOWED_ORIGINS)
         log_dir = BACKEND / 'logs'
         log_dir.mkdir(exist_ok=True)
         records = {}

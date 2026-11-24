@@ -5,9 +5,9 @@ spring:
   application:
     name: ms-auth-usuarios
   datasource:
-    url: jdbc:mysql://localhost:3306/db_usuarios?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: ""
+    url: jdbc:mysql://${EDUSALDO_DB_HOST:127.0.0.1}:${EDUSALDO_DB_PORT:3306}/db_usuarios?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${EDUSALDO_DB_USER:root}
+    password: ${EDUSALDO_DB_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -22,3 +22,15 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+edusaldo:
+  internal:
+    key: ${EDUSALDO_INTERNAL_KEY:edusaldo-local-dev-internal-key-change-in-production-2026}
+  allowed-origins: ${EDUSALDO_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173}
+  gateway-url: ${EDUSALDO_GATEWAY_URL:http://localhost:8090}
+  swagger:
+    public: ${EDUSALDO_SWAGGER_PUBLIC:true}
+  jwt:
+    secret: ${EDUSALDO_JWT_SECRET:edusaldo-local-dev-jwt-secret-change-in-production-2026}
+    expiration-seconds: ${EDUSALDO_JWT_EXPIRATION_SECONDS:3600}
+    issuer: edusaldo-auth

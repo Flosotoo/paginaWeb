@@ -1,0 +1,8 @@
+# Perfil de producción: secretos obligatorios por variable de entorno y Swagger cerrado.
+edusaldo:
+  internal:
+    key: ${EDUSALDO_INTERNAL_KEY}
+  swagger:
+    public: false
+  jwt:
+    secret: ${EDUSALDO_JWT_SECRET}

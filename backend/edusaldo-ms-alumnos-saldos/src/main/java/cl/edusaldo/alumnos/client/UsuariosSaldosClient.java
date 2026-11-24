@@ -12,6 +12,9 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 public class UsuariosSaldosClient {
+  @Value("${edusaldo.internal.key:${EDUSALDO_INTERNAL_KEY:}}")
+  private String internalKey = "";
+
   private final RestTemplate restTemplate = internalTemplate();
 
   @Value("${edusaldo.interservice.enabled:true}")
@@ -20,7 +23,7 @@ public class UsuariosSaldosClient {
   @Value("${edusaldo.services.usuarios-url:http://localhost:8091}")
   private String usuariosBaseUrl = "http://localhost:8091";
 
-  private static RestTemplate internalTemplate() {
+  private RestTemplate internalTemplate() {
     RestTemplate client = new RestTemplate();
     var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
     factory.setConnectTimeout(3000);
@@ -30,8 +33,9 @@ public class UsuariosSaldosClient {
         .getInterceptors()
         .add(
             (request, body, execution) -> {
-              String key = System.getenv("EDUSALDO_INTERNAL_KEY");
-              if (key != null) request.getHeaders().set("X-Internal-Key", key);
+              if (internalKey != null && !internalKey.isBlank()) {
+                request.getHeaders().set("X-Internal-Key", internalKey);
+              }
               RequestContext context = RequestContext.current();
               request.getHeaders().set("X-Internal-Caller", "saldos");
               request

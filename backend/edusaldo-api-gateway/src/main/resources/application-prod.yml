@@ -1,0 +1,7 @@
+# Perfil de producción: sin valores por defecto para secretos ni orígenes CORS.
+edusaldo:
+  internal:
+    key: ${EDUSALDO_INTERNAL_KEY}
+  allowed-origins: ${EDUSALDO_ALLOWED_ORIGINS}
+  jwt:
+    secret: ${EDUSALDO_JWT_SECRET}

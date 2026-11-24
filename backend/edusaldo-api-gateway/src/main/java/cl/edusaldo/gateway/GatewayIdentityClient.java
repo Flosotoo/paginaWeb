@@ -1,6 +1,7 @@
 package cl.edusaldo.gateway;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -16,10 +17,18 @@ public class GatewayIdentityClient {
   private final String authUrl;
 
   public GatewayIdentityClient(
-      @Value("${EDUSALDO_INTERNAL_KEY:}") String key,
+      @Value("${edusaldo.internal.key:${EDUSALDO_INTERNAL_KEY:}}") String key,
       @Value("${edusaldo.auth-url:http://localhost:8091}") String authUrl) {
-    this.key = key;
+    this.key = key == null ? "" : key;
     this.authUrl = authUrl;
+  }
+
+  @PostConstruct
+  void validarConfiguracion() {
+    if (!configured()) {
+      throw new IllegalStateException(
+          "Configuración inválida: edusaldo.internal.key (EDUSALDO_INTERNAL_KEY) debe tener al menos 32 caracteres.");
+    }
   }
 
   public boolean configured() {
@@ -62,8 +71,9 @@ public class GatewayIdentityClient {
     String[] partes = path.split("/");
     String recurso = partes.length > 2 && java.util.Set.of(
         "auth", "usuarios", "saldos", "productos", "categorias", "inventario",
-        "reservas", "entregas", "devoluciones", "auditoria", "configuracion",
-        "politica-acceso", "parametros", "operaciones", "consentimientos")
+        "proveedores", "ordenes-compra", "reservas", "entregas", "devoluciones",
+        "auditoria", "configuracion", "politica-acceso", "parametros", "operaciones",
+        "consentimientos")
         .contains(partes[2]) ? partes[2] : "otros";
     return http.post().uri(authUrl + "/internal/auditoria/denegacion")
         .headers(headers -> trusted(headers, who))
@@ -73,7 +83,7 @@ public class GatewayIdentityClient {
 
   private String base(String path) {
     if (path.startsWith("/api/saldos")) return "http://localhost:8092";
-    if (path.matches("/api/(productos|categorias|inventario)(/.*)?"))
+    if (path.matches("/api/(productos|categorias|inventario|proveedores|ordenes-compra)(/.*)?"))
       return "http://localhost:8093";
     if (path.matches("/api/(reservas|entregas|devoluciones|operaciones)(/.*)?"))
       return "http://localhost:8094";

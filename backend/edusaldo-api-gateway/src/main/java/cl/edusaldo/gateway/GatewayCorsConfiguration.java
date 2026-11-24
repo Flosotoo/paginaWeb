@@ -13,7 +13,8 @@ public class GatewayCorsConfiguration {
   @Bean
   @Order(Ordered.HIGHEST_PRECEDENCE)
   public CorsWebFilter corsWebFilter(
-      @Value("${EDUSALDO_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173}")
+      @Value(
+              "${edusaldo.allowed-origins:${EDUSALDO_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173,http://localhost:8091,http://localhost:8092,http://localhost:8093,http://localhost:8094}}")
           String origins) {
     CorsConfiguration cors = new CorsConfiguration();
     cors.setAllowedOrigins(
