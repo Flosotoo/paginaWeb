@@ -54,11 +54,11 @@ EduSaldo/
 | Componente | Carpeta | Puerto | Base de Datos | Swagger UI / URL |
 | :--- | :--- | :---: | :--- | :--- |
 | **Frontend Web (React)** | [`frontend/`](frontend/) | **5173** | N/A (consume 8090) | `http://localhost:5173` |
-| **API Gateway Central** | [`backend/edusaldo-api-gateway/`](backend/edusaldo-api-gateway/) | **8090** | N/A (enrutamiento) | `http://localhost:8090` |
-| **MS Auth y Usuarios** | [`backend/edusaldo-ms-auth-usuarios/`](backend/edusaldo-ms-auth-usuarios/) | **8091** | `db_usuarios` | Puerto interno protegido |
-| **MS Alumnos y Saldos** | [`backend/edusaldo-ms-alumnos-saldos/`](backend/edusaldo-ms-alumnos-saldos/) | **8092** | `db_saldos` | Puerto interno protegido |
-| **MS Productos e Inventario** | [`backend/edusaldo-ms-productos-inventario/`](backend/edusaldo-ms-productos-inventario/) | **8093** | `db_inventario` | Puerto interno protegido |
-| **MS Reservas y Entregas** | [`backend/edusaldo-ms-ventas-reservas/`](backend/edusaldo-ms-ventas-reservas/) | **8094** | `db_reservas` | Puerto interno protegido |
+| **API Gateway Central** | [`backend/edusaldo-api-gateway/`](backend/edusaldo-api-gateway/) | **8090** | N/A (enrutamiento + JWT) | `http://localhost:8090` |
+| **MS Auth y Usuarios** | [`backend/edusaldo-ms-auth-usuarios/`](backend/edusaldo-ms-auth-usuarios/) | **8091** | `db_usuarios` | `http://localhost:8091/swagger-ui.html` |
+| **MS Alumnos y Saldos** | [`backend/edusaldo-ms-alumnos-saldos/`](backend/edusaldo-ms-alumnos-saldos/) | **8092** | `db_saldos` | `http://localhost:8092/swagger-ui.html` |
+| **MS Productos e Inventario** | [`backend/edusaldo-ms-productos-inventario/`](backend/edusaldo-ms-productos-inventario/) | **8093** | `db_inventario` | `http://localhost:8093/swagger-ui.html` |
+| **MS Reservas y Entregas** | [`backend/edusaldo-ms-ventas-reservas/`](backend/edusaldo-ms-ventas-reservas/) | **8094** | `db_reservas` | `http://localhost:8094/swagger-ui.html` |
 
 ---
 
@@ -149,30 +149,21 @@ Cada microservicio contiene su archivo `schema.sql` canónico con la creación d
 2. Selecciona la base de datos `db_usuarios` en el menú izquierdo, ve a la pestaña **Importar**, selecciona el archivo `backend/edusaldo-ms-auth-usuarios/src/main/resources/schema.sql` y presiona **Continuar**.
 3. Repite el proceso para `db_saldos`, `db_inventario` y `db_reservas` seleccionando su respectivo archivo `schema.sql`.
 
-#### 2. Compilación y Arranque Manual del Backend
-Compila los 5 módulos con Maven (ejecuta en la raíz del repositorio o dentro de cada carpeta):
+#### 2. Compilación y Arranque Manual del Backend (Terminal o Panel Spring Boot)
+Cada módulo incluye **Maven Wrapper (`./mvnw` / `mvnw.cmd`)**, por lo que ni siquiera requiere tener Maven global instalado. En perfil local de desarrollo los 5 servicios comparten una configuración agnóstica lista para iniciar directamente (y en perfil `--spring.profiles.active=prod` exigen variables de entorno explícitas `EDUSALDO_INTERNAL_KEY` y `EDUSALDO_JWT_SECRET` aplicando *Fail-Fast*):
 ```bash
-mvn -f backend/edusaldo-api-gateway/pom.xml clean package -DskipTests
-mvn -f backend/edusaldo-ms-auth-usuarios/pom.xml clean package -DskipTests
-mvn -f backend/edusaldo-ms-alumnos-saldos/pom.xml clean package -DskipTests
-mvn -f backend/edusaldo-ms-productos-inventario/pom.xml clean package -DskipTests
-mvn -f backend/edusaldo-ms-ventas-reservas/pom.xml clean package -DskipTests
-```
-Una vez compilados, puedes arrancar cada microservicio en una terminal distinta con Java:
-```bash
-# Terminal 1: Auth y Usuarios (8091)
+# Compilar con Maven Wrapper (o mvn si está en el PATH)
+./backend/edusaldo-api-gateway/mvnw -f backend/edusaldo-api-gateway/pom.xml clean package -DskipTests
+./backend/edusaldo-ms-auth-usuarios/mvnw -f backend/edusaldo-ms-auth-usuarios/pom.xml clean package -DskipTests
+./backend/edusaldo-ms-alumnos-saldos/mvnw -f backend/edusaldo-ms-alumnos-saldos/pom.xml clean package -DskipTests
+./backend/edusaldo-ms-productos-inventario/mvnw -f backend/edusaldo-ms-productos-inventario/pom.xml clean package -DskipTests
+./backend/edusaldo-ms-ventas-reservas/mvnw -f backend/edusaldo-ms-ventas-reservas/pom.xml clean package -DskipTests
+
+# Arrancar en 5 terminales (o desde el Spring Boot Dashboard de VS Code / IntelliJ)
 java -jar backend/edusaldo-ms-auth-usuarios/target/ms-auth-usuarios-2.0.0.jar
-
-# Terminal 2: Alumnos y Saldos (8092)
 java -jar backend/edusaldo-ms-alumnos-saldos/target/ms-alumnos-saldos-2.0.0.jar
-
-# Terminal 3: Productos e Inventario (8093)
 java -jar backend/edusaldo-ms-productos-inventario/target/ms-productos-inventario-2.0.0.jar
-
-# Terminal 4: Ventas y Reservas (8094)
 java -jar backend/edusaldo-ms-ventas-reservas/target/ms-ventas-reservas-2.0.0.jar
-
-# Terminal 5: API Gateway (8090)
 java -jar backend/edusaldo-api-gateway/target/api-gateway-2.0.0.jar
 ```
 
@@ -194,7 +185,7 @@ Toda la operativa de pruebas está centralizada en [`scripts/`](scripts/):
   ```bash
   python scripts/4_pruebas_http_automaticas.py
   ```
-  Primero se ejecutan los flujos de integración, luego los casos de borde y finalmente controles adicionales de negocio y seguridad. Las pruebas requieren las bases con datos semilla y modifican sus registros. Los intentos de acceso no autorizado se consideran fallos si la API los permite.
+  Primero se ejecutan los flujos de integración, luego los casos de borde y finalmente controles adicionales de negocio y seguridad (20 verificaciones, incluyendo JWT HS256, revocación post-logout, validación defensiva de RUT y alta de alumno con ciclo inicial). Las pruebas requieren las bases con datos semilla y modifican sus registros. Los intentos de acceso no autorizado se consideran fallos si la API los permite.
 - **Colección Postman:** Importa [`scripts/pruebas_postman_coleccion.json`](scripts/pruebas_postman_coleccion.json) directamente en Postman.
 - **Contratos del backend:** Consulta [`backend/README.md`](backend/README.md) para conocer las rutas y la protección de los puertos internos.
 

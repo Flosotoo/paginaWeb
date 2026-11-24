@@ -4,6 +4,9 @@
 Requiere las semillas locales y servicios reconstruidos. Configure las credenciales
 mediante las variables EDUSALDO_*; no se imprimen contraseñas ni tokens.
 """
+import base64
+import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -116,6 +119,16 @@ def redact(value):
     return json.dumps(clean(value), ensure_ascii=False)
 
 
+def decode_jwt_segment(segment):
+    padding = '=' * (-len(segment) % 4)
+    return json.loads(base64.urlsafe_b64decode(segment + padding).decode('utf-8'))
+
+
+def encode_jwt_segment(obj):
+    raw = json.dumps(obj, separators=(',', ':')).encode('utf-8')
+    return base64.urlsafe_b64encode(raw).decode('ascii').rstrip('=')
+
+
 def require(condition, message):
     if not condition:
         raise CheckFailed(message)
@@ -179,10 +192,24 @@ class Scenario:
     def login(self, role, email, password, expected_role):
         data, _ = self.call('POST', '/api/auth/login', 200, {'identificador': email, 'password': password})
         require(isinstance(data, dict), 'Respuesta de sesión inválida')
-        require(isinstance(data.get('token'), str) and bool(data['token']), 'Falta token de sesión')
+        token = data.get('token')
+        require(isinstance(token, str) and bool(token), 'Falta token de sesión')
         require(type(data.get('usuarioId')) is int and data['usuarioId'] > 0, 'Identificador de usuario inválido')
         require(type(data.get('idEstablecimiento')) is int and data['idEstablecimiento'] > 0, 'Identificador de establecimiento inválido')
         require(str(data.get('rol', '')).removeprefix('ROLE_') == expected_role, 'Rol de sesión inesperado')
+        parts = token.split('.')
+        require(len(parts) == 3, 'El token de sesión no tiene formato JWT de 3 segmentos')
+        header = decode_jwt_segment(parts[0])
+        payload = decode_jwt_segment(parts[1])
+        require(header.get('alg') == 'HS256' and header.get('typ') == 'JWT', 'Cabecera JWT inesperada')
+        require(payload.get('iss') == 'edusaldo-auth', 'Emisor JWT inesperado')
+        require(payload.get('sub') == str(data['usuarioId']), 'Claim sub no coincide con usuarioId')
+        require(payload.get('tenant') == data['idEstablecimiento'], 'Claim tenant no coincide con establecimiento')
+        require(payload.get('rol') == expected_role, 'Claim rol no coincide con el rol esperado')
+        require(isinstance(payload.get('jti'), str) and bool(payload['jti']), 'Falta claim jti')
+        require(type(payload.get('iat')) is int and type(payload.get('exp')) is int and payload['exp'] > payload['iat'],
+                'Claims de vigencia JWT inválidos')
+        require('password' not in payload and 'passwordHash' not in payload, 'El JWT expone datos de contraseña')
         self.sessions[role] = data
 
     def account(self):
@@ -478,20 +505,111 @@ class Scenario:
         saved, _ = self.call('GET', f'/api/usuarios/{user_id}', 200, role='admin')
         require(saved.get('primerNombre') == 'Corregido', 'El dato aprobado no quedó persistido')
 
+    def jwt_security(self):
+        token = self.sessions['parent']['token']
+        header_b64, payload_b64, sig_b64 = token.split('.')
+        payload = decode_jwt_segment(payload_b64)
+
+        # 1. Payload adulterado intentando escalar rol conservando la firma.
+        forged_payload = encode_jwt_segment({**payload, 'rol': 'ADMINISTRADOR'})
+        tampered = f'{header_b64}.{forged_payload}.{sig_b64}'
+        status, _, _ = self.client.request('GET', '/api/productos', token=tampered)
+        expect_status(status, 401)
+
+        # 2. Token con alg: none sin firma.
+        none_header = encode_jwt_segment({'alg': 'none', 'typ': 'JWT'})
+        unsigned = f'{none_header}.{payload_b64}.'
+        status, _, _ = self.client.request('GET', '/api/productos', token=unsigned)
+        expect_status(status, 401)
+
+        # 3. Token firmado con clave incorrecta.
+        signing_input = f'{header_b64}.{payload_b64}'.encode('ascii')
+        fake_sig = base64.urlsafe_b64encode(
+            hmac.new(b'clave-incorrecta-para-probar-rechazo-jwt', signing_input, hashlib.sha256).digest()
+        ).decode('ascii').rstrip('=')
+        wrong_key = f'{header_b64}.{payload_b64}.{fake_sig}'
+        status, _, _ = self.client.request('GET', '/api/productos', token=wrong_key)
+        expect_status(status, 401)
+
+        # 4. Login temporal, cierre de sesión y verificación de revocación inmediata del JWT.
+        self.login('jwt_logout',
+                   os.getenv('EDUSALDO_APODERADO_EMAIL', 'carlos.perez@gmail.com'),
+                   os.getenv('EDUSALDO_APODERADO_PASSWORD', 'Edu123456'),
+                   'APODERADO')
+        revoked_token = self.sessions['jwt_logout']['token']
+        self.call('POST', '/api/auth/cerrar-sesion', 200, role='jwt_logout')
+        for path in ('/api/auth/sesion', '/api/productos'):
+            status, _, _ = self.client.request('GET', path, token=revoked_token)
+            expect_status(status, 401)
+
     def rut_validation(self):
         user = self.sessions['parent']
         cuerpo, dv = user['rut'].replace('.', '').split('-')
         formateado = f"{int(cuerpo):,}".replace(',', '.') + '-' + dv
+        sin_guion = cuerpo + dv
         incorrecto = cuerpo + '-' + ('0' if dv != '0' else '1')
-        self.login('rut_format', formateado,
-                   os.getenv('EDUSALDO_APODERADO_PASSWORD', 'Edu123456'), 'APODERADO')
-        require(self.sessions['rut_format']['usuarioId'] == user['usuarioId'], 'El formato de RUT no identifica a la misma persona')
+        password = os.getenv('EDUSALDO_APODERADO_PASSWORD', 'Edu123456')
+        for formato in (formateado, sin_guion):
+            self.login('rut_format', formato, password, 'APODERADO')
+            require(self.sessions['rut_format']['usuarioId'] == user['usuarioId'],
+                    f'El formato de RUT ({formato}) no identifica a la misma persona')
         before, _ = self.call('GET', '/api/usuarios', 200, role='admin')
         body = {'primerNombre': 'Prueba', 'primerApellido': 'Rut', 'correo': f'rut-{uuid.uuid4().hex}@example.org', 'rol': 'APODERADO'}
-        for rut in (incorrecto, formateado):
+        invalidos = (
+            incorrecto,
+            formateado,
+            '00000000-0',
+            '12..345.678-5',
+            "12345678-5' OR '1'='1",
+            '<script>12345678-5</script>',
+            '1' * 40 + '-5',
+        )
+        for rut in invalidos:
             self.call('POST', '/api/usuarios', {400, 409, 422}, {**body, 'rut': rut}, 'admin')
         after, _ = self.call('GET', '/api/usuarios', 200, role='admin')
-        require(len(after) == len(before), 'Un RUT inválido o repetido creó un usuario')
+        require(len(after) == len(before), 'Un RUT inválido, malicioso o repetido creó un usuario')
+
+    def alta_alumno_y_ciclo_inicial(self):
+        number = 26000000 + int(uuid.uuid4().hex[:6], 16) % 2000000
+        total = sum(int(digit) * (2 + index % 6) for index, digit in enumerate(str(number)[::-1]))
+        digit = 11 - total % 11
+        rut_alumno = f'{number}-{("K" if digit == 10 else "0" if digit == 11 else digit)}'
+        parent_rut = self.sessions['parent']['rut']
+        parent_email = os.getenv('EDUSALDO_APODERADO_EMAIL', 'carlos.perez@gmail.com')
+
+        base_payload = {
+            'idEstablecimiento': self.sessions['admin']['idEstablecimiento'],
+            'rutAlumno': rut_alumno,
+            'primerNombreAlumno': 'Prueba',
+            'primerApellidoAlumno': 'Matricula',
+            'fechaNacimiento': '2013-05-15',
+            'curso': '6° Básico A',
+            'rutApoderado': parent_rut,
+            'primerNombreApoderado': 'Carlos',
+            'primerApellidoApoderado': 'Pérez',
+            'correoApoderado': parent_email,
+            'parentesco': 'PADRE',
+        }
+
+        # Rechazos explícitos antes de crear: fecha futura, RUTs iguales y apoderado con otro rol.
+        self.call('POST', '/api/usuarios/alumnos', 400, {**base_payload, 'fechaNacimiento': '2035-01-01'}, 'admin')
+        self.call('POST', '/api/usuarios/alumnos', 400, {**base_payload, 'rutApoderado': rut_alumno}, 'admin')
+        self.call('POST', '/api/usuarios/alumnos', 400, {**base_payload, 'rutApoderado': self.sessions['staff']['rut']}, 'admin')
+
+        # Alta exitosa y verificación de cuenta en $0 + lista vacía de movimientos (sin 400) + mesón.
+        creado, _ = self.call('POST', '/api/usuarios/alumnos', 201, base_payload, 'admin')
+        require(isinstance(creado, dict) and type(creado.get('alumnoId')) is int and creado['alumnoId'] > 0,
+                'Alta de alumno no devolvió alumnoId válido')
+        require(isinstance(creado.get('correoAlumno'), str) and '@' in creado['correoAlumno'],
+                'Alta de alumno no devolvió correo institucional')
+        nuevo_id = creado['alumnoId']
+        cuenta, _ = self.call('GET', f'/api/saldos/cuenta/{nuevo_id}', 200, role='parent')
+        require(cuenta.get('saldoActual') == 0 and cuenta.get('saldoDisponible') == 0,
+                'Alumno recién creado no reportó saldo inicial cero')
+        movs, _ = self.call('GET', f'/api/saldos/cuenta/{nuevo_id}/movimientos', 200, role='parent')
+        require(movs == [], 'Alumno recién creado no devolvió lista vacía de movimientos')
+        buscado, _ = self.call('GET', f'/api/usuarios/alumnos/buscar?rut={rut_alumno}', 200, role='staff')
+        require(buscado.get('id') == nuevo_id, 'Alumno recién creado no fue encontrado en mesón')
 
     def liquidation(self):
         before = self.account()
@@ -616,10 +734,79 @@ class Scenario:
             self.call('POST', f'/api/reservas/{reserva}/cancelar', 200, {'motivo': 'Limpieza de prueba'}, 'parent')
             require(self.account() == inicial and self.stock() == stock, 'No se restauraron los compromisos')
 
+    def compras_y_recepcion(self):
+        stock_antes = self.stock()
+        # Rechazo de RUT inválido en alta de proveedor y denegación RBAC a apoderado
+        self.call('GET', '/api/proveedores', 403, role='parent')
+        self.call('GET', '/api/ordenes-compra', 403, role='parent')
+        self.call('POST', '/api/proveedores', {400, 422},
+                  {'razonSocial': 'Proveedor RUT Inválido', 'rut': '76.123.456-7'}, 'admin')
+        # Creación de proveedor válido con algoritmo Módulo 11
+        number = 70000000 + int(uuid.uuid4().hex[:6], 16) % 20000000
+        total = sum(int(d) * (2 + i % 6) for i, d in enumerate(str(number)[::-1]))
+        dv_num = 11 - total % 11
+        rut_prov = f'{number}-{("K" if dv_num == 10 else "0" if dv_num == 11 else dv_num)}'
+        prov, _ = self.call('POST', '/api/proveedores', 201,
+                            {'razonSocial': f'Editorial {number} SpA', 'rut': rut_prov,
+                             'correo': 'compras@editorial.cl'}, 'admin')
+        prov_id = self.ident(prov)
+        # Encargado emite orden de compra; no puede aprobarla ni recepcionarla antes de aprobación
+        oc, _ = self.call('POST', '/api/ordenes-compra', 201,
+                          {'proveedorId': prov_id, 'observacion': 'Reposición verificada',
+                           'detalles': [{'productoId': self.product, 'cantidad': 4, 'precioUnitario': 700}]}, 'staff')
+        oc_id = self.ident(oc)
+        require(oc.get('estado') == 'PENDIENTE_APROBACION' and oc.get('total_neto') == 2800
+                and oc.get('iva') == 532 and oc.get('total') == 3332, 'Montos o estado inicial de OC inválidos')
+        self.call('PATCH', f'/api/ordenes-compra/{oc_id}/aprobar', 403, role='staff')
+        self.call('PATCH', f'/api/ordenes-compra/{oc_id}/recepcionar', {400, 409, 422}, role='staff')
+        require(self.stock() == stock_antes, 'Recepción rechazada alteró existencias')
+        # Administrador aprueba y Encargado recepciona (con verificación de idempotencia)
+        aprobada, _ = self.call('PATCH', f'/api/ordenes-compra/{oc_id}/aprobar', 200, role='admin')
+        require(aprobada.get('estado') == 'APROBADA', 'OC no pasó a APROBADA')
+        recibida, _ = self.call('PATCH', f'/api/ordenes-compra/{oc_id}/recepcionar', 200, role='staff')
+        require(recibida.get('estado') == 'RECIBIDA', 'OC no pasó a RECIBIDA')
+        stock_despues = self.stock()
+        require(stock_despues['stockFisico'] == stock_antes['stockFisico'] + 4,
+                'Recepción de OC no incrementó el stock físico esperado')
+        reintento, _ = self.call('PATCH', f'/api/ordenes-compra/{oc_id}/recepcionar', 200, role='staff')
+        require(reintento.get('estado') == 'RECIBIDA' and self.stock() == stock_despues,
+                'Reintento de recepción duplicó el ingreso de stock')
+
+    def entrega_meson_y_circuito_familiar(self):
+        antes_cuenta, antes_stock = self.account(), self.stock()
+        alumno_info, _ = self.call('GET', f'/api/usuarios/{self.child}', 200, role='admin')
+        buscado, _ = self.call('GET', f'/api/usuarios/alumnos/buscar?rut={alumno_info["rut"]}', 200, role='staff')
+        require(buscado.get('id') == self.child, 'Búsqueda por RUT en mesón no identificó al alumno')
+        # Intento de entrega directa superando el saldo disponible no debe mutar saldos ni stock
+        unidades_exceso = (antes_cuenta['saldoDisponible'] // antes_stock['precio']) + 2
+        if unidades_exceso <= antes_stock['stockDisponible']:
+            self.call('POST', '/api/entregas/meson', {400, 409, 422},
+                      {'alumnoId': self.child, 'items': [{'productoId': self.product, 'cantidad': unidades_exceso}]}, 'staff')
+            require(self.account() == antes_cuenta and self.stock() == antes_stock,
+                    'Entrega directa con saldo insuficiente alteró saldos o existencias')
+        # Entrega directa válida en mesón y devolución posterior verificando movimientos del apoderado
+        entrega, _ = self.call('POST', '/api/entregas/meson', 201,
+                               {'alumnoId': self.child, 'items': [{'productoId': self.product, 'cantidad': 1}]}, 'staff')
+        entrega_id = self.ident(entrega)
+        detalle_id = self.ident(entrega['items'][0])
+        tras_entrega, stock_tras_entrega = self.account(), self.stock()
+        require(tras_entrega['saldoActual'] == antes_cuenta['saldoActual'] - antes_stock['precio']
+                and tras_entrega['saldoDisponible'] == antes_cuenta['saldoDisponible'] - antes_stock['precio']
+                and stock_tras_entrega['stockFisico'] == antes_stock['stockFisico'] - 1,
+                'Entrega directa en mesón no descontó saldo y stock de forma exacta')
+        movimientos, _ = self.call('GET', f'/api/saldos/cuenta/{self.child}/movimientos', 200, role='parent')
+        require(isinstance(movimientos, list) and len(movimientos) >= 1,
+                'El apoderado no visualiza movimientos tras la entrega en mesón')
+        self.call('POST', '/api/devoluciones', 201,
+                  {'entregaId': entrega_id, 'motivo': 'Devolución verificada mesón',
+                   'items': [{'detalleEntregaId': detalle_id, 'cantidad': 1}]}, 'staff')
+        require(self.account() == antes_cuenta and self.stock() == antes_stock,
+                'La devolución posterior a entrega en mesón no restauró saldo y stock')
+
 
 def main():
     scenario = Scenario(Client(os.getenv('EDUSALDO_GATEWAY', 'http://localhost:8090')))
-    checks = [('Preparación de actores y datos', scenario.prepare), ('CORS', scenario.cors), ('Autorización y aislamiento', scenario.security), ('Pago y persistencia', scenario.payment), ('Confirmación concurrente', scenario.concurrent_payment), ('Pago rechazado', scenario.rejected_payment), ('Bloqueo de acceso', scenario.account_lock), ('Rechazo sin efectos', scenario.rejected_inputs), ('Reserva y cancelación', scenario.cancellation), ('Entrega y devolución', scenario.delivery_and_return), ('Contrato de ajustes', scenario.contrato_ajustes), ('Reporte de cuentas', scenario.reportes_cuentas), ('Corrección y concurrencia', scenario.concurrent_correction), ('Recuperación concurrente', scenario.concurrent_recovery), ('Cancelación ajena', scenario.cancelacion_ajena), ('RUT y duplicados', scenario.rut_validation), ('Liquidación y vínculo', scenario.liquidation), ('Contratos y colección Postman', verificar_contratos)]
+    checks = [('Preparación de actores y datos', scenario.prepare), ('CORS', scenario.cors), ('Autenticación JWT y revocación', scenario.jwt_security), ('Autorización y aislamiento', scenario.security), ('Pago y persistencia', scenario.payment), ('Confirmación concurrente', scenario.concurrent_payment), ('Pago rechazado', scenario.rejected_payment), ('Bloqueo de acceso', scenario.account_lock), ('Rechazo sin efectos', scenario.rejected_inputs), ('Reserva y cancelación', scenario.cancellation), ('Entrega y devolución', scenario.delivery_and_return), ('Entrega directa en mesón y circuito familiar', scenario.entrega_meson_y_circuito_familiar), ('Órdenes de compra y recepción de bodega', scenario.compras_y_recepcion), ('Contrato de ajustes', scenario.contrato_ajustes), ('Reporte de cuentas', scenario.reportes_cuentas), ('Corrección y concurrencia', scenario.concurrent_correction), ('Recuperación concurrente', scenario.concurrent_recovery), ('Cancelación ajena', scenario.cancelacion_ajena), ('RUT y duplicados', scenario.rut_validation), ('Alta de alumno y ciclo inicial', scenario.alta_alumno_y_ciclo_inicial), ('Liquidación y vínculo', scenario.liquidation), ('Contratos y colección Postman', verificar_contratos)]
     try:
         for label, fn in checks:
             scenario.check(label, fn)

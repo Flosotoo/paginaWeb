@@ -1,21 +1,27 @@
 # Frontend de EduSaldo
 
-La interfaz usa React, TypeScript y Vite; requiere Node.js 22.12 o posterior. Las peticiones HTTP pasan por una instancia Axios compartida y llegan al gateway local en `http://localhost:8090`; puede configurarse con `VITE_API_BASE_URL`.
+La interfaz web está construida con **React 18, TypeScript, Vite 6, React Router (`HashRouter` + `<Outlet />`) y Bootstrap 5.3**. Todas las solicitudes HTTP se canalizan mediante una instancia compartida de Axios (`src/services/api.ts`) hacia el API Gateway (`http://localhost:8090`), almacenando el JWT HS256 en `sessionStorage` e inyectándolo como `Authorization: Bearer <token>`.
 
+## Arquitectura Frontend
+- **Enrutamiento protegido (`src/routes/`):** `RutaProtegida.tsx` y `LayoutPortal.tsx` implementan el patrón declarativo con `<Outlet />` y `<NavLink>`, restringiendo el acceso por sesión, estado `PRIMER_ACCESO` y rol (`ADMINISTRADOR`, `ENCARGADO`, `APODERADO`, `ALUMNO`).
+- **Componentes reutilizables tipados (`src/components/`):** `AlertaMensaje`, `BotonAccion` (integrado con `useAccion` para prevención de doble envío), `TarjetaResumen`, `TablaResponsiva` (`.table-responsive`) y `TarjetaAlumno`, armonizados visualmente con Bootstrap 5.3 y la paleta institucional de EduSaldo.
+- **Servicios por dominio (`src/services/`):** contratos desacoplados para `auth`, `usuarios`, `familia`, `catalogo`, `inventario`, `proveedores`, `ordenesCompra`, `cuentaLibreria`, `reservas`, `entregas`, `administracion`, `correcciones`, `liquidacion` y `privacidad`.
+
+## Desarrollo y Compilación
 ```bash
 cd frontend
 npm install
 npm run dev
-```
-
-La interfaz conectada actualmente permite iniciar y cerrar sesión, consultar cuentas, movimientos, alertas y catálogo, efectuar abonos simulados, crear y cancelar reservas y consultar sus avisos simulados, preparar y entregar reservas, registrar entregas directas y devoluciones, gestionar solicitudes de ajuste y registrar categorías, productos e ingresos de stock. El administrador también puede consultar, crear, inactivar y reactivar usuarios de personal o apoderados, matricular alumnos con apoderado, y restablecer claves. También se gestionan vínculos familiares, nóminas CSV, políticas, solicitudes de corrección de datos, consentimiento, liquidación de saldo y informes de saldos y movimientos por alumno y período con exportación CSV. El pago y los correos son simulados.
-
-La cobertura de los requisitos y los reportes todavía debe verificarse criterio por criterio; algunas funciones siguen pendientes. Las operaciones reales y sus restricciones se comprueban en el backend.
-
-```bash
-npm test
 npm run build
-npm run test:e2e
 ```
 
-Las pruebas de navegador requieren que el gateway y los cuatro servicios estén iniciados con las bases y semillas locales, y que Playwright tenga Chromium instalado (`npx playwright install chromium`). Algunas pruebas crean datos y realizan movimientos de prueba; su ejecución debe reservarse para bases de desarrollo.
+## Pruebas Unitarias y Cobertura (Jasmine + Karma y Vitest)
+- **Runner oficial con cobertura (`Jasmine + Karma` en Chromium/Chrome Headless):**
+  ```bash
+  npm test
+  ```
+  Genera el reporte HTML detallado en `frontend/coverage/html/index.html` y verifica automáticamente umbrales mínimos de cobertura sobre componentes, rutas protegidas, contexto de sesión, interceptores/servicios Axios con mocks (`spyOn`) y validadores de dominio (`rut.ts`, `nomina.ts`, `exportarCsv.ts`).
+- **Suite complementaria rápida con Vitest:**
+  ```bash
+  npm run test:vitest
+  ```

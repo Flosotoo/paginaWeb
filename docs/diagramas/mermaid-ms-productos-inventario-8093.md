@@ -31,9 +31,40 @@ class IngresoStock {
   +Long id
   +Long idEstablecimiento
   +Long encargadoId
+  +Long ordenCompraId
   +LocalDateTime fecha
   +String referenciaUnica
   +String observacion
+}
+
+class Proveedor {
+  +Long id
+  +Long idEstablecimiento
+  +String razonSocial
+  +String rut
+  +String telefono
+  +String correo
+  +String contacto
+  +EstadoRegistro estado
+}
+
+class OrdenCompra {
+  +Long id
+  +Long idEstablecimiento
+  +Long proveedorId
+  +Long creadaPor
+  +Long aprobadaPor
+  +String estado
+  +long totalNeto
+  +long iva
+  +long total
+}
+
+class OrdenCompraDetalle {
+  +Long id
+  +int cantidad
+  +long precioUnitario
+  +long subtotal
 }
 
 class DetalleIngresoStock {
@@ -97,6 +128,11 @@ class MovimientoInventario {
 }
 
 Categoria "1" <-- "0..*" Producto : clasifica
+
+Proveedor "1" <-- "0..*" OrdenCompra : abastece
+OrdenCompra "1" *-- "1..*" OrdenCompraDetalle : detalla
+Producto "1" <-- "0..*" OrdenCompraDetalle : solicita
+OrdenCompra "0..1" <-- "0..1" IngresoStock : recepciona
 
 IngresoStock "1" *-- "1..*" DetalleIngresoStock : contiene
 Producto "1" <-- "0..*" DetalleIngresoStock : corresponde

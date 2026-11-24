@@ -8,11 +8,11 @@ El backend de **EduSaldo** está diseñado bajo una arquitectura de **microservi
 
 | Componente | Carpeta | Puerto | Base de Datos | Swagger UI Local |
 | :--- | :--- | :---: | :--- | :--- |
-| **API Gateway Central** | [`edusaldo-api-gateway/`](edusaldo-api-gateway/) | **8090** | N/A (enrutamiento perimetral y CORS) | `http://localhost:8090` |
-| **MS Auth y Usuarios** | [`edusaldo-ms-auth-usuarios/`](edusaldo-ms-auth-usuarios/) | **8091** | `db_usuarios` | Puerto interno protegido |
-| **MS Alumnos y Saldos** | [`edusaldo-ms-alumnos-saldos/`](edusaldo-ms-alumnos-saldos/) | **8092** | `db_saldos` | Puerto interno protegido |
-| **MS Productos e Inventario** | [`edusaldo-ms-productos-inventario/`](edusaldo-ms-productos-inventario/) | **8093** | `db_inventario` | Puerto interno protegido |
-| **MS Reservas y Entregas** | [`edusaldo-ms-ventas-reservas/`](edusaldo-ms-ventas-reservas/) | **8094** | `db_reservas` | Puerto interno protegido |
+| **API Gateway Central** | [`edusaldo-api-gateway/`](edusaldo-api-gateway/) | **8090** | N/A (enrutamiento perimetral, JWT y CORS) | `http://localhost:8090` |
+| **MS Auth y Usuarios** | [`edusaldo-ms-auth-usuarios/`](edusaldo-ms-auth-usuarios/) | **8091** | `db_usuarios` | `http://localhost:8091/swagger-ui.html` (enruta vía 8090) |
+| **MS Alumnos y Saldos** | [`edusaldo-ms-alumnos-saldos/`](edusaldo-ms-alumnos-saldos/) | **8092** | `db_saldos` | `http://localhost:8092/swagger-ui.html` (enruta vía 8090) |
+| **MS Productos e Inventario** | [`edusaldo-ms-productos-inventario/`](edusaldo-ms-productos-inventario/) | **8093** | `db_inventario` | `http://localhost:8093/swagger-ui.html` (enruta vía 8090) |
+| **MS Reservas y Entregas** | [`edusaldo-ms-ventas-reservas/`](edusaldo-ms-ventas-reservas/) | **8094** | `db_reservas` | `http://localhost:8094/swagger-ui.html` (enruta vía 8090) |
 
 ---
 
@@ -60,13 +60,15 @@ python scripts/4_pruebas_http_automaticas.py
 
 ---
 
-## 🌐 Uso del API
+## 🌐 Uso del API y Seguridad JWT
 
-El navegador y los clientes externos consumen `http://localhost:8090`. Los puertos de los microservicios requieren una clave interna compartida entre procesos; esa clave no se entrega al frontend. Para probar los flujos, utiliza la colección Postman o la suite HTTP.
+El navegador y los clientes externos consumen `http://localhost:8090`. La autenticación opera mediante **JWT firmado con HS256** (`iss=edusaldo-auth`, expiración de 1 hora): `edusaldo-ms-auth-usuarios` firma el token y persiste el hash SHA-256 de su `jti` en `sesiones_usuario` para permitir revocación inmediata al cerrar sesión o bloquear la cuenta. El API Gateway verifica criptográficamente el JWT en el borde (rechazando con `401` tokens expirados, adulterados o `alg: none`), comprueba la vigencia/revocación y aplica autorización por rol y establecimiento antes de enrutar.
+
+Los puertos de los microservicios requieren la clave interna `EDUSALDO_INTERNAL_KEY` y el firmado/verificación JWT requiere `EDUSALDO_JWT_SECRET` (ambas de al menos 32 bytes; `scripts/2_arrancar_servicios.py` las genera e inyecta automáticamente y ninguna se entrega al frontend). Para probar los flujos, utiliza la colección Postman o la suite HTTP.
 
 Las rutas principales son:
 
-- `POST /api/auth/login` inicia una sesión; las solicitudes autorizadas usan `Authorization: Bearer <token>`.
+- `POST /api/auth/login` inicia una sesión y retorna un JWT HS256; las solicitudes autorizadas usan `Authorization: Bearer <token>`.
 - `GET /api/auth/sesion` consulta la sesión vigente; `POST /api/auth/cerrar-sesion` la revoca.
 - `GET /api/productos` consulta el catálogo y `GET /api/saldos/cuenta/{alumnoId}` consulta la cuenta autorizada.
 - `POST /api/saldos/abonos/iniciar` y `POST /api/saldos/abonos/confirmar` ejecutan un pago simulado en dos pasos.
@@ -74,7 +76,10 @@ Las rutas principales son:
 - `POST /api/entregas/meson` registra una entrega presencial y `POST /api/devoluciones` registra una devolución sobre una entrega existente.
 - `POST /api/inventario/ajustes/solicitar` registra una solicitud; `POST /api/inventario/ajustes/{id}/aprobar` o `/rechazar` la resuelve por un administrador.
 
-Los servicios publican OpenAPI en sus puertos internos, protegidos por la misma clave que el resto de sus rutas; no son páginas públicas accesibles directamente desde el navegador.
+- `GET /api/proveedores`, `POST /api/proveedores`, `PUT /api/proveedores/{id}` y `PATCH /api/proveedores/{id}/activar|desactivar` administran el maestro de proveedores con validación RUT Módulo 11.
+- `POST /api/ordenes-compra`, `PATCH /api/ordenes-compra/{id}/aprobar` y `PATCH /api/ordenes-compra/{id}/recepcionar` ejecutan el ciclo de órdenes de compra e ingreso idempotente a inventario.
+
+En desarrollo local (`edusaldo.swagger.public=true`), los cuatro microservicios exponen su interfaz de documentación en `/swagger-ui.html` y `/api-docs` configurada con `OpenApiConfig` apuntando a `http://localhost:8090` y esquema `bearerAuth` (JWT), mientras mantienen bloqueado con `401` cualquier acceso directo a `/api/**` sin `X-Internal-Key`. En el perfil `prod` (`application-prod.yml`), Swagger queda deshabilitado y los secretos deben suministrarse obligatoriamente por variables de entorno.
 
 ---
 
@@ -86,9 +91,10 @@ Importa [`scripts/pruebas_postman_coleccion.json`](../scripts/pruebas_postman_co
 
 ## 🧪 Pruebas Unitarias de Microservicios
 
-Para ejecutar las baterías de pruebas unitarias con base de datos en memoria (H2) de cada microservicio:
+Para ejecutar las baterías de pruebas unitarias del gateway y de cada microservicio (con H2 en memoria):
 ```bash
-cd backend/edusaldo-ms-auth-usuarios && mvn clean test
+cd backend/edusaldo-api-gateway && mvn clean test
+cd ../edusaldo-ms-auth-usuarios && mvn clean test
 cd ../edusaldo-ms-alumnos-saldos && mvn clean test
 cd ../edusaldo-ms-productos-inventario && mvn clean test
 cd ../edusaldo-ms-ventas-reservas && mvn clean test
