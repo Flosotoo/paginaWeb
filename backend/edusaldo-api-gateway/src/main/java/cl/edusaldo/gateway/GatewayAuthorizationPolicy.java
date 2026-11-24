@@ -109,6 +109,8 @@ public class GatewayAuthorizationPolicy {
         return Mono.just(staff(who));
       if (method.equals("PATCH") && path.matches("/api/ordenes-compra/\\d+/aprobar"))
         return Mono.just(admin(who));
+      if (method.equals("PATCH") && path.matches("/api/ordenes-compra/\\d+/recepcionar"))
+        return Mono.just(staff(who));
       return Mono.just(false);
     }
     // Proveedores: lectura para personal, modificaciones solo para administradores.

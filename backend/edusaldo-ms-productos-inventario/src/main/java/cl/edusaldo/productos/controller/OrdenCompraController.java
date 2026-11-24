@@ -14,5 +14,6 @@ public class OrdenCompraController {
  public Map<String,Object> crear(@RequestBody CrearOrdenCompraDTO dto) {return servicio.crear(dto);}
  @GetMapping public List<Map<String,Object>> listar(){return servicio.listar();}
  @GetMapping("/{id}") public Map<String,Object> obtener(@PathVariable Long id){return servicio.obtener(id);}
+ @PatchMapping("/{id}/recepcionar") public Map<String,Object> recepcionar(@PathVariable Long id){return servicio.recepcionar(id);}
  @PatchMapping("/{id}/aprobar") public Map<String,Object> aprobar(@PathVariable Long id){return servicio.aprobar(id);}
 }

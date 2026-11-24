@@ -2,6 +2,8 @@ package cl.edusaldo.productos.service;
 
 import cl.edusaldo.productos.config.RequestContext;
 import cl.edusaldo.productos.dto.CrearOrdenCompraDTO;
+import cl.edusaldo.productos.dto.IngresoManualDTO;
+import cl.edusaldo.productos.dto.DetalleIngresoDTO;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -10,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrdenCompraService {
  private final JdbcTemplate db;
- public OrdenCompraService(JdbcTemplate db) { this.db=db; }
+ private final InventarioService inventario;
+ public OrdenCompraService(JdbcTemplate db, InventarioService inventario) { this.db=db; this.inventario=inventario; }
 
  @Transactional
  public Map<String,Object> crear(CrearOrdenCompraDTO dto) {
@@ -42,6 +45,31 @@ public class OrdenCompraService {
   RequestContext.requireRoles("ADMINISTRADOR");
   int actualizados=db.update("UPDATE ordenes_compra SET estado='APROBADA',aprobada_por=?,fecha_aprobacion=NOW() WHERE id=? AND id_establecimiento=? AND estado='PENDIENTE_APROBACION'",RequestContext.current().usuario(),id,RequestContext.tenant());
   if(actualizados!=1) throw new IllegalStateException("Orden inexistente, de otro establecimiento o no pendiente");
+  return obtener(id);
+ }
+
+ @Transactional
+ public Map<String,Object> recepcionar(Long id) {
+  RequestContext.requireRoles("ENCARGADO", "ADMINISTRADOR");
+  Long tenant=RequestContext.tenant();
+  var ordenes=db.queryForList("SELECT estado FROM ordenes_compra WHERE id=? AND id_establecimiento=? FOR UPDATE",id,tenant);
+  if(ordenes.isEmpty()) throw new NoSuchElementException("Orden no encontrada");
+  String estado=String.valueOf(ordenes.get(0).get("estado"));
+  if("RECIBIDA".equals(estado)) return obtener(id);
+  if(!"APROBADA".equals(estado)) throw new IllegalStateException("La orden debe estar aprobada");
+  var detalles=db.query("SELECT producto_id,cantidad FROM ordenes_compra_detalle WHERE orden_id=? ORDER BY producto_id",
+      (rs,n)->new DetalleIngresoDTO(rs.getLong("producto_id"),rs.getInt("cantidad")),id);
+  if(detalles.isEmpty() || detalles.stream().anyMatch(d->d.getCantidad()<=0))
+   throw new IllegalStateException("Orden sin detalles válidos");
+  IngresoManualDTO dto=new IngresoManualDTO();
+  dto.setEncargadoId(RequestContext.current().usuario());
+  dto.setReferenciaUnica("OC-"+tenant+"-"+id);
+  dto.setObservacion("Recepción de orden de compra "+id);
+  dto.setDetalles(detalles);
+  var ingreso=inventario.registrarIngresoManual(dto);
+  ingreso.setOrdenCompraId(id);
+  int actualizados=db.update("UPDATE ordenes_compra SET estado='RECIBIDA' WHERE id=? AND id_establecimiento=? AND estado='APROBADA'",id,tenant);
+  if(actualizados!=1) throw new IllegalStateException("No se pudo cerrar la orden");
   return obtener(id);
  }
 
