@@ -14,12 +14,40 @@ export function usePortalFamilia() {
   const [monto, setMonto] = useState("");
   const [tokenPago, setTokenPago] = useState<string | null>(null);
   const [aviso, setAviso] = useState("");
+  const [avisoReserva, setAvisoReserva] = useState<{ mensaje: string; tipo: "exito" | "error"; id?: number } | null>(null);
+  const [avisoCancelacion, setAvisoCancelacion] = useState<{ mensaje: string; tipo: "exito" | "error"; id: number } | null>(null);
   const { procesando, realizar } = useAccion();
   const cargarAlumnos = useCallback(
     () => familiaService.alumnos(usuario!.usuarioId),
     [usuario],
   );
   const alumnos = useConsulta(cargarAlumnos, usuario?.rol === "APODERADO");
+  const cargarSaldosAlumnos = useCallback(async () => {
+    const resultados = await Promise.allSettled(
+      (alumnos.datos ?? []).map(async (a) => ({
+        id: a.id,
+        saldo: (await familiaService.cuenta(a.id)).saldoDisponible,
+      })),
+    );
+    const saldos: Record<number, number> = {};
+    resultados.forEach((r) => {
+      if (r.status === "fulfilled") saldos[r.value.id] = r.value.saldo;
+    });
+    return saldos;
+  }, [alumnos.datos]);
+  const saldosAlumnos = useConsulta(cargarSaldosAlumnos,
+    usuario?.rol === "APODERADO" && Boolean(alumnos.datos?.length));
+  const [avisoPago, setAvisoPago] = useState<{ mensaje: string; tipo: "exito" | "error" } | null>(null);
+  const seleccionarAlumno = (id: number) => {
+    if (procesando || tokenPago) return;
+    setAvisoPago(null);
+    setAvisoReserva(null);
+    setAvisoCancelacion(null);
+    setAviso("");
+    setMonto("");
+    setCarrito({});
+    setAlumno(id);
+  };
   const cargarProductos = useCallback(() => catalogoService.productos(), []);
   const productos = useConsulta(cargarProductos);
   const cargarCuenta = useCallback(
@@ -58,19 +86,20 @@ export function usePortalFamilia() {
       setAlumno((actual) =>
         alumnos.datos!.some((a) => a.id === actual)
           ? actual
-          : alumnos.datos![0].id,
+          : 0,
       );
   }, [usuario, alumnos.datos]);
-  const ejecutar = async (accion: () => Promise<void>) => {
+  const ejecutar = async (accion: () => Promise<void>, alError = (mensaje: string) => setAviso(mensaje)) => {
     setAviso("");
     try {
       await realizar(accion);
     } catch (error) {
-      setAviso(mensajeError(error));
+      alError(mensajeError(error));
     }
   };
   const reservar = () =>
     ejecutar(async () => {
+      setAvisoReserva(null);
       const items = Object.entries(carrito)
         .filter(([, cantidad]) => cantidad > 0)
         .map(([productoId, cantidad]) => ({
@@ -78,25 +107,27 @@ export function usePortalFamilia() {
           cantidad,
         }));
       if (!alumno || !items.length) {
-        setAviso("Selecciona un alumno y al menos un material.");
+        setAvisoReserva({ tipo: "error", mensaje: "Selecciona un alumno y al menos un material." });
         return;
       }
-      await reservasService.crear(alumno, items);
+      const reserva = await reservasService.crear(alumno, items);
       setCarrito({});
-      setAviso("Reserva registrada.");
+      setAvisoReserva({ tipo: "exito", id: reserva.id, mensaje: `Reserva realizada con éxito: ${items.reduce((n, i) => n + i.cantidad, 0)} materiales por $${reserva.total.toLocaleString("es-CL")}.` });
       await Promise.all([
         cuenta.recargar(),
+        ...(usuario?.rol === "APODERADO" ? [saldosAlumnos.recargar()] : []),
         movimientos.recargar(),
         reservas.recargar(),
         avisosReserva.recargar(),
         productos.recargar(),
       ]);
-    });
+    }, mensaje => setAvisoReserva({ tipo: "error", mensaje }));
   const MIN_ABONO = 100;
   const MAX_ABONO = 500000;
 
   const iniciarPago = () =>
     ejecutar(async () => {
+      setAvisoPago(null);
       const valor = Number(monto);
       if (!Number.isSafeInteger(valor) || valor <= 0) {
         setAviso("Ingresa un monto entero mayor que cero.");
@@ -116,41 +147,50 @@ export function usePortalFamilia() {
         valor,
       );
       setTokenPago(pago.token);
-      setAviso("Pago simulado iniciado. Elige su resultado para continuar.");
+
     });
   const confirmarPago = (resultado: "APROBADO" | "RECHAZADO") =>
     ejecutar(async () => {
       if (!tokenPago) return;
+      const valor = Number(monto);
       await familiaService.confirmarAbono(tokenPago, resultado);
       setTokenPago(null);
       setMonto("");
-      setAviso(
-        resultado === "APROBADO"
-          ? "Abono registrado."
-          : "Pago rechazado sin abonar saldo.",
-      );
+      setAvisoPago({
+        tipo: resultado === "APROBADO" ? "exito" : "error",
+        mensaje: resultado === "APROBADO"
+          ? `Pago aprobado. Abono de $${valor.toLocaleString("es-CL")} registrado correctamente.`
+          : `Pago rechazado. El abono de $${valor.toLocaleString("es-CL")} no se acreditó. Puedes intentar nuevamente.`,
+      });
       await cuenta.recargar();
       await Promise.all([
         movimientos.recargar(),
         notificaciones.recargar(),
         abonos.recargar(),
+        saldosAlumnos.recargar(),
       ]);
     });
   const cancelar = (id: number, motivo: string) =>
     ejecutar(async () => {
+      setAvisoCancelacion(null);
       await reservasService.cancelar(id, motivo);
-      setAviso("Reserva cancelada.");
+      setAvisoCancelacion({ id, tipo: "exito", mensaje: "Reserva cancelada. Se liberó el saldo comprometido." });
       await Promise.all([
         cuenta.recargar(),
+        ...(usuario?.rol === "APODERADO" ? [saldosAlumnos.recargar()] : []),
         movimientos.recargar(),
         reservas.recargar(),
         productos.recargar(),
       ]);
-    });
+    }, mensaje => setAvisoCancelacion({ id, tipo: "error", mensaje }));
   return {
     usuario,
     alumno,
-    setAlumno,
+    setAlumno: seleccionarAlumno,
+    saldosAlumnos,
+    avisoPago,
+    avisoReserva,
+    avisoCancelacion,
     carrito,
     setCarrito,
     monto,

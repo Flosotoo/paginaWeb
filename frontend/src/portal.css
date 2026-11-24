@@ -766,3 +766,102 @@ a {
   color: #5c6962;
   font-size: 0.8rem;
 }
+
+
+/* Selección de alumnos: estilos exclusivos del portal familiar. */
+.family-dashboard .child-choice { height: 100%; background: #fff9ef; color: #21463d; border: 2px solid #d8c8b8; border-radius: 16px; padding: 20px; }
+.family-dashboard .child-choice.is-selected { background: #21463d; color: #fff; border-color: #21463d; box-shadow: 0 0 0 3px #a8c9b5; }
+.family-dashboard .child-choice .family-student-name { display: block; font-size: 1.35rem; line-height: 1.3; font-weight: 800; margin: 12px 0 6px; color: inherit; }
+.family-dashboard .child-choice small { font-size: .95rem; color: inherit; }
+.family-dashboard .child-choice .choice-state { font-size: .85rem; white-space: normal; text-align: center; background: #e8ded0; color: #21463d; }
+.family-dashboard .child-choice.is-selected .choice-state, .family-dashboard .child-choice.is-selected .child-avatar { background: #d7e9dc; color: #21463d; }
+.family-dashboard .child-choice.is-selected .choice-bottom { border-color: #719085; }
+.family-dashboard .child-choice.is-selected .choice-bottom .link-like { color: #fff; }
+.family-dashboard .child-choice .choice-bottom .link-like { font-size: 1rem; white-space: normal; }
+.family-dashboard .child-choice:focus-visible { outline: 3px solid #b46c45; outline-offset: 4px; }
+.family-dashboard .family-student-balance { display: grid; gap: 3px; margin-top: 14px; }
+.family-dashboard .family-student-balance strong { font-size: 1.4rem; color: inherit; }
+.family-dashboard .family-selected-name { font-size: 1.6rem; font-weight: 800; color: #21463d; }
+.family-dashboard .family-payment-recipient { font-size: 1rem; font-weight: 700; color: #21463d; background: #e4eee4; padding: 10px; border-radius: 8px; }
+
+/* Portal familiar: reservas y mensajes locales. */
+.family-dashboard .edusaldo-alert.alert-success { background: #e4f2e7; color: #205c36; border: 1px solid #9bc6a5; }
+.family-dashboard .edusaldo-alert.alert-danger { background: #fceaea; color: #922b25; border: 1px solid #e3a4a0; }
+.family-dashboard .family-action-result { margin-top: 12px; }
+.family-dashboard .family-reservation-owner { background: #21463d; color: white; padding: 18px; border-radius: 14px; margin: 14px 0; }
+.family-dashboard .family-reservation-owner h3 { color: white; font-size: 1.4rem; margin: 5px 0; }
+.family-dashboard .family-reservation-kpis { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 14px 0; }
+.family-dashboard .family-reservation-kpis > div { background: #f4f1e8; padding: 14px; border-radius: 12px; display: grid; gap: 4px; }
+.family-dashboard .family-reservation-kpis strong { font-size: 1.4rem; color: #21463d; }
+.family-dashboard .family-reservation-list { display: grid; gap: 14px; margin: 16px 0; }
+.family-dashboard .family-reservation-card { padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.family-dashboard .family-reservation-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.family-dashboard .family-reservation-row h3 { font-size: 1.2rem; margin: 0; }
+.family-dashboard .family-reservation-total { font-size: 1.4rem; color: #21463d; }
+.family-dashboard .family-reservation-status { border-radius: 999px; padding: 5px 10px; background: #eeeae3; color: #333; font-weight: 700; font-size: .85rem; }
+.family-dashboard .status-pendiente { background: #fff0d3; color: #805400; }
+.family-dashboard .status-lista_para_retiro { background: #e1edf8; color: #245b85; }
+.family-dashboard .status-entregada { background: #dcebdc; color: #1b6238; }
+.family-dashboard .status-cancelada { background: #fceaea; color: #922b25; }
+.family-dashboard .family-reservation-card details { border-top: 1px solid #e6dfd2; padding-top: 12px; }
+.family-dashboard summary { cursor: pointer; font-weight: 700; color: #21463d; }
+.family-dashboard .family-reservation-detail { display: grid; gap: 10px; padding-top: 12px; }
+.family-dashboard .family-reservation-code { overflow-wrap: anywhere; font-size: .85rem; }
+.family-dashboard .family-reservation-notice, .family-dashboard .family-cancel-panel { background: #f4f1e8; border-radius: 12px; padding: 12px; overflow-wrap: anywhere; }
+.family-dashboard .family-reservation-notice strong { display: block; }
+@media (max-width: 767px) {
+ .family-dashboard .reserva-layout { display: grid; grid-template-columns: minmax(0,1fr); }
+ .family-dashboard .reserva-aside { position: static; min-width: 0; }
+ .family-dashboard .product-card { flex-wrap: wrap; min-width: 0; }
+ .family-dashboard .product-controls { width: 100%; }
+ .family-dashboard .family-reservation-card { padding: 12px; }
+ .family-dashboard .family-reservation-card .btn { min-height: 44px; }
+}
+
+/* Catálogo familiar adaptable: un solo carrito y un solo formulario. */
+.family-dashboard .family-mobile-categories,
+.family-dashboard .family-mobile-cart-bar,
+.family-dashboard .family-mobile-close { display: none; }
+.family-dashboard .family-reservation-item { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: start; }
+.family-dashboard .family-reservation-item strong { white-space: nowrap; }
+.family-dashboard .family-product-description { font-size: .85rem; }
+@media (max-width: 767px) {
+ .family-dashboard .family-mobile-catalog { padding-bottom: 110px; }
+ .family-dashboard .family-desktop-categories { display: none; }
+ .family-dashboard .family-mobile-categories { display: grid; gap: 5px; margin-bottom: 14px; }
+ .family-dashboard .family-mobile-categories select { width: 100%; min-height: 44px; font-size: 16px; }
+ .family-dashboard .family-mobile-catalog .product-card { display: grid; grid-template-columns: minmax(0,1fr); gap: 6px; padding: 12px; min-height: 0 !important; height: auto !important; }
+ .family-dashboard .family-product-info { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 8px; align-items: center; }
+ .family-dashboard .family-product-info h3 { grid-column: 1 / -1; font-size: 1rem; font-weight: 700; margin: 0; }
+ .family-dashboard .family-product-category { display: none; }
+ .family-dashboard .family-product-price { font-size: 1.15rem; }
+ .family-dashboard .family-product-info .product-stock { margin: 0; font-size: .85rem; text-align: right; }
+ .family-dashboard .family-product-description { grid-column: 1 / -1; }
+ .family-dashboard .family-product-description p { margin: 4px 0; }
+ .family-dashboard .family-mobile-catalog .product-controls { min-height: 0 !important; min-width: 0 !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 6px; }
+ .family-dashboard .family-mobile-catalog .product-controls label { width: auto !important; margin: 0 !important; font-size: .9rem !important; }
+ .family-dashboard .family-mobile-catalog .product-controls .btn { width: 44px !important; min-height: 44px !important; }
+ .family-dashboard .family-mobile-catalog .product-controls input { width: 48px !important; min-height: 44px; font-size: 16px; }
+ .family-dashboard .family-product-remove { display: none; }
+ .family-dashboard .family-mobile-cart-bar { position: fixed; z-index: 1040; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #21463d; color: white; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -3px 16px #0002; }
+ .family-dashboard .family-mobile-cart-bar strong, .family-dashboard .family-mobile-cart-bar small { display: block; color: white; }
+ .family-dashboard .family-mobile-cart-bar strong { font-size: 1.25rem; }
+ .family-dashboard .family-mobile-cart-bar .btn { min-height: 44px; }
+ .family-dashboard .family-mobile-catalog .reserva-aside { display: none; }
+ .family-dashboard .family-mobile-catalog .reserva-aside.family-order-open { display: block; position: fixed; z-index: 1050; inset: 0 0 0 0; width: 100%; max-width: none; max-height: none; overflow-y: auto; border-radius: 0; padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); background: #fffdf8; }
+ .family-dashboard .family-mobile-close { display: inline-flex; min-height: 44px; margin-bottom: 16px; }
+ .family-dashboard .family-mobile-catalog .cart-line .btn { min-height: 44px !important; width: 36px !important; }
+}
+
+/* V4: navegación familiar */
+.family-v4-nav {display:grid;gap:12px;margin-bottom:16px;}
+.family-v4-nav .back-link {justify-self:start;}
+.family-v4-options {display:grid;gap:12px;}
+.family-v4-balance {display:grid;gap:5px;background:#21463d;color:white;padding:20px;border-radius:14px;}
+.family-v4-balance strong {font-size:2rem;}
+.family-v4-option {display:grid;grid-template-columns:44px minmax(0,1fr) 18px;align-items:center;gap:12px;text-align:left;background:#fffdf8;border:1px solid #ded9ce;border-radius:12px;padding:14px;color:#21463d;min-height:72px;width:100%;}
+.family-v4-option strong,.family-v4-option small {display:block;}
+.family-v4-option strong {font-size:1rem;}
+.family-v4-option small {font-size:.85rem;color:#52635b;}
+.family-v4-option > span:first-child {background:#e2ebe0;border-radius:10px;padding:10px;text-align:center;font-size:1.2rem;}
+.family-v4-option:focus-visible {outline:3px solid #739b80;}

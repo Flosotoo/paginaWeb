@@ -1,5 +1,5 @@
 import { CambiarClave } from "./CambiarClave";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CancelacionReserva } from "./CancelacionReserva";
 import { Privacidad } from "./Privacidad";
 import { CorreccionDatos } from "./CorreccionDatos";
@@ -13,14 +13,29 @@ interface PortalFamiliaProps {
 }
 
 const pesos = (valor: number) => `$${valor.toLocaleString("es-CL")}`;
+const estadosReserva: Record<string, string> = { PENDIENTE: "Pendiente", LISTA_PARA_RETIRO: "Lista para retiro", ENTREGADA: "Entregada", CANCELADA: "Cancelada" };
+function movimientoVisual(tipo: string, descripcion: string, monto: number) {
+  if (tipo === "LIBERACION_RESERVA") return { texto: `${pesos(monto)} liberados`, color: "#28639b", icono: "↗", fondo: "#e1edf8" };
+  if (tipo.includes("RETENCION") || tipo.includes("COMPROMISO") || /retención para reserva/i.test(descripcion)) return { texto: `${pesos(monto)} retenidos`, color: "#805400", icono: "🔒", fondo: "#fff0d3" };
+  if (tipo === "ABONO" || tipo === "DEVOLUCION") return { texto: `+${pesos(monto)}`, color: "#1b6238", icono: "+$", fondo: "#dcebdc" };
+  if (tipo === "ENTREGA") return { texto: `−${pesos(monto)}`, color: "#993a20", icono: "−$", fondo: "#f4dfd2" };
+  return { texto: pesos(monto), color: "#242b28", icono: "$", fondo: "#eeeae3" };
+}
 
 export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
+  const [filtroReserva, setFiltroReserva] = useState("Todas");
+  const [cancelacionAbierta, setCancelacionAbierta] = useState<number | null>(null);
+  const [pedidoAbierto, setPedidoAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSel, setCategoriaSel] = useState("Todos");
   const {
     usuario,
     alumno,
     setAlumno,
+    saldosAlumnos,
+    avisoPago,
+    avisoReserva,
+    avisoCancelacion,
     carrito,
     setCarrito,
     monto,
@@ -44,6 +59,8 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
 
   const alumnoSeleccionado = alumnos.datos?.find((a) => a.id === alumno);
 
+  const nombreAlumno = alumnoSeleccionado?.nombreCompleto ?? (usuario?.rol === "ALUMNO" ? usuario.nombreCompleto : "Alumno seleccionado");
+  const reservasAlumno = (reservas.datos ?? []).filter(r => r.alumnoId === alumno);
   const categoriasDisponibles = [
     "Todos",
     ...Array.from(
@@ -71,7 +88,22 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
     0,
   );
 
-  const vistaCuenta = seccion === "inicio" || seccion === "cuenta";
+  const esApoderado = usuario?.rol === "APODERADO";
+  const inicioFamilia = seccion === "cuenta" || seccion === "inicio";
+  const global = seccion === "correcciones" || seccion === "privacidad";
+  const hijoValido = alumno > 0 && Boolean(alumnoSeleccionado);
+  const vistaCuenta = esApoderado ? seccion === "abonar" && hijoValido : inicioFamilia;
+  const mostrarInicio = esApoderado && (inicioFamilia || (!hijoValido && !global));
+  useEffect(() => {
+    if (!esApoderado) return;
+    if (tokenPago || procesando) return;
+    if (!inicioFamilia && !global && !hijoValido) setSeccion("cuenta");
+  }, [esApoderado, inicioFamilia, global, hijoValido, tokenPago, procesando, setSeccion]);
+  useEffect(() => {
+    if (esApoderado && tokenPago && seccion !== "abonar") setSeccion("abonar");
+  }, [esApoderado, tokenPago, seccion, setSeccion]);
+  const volverOpciones = () => setSeccion(esApoderado ? "opciones" : "cuenta");
+  const opciones = [["abonar", "Abonar saldo", "Agregar dinero a su cuenta", "＋"], ["catalogo", "Reservar materiales", "Consultar catálogo y reservar", "🛒"], ["reservas", "Revisar reservas", "Consultar estado de pedidos", "▤"], ["movimientos", "Revisar movimientos", "Consultar cartola", "↔"], ["notificaciones", "Notificaciones", "Consultar avisos", "♢"]];
 
   return (
     <main className="dashboard family-dashboard">
@@ -89,9 +121,15 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
       )}
       {alumnos.error && <p role="alert">{alumnos.error}</p>}
 
-      {vistaCuenta && (
+      {esApoderado && hijoValido && !inicioFamilia && !global && (
+        <section className="family-v4-nav">
+          <button type="button" className="back-link secondary" disabled={procesando || !!tokenPago} onClick={() => setSeccion(seccion === "opciones" ? "cuenta" : "opciones")}>{seccion === "opciones" ? "← Volver a Mis hijos" : "← Volver a opciones"}</button>
+          <div className="family-reservation-owner"><small>CUENTA DEL ALUMNO</small><h3>{nombreAlumno}</h3><span>{alumnoSeleccionado?.curso}</span></div>
+        </section>
+      )}
+      {(vistaCuenta || mostrarInicio) && (
         <>
-          <section className="family-intro">
+          {(!esApoderado || mostrarInicio) && <section className="family-intro">
             <div>
               <h1>
                 Hola, <span>{usuario?.nombreCompleto}</span>.
@@ -104,13 +142,14 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
               alt="Cuadernos y lápices"
               style={{ maxWidth: "240px", maxHeight: "160px" }}
             />
-          </section>
+          </section>}
 
-          {usuario?.rol === "APODERADO" && (
+          {mostrarInicio && (
             <section className="family-section">
               <div className="section-heading">
                 <div>
-                  <h2>Mis alumnos</h2>
+                  <h2>Mis hijos</h2>
+                  <p>Selecciona al alumno cuya cuenta deseas administrar.</p>
                 </div>
                 <span className="count-pill">{alumnos.datos?.length ?? 0} estudiantes</span>
               </div>
@@ -120,9 +159,11 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                   <div key={a.id} className="col-12 col-md-6 col-xl-4">
                     <TarjetaAlumno
                       alumno={a}
-                      seleccionado={alumno === a.id}
+                      saldoDisponible={saldosAlumnos.cargando ? undefined : saldosAlumnos.datos?.[a.id]}
+                      seleccionado={false}
+                      modoIngreso
                       deshabilitado={!!tokenPago || procesando}
-                      onSeleccionar={setAlumno}
+                      onSeleccionar={(id) => { setAlumno(id); setFiltroReserva("Todas"); setCancelacionAbierta(null); setPedidoAbierto(false); setBusqueda(""); setCategoriaSel("Todos"); setSeccion("opciones"); }}
                     />
                   </div>
                 ))}
@@ -130,14 +171,14 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             </section>
           )}
 
-          <section className="account-section">
+          {vistaCuenta && <section className="account-section">
             <div className="account-top">
               <div>
-                <span className="eyebrow">CUENTA SELECCIONADA</span>
-                <h2 id="cuenta">Cuenta</h2>
+                <span className="eyebrow">ESTÁS ADMINISTRANDO LA CUENTA DE</span>
+                <h2 id="cuenta" className="family-selected-name">{alumnoSeleccionado?.nombreCompleto ?? "Cuenta"}</h2>
                 <p className="muted">
                   {alumnoSeleccionado
-                    ? `${alumnoSeleccionado.nombreCompleto} · ${alumnoSeleccionado.curso} · RUT ${alumnoSeleccionado.rut}`
+                    ? `${alumnoSeleccionado.curso} · RUT ${alumnoSeleccionado.rut}`
                     : "Detalle de saldos y abonos"}
                 </p>
               </div>
@@ -179,6 +220,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                       <>
                         <span className="eyebrow">ABONO DE SALDO</span>
                         <h3 style={{ margin: "5px 0 12px" }}>Pasarela Simulada (Webpay)</h3>
+                        <p className="family-payment-recipient">Abono para {alumnoSeleccionado?.nombreCompleto}</p>
                         <label htmlFor="monto-abono">Monto del abono simulado</label>
                         <div style={{ display: "flex", gap: "10px", marginTop: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
                           <div>
@@ -192,7 +234,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                               placeholder="Ej: 10000"
                               value={monto}
                               onChange={(e) => setMonto(e.target.value)}
-                              disabled={!!tokenPago}
+                              disabled={!!tokenPago || procesando}
                               style={{
                                 maxWidth: "180px",
                                 borderColor: errorMontoAbono ? "#b42318" : undefined,
@@ -247,6 +289,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                           </p>
                         )}
 
+                        {avisoPago && <AlertaMensaje mensaje={avisoPago.mensaje} tipo={avisoPago.tipo} />}
                         {tokenPago && (
                           <div
                             style={{
@@ -271,7 +314,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                       </>
                     );
                   })()}
-                  <span className="eyebrow">ACCIONES RÁPIDAS</span>
+                  {!esApoderado && <><span className="eyebrow">ACCIONES RÁPIDAS</span>
                   <div style={{ display: "flex", gap: "10px", marginTop: "8px", flexWrap: "wrap" }}>
                     <button
                       type="button"
@@ -287,14 +330,14 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                     >
                       📋 Mis Reservas →
                     </button>
-                  </div>
+                  </div></>}
                 </div>
               </div>
             )}
-          </section>
+          </section>}
 
           {/* Últimos movimientos del alumno en portada */}
-          <section className="family-activity" style={{ marginTop: "24px" }}>
+          {!esApoderado && <section className="family-activity" style={{ marginTop: "24px" }}>
             <div className="section-heading">
               <div>
                 <h2>Últimos movimientos</h2>
@@ -313,7 +356,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             {movimientos.datos && movimientos.datos.length > 0 ? (
               <div className="family-movement-list" style={{ display: "grid", gap: "8px", marginTop: "12px" }}>
                 {movimientos.datos.slice(0, 5).map((m) => {
-                  const esIngreso = m.tipo === "ABONO" || m.tipo === "DEVOLUCION" || m.tipo === "LIBERACION_RESERVA";
+                  const visual = movimientoVisual(m.tipo, m.descripcion ?? "", m.monto);
                   return (
                     <div
                       key={m.id}
@@ -332,7 +375,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                         <span
-                          className={`movement-icon ${esIngreso ? "credit" : "debit"}`}
+                          className="movement-icon"
                           style={{
                             width: "36px",
                             height: "36px",
@@ -340,12 +383,12 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                             display: "grid",
                             placeItems: "center",
                             fontWeight: "bold",
-                            background: esIngreso ? "#dcebdc" : "#f4dfd2",
-                            color: esIngreso ? "#1b6238" : "#993a20",
+                            background: visual.fondo,
+                            color: visual.color,
                             fontSize: "14px",
                           }}
                         >
-                          {esIngreso ? "+$" : "-$"}
+                          {visual.icono}
                         </span>
                         <div>
                           <strong style={{ fontSize: "14px", color: "#173b31" }}>
@@ -358,12 +401,12 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                         </div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <strong style={{ color: esIngreso ? "#1b6238" : "#242b28", fontSize: "15px" }}>
-                          {esIngreso ? "+" : "-"}{pesos(m.monto)}
+                        <strong style={{ color: visual.color, fontSize: "15px" }}>
+                          {visual.texto}
                         </strong>
                         <br />
                         <small className="muted" style={{ fontSize: "12px" }}>
-                          Saldo {pesos(m.saldoResultante)}
+                          Saldo total {pesos(m.saldoResultante)}
                         </small>
                       </div>
                     </div>
@@ -377,9 +420,9 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 </p>
               )
             )}
-          </section>
+          </section>}
 
-          {notificaciones.datos && notificaciones.datos.some((n) => n.alumnoId === alumno && n.estado === "SIMULADA") && (
+          {!esApoderado && notificaciones.datos && notificaciones.datos.some((n) => n.alumnoId === alumno && n.estado === "SIMULADA") && (
             <section className="account-section" style={{ marginTop: "20px" }}>
               <span className="eyebrow">ALERTAS</span>
               <h3>Alertas de saldo</h3>
@@ -395,8 +438,15 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
         </>
       )}
 
-      {seccion === "catalogo" && (
-        <section className="family-section">
+      {esApoderado && hijoValido && seccion === "opciones" && <section className="account-section family-v4-options">
+        <div className="family-v4-balance"><small>Saldo disponible</small><strong>{cuenta.datos ? pesos(cuenta.datos.saldoDisponible) : "—"}</strong><small>Saldo comprometido: {cuenta.datos ? pesos(cuenta.datos.saldoComprometido) : "—"}</small></div>
+        <h2>¿Qué deseas hacer?</h2>
+        {opciones.map(([id, titulo, descripcion, icono]) => <button key={id} type="button" className="family-v4-option" onClick={() => setSeccion(id)}><span aria-hidden="true">{icono}</span><span><strong>{titulo}</strong><small>{descripcion}</small></span><span aria-hidden="true">›</span></button>)}
+      </section>}
+      {esApoderado && hijoValido && seccion === "notificaciones" && <section className="account-section"><h2>Notificaciones</h2>{notificaciones.error && <p role="alert">{notificaciones.error}</p>}{avisosReserva.error && <p role="alert">{avisosReserva.error}</p>}{(notificaciones.cargando || avisosReserva.cargando) && <p>Cargando avisos…</p>}{notificaciones.datos?.filter(n => n.alumnoId === alumno).map(n => <p key={n.id} className="card p-3">{n.contenido}</p>)}{avisosReserva.datos?.filter(n => n.alumnoId === alumno).map(n => <details key={n.id} className="family-reservation-notice"><summary>{n.asunto}</summary><p style={{whiteSpace:"pre-line"}}>{n.mensaje}</p></details>)}{!notificaciones.cargando && !avisosReserva.cargando && !notificaciones.error && !avisosReserva.error && !notificaciones.datos?.some(n => n.alumnoId === alumno) && !avisosReserva.datos?.some(n => n.alumnoId === alumno) && <p>No hay avisos para este alumno.</p>}</section>}
+
+      {(!esApoderado || hijoValido) && seccion === "catalogo" && (
+        <section className="family-section family-mobile-catalog">
           {/* Franja compacta del alumno con saldo */}
           <div
             className="reserva-student-strip"
@@ -417,7 +467,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
               <small style={{ textTransform: "uppercase", fontWeight: 700, color: "#65756c", fontSize: "11px", letterSpacing: "0.5px" }}>
                 Alumno seleccionado
               </small>
-              <h3 style={{ margin: "2px 0 0", color: "#173b31", fontSize: "1.15rem" }}>
+              <h3 style={{ margin: "2px 0 0", color: "#173b31", fontSize: "1.45rem", fontWeight: 800 }}>
                 {alumnoSeleccionado?.nombreCompleto || "Estudiante"} {alumnoSeleccionado?.curso ? `· ${alumnoSeleccionado.curso}` : ""}
               </h3>
             </div>
@@ -451,7 +501,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
           </div>
 
           {categoriasDisponibles.length > 1 && (
-            <div className="category-list" aria-label="Filtrar por categoría">
+            <div className="category-list family-desktop-categories" aria-label="Filtrar por categoría">
               {categoriasDisponibles.map((cat) => (
                 <button
                   key={cat}
@@ -464,6 +514,13 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
               ))}
             </div>
           )}
+
+          <div className="family-mobile-categories">
+            <label htmlFor="categoria-movil">Categoría</label>
+            <select id="categoria-movil" className="input" value={categoriaSel} onChange={e => setCategoriaSel(e.target.value)}>
+              {categoriasDisponibles.map(cat => <option key={cat} value={cat}>{cat === "Todos" ? "Todas las categorías" : cat}</option>)}
+            </select>
+          </div>
 
           {productos.cargando && <p>Cargando catálogo…</p>}
           {productos.error && <p role="alert">{productos.error}</p>}
@@ -479,28 +536,26 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 const enCarrito = carrito[p.id] ?? 0;
                 return (
                   <article key={p.id} className="product-card" data-testid={`product-card-${p.id}`}>
-                    <div style={{ flex: 1 }}>
-                      <small>{p.categoria || "Material"} · SKU {p.sku || p.id}</small>
+                    <div className="family-product-info" style={{ flex: 1 }}>
+                      <small className="family-product-category">{p.categoria || "Material"}</small>
                       <h3>{p.nombre}</h3>
-                      <strong>{pesos(p.precio)}</strong>
+                      <strong className="family-product-price">{pesos(p.precio)}</strong>
                       <p className="product-stock">
                         {disp <= 0 ? (
                           <span style={{ color: "#b91c1c", fontWeight: 700 }}>Agotado (0 disp.)</span>
                         ) : disp <= (p.stockCritico || 5) ? (
                           <span style={{ color: "#b45309", fontWeight: 700 }}>⚠ Últimas {disp} unid. disponibles</span>
                         ) : (
-                          <span>{disp} disponibles · Stock físico {p.stockFisico}</span>
+                          <span>{disp} disponibles</span>
                         )}
                       </p>
                       {p.descripcion && (
-                        <p style={{ fontSize: "12px", color: "var(--muted)", margin: "4px 0 0" }}>
-                          {p.descripcion}
-                        </p>
+                        <details className="family-product-description"><summary>Descripción</summary><p>{p.descripcion}</p></details>
                       )}
                     </div>
                     <div className="product-controls" style={{ minWidth: "165px", minHeight: "82px", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "flex-end" }}>
                       <label htmlFor={`cant-${p.id}`} style={{ fontSize: "12px", marginBottom: "4px", textAlign: "right", width: "100%" }}>
-                        Cantidad de {p.nombre}
+                        Cantidad
                       </label>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-end" }}>
                         <button
@@ -520,7 +575,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                           type="number"
                           min="0"
                           max={disp}
-                          disabled={disp <= 0}
+                          disabled={disp <= 0 || procesando}
                           value={enCarrito || ""}
                           placeholder="0"
                           style={{ width: "70px", textAlign: "center", padding: "6px 8px" }}
@@ -548,7 +603,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                           +
                         </button>
                       </div>
-                      <div style={{ minHeight: "22px", marginTop: "4px", textAlign: "right", width: "100%" }}>
+                      <div className="family-product-remove" style={{ minHeight: "22px", marginTop: "4px", textAlign: "right", width: "100%" }}>
                         <button
                           type="button"
                           style={{
@@ -574,9 +629,15 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             </div>
 
             {/* Columna Derecha Fija: Mi Reserva */}
-            <aside className="reserva-aside">
+            <div className="family-mobile-cart-bar">
+              <div><small>{seleccion.reduce((n,p) => n + (carrito[p.id] ?? 0), 0)} materiales</small><strong>{pesos(totalSeleccion)}</strong></div>
+              <button type="button" className="btn secondary" aria-expanded={pedidoAbierto} aria-controls="family-order-panel" onClick={() => setPedidoAbierto(v => !v)}>{pedidoAbierto ? "Cerrar pedido" : "Ver pedido"}</button>
+            </div>
+            <aside id="family-order-panel" className={`reserva-aside ${pedidoAbierto ? "family-order-open" : ""}`}>
+              <button type="button" className="btn secondary family-mobile-close" onClick={() => setPedidoAbierto(false)}>Volver al catálogo</button>
               <span className="eyebrow">MI PEDIDO</span>
               <h3 style={{ margin: "4px 0 14px", fontSize: "1.45rem", color: "#173b31" }}>Mi reserva</h3>
+              <p className="family-payment-recipient">Reserva para {nombreAlumno}</p>
               {seleccion.length === 0 ? (
                 <p className="muted" style={{ fontSize: "13px", margin: "10px 0 16px" }}>
                   Aún no has agregado materiales. Ajusta las cantidades en la lista para armar tu pedido.
@@ -687,20 +748,21 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
               >
                 {procesando ? "Procesando…" : "Confirmar reserva"}
               </button>
+              {avisoReserva && <div className="family-action-result"><AlertaMensaje mensaje={avisoReserva.mensaje} tipo={avisoReserva.tipo} />{avisoReserva.tipo === "exito" && <button className="btn secondary" onClick={() => { setPedidoAbierto(false); setFiltroReserva("Todas"); setSeccion("reservas"); }}>Ver mis reservas →</button>}</div>}
             </aside>
           </div>
         </section>
       )}
 
-      {seccion === "reservas" && (
+      {(!esApoderado || hijoValido) && seccion === "reservas" && (
         <section className="account-section">
-          <button
+          {!esApoderado && <button
             type="button"
             className="back-link secondary"
-            onClick={() => setSeccion("cuenta")}
+            onClick={volverOpciones}
           >
             ← Volver a Mi Cuenta
-          </button>
+          </button>}
           <div className="section-heading">
             <div>
               <span className="eyebrow">HISTORIAL</span>
@@ -708,81 +770,39 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             </div>
           </div>
 
+          <div className="family-reservation-owner"><small>ESTÁS ADMINISTRANDO LA CUENTA DE</small><h3>{nombreAlumno}</h3><span>{alumnoSeleccionado?.curso}</span></div>
+          <div className="family-reservation-kpis"><div><small>Reservas pendientes</small><strong>{reservasAlumno.filter(r => r.estado === "PENDIENTE").length}</strong></div><div><small>Saldo comprometido</small><strong>{cuenta.datos ? pesos(cuenta.datos.saldoComprometido) : "—"}</strong></div></div>
+          <div className="category-list" aria-label="Filtrar reservas">{["Todas", ...Object.keys(estadosReserva), ...Array.from(new Set(reservasAlumno.map(r => r.estado))).filter(e => !(e in estadosReserva))].map(e => <button key={e} type="button" className={`category-chip ${filtroReserva === e ? "active" : ""}`} aria-pressed={filtroReserva === e} onClick={() => setFiltroReserva(e)}>{estadosReserva[e] ?? e}</button>)}</div>
+          {reservas.cargando && <p>Cargando reservas…</p>}
           {reservas.error && <p role="alert">{reservas.error}</p>}
-          {reservas.datos?.length === 0 && <p>No hay reservas.</p>}
-
-          <div style={{ display: "grid", gap: "14px" }}>
-            {reservas.datos?.map((r) => (
-              <article key={r.id} className="card" style={{ padding: "18px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                  <div>
-                    <span className={`staff-badge ${r.estado === "ENTREGADA" ? "staff-stock-ok" : r.estado === "CANCELADA" ? "staff-stock-bad" : "staff-stock-warn"}`}>
-                      {r.estado}
-                    </span>
-                    <h3 style={{ margin: "6px 0 2px" }}>
-                      {r.codigo} · {r.estado}
-                    </h3>
-                    <p style={{ margin: "4px 0", color: "var(--muted)", fontSize: "14px" }}>
-                      {pesos(r.total)} ·{" "}
-                      {r.items
-                        .map((i) => `${i.nombreProducto} (${i.cantidad})`)
-                        .join(", ")}
-                    </p>
-                  </div>
-                </div>
-                {r.estado === "PENDIENTE" && (
-                  <div style={{ marginTop: "12px", borderTop: "1px solid #e8e4da", paddingTop: "10px" }}>
-                    <CancelacionReserva procesando={procesando} cancelar={(motivo) => cancelar(r.id, motivo)} />
-                  </div>
-                )}
+          {!reservas.cargando && !reservas.error && reservasAlumno.filter(r => filtroReserva === "Todas" || r.estado === filtroReserva).length === 0 && <p>No hay reservas en esta categoría.</p>}
+          <div className="family-reservation-list">
+            {reservasAlumno.filter(r => filtroReserva === "Todas" || r.estado === filtroReserva).map(r => (
+              <article key={r.id} className="card family-reservation-card">
+                <div className="family-reservation-row"><small>{new Date(r.fechaCreacion).toLocaleDateString("es-CL")}</small><span className={`family-reservation-status status-${r.estado.toLowerCase()}`}>{estadosReserva[r.estado] ?? r.estado}</span></div>
+                <div className="family-reservation-row"><div><h3>{r.items.reduce((n,i) => n+i.cantidad,0)} materiales</h3><small>{r.items.length} {r.items.length === 1 ? "tipo de producto" : "tipos de productos"}</small></div><strong className="family-reservation-total">{pesos(r.total)}</strong></div>
+                <details><summary>Ver detalle de la reserva</summary><div className="family-reservation-detail">{r.items.map(i => <div key={i.productoId} className="family-reservation-item"><span>{i.cantidad} × {i.nombreProducto}</span><strong>{pesos(i.subtotal)}</strong></div>)}<details><summary>Código de reserva</summary><p className="family-reservation-code">{r.codigo}</p></details>
+                {avisosReserva.datos?.filter(a => a.alumnoId === alumno && a.reservaId === r.id).map(a => <details key={a.id} className="family-reservation-notice"><summary>Confirmación / aviso de reserva</summary><small>Aviso · {a.estado === "SIMULADA" ? "Correo simulado" : a.estado}</small><strong>{a.asunto}</strong><p style={{whiteSpace:"pre-line"}}>{a.mensaje}</p></details>)}
+                </div></details>
+                {r.estado === "PENDIENTE" && <><button type="button" className="btn secondary" disabled={procesando} onClick={() => setCancelacionAbierta(cancelacionAbierta === r.id ? null : r.id)}>{cancelacionAbierta === r.id ? "Volver sin cancelar" : "Cancelar reserva"}</button>{cancelacionAbierta === r.id && <div className="family-cancel-panel"><strong>¿Deseas cancelar esta reserva?</strong><p>Se liberarán {pesos(r.total)} comprometidos.</p><CancelacionReserva procesando={procesando} cancelar={motivo => cancelar(r.id, motivo)} /></div>}</>}
+                {avisoCancelacion?.id === r.id && <AlertaMensaje mensaje={avisoCancelacion.mensaje} tipo={avisoCancelacion.tipo}/>}
               </article>
             ))}
           </div>
-
-          <div style={{ marginTop: "30px" }}>
-            <div className="section-heading">
-              <div>
-                <span className="eyebrow">COMUNICACIONES</span>
-                <h2>Confirmaciones de reserva</h2>
-              </div>
-            </div>
-            <p>Los correos son simulados; aquí puedes consultar los avisos registrados.</p>
-            <button
-              className="btn secondary"
-              style={{ marginBottom: "12px" }}
-              onClick={() => void avisosReserva.recargar()}
-            >
-              Actualizar avisos
-            </button>
-            {avisosReserva.error && <p role="alert">{avisosReserva.error}</p>}
-            <div style={{ display: "grid", gap: "12px" }}>
-              {avisosReserva.datos
-                ?.filter((a) => a.alumnoId === alumno && a.tipoEvento === "RESERVA")
-                .filter((a, i, todos) => todos.findIndex((otro) => otro.reservaId === a.reservaId) === i)
-                .map((a) => (
-                  <article key={a.id} className="card" style={{ padding: "16px", background: "#f0fdf4", border: "1px solid #86efac" }}>
-                    <span className="staff-badge staff-stock-ok">AVISO SIMULADO</span>
-                    <h3 style={{ margin: "6px 0" }}>{a.asunto}</h3>
-                    <p style={{ whiteSpace: "pre-line", margin: "6px 0" }}>{a.mensaje}</p>
-                    <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>
-                      {a.estado === "SIMULADA" ? "Correo simulado" : `Estado del aviso: ${a.estado}`}
-                    </p>
-                  </article>
-                ))}
-            </div>
-          </div>
+          {avisoCancelacion?.tipo === "exito" && !reservasAlumno.filter(r => filtroReserva === "Todas" || r.estado === filtroReserva).some(r => r.id === avisoCancelacion.id) && <AlertaMensaje mensaje={avisoCancelacion.mensaje} tipo="exito"/>}
+          <details className="family-reservation-notice"><summary>Comunicaciones de reserva</summary><p>Los correos son simulados. Los avisos asociados se muestran en el detalle de cada reserva.</p><button className="btn secondary" onClick={() => void avisosReserva.recargar()}>Actualizar avisos</button>{avisosReserva.error && <p role="alert">{avisosReserva.error}</p>}{avisosReserva.datos?.filter(a => a.alumnoId === alumno && !reservasAlumno.some(r => r.id === a.reservaId)).map(a => <div key={a.id}><strong>{a.asunto}</strong><p style={{whiteSpace:"pre-line"}}>{a.mensaje}</p></div>)}</details>
         </section>
       )}
 
-      {seccion === "movimientos" && (
+      {(!esApoderado || hijoValido) && seccion === "movimientos" && (
         <section className="account-section">
-          <button
+          {!esApoderado && <button
             type="button"
             className="back-link secondary"
-            onClick={() => setSeccion("cuenta")}
+            onClick={volverOpciones}
           >
             ← Volver a Mi Cuenta
-          </button>
+          </button>}
           <div className="section-heading">
             <div>
               <span className="eyebrow">FINANZAS</span>
@@ -815,7 +835,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             {movimientos.datos?.map((m) => (
               <div key={m.id} className="card" style={{ padding: "12px 16px" }}>
                 <span className="staff-badge">{m.tipo}</span>{" "}
-                <strong>{pesos(m.monto)}</strong> · Saldo {pesos(m.saldoResultante)} · {m.descripcion}
+                <strong style={{color: movimientoVisual(m.tipo, m.descripcion ?? "", m.monto).color}}>{movimientoVisual(m.tipo, m.descripcion ?? "", m.monto).texto}</strong> · Saldo total {pesos(m.saldoResultante)} · {m.descripcion}
               </div>
             ))}
           </div>

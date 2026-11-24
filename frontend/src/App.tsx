@@ -39,7 +39,7 @@ export const SECCIONES_POR_ROL: Record<Rol, readonly string[]> = {
     ...SECCIONES_INVENTARIO.filter(id => id !== "inventario"),
   ],
   ENCARGADO: [...MENU_ENCARGADO.map(([id]) => id), ...SECCIONES_INVENTARIO.filter(id => id !== "inventario")],
-  APODERADO: MENU_FAMILIA.map(([id]) => id),
+  APODERADO: [...MENU_FAMILIA.map(([id]) => id), "opciones", "abonar", "notificaciones"],
   ALUMNO: MENU_FAMILIA.map(([id]) => id),
 };
 

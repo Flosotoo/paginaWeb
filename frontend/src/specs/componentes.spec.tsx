@@ -1,3 +1,4 @@
+
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AlertaMensaje } from "../components/AlertaMensaje";
 import { BotonAccion } from "../components/BotonAccion";
@@ -86,6 +87,7 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
           throw new Error("Aún bloqueado por useAccion");
         }
       });
+
       expect(boton.hasAttribute("disabled")).toBeFalse();
       expect(boton.textContent).toContain("Confirmar entrega");
     });
@@ -163,6 +165,7 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
 
     it("refleja selección activa e invoca onSeleccionar con el ID del estudiante", () => {
       const onSeleccionar = jasmine.createSpy("onSeleccionar");
+
       const { rerender } = render(
         <TarjetaAlumno
           alumno={alumnoDemo}
@@ -172,8 +175,10 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
       );
 
       const boton = screen.getByTestId("student-card-4");
+
       expect(boton.getAttribute("aria-pressed")).toBe("false");
-      expect(boton.textContent).toContain("Seleccionar →");
+      expect(boton.textContent).toContain("Seleccionar alumno →");
+      expect(boton.textContent).toContain("Tomás Pérez");
 
       fireEvent.click(boton);
       expect(onSeleccionar).toHaveBeenCalledOnceWith(4);
@@ -186,9 +191,13 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
           onSeleccionar={onSeleccionar}
         />,
       );
+
       expect(boton.getAttribute("aria-pressed")).toBe("true");
       expect(boton.hasAttribute("disabled")).toBeTrue();
-      expect(boton.textContent).toContain("Seleccionado");
+      expect(boton.textContent).toContain("Administrando esta cuenta");
+
+      fireEvent.click(boton);
+      expect(onSeleccionar).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -34,7 +34,8 @@ export const MENU_FAMILIA: readonly [string, string][] = [
 export const SECCIONES_INVENTARIO = ["inventario", "gestion-catalogo", "gestion-compras", "inventario-ajustes", "inventario-movimientos"] as const;
 
 export function obtenerMenuPorRol(rol: Rol): readonly [string, string][] {
-  if (rol === "APODERADO" || rol === "ALUMNO") return MENU_FAMILIA;
+  if (rol === "APODERADO") return [["cuenta", "Mis hijos"], ["correcciones", "Mis datos"], ["privacidad", "Privacidad"]];
+  if (rol === "ALUMNO") return MENU_FAMILIA;
   if (rol === "ADMINISTRADOR") return MENU_ADMINISTRADOR;
   return MENU_ENCARGADO;
 }
