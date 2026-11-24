@@ -4,6 +4,8 @@ import { CancelacionReserva } from "./CancelacionReserva";
 import { Privacidad } from "./Privacidad";
 import { CorreccionDatos } from "./CorreccionDatos";
 import { usePortalFamilia } from "../../hooks/usePortalFamilia";
+import { TarjetaAlumno } from "../../components/TarjetaAlumno";
+import { AlertaMensaje } from "../../components/AlertaMensaje";
 
 interface PortalFamiliaProps {
   seccion: string;
@@ -74,54 +76,16 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
   return (
     <main className="dashboard family-dashboard">
       {aviso && (
-        <div
-          role="status"
-          className={`form-feedback ${
+        <AlertaMensaje
+          mensaje={aviso}
+          tipo={
             aviso.toLowerCase().includes("error") ||
             aviso.toLowerCase().includes("rechazad") ||
             aviso.toLowerCase().includes("no se pudo")
               ? "error"
-              : ""
-          }`}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "12px 18px",
-            borderRadius: "12px",
-            marginBottom: "16px",
-            background:
-              aviso.toLowerCase().includes("error") ||
-              aviso.toLowerCase().includes("rechazad") ||
-              aviso.toLowerCase().includes("no se pudo")
-                ? "#fef3f2"
-                : "#eef6f0",
-            border: `1px solid ${
-              aviso.toLowerCase().includes("error") ||
-              aviso.toLowerCase().includes("rechazad") ||
-              aviso.toLowerCase().includes("no se pudo")
-                ? "#fecdca"
-                : "#bcdfc6"
-            }`,
-            color:
-              aviso.toLowerCase().includes("error") ||
-              aviso.toLowerCase().includes("rechazad") ||
-              aviso.toLowerCase().includes("no se pudo")
-                ? "#b42318"
-                : "#18543c",
-            fontWeight: 600,
-            fontSize: "0.92rem",
-          }}
-        >
-          <span>
-            {aviso.toLowerCase().includes("error") ||
-            aviso.toLowerCase().includes("rechazad") ||
-            aviso.toLowerCase().includes("no se pudo")
-              ? "⚠️"
-              : "✓"}
-          </span>
-          <span>{aviso}</span>
-        </div>
+              : "exito"
+          }
+        />
       )}
       {alumnos.error && <p role="alert">{alumnos.error}</p>}
 
@@ -151,26 +115,16 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 <span className="count-pill">{alumnos.datos?.length ?? 0} estudiantes</span>
               </div>
 
-              <div id="children" className="child-grid" aria-label="Seleccionar alumno">
+              <div id="children" className="row g-3" aria-label="Seleccionar alumno">
                 {alumnos.datos?.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    className={`child-choice ${alumno === a.id ? "is-selected" : ""}`}
-                    onClick={() => setAlumno(a.id)}
-                    disabled={!!tokenPago || procesando}
-                    data-testid={`student-card-${a.id}`}
-                  >
-                    <div className="child-top">
-                      <span className="child-avatar">{a.nombreCompleto.charAt(0)}</span>
-                      <span className="choice-state">{alumno === a.id ? "✓ Cuenta activa" : "Activa"}</span>
-                    </div>
-                    <strong>{a.nombreCompleto}</strong>
-                    <small>{a.curso} · RUT {a.rut}</small>
-                    <div className="choice-bottom">
-                      <span className="link-like">{alumno === a.id ? "Seleccionado" : "Seleccionar →"}</span>
-                    </div>
-                  </button>
+                  <div key={a.id} className="col-12 col-md-6 col-xl-4">
+                    <TarjetaAlumno
+                      alumno={a}
+                      seleccionado={alumno === a.id}
+                      deshabilitado={!!tokenPago || procesando}
+                      onSeleccionar={setAlumno}
+                    />
+                  </div>
                 ))}
               </div>
             </section>

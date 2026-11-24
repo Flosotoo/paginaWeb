@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useAccion } from "../../hooks/useAccion";
+import { mensajeError as mensajeErrorApi } from "../../services/api";
 import { proveedoresService, type DatosProveedor, type Proveedor } from "../../services/proveedores";
 
 interface Props {
@@ -10,20 +12,19 @@ const formularioVacio: DatosProveedor = {
   contacto: "", banco: "", tipoCuenta: "", numeroCuenta: "",
 };
 
-function mensajeError(error: unknown): string {
+function formatearErrorProveedor(error: unknown): string {
   if (typeof error === "object" && error !== null) {
-    const e = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
-    if (e.response?.status === 401) return "La sesión no está autorizada. Inicia sesión nuevamente y comprueba que el Gateway esté funcionando.";
-    if (e.response?.status === 403) return "No tienes permisos para realizar esta operación.";
-    return e.response?.data?.message || e.message || "Ocurrió un error al consultar proveedores.";
+    const status = (error as { response?: { status?: number } }).response?.status;
+    if (status === 401) return "La sesión no está autorizada. Inicia sesión nuevamente.";
+    if (status === 403) return "No tienes permisos para realizar esta operación.";
   }
-  return "Ocurrió un error inesperado.";
+  return mensajeErrorApi(error);
 }
 
 export function GestionProveedores({ esAdmin }: Props) {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [procesando, setProcesando] = useState(false);
+  const { procesando, realizar } = useAccion();
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -36,7 +37,7 @@ export function GestionProveedores({ esAdmin }: Props) {
     setCargando(true);
     setError("");
     try { setProveedores(await proveedoresService.listar()); }
-    catch (e) { setError(mensajeError(e)); }
+    catch (e) { setError(formatearErrorProveedor(e)); }
     finally { setCargando(false); }
   }, []);
 
@@ -69,34 +70,34 @@ export function GestionProveedores({ esAdmin }: Props) {
   const guardar = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!esAdmin || procesando) return;
-    setProcesando(true);
     setError("");
     setMensaje("");
-    try {
-      const payload = Object.fromEntries(Object.entries(datos).map(([k, v]) => [k, String(v ?? "").trim()])) as unknown as DatosProveedor;
-      const eraNuevo = editandoId === null;
-      if (eraNuevo) await proveedoresService.crear(payload);
-      else await proveedoresService.actualizar(editandoId, payload);
-      limpiar();
-      await cargar();
-      setMensaje(eraNuevo ? "Proveedor registrado correctamente." : "Proveedor actualizado correctamente.");
-    } catch (e) { setError(mensajeError(e)); }
-    finally { setProcesando(false); }
+    await realizar(async () => {
+      try {
+        const payload = Object.fromEntries(Object.entries(datos).map(([k, v]) => [k, String(v ?? "").trim()])) as unknown as DatosProveedor;
+        const eraNuevo = editandoId === null;
+        if (eraNuevo) await proveedoresService.crear(payload);
+        else await proveedoresService.actualizar(editandoId, payload);
+        limpiar();
+        await cargar();
+        setMensaje(eraNuevo ? "Proveedor registrado correctamente." : "Proveedor actualizado correctamente.");
+      } catch (e) { setError(formatearErrorProveedor(e)); }
+    });
   };
 
   const cambiarEstado = async (p: Proveedor) => {
     if (!esAdmin || procesando) return;
     const activar = p.estado !== "ACTIVO";
     if (!window.confirm(`¿Confirmas ${activar ? "activar" : "desactivar"} a ${p.razonSocial}?`)) return;
-    setProcesando(true);
     setError("");
     setMensaje("");
-    try {
-      await proveedoresService.cambiarEstado(p.id, activar);
-      await cargar();
-      setMensaje(`Proveedor ${activar ? "activado" : "desactivado"} correctamente.`);
-    } catch (e) { setError(mensajeError(e)); }
-    finally { setProcesando(false); }
+    await realizar(async () => {
+      try {
+        await proveedoresService.cambiarEstado(p.id, activar);
+        await cargar();
+        setMensaje(`Proveedor ${activar ? "activado" : "desactivado"} correctamente.`);
+      } catch (e) { setError(formatearErrorProveedor(e)); }
+    });
   };
 
   const campos: { nombre: keyof DatosProveedor; etiqueta: string; obligatorio?: boolean; tipo?: string }[] = [

@@ -1,7 +1,12 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import type { Producto } from "../../services/catalogo";
 import { useEntregaMeson } from "../../hooks/useEntregaMeson";
 import { familiaService, type Cuenta } from "../../services/familia";
+import {
+  formatearRutVisual,
+  mensajeErrorRut,
+  normalizarRutCanonicamente,
+} from "../../utils/rut";
 
 const pesos = (valor: number) => `$${valor.toLocaleString("es-CL")}`;
 
@@ -23,6 +28,7 @@ export function EntregaMeson({
     devolver,
   } = useEntregaMeson(actualizar);
   const [rut, setRut] = useState("");
+  const [errorRut, setErrorRut] = useState("");
   const [producto, setProducto] = useState("");
   const [cantidad, setCantidad] = useState("1");
   const [idEntrega, setIdEntrega] = useState("");
@@ -32,20 +38,38 @@ export function EntregaMeson({
   const [filtroRapido, setFiltroRapido] = useState("");
   const [cuentaAlumno, setCuentaAlumno] = useState<Cuenta | null>(null);
 
-  useEffect(() => {
-    if (alumno?.id) {
-      void familiaService
-        .cuenta(alumno.id)
-        .then((c) => setCuentaAlumno(c))
-        .catch(() => setCuentaAlumno(null));
-    } else {
+  const recargarCuentaAlumno = useCallback(async (alumnoId?: number) => {
+    const idObjetivo = alumnoId ?? alumno?.id;
+    if (!idObjetivo) {
+      setCuentaAlumno(null);
+      return;
+    }
+    try {
+      setCuentaAlumno(await familiaService.cuenta(idObjetivo));
+    } catch {
       setCuentaAlumno(null);
     }
   }, [alumno?.id]);
 
+  useEffect(() => {
+    void recargarCuentaAlumno(alumno?.id);
+  }, [alumno?.id, entrega?.id, aviso, recargarCuentaAlumno]);
+
   const enviarBusqueda = (e: FormEvent) => {
     e.preventDefault();
-    void buscarAlumno(rut.trim());
+    const err = mensajeErrorRut(rut);
+    if (err) {
+      setErrorRut(err);
+      return;
+    }
+    const canonico = normalizarRutCanonicamente(rut);
+    if (!canonico) {
+      setErrorRut("RUT inválido.");
+      return;
+    }
+    setErrorRut("");
+    setRut(formatearRutVisual(canonico));
+    void buscarAlumno(canonico);
   };
 
   const productoSeleccionado = productos.find((p) => String(p.id) === String(producto));
@@ -95,11 +119,21 @@ export function EntregaMeson({
                   <input
                     className="input"
                     placeholder="Ej: 23.456.789-6"
+                    maxLength={15}
                     value={rut}
-                    onChange={(e) => setRut(e.target.value)}
+                    onChange={(e) => {
+                      setRut(e.target.value);
+                      if (errorRut) setErrorRut("");
+                    }}
+                    onBlur={() => setRut((prev) => formatearRutVisual(prev))}
                     required
                   />
                 </label>
+                {errorRut && (
+                  <p role="alert" style={{ marginTop: "6px", color: "#b91c1c", fontWeight: 600 }}>
+                    {errorRut}
+                  </p>
+                )}
                 <div className="form-actions" style={{ marginTop: "10px" }}>
                   <button className="btn" disabled={procesando}>
                     Buscar alumno

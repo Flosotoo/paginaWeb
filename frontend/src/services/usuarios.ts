@@ -49,8 +49,20 @@ export interface AltaAlumno {
   correoApoderado: string;
   parentesco: "PADRE" | "MADRE" | "TUTOR_LEGAL" | "OTRO";
 }
+export interface AltaAlumnoRespuesta {
+  alumnoId: number;
+  apoderadoId: number;
+  rutAlumno: string;
+  nombreAlumno: string;
+  correoAlumno?: string | null;
+  rutApoderado: string;
+  nombreApoderado: string;
+  parentesco: string;
+  mensaje: string;
+}
 export async function registrarAlumno(datos: AltaAlumno) {
-  return (await api.post("/api/usuarios/alumnos", datos)).data;
+  return (await api.post<AltaAlumnoRespuesta>("/api/usuarios/alumnos", datos))
+    .data;
 }
 export interface Vinculo {
   id: number;

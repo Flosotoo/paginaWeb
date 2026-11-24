@@ -1,6 +1,11 @@
 import { useState } from "react";
 import type { Usuario } from "../../services/usuarios";
 import { useVinculos } from "../../hooks/useVinculos";
+import {
+  formatearRutVisual,
+  mensajeErrorRut,
+  normalizarRutCanonicamente,
+} from "../../utils/rut";
 export function GestionVinculos({
   usuarios,
   recargarUsuarios,
@@ -22,6 +27,7 @@ export function GestionVinculos({
   const [nombreAlumno, setNombreAlumno] = useState("");
   const [apellidoAlumno, setApellidoAlumno] = useState("");
   const [rutAlumno, setRutAlumno] = useState("");
+  const [errorRut, setErrorRut] = useState("");
   const [fechaNacimientoAlumno, setFechaNacimientoAlumno] = useState("");
   const [apoderado, setApoderado] = useState("");
   const [parentesco, setParentesco] = useState("PADRE");
@@ -63,6 +69,21 @@ export function GestionVinculos({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                let rutCorregido: string | undefined;
+                if (rutAlumno.trim()) {
+                  const err = mensajeErrorRut(rutAlumno);
+                  if (err) {
+                    setErrorRut(err);
+                    return;
+                  }
+                  const canonico = normalizarRutCanonicamente(rutAlumno);
+                  if (!canonico) {
+                    setErrorRut("RUT inválido.");
+                    return;
+                  }
+                  rutCorregido = canonico;
+                }
+                setErrorRut("");
                 void actualizarCurso(curso.trim(), {
                   ...(nombreAlumno.trim()
                     ? { primerNombre: nombreAlumno.trim() }
@@ -70,7 +91,7 @@ export function GestionVinculos({
                   ...(apellidoAlumno.trim()
                     ? { primerApellido: apellidoAlumno.trim() }
                     : {}),
-                  ...(rutAlumno.trim() ? { rut: rutAlumno.trim() } : {}),
+                  ...(rutCorregido ? { rut: rutCorregido } : {}),
                   ...(fechaNacimientoAlumno.trim()
                     ? { fechaNacimiento: fechaNacimientoAlumno.trim() }
                     : {}),
@@ -91,11 +112,22 @@ export function GestionVinculos({
                   RUT corregido del alumno
                   <input
                     className="input"
+                    placeholder="Ej: 23.456.789-6"
+                    maxLength={15}
                     value={rutAlumno}
-                    onChange={(e) => setRutAlumno(e.target.value)}
+                    onChange={(e) => {
+                      setRutAlumno(e.target.value);
+                      if (errorRut) setErrorRut("");
+                    }}
+                    onBlur={() => setRutAlumno((prev) => formatearRutVisual(prev))}
                   />
                 </label>
               </div>
+              {errorRut && (
+                <p role="alert" style={{ margin: "6px 0 10px", color: "#b91c1c", fontWeight: 600 }}>
+                  {errorRut}
+                </p>
+              )}
               <div className="form-grid-3">
                 <label>
                   Nombre corregido del alumno

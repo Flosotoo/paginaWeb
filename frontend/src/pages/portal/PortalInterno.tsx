@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { CuentaLibreria } from "./CuentaLibreria";
 import { GestionProveedores } from "./GestionProveedores";
+import { GestionOrdenesCompra } from "./GestionOrdenesCompra";
+import { PagosWebpayAdmin } from "./PagosWebpayAdmin";
 import type { Reserva } from "../../services/reservas";
 import { HistorialOperativo } from "./HistorialOperativo";
 import { CancelacionReserva } from "./CancelacionReserva";
@@ -49,6 +51,9 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
   const [busquedaReserva, setBusquedaReserva] = useState<string>("");
   const [paginaReserva, setPaginaReserva] = useState<number>(1);
   const [verificacionManual, setVerificacionManual] = useState<Record<number, boolean>>({});
+  const [pestanaCompras, setPestanaCompras] = useState<"proveedores" | "ordenes">(
+    esAdmin ? "proveedores" : "ordenes",
+  );
   const [conteoPistoleo, setConteoPistoleo] = useState<Record<number, Record<number, number>>>({});
   const [inputPistoleo, setInputPistoleo] = useState<Record<number, string>>({});
   const [avisoPistoleo, setAvisoPistoleo] = useState<Record<number, string>>({});
@@ -508,7 +513,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </>
       )}
 
-      {/* INICIO ADMINISTRADOR: estructura de recuperación Etapa 38 */}
+      {/* INICIO ADMINISTRADOR */}
       {esAdmin && seccion === "inicio" && (
         <>
           <section className="admin-welcome" style={{ marginBottom: "25px" }}>
@@ -524,10 +529,14 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
             {[
               { id: "cuenta-libreria", icono: "▤", titulo: "Cuenta Librería", descripcion: "Consulta y administración de la cuenta de la librería." },
               { id: "inventario", icono: "▦", titulo: "Inventario y Valorización", descripcion: "Existencias, stock crítico, valorización y control de inventario." },
-              { id: "gestion-compras", icono: "🛒", titulo: "Gestión de Compras", descripcion: "Consulta y administración de proveedores. Órdenes y recepciones pendientes de integrar." },
-              { id: "pagos", icono: "💰", titulo: "Pagos", descripcion: "Consulta y seguimiento de pagos y movimientos." },
+              { id: "gestion-catalogo", icono: "🏷", titulo: "Catálogo y stock", descripcion: "Alta, edición e ingresos de productos y categorías." },
+              { id: "reservas", icono: "📦", titulo: "Reservas", descripcion: "Seguimiento, preparación y cancelación de reservas escolares." },
+              { id: "gestion-compras", icono: "🛒", titulo: "Gestión de Compras", descripcion: "Proveedores activos, órdenes de compra, aprobación y recepción en bodega." },
+              { id: "pagos", icono: "💰", titulo: "Pagos", descripcion: "Consulta, conciliación y exportación de recargas electrónicas Webpay." },
               { id: "personas", icono: "👥", titulo: "Usuarios y alumnos", descripcion: "Administración de usuarios, alumnos y sus vínculos." },
               { id: "configuracion", icono: "⚙", titulo: "Configuración del sistema", descripcion: "Parámetros, auditoría y herramientas de administración." },
+              { id: "correcciones", icono: "✎", titulo: "Mis datos", descripcion: "Consulta y actualización de datos de tu cuenta." },
+              { id: "privacidad", icono: "🔒", titulo: "Privacidad y seguridad", descripcion: "Consentimientos y cambio de contraseña." },
             ].map((tarjeta) => (
               <button
                 key={tarjeta.id}
@@ -558,29 +567,49 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </section>
       )}
 
-      {/* GESTIÓN DE COMPRAS: proveedores conectados al backend */}
-      {esAdmin && seccion === "gestion-compras" && (
+      {/* GESTIÓN DE COMPRAS: proveedores + órdenes de compra y recepción */}
+      {seccion === "gestion-compras" && (
         <section className="account-section">
           <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>
-            ← Volver al inicio de administración
+            ← Volver al inicio {esAdmin ? "de administración" : "del encargado"}
           </button>
-          <GestionProveedores esAdmin={esAdmin} />
+          <div className="subnav-cards mb-4">
+            <button
+              type="button"
+              className={`subnav-card ${pestanaCompras === "proveedores" ? "active" : ""}`}
+              onClick={() => setPestanaCompras("proveedores")}
+            >
+              <strong>1. Proveedores</strong>
+              <span>{esAdmin ? "Alta, edición y vigencia de proveedores" : "Consulta de proveedores activos"}</span>
+            </button>
+            <button
+              type="button"
+              className={`subnav-card ${pestanaCompras === "ordenes" ? "active" : ""}`}
+              onClick={() => setPestanaCompras("ordenes")}
+            >
+              <strong>2. Órdenes de Compra y Recepción</strong>
+              <span>{esAdmin ? "Emisión, aprobación y recepción de mercadería" : "Emisión de solicitudes y recepción en bodega"}</span>
+            </button>
+          </div>
+          {pestanaCompras === "proveedores" ? (
+            <GestionProveedores esAdmin={esAdmin} />
+          ) : (
+            <GestionOrdenesCompra
+              esAdmin={esAdmin}
+              productos={productos.datos ?? []}
+              onStockActualizado={productos.recargar}
+            />
+          )}
         </section>
       )}
 
-      {/* Pagos permanece pendiente de integración */}
+      {/* PAGOS Y ABONOS WEBPAY */}
       {esAdmin && seccion === "pagos" && (
         <section className="account-section">
           <button type="button" className="back-link secondary" onClick={() => setSeccion("inicio")}>
             ← Volver al inicio de administración
           </button>
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">RECUPERACIÓN ETAPA 38</span>
-              <h2>Pagos</h2>
-            </div>
-          </div>
-          <p>Esta sección está identificada en la estructura original y pendiente de recuperar. Todavía no se han conectado sus funciones ni sus datos.</p>
+          <PagosWebpayAdmin />
         </section>
       )}
 
