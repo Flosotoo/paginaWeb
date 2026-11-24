@@ -20,6 +20,7 @@ import reactor.core.publisher.*;
  */
 @Component
 public class GatewaySecurityFilter implements WebFilter, Ordered {
+  private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(GatewaySecurityFilter.class);
   private final ObjectMapper json;
   private final GatewayIdentityClient identity;
   private final GatewayAuthorizationPolicy policy;
@@ -78,7 +79,7 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
                           }
                           return (publicPath
                                   ? Mono.just(true)
-                                  : policy.authorize(path, method, body, who))
+                                  : policy.authorize(path, method, body, who).doOnError(failure -> diagnostico("POLITICA", failure)))
                               .flatMap(
                                   allowed -> {
                                     if (!allowed)
@@ -138,6 +139,8 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
                                           }
                                         };
                                     return chain.filter(exchange.mutate().request(request).build())
+                                        .doOnError(failure -> diagnostico("REENVIO", failure))
+                                        .doOnSuccess(ignored -> LOG.info("Gateway: reenvio finalizado, estado={}", exchange.getResponse().getStatusCode()))
                                         .then(Mono.defer(() -> !publicPath
                                                 && exchange.getResponse().getStatusCode() == HttpStatus.FORBIDDEN
                                             ? auditarDenegacion(who, method, path) : Mono.empty()));
@@ -153,6 +156,13 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
                         : error instanceof DataBufferLimitException
                             ? HttpStatus.PAYLOAD_TOO_LARGE
                             : HttpStatus.SERVICE_UNAVAILABLE));
+  }
+
+  private void diagnostico(String etapa, Throwable failure) {
+    LOG.warn("Gateway: etapa={}, tipo={}, estadoHTTP={}", etapa,
+        failure.getClass().getSimpleName(),
+        failure instanceof WebClientResponseException response
+            ? response.getStatusCode().value() : "N/A");
   }
 
   private void applyTenant(JsonNode body, long tenant) {
