@@ -2,8 +2,11 @@ package cl.edusaldo.auth.service;
 
 import cl.edusaldo.auth.model.*;
 import cl.edusaldo.auth.repository.*;
+import io.jsonwebtoken.Claims;
 import java.security.*;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,21 +15,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class SesionService {
   private final SesionUsuarioRepository sesiones;
   private final ApoderadoAlumnoRepository vinculos;
+  private final JwtService jwt;
 
   @org.springframework.beans.factory.annotation.Autowired
   private PoliticaAccesoRepository politicas;
 
-  public SesionService(SesionUsuarioRepository sesiones, ApoderadoAlumnoRepository vinculos) {
+  public SesionService(
+      SesionUsuarioRepository sesiones, ApoderadoAlumnoRepository vinculos, JwtService jwt) {
     this.sesiones = sesiones;
     this.vinculos = vinculos;
+    this.jwt = jwt;
   }
 
-  private String hash(String token) {
+  private String hash(String valor) {
     try {
       return HexFormat.of()
           .formatHex(
               MessageDigest.getInstance("SHA-256")
-                  .digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+                  .digest(valor.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }
@@ -34,26 +40,40 @@ public class SesionService {
 
   @Transactional
   public String emitir(Usuario usuario) {
-    byte[] bytes = new byte[32];
-    new SecureRandom().nextBytes(bytes);
-    String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    Instant emision = Instant.now();
+    Instant vencimiento = emision.plusSeconds(jwt.getExpirationSeconds());
+    String jti = UUID.randomUUID().toString();
+    String token = jwt.emitir(usuario, jti, emision, vencimiento);
+
+    // Persistimos SHA-256(jti) para permitir revocación inmediata en logout o bloqueo sin cambiar DDL.
     SesionUsuario s = new SesionUsuario();
-    s.hash = hash(token);
+    s.hash = hash(jti);
     s.usuario = usuario;
-    s.vencimiento = LocalDateTime.now().plusHours(1);
+    s.vencimiento = LocalDateTime.ofInstant(vencimiento, ZoneId.systemDefault());
+    s.revocada = false;
     sesiones.save(s);
     return token;
   }
 
   @Transactional(readOnly = true)
   public Map<String, Object> validar(String token) {
+    Claims claims = jwt.verificar(token);
+    String jti = claims.getId();
+    long subjectId;
+    try {
+      subjectId = Long.parseLong(claims.getSubject());
+    } catch (NumberFormatException ex) {
+      throw new IllegalArgumentException("Token JWT inválido");
+    }
+
     SesionUsuario s =
         sesiones
-            .findById(hash(token))
+            .findById(hash(jti))
             .orElseThrow(() -> new IllegalArgumentException("Sesión inválida"));
     if (s.revocada
         || s.vencimiento.isBefore(LocalDateTime.now())
-        || !s.usuario.puedeIniciarSesion())
+        || !s.usuario.puedeIniciarSesion()
+        || !Objects.equals(s.usuario.getId(), subjectId))
       throw new IllegalArgumentException("Sesión vencida o revocada");
     Usuario u = (Usuario) org.hibernate.Hibernate.unproxy(s.usuario);
     List<Long> alumnos = new ArrayList<>();
@@ -101,12 +121,18 @@ public class SesionService {
 
   @Transactional
   public void revocar(String token) {
-    sesiones
-        .findById(hash(token))
-        .ifPresent(
-            s -> {
-              s.revocada = true;
-              sesiones.save(s);
-            });
+    if (token == null || token.isBlank()) return;
+    try {
+      Claims claims = jwt.verificar(token);
+      sesiones
+          .findById(hash(claims.getId()))
+          .ifPresent(
+              s -> {
+                s.revocada = true;
+                sesiones.save(s);
+              });
+    } catch (IllegalArgumentException ignored) {
+      // Un token ya inválido o expirado no otorga acceso y no requiere revocación adicional.
+    }
   }
 }

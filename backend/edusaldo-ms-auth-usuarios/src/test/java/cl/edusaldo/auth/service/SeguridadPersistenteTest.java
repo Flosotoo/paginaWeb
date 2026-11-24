@@ -216,12 +216,42 @@ class SeguridadPersistenteTest {
   @Test
   void sesionExponeEstadoUmbralYNombreSinTokenCrudo() {
     var u = tutor();
-    var result = sesiones.validar(sesiones.emitir(u));
+    String jwt = sesiones.emitir(u);
+    assertEquals(3, jwt.split("\\.").length);
+    var result = sesiones.validar(jwt);
     assertEquals("ACTIVA", result.get("estado"));
     assertEquals("APODERADO", result.get("rol"));
     assertEquals(u.getNombreCompleto(), result.get("nombreCompleto"));
     assertEquals(3000, result.get("umbralSaldoBajoClp"));
     assertFalse(result.containsKey("token"));
+  }
+
+  @Test
+  void cierreDeSesionRevocaJwtYRechazaTokenAdulteradoCon401() throws Exception {
+    var u = tutor();
+    String jwt = sesiones.emitir(u);
+    sesiones.revocar(jwt);
+    assertThrows(IllegalArgumentException.class, () -> sesiones.validar(jwt));
+
+    mvc.perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                    "/internal/sesiones/validar")
+                .header("X-Internal-Key", "01234567890123456789012345678901")
+                .header("X-Internal-Caller", "gateway")
+                .header("Authorization", "Bearer " + jwt))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
+                .isUnauthorized());
+
+    mvc.perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(
+                    "/internal/sesiones/validar")
+                .header("X-Internal-Key", "01234567890123456789012345678901")
+                .header("X-Internal-Caller", "gateway")
+                .header("Authorization", "Bearer header.adulterado.firma"))
+        .andExpect(
+            org.springframework.test.web.servlet.result.MockMvcResultMatchers.status()
+                .isUnauthorized());
   }
 
   @Test

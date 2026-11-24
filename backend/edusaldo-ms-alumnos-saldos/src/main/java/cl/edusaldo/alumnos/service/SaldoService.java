@@ -447,17 +447,17 @@ public class SaldoService {
   @Transactional(readOnly = true)
   public List<MovimientoSaldoDTO> listarMovimientos(Long alumnoId) {
     autorizarAlumno(alumnoId);
-    CuentaSaldo cuenta =
-        cuentaSaldoRepository
-            .findByAlumnoIdAndIdEstablecimiento(alumnoId, RequestContext.tenant())
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Cuenta de saldo no encontrada para el alumno ID: " + alumnoId));
-
-    return movimientoSaldoRepository.findByCuentaSaldoIdOrderByFechaDesc(cuenta.getId()).stream()
-        .map(MovimientoSaldoDTO::new)
-        .collect(Collectors.toList());
+    // Un alumno recién matriculado aún no tiene fila en cuenta_saldo hasta su primer movimiento.
+    return cuentaSaldoRepository
+        .findByAlumnoIdAndIdEstablecimiento(alumnoId, RequestContext.tenant())
+        .map(
+            cuenta ->
+                movimientoSaldoRepository
+                    .findByCuentaSaldoIdOrderByFechaDesc(cuenta.getId())
+                    .stream()
+                    .map(MovimientoSaldoDTO::new)
+                    .collect(Collectors.toList()))
+        .orElseGet(List::of);
   }
 
   @Transactional(readOnly = true)

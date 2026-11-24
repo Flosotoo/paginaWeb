@@ -34,6 +34,19 @@ public class GatewayAuthorizationPolicy {
     return who.path("rol").asText().equals("ADMINISTRADOR");
   }
 
+  private static String normalizarRutComparable(String valor) {
+    if (valor == null) return "";
+    String limpio =
+        valor
+            .trim()
+            .replace('\u2013', '-')
+            .replace('\u2014', '-')
+            .replace('\u2212', '-')
+            .replaceAll("[.\\-\\s]+", "")
+            .toUpperCase(Locale.ROOT);
+    return limpio.replaceFirst("^0+(?=[0-9]{7,8}[0-9K]$)", "");
+  }
+
   private Mono<Boolean> pupil(long id, JsonNode who) {
     return read("/api/usuarios/" + id, who)
         .map(
@@ -139,9 +152,10 @@ public class GatewayAuthorizationPolicy {
         && method.equals("GET")
         && !admin(who)) return Mono.just(false);
     String identificador = body.path("identificador").asText().trim();
+    String rutTitular = normalizarRutComparable(who.path("rut").asText());
     if (path.equals("/api/auth/cambiar-password")
         && !identificador.equalsIgnoreCase(who.path("correo").asText())
-        && !identificador.replace(".", "").equalsIgnoreCase(who.path("rut").asText().replace(".", "")))
+        && (rutTitular.isEmpty() || !normalizarRutComparable(identificador).equals(rutTitular)))
       return Mono.just(false);
     boolean write = !Set.of("GET", "HEAD", "OPTIONS").contains(method);
     String role = who.path("rol").asText();

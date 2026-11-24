@@ -88,9 +88,47 @@ class AltaAtomicaTest {
     assertEquals(20L, resp.getAlumnoId());
     assertEquals(10L, resp.getApoderadoId());
     assertEquals("Tomás González", resp.getNombreAlumno());
+    assertEquals("tomas.gonzalez@alumnos.colegio.cl", resp.getCorreoAlumno());
     assertEquals("Carlos González", resp.getNombreApoderado());
     verify(auditoriaService, times(1))
         .registrar(any(), eq("ALTA_ATOMICA"), eq("Alumno"), eq("20"), any());
+  }
+
+  @Test
+  @DisplayName("Alta atómica rechaza mismo RUT para alumno y apoderado, fecha futura y apoderado con otro rol o correo duplicado")
+  void testAltaAtomicaValidacionesExplicitas() {
+    dtoAlta.setRutApoderado(dtoAlta.getRutAlumno());
+    IllegalArgumentException mismoRut =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> usuarioService.registrarAlumnoConApoderado(dtoAlta));
+    assertTrue(mismoRut.getMessage().contains("no pueden ser iguales"));
+
+    dtoAlta.setRutApoderado("16333444-5");
+    dtoAlta.setFechaNacimiento(LocalDate.now().plusDays(1));
+    IllegalArgumentException futura =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> usuarioService.registrarAlumnoConApoderado(dtoAlta));
+    assertTrue(futura.getMessage().contains("futura"));
+
+    dtoAlta.setFechaNacimiento(LocalDate.of(2012, 5, 15));
+    when(usuarioRepository.existsByRut("24111222-5")).thenReturn(false);
+    when(apoderadoRepository.findByRut("16333444-5")).thenReturn(Optional.empty());
+    when(usuarioRepository.existsByRut("16333444-5")).thenReturn(true);
+    IllegalArgumentException otroRol =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> usuarioService.registrarAlumnoConApoderado(dtoAlta));
+    assertTrue(otroRol.getMessage().contains("otro rol"));
+
+    when(usuarioRepository.existsByRut("16333444-5")).thenReturn(false);
+    when(usuarioRepository.existsByCorreo("carlos.gonzalez@gmail.com")).thenReturn(true);
+    IllegalArgumentException correoDup =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> usuarioService.registrarAlumnoConApoderado(dtoAlta));
+    assertTrue(correoDup.getMessage().contains("correo del apoderado"));
   }
 
   @Test

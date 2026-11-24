@@ -285,4 +285,15 @@ class SaldoServiceTest {
     verify(movimientoSaldoRepository, never()).save(any());
   }
 
+  @Test
+  @DisplayName("8. Alumno recién creado sin cuenta previa recibe lista vacía de movimientos")
+  void listarMovimientosDevuelveListaVaciaCuandoNoExisteCuenta() {
+    when(cuentaSaldoRepository.findByAlumnoIdAndIdEstablecimiento(99L, 1L))
+        .thenReturn(Optional.empty());
+    var movimientos = saldoService.listarMovimientos(99L);
+    assertNotNull(movimientos);
+    assertTrue(movimientos.isEmpty());
+    verify(movimientoSaldoRepository, never()).findByCuentaSaldoIdOrderByFechaDesc(any());
+  }
+
 }

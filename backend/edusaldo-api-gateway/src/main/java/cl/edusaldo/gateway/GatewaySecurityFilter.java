@@ -2,6 +2,7 @@ package cl.edusaldo.gateway;
 
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.jsonwebtoken.Claims;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +25,18 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
   private final ObjectMapper json;
   private final GatewayIdentityClient identity;
   private final GatewayAuthorizationPolicy policy;
+  private final GatewayJwtVerifier jwtVerifier;
 
   @Autowired
   public GatewaySecurityFilter(
-      ObjectMapper json, GatewayIdentityClient identity, GatewayAuthorizationPolicy policy) {
+      ObjectMapper json,
+      GatewayIdentityClient identity,
+      GatewayAuthorizationPolicy policy,
+      GatewayJwtVerifier jwtVerifier) {
     this.json = json;
     this.identity = identity;
     this.policy = policy;
+    this.jwtVerifier = jwtVerifier;
   }
 
   public int getOrder() {
@@ -46,7 +52,8 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
         || path.matches("/api/inventario/(retener|liberar|descontar|reingresar)(/.*)?"))
       return error(exchange, HttpStatus.FORBIDDEN);
     if (path.equals("/salud")) return chain.filter(exchange);
-    if (!identity.configured()) return error(exchange, HttpStatus.SERVICE_UNAVAILABLE);
+    if (!identity.configured() || !jwtVerifier.configured())
+      return error(exchange, HttpStatus.SERVICE_UNAVAILABLE);
     boolean publicPath =
         method.equals("POST")
             && Set.of(
@@ -57,8 +64,32 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
     String bearer = exchange.getRequest().getHeaders().getFirst("Authorization");
     if (!publicPath && (bearer == null || !bearer.startsWith("Bearer ")))
       return error(exchange, HttpStatus.UNAUTHORIZED);
+
+    Claims verifiedClaims = null;
+    if (!publicPath) {
+      verifiedClaims = jwtVerifier.verifyBearer(bearer).orElse(null);
+      if (verifiedClaims == null) return error(exchange, HttpStatus.UNAUTHORIZED);
+    }
+
+    final Claims claims = verifiedClaims;
     Mono<JsonNode> session =
-        publicPath ? Mono.just(json.createObjectNode()) : identity.session(bearer);
+        publicPath
+            ? Mono.just(json.createObjectNode())
+            : identity
+                .session(bearer)
+                .flatMap(
+                    who -> {
+                      if (!claimsCoincidenConSesion(claims, who)) {
+                        return Mono.error(
+                            WebClientResponseException.create(
+                                HttpStatus.UNAUTHORIZED.value(),
+                                "Unauthorized",
+                                org.springframework.http.HttpHeaders.EMPTY,
+                                new byte[0],
+                                StandardCharsets.UTF_8));
+                      }
+                      return Mono.just(who);
+                    });
     return session
         .flatMap(
             who ->
@@ -140,7 +171,7 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
                                         };
                                     return chain.filter(exchange.mutate().request(request).build())
                                         .doOnError(failure -> diagnostico("REENVIO", failure))
-                                        .doOnSuccess(ignored -> LOG.info("Gateway: reenvio finalizado, estado={}", exchange.getResponse().getStatusCode()))
+                                        .doOnSuccess(ignored -> LOG.debug("Gateway: reenvio finalizado, estado={}", exchange.getResponse().getStatusCode()))
                                         .then(Mono.defer(() -> !publicPath
                                                 && exchange.getResponse().getStatusCode() == HttpStatus.FORBIDDEN
                                             ? auditarDenegacion(who, method, path) : Mono.empty()));
@@ -152,10 +183,27 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
                     exchange,
                     error instanceof WebClientResponseException response
                             && response.getStatusCode().is4xxClientError()
-                        ? HttpStatus.UNAUTHORIZED
+                        ? (esFalloConfianzaInterna(response)
+                            ? HttpStatus.BAD_GATEWAY
+                            : HttpStatus.UNAUTHORIZED)
                         : error instanceof DataBufferLimitException
                             ? HttpStatus.PAYLOAD_TOO_LARGE
                             : HttpStatus.SERVICE_UNAVAILABLE));
+  }
+
+  private static boolean esFalloConfianzaInterna(WebClientResponseException response) {
+    String body = response.getResponseBodyAsString();
+    return body != null && body.contains("Acceso interno no autorizado");
+  }
+
+  private boolean claimsCoincidenConSesion(Claims claims, JsonNode who) {
+    if (claims == null || who == null) return false;
+    long claimSub = Long.parseLong(claims.getSubject());
+    long claimTenant = claims.get("tenant", Number.class).longValue();
+    String claimRol = claims.get("rol", String.class);
+    return who.path("usuarioId").asLong(-1) == claimSub
+        && who.path("idEstablecimiento").asLong(-1) == claimTenant
+        && Objects.equals(claimRol, who.path("rol").asText());
   }
 
   private void diagnostico(String etapa, Throwable failure) {
@@ -181,8 +229,18 @@ public class GatewaySecurityFilter implements WebFilter, Ordered {
   private Mono<Void> error(ServerWebExchange exchange, HttpStatus status) {
     exchange.getResponse().setStatusCode(status);
     exchange.getResponse().getHeaders().set("Content-Type", "application/json");
+    String message =
+        status == HttpStatus.BAD_GATEWAY
+            ? "Error de confianza interna entre servicios"
+            : status == HttpStatus.SERVICE_UNAVAILABLE
+                ? "Servicio temporalmente no disponible"
+                : status == HttpStatus.BAD_REQUEST
+                    ? "Solicitud inválida"
+                    : status == HttpStatus.PAYLOAD_TOO_LARGE
+                        ? "Cuerpo de solicitud excede el límite permitido"
+                        : "Acceso no autorizado";
     byte[] body =
-        ("{\"status\":" + status.value() + ",\"message\":\"Acceso no autorizado\"}")
+        ("{\"status\":" + status.value() + ",\"message\":\"" + message + "\"}")
             .getBytes(StandardCharsets.UTF_8);
     return exchange
         .getResponse()

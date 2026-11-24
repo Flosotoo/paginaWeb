@@ -5,6 +5,7 @@ public class AltaAlumnoApoderadoResponseDTO {
     private Long apoderadoId;
     private String rutAlumno;
     private String nombreAlumno;
+    private String correoAlumno;
     private String rutApoderado;
     private String nombreApoderado;
     private String parentesco;
@@ -15,10 +16,17 @@ public class AltaAlumnoApoderadoResponseDTO {
 
     public AltaAlumnoApoderadoResponseDTO(Long alumnoId, Long apoderadoId, String rutAlumno, String nombreAlumno,
                                          String rutApoderado, String nombreApoderado, String parentesco, String mensaje) {
+        this(alumnoId, apoderadoId, rutAlumno, nombreAlumno, null, rutApoderado, nombreApoderado, parentesco, mensaje);
+    }
+
+    public AltaAlumnoApoderadoResponseDTO(Long alumnoId, Long apoderadoId, String rutAlumno, String nombreAlumno,
+                                         String correoAlumno, String rutApoderado, String nombreApoderado,
+                                         String parentesco, String mensaje) {
         this.alumnoId = alumnoId;
         this.apoderadoId = apoderadoId;
         this.rutAlumno = rutAlumno;
         this.nombreAlumno = nombreAlumno;
+        this.correoAlumno = correoAlumno;
         this.rutApoderado = rutApoderado;
         this.nombreApoderado = nombreApoderado;
         this.parentesco = parentesco;
@@ -33,6 +41,8 @@ public class AltaAlumnoApoderadoResponseDTO {
     public void setRutAlumno(String rutAlumno) { this.rutAlumno = rutAlumno; }
     public String getNombreAlumno() { return nombreAlumno; }
     public void setNombreAlumno(String nombreAlumno) { this.nombreAlumno = nombreAlumno; }
+    public String getCorreoAlumno() { return correoAlumno; }
+    public void setCorreoAlumno(String correoAlumno) { this.correoAlumno = correoAlumno; }
     public String getRutApoderado() { return rutApoderado; }
     public void setRutApoderado(String rutApoderado) { this.rutApoderado = rutApoderado; }
     public String getNombreApoderado() { return nombreApoderado; }

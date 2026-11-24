@@ -217,8 +217,21 @@ public class UsuarioService {
   @Transactional
   public AltaAlumnoApoderadoResponseDTO registrarAlumnoConApoderado(AltaAlumnoApoderadoDTO dto) {
     TenantContext.requireTenant(dto.getIdEstablecimiento());
+    if (dto.getFechaNacimiento() == null) {
+      throw new IllegalArgumentException("La fecha de nacimiento del alumno es obligatoria");
+    }
+    if (dto.getFechaNacimiento().isAfter(java.time.LocalDate.now())) {
+      throw new IllegalArgumentException("La fecha de nacimiento no puede ser futura");
+    }
+    if (dto.getFechaNacimiento().isBefore(java.time.LocalDate.of(1900, 1, 1))) {
+      throw new IllegalArgumentException("La fecha de nacimiento está fuera de un rango válido");
+    }
     dto.setRutAlumno(Rut.normalizar(dto.getRutAlumno()));
     dto.setRutApoderado(Rut.normalizar(dto.getRutApoderado()));
+    if (dto.getRutAlumno().equals(dto.getRutApoderado())) {
+      throw new IllegalArgumentException(
+          "El RUT del alumno y el del apoderado no pueden ser iguales");
+    }
     if (usuarioRepository.existsByRut(dto.getRutAlumno())) {
       throw new IllegalArgumentException(
           "El RUT del alumno ya está registrado: " + dto.getRutAlumno());
@@ -229,13 +242,26 @@ public class UsuarioService {
             .findByRut(dto.getRutApoderado())
             .orElseGet(
                 () -> {
+                  if (usuarioRepository.existsByRut(dto.getRutApoderado())) {
+                    throw new IllegalArgumentException(
+                        "El RUT del apoderado ya está registrado con otro rol: "
+                            + dto.getRutApoderado());
+                  }
+                  if (dto.getCorreoApoderado() == null || dto.getCorreoApoderado().isBlank()) {
+                    throw new IllegalArgumentException("El correo del apoderado es obligatorio");
+                  }
+                  if (usuarioRepository.existsByCorreo(dto.getCorreoApoderado().trim())) {
+                    throw new IllegalArgumentException(
+                        "El correo del apoderado ya se encuentra registrado: "
+                            + dto.getCorreoApoderado().trim());
+                  }
                   String passTempApoderado = claveTemporal();
                   Apoderado nuevoApoderado =
                       new Apoderado(
                           dto.getRutApoderado(),
                           dto.getPrimerNombreApoderado(),
                           dto.getPrimerApellidoApoderado(),
-                          dto.getCorreoApoderado(),
+                          dto.getCorreoApoderado().trim(),
                           passTempApoderado,
                           dto.getTelefonoApoderado());
                   nuevoApoderado.setIdEstablecimiento(dto.getIdEstablecimiento());
@@ -245,6 +271,10 @@ public class UsuarioService {
                   Apoderado guardado = apoderadoRepository.save(nuevoApoderado);
                   if (correoSimuladoService != null)
                     correoSimuladoService.registrar(guardado, "CLAVE_TEMPORAL", passTempApoderado);
+                  if (adscripcionRepository != null && guardado.getId() != null) {
+                    adscripcionRepository.save(
+                        new Adscripcion(guardado.getIdEstablecimiento(), guardado.getId()));
+                  }
                   return guardado;
                 });
 
@@ -287,6 +317,10 @@ public class UsuarioService {
     Alumno alumnoGuardado = alumnoRepository.save(alumno);
     if (correoSimuladoService != null)
       correoSimuladoService.registrar(alumnoGuardado, "CLAVE_TEMPORAL", passTempAlumno);
+    if (adscripcionRepository != null && alumnoGuardado.getId() != null) {
+      adscripcionRepository.save(
+          new Adscripcion(alumnoGuardado.getIdEstablecimiento(), alumnoGuardado.getId()));
+    }
 
     Parentesco parentesco = dto.getParentesco() != null ? dto.getParentesco() : Parentesco.PADRE;
     ApoderadoAlumno rel = new ApoderadoAlumno(apoderado, alumnoGuardado, parentesco);
@@ -310,6 +344,7 @@ public class UsuarioService {
         apoderado.getId(),
         alumnoGuardado.getRut(),
         alumnoGuardado.getNombreCompleto(),
+        alumnoGuardado.getCorreo(),
         apoderado.getRut(),
         apoderado.getNombreCompleto(),
         parentesco.name(),
@@ -914,6 +949,9 @@ public class UsuarioService {
       }
       if (fecha.isAfter(java.time.LocalDate.now())) {
         throw new IllegalArgumentException("La fecha de nacimiento no puede ser futura");
+      }
+      if (fecha.isBefore(java.time.LocalDate.of(1900, 1, 1))) {
+        throw new IllegalArgumentException("La fecha de nacimiento está fuera de un rango válido");
       }
       a.setFechaNacimiento(fecha);
       cambios.add("fechaNacimiento=" + fecha);

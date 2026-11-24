@@ -4,6 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.*;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.*;
@@ -12,23 +19,49 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 import reactor.core.publisher.Mono;
 
 class GatewayBoundaryTest {
+  private static final String JWT_SECRET = "clave-secreta-jwt-gateway-test-32-bytes-minimo";
+
   private final ObjectMapper json = new ObjectMapper();
   private final GatewayIdentityClient identity =
       new GatewayIdentityClient("01234567890123456789012345678901", "http://localhost:8091");
+  private final GatewayJwtVerifier jwtVerifier =
+      new GatewayJwtVerifier(JWT_SECRET, "edusaldo-auth");
+
+  private String bearerFor(long userId, long tenant, String role) {
+    Instant now = Instant.now();
+    String token =
+        Jwts.builder()
+            .header()
+            .type("JWT")
+            .and()
+            .issuer("edusaldo-auth")
+            .subject(String.valueOf(userId))
+            .id(UUID.randomUUID().toString())
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(now.plusSeconds(3600)))
+            .claim("tenant", tenant)
+            .claim("rol", role)
+            .signWith(
+                Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)
+            .compact();
+    return "Bearer " + token;
+  }
 
   private GatewaySecurityFilter filter(GatewayIdentityClient client) {
     if (mockingDetails(client).isSpy())
       doReturn(Mono.empty()).when(client).auditarDenegacion(any(), anyString(), anyString());
-    return new GatewaySecurityFilter(json, client, new GatewayAuthorizationPolicy(client));
+    return new GatewaySecurityFilter(
+        json, client, new GatewayAuthorizationPolicy(client), jwtVerifier);
   }
 
   @Test
   void accesoDenegadoSeAuditaSinEnviarConsultaNiCuerpo() throws Exception {
     var client = spy(identity);
+    var bearer = bearerFor(3, 1, "APODERADO");
     var who = json.readTree("{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\"APODERADO\",\"estado\":\"ACTIVA\"}");
-    doReturn(Mono.just(who)).when(client).session("Bearer valido");
+    doReturn(Mono.just(who)).when(client).session(bearer);
     doReturn(Mono.empty()).when(client).auditarDenegacion(who, "GET", "/api/auditoria");
-    var ex = MockServerWebExchange.from(MockServerHttpRequest.get("/api/auditoria?dato=secreto").header("Authorization", "Bearer valido"));
+    var ex = MockServerWebExchange.from(MockServerHttpRequest.get("/api/auditoria?dato=secreto").header("Authorization", bearer));
     filter(client).filter(ex, e -> { throw new AssertionError("No debe enrutar"); }).block();
     assertEquals(HttpStatus.FORBIDDEN, ex.getResponse().getStatusCode());
     verify(client).auditarDenegacion(who, "GET", "/api/auditoria");
@@ -37,12 +70,13 @@ class GatewayBoundaryTest {
   @Test
   void falloDeAuditoriaNoAutorizaLaPeticion() throws Exception {
     var client = mock(GatewayIdentityClient.class);
+    var bearer = bearerFor(3, 1, "APODERADO");
     var who = json.readTree("{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\"APODERADO\",\"estado\":\"ACTIVA\"}");
     when(client.configured()).thenReturn(true);
-    when(client.session("Bearer valido")).thenReturn(Mono.just(who));
+    when(client.session(bearer)).thenReturn(Mono.just(who));
     when(client.auditarDenegacion(who, "GET", "/api/auditoria"))
         .thenReturn(Mono.error(new IllegalStateException("Auditoría no disponible")));
-    var ex = MockServerWebExchange.from(MockServerHttpRequest.get("/api/auditoria").header("Authorization", "Bearer valido"));
+    var ex = MockServerWebExchange.from(MockServerHttpRequest.get("/api/auditoria").header("Authorization", bearer));
     filter(client).filter(ex, e -> { throw new AssertionError("No debe enrutar"); }).block();
     assertEquals(HttpStatus.FORBIDDEN, ex.getResponse().getStatusCode());
   }
@@ -50,21 +84,79 @@ class GatewayBoundaryTest {
   @Test
   void registraDenegacionDevueltaPorServicio() throws Exception {
     var client = mock(GatewayIdentityClient.class);
+    var bearer = bearerFor(3, 1, "APODERADO");
     var who = json.readTree("{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\"APODERADO\",\"estado\":\"ACTIVA\"}");
     when(client.configured()).thenReturn(true);
-    when(client.session("Bearer valido")).thenReturn(Mono.just(who));
-    when(client.auditarDenegacion(who, "GET", "/api/productos")) .thenReturn(Mono.empty());
-    var ex = MockServerWebExchange.from(MockServerHttpRequest.get("/api/productos").header("Authorization", "Bearer valido"));
+    when(client.session(bearer)).thenReturn(Mono.just(who));
+    when(client.auditarDenegacion(who, "GET", "/api/productos")).thenReturn(Mono.empty());
+    var ex = MockServerWebExchange.from(MockServerHttpRequest.get("/api/productos").header("Authorization", bearer));
     filter(client).filter(ex, e -> { e.getResponse().setStatusCode(HttpStatus.FORBIDDEN); return Mono.empty(); }).block();
     assertEquals(HttpStatus.FORBIDDEN, ex.getResponse().getStatusCode());
     verify(client).auditarDenegacion(who, "GET", "/api/productos");
   }
 
   @Test
-  void cambioDeClaveAceptaRutConFormatoPeroNoOtraIdentidad() throws Exception {
+  void gatewayRechazaJwtAdulteradoAlgNoneYExpiradoSinConsultarAuth() {
+    var client = mock(GatewayIdentityClient.class);
+    when(client.configured()).thenReturn(true);
+
+    String valido = bearerFor(3, 1, "APODERADO").substring(7);
+    String[] partes = valido.split("\\.");
+
+    // 1. Payload adulterado (elevación de rol).
+    String payloadFalso =
+        Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(
+                "{\"iss\":\"edusaldo-auth\",\"sub\":\"3\",\"jti\":\"x\",\"tenant\":1,\"rol\":\"ADMINISTRADOR\"}"
+                    .getBytes(StandardCharsets.UTF_8));
+    String adulterado = "Bearer " + partes[0] + "." + payloadFalso + "." + partes[2];
+
+    // 2. alg: none sin firma.
+    String headerNone =
+        Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString("{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+    String sinFirma = "Bearer " + headerNone + "." + partes[1] + ".";
+
+    // 3. Token expirado.
+    Instant pasado = Instant.now().minusSeconds(600);
+    String expirado =
+        "Bearer "
+            + Jwts.builder()
+                .issuer("edusaldo-auth")
+                .subject("3")
+                .id(UUID.randomUUID().toString())
+                .issuedAt(Date.from(pasado.minusSeconds(3600)))
+                .expiration(Date.from(pasado))
+                .claim("tenant", 1L)
+                .claim("rol", "APODERADO")
+                .signWith(
+                    Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)
+                .compact();
+
+    for (String tokenInvalido : new String[] {adulterado, sinFirma, expirado, "Bearer no-es-jwt"}) {
+      var ex =
+          MockServerWebExchange.from(
+              MockServerHttpRequest.get("/api/productos").header("Authorization", tokenInvalido));
+      filter(client)
+          .filter(
+              ex,
+              e -> {
+                throw new AssertionError("No debe enrutar token inválido");
+              })
+          .block();
+      assertEquals(HttpStatus.UNAUTHORIZED, ex.getResponse().getStatusCode());
+    }
+    verify(client, never()).session(anyString());
+  }
+
+  @Test
+  void cambioDeClaveAceptaRutConFormatoYSinGuionPeroNoOtraIdentidad() throws Exception {
     var policy = new GatewayAuthorizationPolicy(identity);
     var who = json.readTree("{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\"APODERADO\",\"estado\":\"ACTIVA\",\"rut\":\"12345678-5\",\"correo\":\"persona@example.org\"}");
     assertTrue(policy.authorize("/api/auth/cambiar-password", "POST", json.readTree("{\"identificador\":\"12.345.678-5\"}"), who).block());
+    assertTrue(policy.authorize("/api/auth/cambiar-password", "POST", json.readTree("{\"identificador\":\"123456785\"}"), who).block());
     assertFalse(policy.authorize("/api/auth/cambiar-password", "POST", json.readTree("{\"identificador\":\"12345678-9\"}"), who).block());
   }
 
@@ -96,17 +188,18 @@ class GatewayBoundaryTest {
   @Test
   void dependenciaCaidaNoSeConfundeConDenegacion() throws Exception {
     var client = spy(identity);
+    var bearer = bearerFor(3, 1, "APODERADO");
     var who =
         json.readTree(
             "{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\"APODERADO\",\"estado\":\"ACTIVA\",\"alumnos\":[4]}");
-    doReturn(Mono.just(who)).when(client).session("Bearer valido");
+    doReturn(Mono.just(who)).when(client).session(bearer);
     doReturn(Mono.error(new IllegalStateException("Servicio caído")))
         .when(client)
         .read("/api/usuarios/4", who);
     var ex =
         MockServerWebExchange.from(
             MockServerHttpRequest.get("/api/saldos/cuenta/4")
-                .header("Authorization", "Bearer valido"));
+                .header("Authorization", bearer));
     filter(client)
         .filter(
             ex,
@@ -120,17 +213,18 @@ class GatewayBoundaryTest {
   @Test
   void alumnoDeOtroColegioSeRechazaAunqueLaDependenciaResponda() throws Exception {
     var client = spy(identity);
+    var bearer = bearerFor(3, 1, "APODERADO");
     var who =
         json.readTree(
             "{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\"APODERADO\",\"estado\":\"ACTIVA\",\"alumnos\":[4]}");
-    doReturn(Mono.just(who)).when(client).session("Bearer valido");
+    doReturn(Mono.just(who)).when(client).session(bearer);
     doReturn(Mono.just(json.readTree("{\"id\":4,\"idEstablecimiento\":2}")))
         .when(client)
         .read("/api/usuarios/4", who);
     var ex =
         MockServerWebExchange.from(
             MockServerHttpRequest.get("/api/saldos/cuenta/4")
-                .header("Authorization", "Bearer valido"));
+                .header("Authorization", bearer));
     filter(client)
         .filter(
             ex,
@@ -145,10 +239,11 @@ class GatewayBoundaryTest {
   void errorDeRecursoAusenteSeDistingueDeErrorDelServicio() throws Exception {
     for (int status : new int[] {404, 503}) {
       var client = spy(identity);
+      var bearer = bearerFor(3, 1, "APODERADO");
       var who =
           json.readTree(
               "{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\"APODERADO\",\"estado\":\"ACTIVA\",\"alumnos\":[4]}");
-      doReturn(Mono.just(who)).when(client).session("Bearer valido");
+      doReturn(Mono.just(who)).when(client).session(bearer);
       var failure =
           org.springframework.web.reactive.function.client.WebClientResponseException.create(
               status, "error", HttpHeaders.EMPTY, null, null);
@@ -156,7 +251,7 @@ class GatewayBoundaryTest {
       var ex =
           MockServerWebExchange.from(
               MockServerHttpRequest.get("/api/saldos/cuenta/4")
-                  .header("Authorization", "Bearer valido"));
+                  .header("Authorization", bearer));
       filter(client)
           .filter(
               ex,
@@ -247,14 +342,15 @@ class GatewayBoundaryTest {
   @Test
   void cabecerasDeActorSeSustituyenPorLaSesionPersistida() throws Exception {
     var client = spy(identity);
+    var bearer = bearerFor(7, 2, "ADMINISTRADOR");
     var who =
         json.readTree(
             "{\"usuarioId\":7,\"idEstablecimiento\":2,\"rol\":\"ADMINISTRADOR\",\"estado\":\"ACTIVA\",\"umbralSaldoBajoClp\":4500}");
-    doReturn(Mono.just(who)).when(client).session("Bearer valido");
+    doReturn(Mono.just(who)).when(client).session(bearer);
     var ex =
         MockServerWebExchange.from(
             MockServerHttpRequest.get("/api/configuracion")
-                .header("Authorization", "Bearer valido")
+                .header("Authorization", bearer)
                 .header("X-Usuario-Id", "1")
                 .header("X-Establecimiento-Id", "99")
                 .header("X-Rol", "ENCARGADO")

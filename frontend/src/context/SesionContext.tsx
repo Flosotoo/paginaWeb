@@ -7,10 +7,19 @@ import {
   type ReactNode,
 } from "react";
 import axios from "axios";
+import {
+  mensajeError,
+  setSessionToken,
+  setUnauthorizedHandler,
+} from "../services/api";
 import { authService, type Rol, type Sesion } from "../services/auth";
-import { mensajeError, setSessionToken } from "../services/api";
 
-export type UsuarioSesion = Omit<Sesion, "token" | "rol"> & { rol: Rol };
+export type UsuarioSesion = Omit<Sesion, "token"> & {
+  rol: Rol;
+  alumnos?: number[];
+  umbralSaldoBajoClp?: number;
+};
+
 interface EstadoSesion {
   usuario: UsuarioSesion | null;
   cargando: boolean;
@@ -19,18 +28,38 @@ interface EstadoSesion {
   salir: () => Promise<void>;
   comprobar: () => Promise<void>;
 }
+
 const Clave = "edusaldo_sesion";
 const Contexto = createContext<EstadoSesion | null>(null);
+
 function normalizar(s: Omit<Sesion, "token">): UsuarioSesion {
   const rol = s.rol.replace(/^ROLE_/, "") as Rol;
   if (!["ADMINISTRADOR", "ENCARGADO", "APODERADO", "ALUMNO"].includes(rol))
     throw new Error("Rol inválido");
   return { ...s, rol };
 }
+
 export function SesionProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const invalidarSesionLocal = useCallback((mensaje?: string) => {
+    sessionStorage.removeItem(Clave);
+    setSessionToken(null);
+    setUsuario(null);
+    setError(mensaje ?? null);
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      invalidarSesionLocal(
+        "Tu sesión expiró o fue revocada. Inicia sesión nuevamente.",
+      );
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [invalidarSesionLocal]);
+
   const comprobar = useCallback(async () => {
     const token = sessionStorage.getItem(Clave);
     if (!token) {
@@ -55,9 +84,11 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       setCargando(false);
     }
   }, []);
+
   useEffect(() => {
     void comprobar();
   }, [comprobar]);
+
   const ingresar = async (identificador: string, password: string) => {
     const sesion = await authService.login(identificador.trim(), password);
     if (!sesion.token)
@@ -69,16 +100,15 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     setUsuario(siguiente);
     setError(null);
   };
+
   const salir = async () => {
     try {
       await authService.logout();
     } finally {
-      sessionStorage.removeItem(Clave);
-      setSessionToken(null);
-      setUsuario(null);
-      setError(null);
+      invalidarSesionLocal();
     }
   };
+
   return (
     <Contexto.Provider
       value={{ usuario, cargando, error, ingresar, salir, comprobar }}
@@ -87,6 +117,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     </Contexto.Provider>
   );
 }
+
 export function useSesion() {
   const valor = useContext(Contexto);
   if (!valor) throw new Error("Falta SesionProvider");
