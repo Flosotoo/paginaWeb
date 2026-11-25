@@ -6,8 +6,15 @@ import {
   setUnauthorizedHandler,
 } from "../services/api";
 import { authService } from "../services/auth";
+import { entregasService } from "../services/entregas";
 import { ordenesCompraService } from "../services/ordenesCompra";
 import { proveedoresService } from "../services/proveedores";
+import { usuariosService } from "../services/usuarios";
+import {
+  construirHtmlEtiquetaBolsa,
+  escaparHtml,
+  generarSvgCode128B,
+} from "../utils/codigoBarras";
 import { exportarCsv } from "../utils/exportarCsv";
 import { interpretarNomina } from "../utils/nomina";
 import {
@@ -300,6 +307,45 @@ describe("Servicios Axios con Mocks y Utilidades de Dominio", () => {
       expect(createUrlSpy).toHaveBeenCalledTimes(1);
       expect(clickSpy).toHaveBeenCalledTimes(1);
       expect(revokeSpy).toHaveBeenCalledWith("blob:csv-test");
+    });
+
+    it("genera código de barras Code 128 B en SVG, rechaza caracteres inválidos y escapa HTML en etiquetas", () => {
+      const svg = generarSvgCode128B("BOL-RES-2026-0001");
+      expect(svg).not.toBeNull();
+      expect(svg!).toContain("<svg ");
+      expect(svg!).toContain("<rect ");
+
+      expect(generarSvgCode128B("")).toBeNull();
+      expect(generarSvgCode128B("BOL-ÑANDÚ")).toBeNull();
+      expect(escaparHtml(`<script>"a"&'b'</script>`)).toBe(
+        "&lt;script&gt;&quot;a&quot;&amp;&#39;b&#39;&lt;/script&gt;",
+      );
+
+      const html = construirHtmlEtiquetaBolsa({
+        codigo: "BOL-RES-1",
+        nombreAlumno: `Tomás <script>alert(1)</script>`,
+        curso: "8° Básico",
+        totalMateriales: 3,
+      });
+      expect(html).not.toBeNull();
+      expect(html!).not.toContain("<script>alert(1)</script>");
+      expect(html!).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+      expect(html!).toContain("3 materiales");
+      expect(html!).toContain("<svg ");
+    });
+
+    it("invoca usuariosService.obtenerPorId y entregasService.historial por sus rutas canónicas", async () => {
+      const getSpy = spyOn(api, "get").and.resolveTo({
+        data: { id: 4, nombreCompleto: "Tomás Pérez", curso: "8° Básico" },
+      });
+
+      const resumen = await usuariosService.obtenerPorId(4);
+      expect(getSpy).toHaveBeenCalledWith("/api/usuarios/4");
+      expect(resumen.nombreCompleto).toBe("Tomás Pérez");
+
+      getSpy.and.resolveTo({ data: [] });
+      await entregasService.historial();
+      expect(getSpy).toHaveBeenCalledWith("/api/entregas/historial");
     });
   });
 });

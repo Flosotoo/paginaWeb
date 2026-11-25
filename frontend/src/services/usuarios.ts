@@ -15,9 +15,17 @@ export interface NuevoUsuario {
   correo: string;
   rol: "ENCARGADO" | "APODERADO";
 }
+export interface ResumenUsuario {
+  id: number;
+  nombreCompleto: string;
+  curso?: string;
+}
 export const usuariosService = {
   async listar() {
     return (await api.get<Usuario[]>("/api/usuarios")).data;
+  },
+  async obtenerPorId(id: number) {
+    return (await api.get<ResumenUsuario>(`/api/usuarios/${id}`)).data;
   },
   async crear(datos: NuevoUsuario) {
     return (await api.post<Usuario>("/api/usuarios", datos)).data;

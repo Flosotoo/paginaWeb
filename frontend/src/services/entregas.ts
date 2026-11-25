@@ -18,6 +18,8 @@ export interface Entrega {
   id: number;
   numero: string;
   alumnoId: number;
+  reservaId?: number | null;
+  estadoOperacion?: string;
   total: number;
   fecha: string;
   origen: string;
