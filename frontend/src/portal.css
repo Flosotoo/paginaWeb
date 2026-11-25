@@ -865,3 +865,45 @@ a {
 .family-v4-option small {font-size:.85rem;color:#52635b;}
 .family-v4-option > span:first-child {background:#e2ebe0;border-radius:10px;padding:10px;text-align:center;font-size:1.2rem;}
 .family-v4-option:focus-visible {outline:3px solid #739b80;}
+
+/* Reservas del encargado: navegación por operación */
+.reserva-menu { display: grid; gap: 10px; }
+.reserva-opcion { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; text-align:left; padding:16px; border:1px solid #d9d2c4; border-radius:14px; background:#fffdf8; color:#21463d; cursor:pointer; }
+.reserva-opcion strong,.reserva-opcion small { display:block; }
+.reserva-opcion small { margin-top:4px; }
+.reserva-opcion b { white-space:nowrap; }
+.reserva-opcion:hover,.reserva-opcion:focus-visible { border-color:#21463d; }
+.reserva-confirmacion { padding:24px; text-align:center; background:#e8f3eb; border:1px solid #8ab99a; border-radius:16px; color:#21463d; }
+.reserva-confirmacion button { margin:6px; }
+
+/* Cartola familiar compacta */
+.cartola-familia .cartola-filtros { display:grid; gap:10px; margin:16px 0; }
+.cartola-familia .cartola-filtros label { display:grid; gap:4px; min-width:0; font-size:.85rem; }
+.cartola-familia .cartola-filtros input, .cartola-familia .cartola-filtros select { width:100%; min-width:0; box-sizing:border-box; }
+.cartola-familia .cartola-fechas { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+.cartola-familia .cartola-tabla { overflow-x:auto; border:1px solid #e2ddd3; border-radius:10px; }
+.cartola-familia .cartola-tabla table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.cartola-familia .cartola-tabla th, .cartola-familia .cartola-tabla td { padding:10px 8px; border-bottom:1px solid #e2ddd3; vertical-align:top; text-align:left; }
+.cartola-familia .cartola-tabla th { background:#f0ece3; color:#21463d; }
+.cartola-familia .cartola-tabla td:not(:first-child), .cartola-familia .cartola-tabla th:not(:first-child) { text-align:right; white-space:nowrap; }
+.cartola-familia .cartola-tabla td small, .cartola-familia .cartola-tabla td strong { display:block; }
+.cartola-familia .cartola-tabla tr:last-child td { border-bottom:0; }
+.cartola-familia .abono { color:#1b6238; } .cartola-familia .cargo { color:#993a20; } .cartola-familia .retencion { color:#28639b; }
+.cartola-familia .cartola-nota, .cartola-familia .cartola-pagos { font-size:.8rem; margin:12px 0; }
+@media(max-width:480px) { .cartola-familia .cartola-tabla table { font-size:.76rem; } .cartola-familia .cartola-tabla th, .cartola-familia .cartola-tabla td { padding:8px 5px; } }
+
+/* Acabado visual de filtros y pagos de la cartola */
+.cartola-familia .cartola-filtros input,
+.cartola-familia .cartola-filtros select {
+  min-height:44px; padding:8px 10px; border:1px solid #d9d2c4;
+  border-radius:10px; background:#fffdf8; color:#21463d; font:inherit;
+  font-size:16px;
+}
+.cartola-familia .cartola-filtros input:focus-visible,
+.cartola-familia .cartola-filtros select:focus-visible,
+.cartola-familia .cartola-pagos summary:focus-visible { outline:2px solid #739b80; outline-offset:2px; }
+.cartola-familia .cartola-pagos { background:#f4f1e8; border:1px solid #e2ddd3; border-radius:10px; padding:12px; }
+.cartola-familia .cartola-pagos summary { padding:8px 0; }
+.cartola-familia .cartola-pagos p { margin:8px 0; }
+.cartola-familia .cartola-pagos p + p { border-top:1px solid #e2ddd3; padding-top:10px; }
+.cartola-familia .cartola-pago-estado { font-weight:600; }

@@ -1,3 +1,4 @@
+import { CartolaFamilia } from "./CartolaFamilia";
 import { CambiarClave } from "./CambiarClave";
 import { useEffect, useState } from "react";
 import { CancelacionReserva } from "./CancelacionReserva";
@@ -13,6 +14,7 @@ interface PortalFamiliaProps {
 }
 
 const pesos = (valor: number) => `$${valor.toLocaleString("es-CL")}`;
+const normalizarBusqueda = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-CL").trim();
 const estadosReserva: Record<string, string> = { PENDIENTE: "Pendiente", LISTA_PARA_RETIRO: "Lista para retiro", ENTREGADA: "Entregada", CANCELADA: "Cancelada" };
 function movimientoVisual(tipo: string, descripcion: string, monto: number) {
   if (tipo === "LIBERACION_RESERVA") return { texto: `${pesos(monto)} liberados`, color: "#28639b", icono: "↗", fondo: "#e1edf8" };
@@ -75,9 +77,8 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
   const productosVisibles = productos.datos?.filter((p) => {
     if (p.estado !== "ACTIVO") return false;
     if (categoriaSel !== "Todos" && p.categoria !== categoriaSel) return false;
-    return `${p.nombre} ${p.categoria ?? ""} ${p.sku ?? ""}`
-      .toLocaleLowerCase("es-CL")
-      .includes(busqueda.trim().toLocaleLowerCase("es-CL"));
+    return normalizarBusqueda(`${p.nombre} ${p.categoria ?? ""} ${p.sku ?? ""}`)
+      .includes(normalizarBusqueda(busqueda));
   });
 
   const seleccion =
@@ -463,6 +464,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
               gap: "12px",
             }}
           >
+            {!(esApoderado && hijoValido && !inicioFamilia && !global) && (
             <div>
               <small style={{ textTransform: "uppercase", fontWeight: 700, color: "#65756c", fontSize: "11px", letterSpacing: "0.5px" }}>
                 Alumno seleccionado
@@ -471,6 +473,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 {alumnoSeleccionado?.nombreCompleto || "Estudiante"} {alumnoSeleccionado?.curso ? `· ${alumnoSeleccionado.curso}` : ""}
               </h3>
             </div>
+            )}
             <div style={{ textAlign: "right" }}>
               <small style={{ textTransform: "uppercase", fontWeight: 700, color: "#65756c", fontSize: "11px", letterSpacing: "0.5px" }}>
                 Saldo disponible para reservas
@@ -795,51 +798,8 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
       )}
 
       {(!esApoderado || hijoValido) && seccion === "movimientos" && (
-        <section className="account-section">
-          {!esApoderado && <button
-            type="button"
-            className="back-link secondary"
-            onClick={volverOpciones}
-          >
-            ← Volver a Mi Cuenta
-          </button>}
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">FINANZAS</span>
-              <h2>Historial de abonos</h2>
-            </div>
-          </div>
-          {abonos.error && <p role="alert">{abonos.error}</p>}
-          {abonos.datos?.length === 0 && <p>No hay abonos.</p>}
-          <div style={{ display: "grid", gap: "8px", marginBottom: "30px" }}>
-            {abonos.datos?.map((a) => (
-              <div key={a.id} className="card" style={{ padding: "12px 16px" }}>
-                <strong>{pesos(a.monto)}</strong> · {a.medioPago} ·{" "}
-                <span className={`staff-badge ${a.estado === "CONFIRMADO" ? "staff-stock-ok" : "staff-stock-warn"}`}>
-                  {a.estado}
-                </span>{" "}
-                · {new Date(a.fechaCreacion).toLocaleString("es-CL")}
-              </div>
-            ))}
-          </div>
-
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">CARTOLA</span>
-              <h2>Movimientos</h2>
-            </div>
-          </div>
-          {movimientos.error && <p role="alert">{movimientos.error}</p>}
-          {movimientos.datos?.length === 0 && <p>No hay movimientos.</p>}
-          <div style={{ display: "grid", gap: "8px" }}>
-            {movimientos.datos?.map((m) => (
-              <div key={m.id} className="card" style={{ padding: "12px 16px" }}>
-                <span className="staff-badge">{m.tipo}</span>{" "}
-                <strong style={{color: movimientoVisual(m.tipo, m.descripcion ?? "", m.monto).color}}>{movimientoVisual(m.tipo, m.descripcion ?? "", m.monto).texto}</strong> · Saldo total {pesos(m.saldoResultante)} · {m.descripcion}
-              </div>
-            ))}
-          </div>
-        </section>
+        <CartolaFamilia key={alumno} cuenta={cuenta} movimientos={movimientos}
+          abonos={abonos} esApoderado={esApoderado} volver={volverOpciones} />
       )}
 
       {seccion === "correcciones" && (

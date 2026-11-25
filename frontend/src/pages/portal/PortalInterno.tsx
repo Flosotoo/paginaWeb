@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { SECCIONES_INVENTARIO } from "../../routes/LayoutPortal";
 import { CuentaLibreria } from "./CuentaLibreria";
 import { GestionProveedores } from "./GestionProveedores";
 import { GestionOrdenesCompra } from "./GestionOrdenesCompra";
 import { PagosWebpayAdmin } from "./PagosWebpayAdmin";
+import { api } from "../../services/api";
 import type { Reserva } from "../../services/reservas";
 import { HistorialOperativo, MovimientosInventario } from "./HistorialOperativo";
 import { CancelacionReserva } from "./CancelacionReserva";
@@ -46,9 +47,55 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
   } = usePortalInterno();
 
   const esAdmin = usuario?.rol === "ADMINISTRADOR";
+  const [alumnosReserva, setAlumnosReserva] = useState<Record<number, { nombreCompleto: string; curso: string }>>({});
+  const idsAlumnos = useMemo(() => [...new Set((reservas.datos ?? []).map(r => r.alumnoId))].sort((a,b) => a-b).join(","), [reservas.datos]);
+  useEffect(() => {
+    let vigente = true;
+    if (seccion !== "reservas" || !idsAlumnos) return;
+    void Promise.allSettled(idsAlumnos.split(",").map(async id => {
+      const { data } = await api.get<{ nombreCompleto: string; curso: string }>(`/api/usuarios/${id}`);
+      return [Number(id), data] as const;
+    })).then(resultados => {
+      if (vigente) setAlumnosReserva(Object.fromEntries(resultados.flatMap(r => r.status === "fulfilled" ? [r.value] : [])));
+    });
+    return () => { vigente = false; };
+  }, [idsAlumnos, seccion, usuario?.usuarioId]);
+  const nombreAlumno = (id: number) => alumnosReserva[id]?.nombreCompleto || `Alumno ${id}`;
+  const normalizarBusqueda = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const fechaReserva = (fecha: string) => {
+    const valor = new Date(fecha);
+    return Number.isNaN(valor.getTime()) ? "Fecha no disponible" : valor.toLocaleDateString("es-CL");
+  };
+
+
+  const [fechasEntrega, setFechasEntrega] = useState<Record<number, string>>({});
+  useEffect(() => {
+    let vigente = true;
+    if (seccion !== "reservas" || esAdmin) return;
+    void api.get<{ reservaId: number | null; fecha: string; estadoOperacion: string }[]>("/api/entregas/historial")
+      .then(({ data }) => {
+        if (vigente) setFechasEntrega(Object.fromEntries(data.filter(e => e.reservaId !== null && e.estadoOperacion === "COMPLETADA").map(e => [e.reservaId, e.fecha])));
+      }).catch(() => { if (vigente) setFechasEntrega({}); });
+    return () => { vigente = false; };
+  }, [seccion, esAdmin, reservas.datos]);
 
   // Sub-filtros y paginación para Reservas
-  const [filtroReservaEstado, setFiltroReservaEstado] = useState<string>("TODAS");
+  const accesoInicio = useRef<string | null>(null);
+  const [filtroReservaEstado, setFiltroReservaEstado] = useState<string>("MENU");
+  const [confirmacionReserva, setConfirmacionReserva] = useState<{ texto: string; reserva: Reserva } | null>(null);
+  useEffect(() => {
+    const acceso = accesoInicio.current;
+    accesoInicio.current = null;
+    setFiltroReservaEstado(seccion === "reservas" && acceso ? acceso : "MENU");
+    if (seccion === "inventario") {
+      setFiltroStock(acceso === "CRITICO" ? "CRITICO" : "TODOS");
+      setBusquedaInventario("");
+      setPaginaStock(1);
+    }
+    setConfirmacionReserva(null);
+    setBusquedaReserva("");
+    setPaginaReserva(1);
+  }, [seccion]);
   const [busquedaReserva, setBusquedaReserva] = useState<string>("");
   const [paginaReserva, setPaginaReserva] = useState<number>(1);
   const [verificacionManual, setVerificacionManual] = useState<Record<number, boolean>>({});
@@ -112,250 +159,27 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
   };
 
   const abrirEtiquetaImprimible = (r: Reserva) => {
-    const popup = window.open("", "_blank", "width=640,height=720");
+    const codigo = `BOL-${r.codigo}`;
+    // Code 128 B: caracteres ASCII imprimibles, checksum y parada.
+    if (!/^[ -~]+$/.test(codigo)) return;
+    const patrones = ["BaBbBb", "BbBaBb", "BbBbBa", "AbAbBc", "AbAcBb", "AcAbBb", "AbBbAc", "AbBcAb", "AcBbAb", "BbAbAc", "BbAcAb", "BcAbAb", "AaBbCb", "AbBaCb", "AbBbCa", "AaCbBb", "AbCaBb", "AbCbBa", "BbCbAa", "BbAaCb", "BbAbCa", "BaCbAb", "BbCaAb", "CaBaCa", "CaAbBb", "CbAaBb", "CbAbBa", "CaBbAb", "CbBaAb", "CbBbAa", "BaBaBc", "BaBcBa", "BcBaBa", "AaAcBc", "AcAaBc", "AcAcBa", "AaBcAc", "AcBaAc", "AcBcAa", "BaAcAc", "BcAaAc", "BcAcAa", "AaBaCc", "AaBcCa", "AcBaCa", "AaCaBc", "AaCcBa", "AcCaBa", "CaCaBa", "BaAcCa", "BcAaCa", "BaCaAc", "BaCcAa", "BaCaCa", "CaAaBc", "CaAcBa", "CcAaBa", "CaBaAc", "CaBcAa", "CcBaAa", "CaDaAa", "BbAdAa", "DcAaAa", "AaAbBd", "AaAdBb", "AbAaBd", "AbAdBa", "AdAaBb", "AdAbBa", "AaBbAd", "AaBdAb", "AbBaAd", "AbBdAa", "AdBaAb", "AdBbAa", "BdAbAa", "BbAaAd", "DaCaAa", "BdAaAb", "AcDaAa", "AaAbDb", "AbAaDb", "AbAbDa", "AaDbAb", "AbDaAb", "AbDbAa", "DaAbAb", "DbAaAb", "DbAbAa", "BaBaDa", "BaDaBa", "DaBaBa", "AaAaDc", "AaAcDa", "AcAaDa", "AaDaAc", "AaDcAa", "DaAaAc", "DaAcAa", "AaCaDa", "AaDaCa", "CaAaDa", "DaAaCa", "BaAdAb", "BaAbAd", "BaAbCb", "BcCaAaB"];
+    const valores = Array.from(codigo, c => c.charCodeAt(0) - 32);
+    const checksum = (104 + valores.reduce((suma, v, i) => suma + v * (i + 1), 0)) % 103;
+    let x = 10;
+    let barras = "";
+    for (const v of [104, ...valores, checksum, 106]) {
+      for (const c of patrones[v]) {
+        const ancho = c.toUpperCase().charCodeAt(0) - 64;
+        if (c === c.toUpperCase()) barras += `<rect x="${x}" y="0" width="${ancho}" height="64"/>`;
+        x += ancho;
+      }
+    }
+    const escapar = (texto: string) => texto.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c] ?? c));
+    const popup = window.open("", "_blank", "width=640,height=420");
     if (!popup) return;
-
-    const itemsHtml = r.items
-      .map(
-        (i) => `
-        <tr>
-          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0;">
-            <strong>${i.nombreProducto}</strong>
-          </td>
-          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-weight: bold;">
-            ${i.cantidad}
-          </td>
-          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">
-            $${(i.precioUnitario ?? 0).toLocaleString("es-CL")}
-          </td>
-          <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">
-            $${((i.precioUnitario ?? 0) * i.cantidad).toLocaleString("es-CL")}
-          </td>
-        </tr>`
-      )
-      .join("");
-
-    popup.document.write(`<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Etiqueta de Bolsa - BOL-${r.codigo}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
-      padding: 24px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .ticket-container {
-      background: #ffffff;
-      width: 100%;
-      max-width: 500px;
-      border: 2px dashed #64748b;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    }
-    .header {
-      text-align: center;
-      border-bottom: 2px solid #0f172a;
-      padding-bottom: 14px;
-      margin-bottom: 16px;
-    }
-    .school-title {
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      color: #18543c;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .main-heading {
-      font-size: 19px;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 10px;
-    }
-    .bag-badge {
-      display: inline-block;
-      background: #173b31;
-      color: #ffffff;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      margin-bottom: 6px;
-    }
-    .meta-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      background: #f1f5f9;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 12px;
-      margin-bottom: 16px;
-    }
-    .meta-item strong {
-      display: block;
-      color: #64748b;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      margin-bottom: 16px;
-    }
-    th {
-      background: #f8fafc;
-      border-bottom: 2px solid #cbd5e1;
-      padding: 8px 10px;
-      text-align: left;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #475569;
-    }
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-weight: 800;
-    }
-    .total-price {
-      font-size: 20px;
-      color: #18543c;
-    }
-    .footer-instructions {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.4;
-    }
-    .btn-bar {
-      margin-top: 20px;
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-    .print-btn {
-      background: #18543c;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    .close-btn {
-      background: #e2e8f0;
-      color: #334155;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    @media print {
-      body {
-        background: transparent;
-        padding: 0;
-      }
-      .ticket-container {
-        border: 1px dashed #000;
-        box-shadow: none;
-        max-width: 100%;
-        padding: 10px;
-      }
-      .btn-bar {
-        display: none !important;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="ticket-container">
-    <div class="header">
-      <div class="school-title">EduSaldo · Librería Escolar</div>
-      <h1 class="main-heading">Comprobante de Bolsa de Reserva</h1>
-      <div class="bag-badge">BOL-${r.codigo}</div>
-    </div>
-
-    <div class="meta-grid">
-      <div class="meta-item">
-        <strong>Código de Reserva</strong>
-        <span>${r.codigo}</span>
-      </div>
-      <div class="meta-item">
-        <strong>Identificador Alumno</strong>
-        <span>Alumno N° ${r.alumnoId}</span>
-      </div>
-      <div class="meta-item">
-        <strong>Fecha de Emisión</strong>
-        <span>${new Date().toLocaleDateString("es-CL")}</span>
-      </div>
-      <div class="meta-item">
-        <strong>Hora de Emisión</strong>
-        <span>${new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
-      </div>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Material / Artículo</th>
-          <th style="text-align: center;">Cant.</th>
-          <th style="text-align: right;">Unitario</th>
-          <th style="text-align: right;">Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${itemsHtml}
-      </tbody>
-    </table>
-
-    <div class="total-row">
-      <span>Total reservado:</span>
-      <span class="total-price">$${r.total.toLocaleString("es-CL")}</span>
-    </div>
-
-    <p class="footer-instructions">
-      📌 Adherir esta etiqueta a la bolsa antes de ubicarla en el estante de retiro presencial.
-    </p>
-
-    <div class="btn-bar">
-      <button class="print-btn" onclick="window.print()">🖨️ Imprimir etiqueta</button>
-      <button class="close-btn" onclick="window.close()">Cerrar</button>
-    </div>
-  </div>
-
-  <script>
-    window.addEventListener("load", function() {
-      setTimeout(function() {
-        window.print();
-      }, 350);
-    });
-  </script>
-</body>
-</html>`);
+    popup.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Etiqueta EduSaldo</title><style>
+      body{font-family:Arial,sans-serif;color:#111;margin:12px} .etiqueta{width:160mm;max-width:100%;box-sizing:border-box;border:1px dashed #555;padding:4mm} h1{font-size:20px;margin:4px 0} p{margin:4px 0} svg{display:block;width:100%;height:18mm} small{display:block;overflow-wrap:anywhere;font-size:10px} button{margin-top:12px;padding:8px} @media print{button{display:none}body{margin:0}}
+      </style></head><body><div class="etiqueta"><strong>EduSaldo · Retiro de materiales</strong><h1>${escapar(nombreAlumno(r.alumnoId))}</h1><p>${escapar(alumnosReserva[r.alumnoId]?.curso || "Curso no disponible")} · ${r.items.reduce((n,i)=>n+i.cantidad,0)} materiales</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x+10} 64" preserveAspectRatio="none" fill="black" shape-rendering="crispEdges">${barras}</svg><small>${escapar(codigo)}</small></div><button onclick="window.print()">Imprimir etiqueta</button></body></html>`);
     popup.document.close();
   };
 
@@ -376,19 +200,15 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
 
   // Filtrado de Reservas
   const reservasFiltradas = (reservas.datos ?? []).filter((r) => {
-    if (filtroReservaEstado === "PENDIENTE" && r.estado !== "PENDIENTE") return false;
-    if (filtroReservaEstado === "LISTA_PARA_RETIRO" && r.estado !== "LISTA_PARA_RETIRO") return false;
-    if (
-      filtroReservaEstado === "HISTORIAL" &&
-      !["ENTREGADA", "CANCELADA"].includes(r.estado)
-    )
-      return false;
+    if (filtroReservaEstado !== "TODAS" && r.estado !== filtroReservaEstado) return false;
     if (busquedaReserva.trim()) {
-      const q = busquedaReserva.trim().toLowerCase();
+      const q = normalizarBusqueda(busquedaReserva.trim());
       const coincide =
         r.codigo.toLowerCase().includes(q) ||
         String(r.alumnoId).includes(q) ||
-        r.items.some((i) => i.nombreProducto.toLowerCase().includes(q));
+        normalizarBusqueda(nombreAlumno(r.alumnoId)).includes(q) ||
+        normalizarBusqueda(alumnosReserva[r.alumnoId]?.curso ?? "").includes(q) ||
+        r.items.some((i) => normalizarBusqueda(i.nombreProducto).includes(q));
       if (!coincide) return false;
     }
     return true;
@@ -433,83 +253,47 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
 
   return (
     <main className="dashboard staff-dashboard">
-      {aviso && <p role="status" className="form-feedback">{aviso}</p>}
+      {aviso && seccion !== "reservas" && <p role="status" className="form-feedback">{aviso}</p>}
 
       {/* VISTA INICIO PARA ENCARGADO */}
       {!esAdmin && seccion === "inicio" && (
         <>
-          <section className="staff-hero">
+          <section className="account-section" style={{ padding: "16px", marginBottom: "12px" }}>
             <span className="eyebrow">ÁREA DEL ENCARGADO</span>
-            <h1>Materiales listos para cada día.</h1>
-            <p>
-              Prepara reservas, registra entregas y consulta existencias desde un solo lugar.
-            </p>
+            <h2 style={{ margin: "4px 0 0" }}>Panel del Encargado</h2>
           </section>
-
-          <section className="staff-stats" id="staff-stats">
-            <div className="staff-stat">
-              <strong>{porPreparar}</strong>
-              <span>Reservas por preparar</span>
+          <section className="account-section" style={{ padding: "16px", marginBottom: "12px" }}>
+            <h3 style={{ margin: "0 0 12px" }}>Estado de operaciones</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
+              {[
+                { titulo: "Por preparar", total: porPreparar, filtro: "PENDIENTE", destino: "reservas" },
+                { titulo: "Listas para retiro", total: pendientesEntrega, filtro: "LISTA_PARA_RETIRO", destino: "reservas" },
+                { titulo: "Stock crítico", total: stockCritico, filtro: "CRITICO", destino: "inventario" },
+                { titulo: "Entregadas", total: entregadas, filtro: "ENTREGADA", destino: "reservas" },
+              ].map(({ titulo, total, filtro, destino }) => (
+                <button key={filtro} type="button" className="subnav-card" style={{ minWidth: 0, textAlign: "left", padding: "12px", cursor: "pointer" }} onClick={() => {
+                  accesoInicio.current = filtro;
+                  setSeccion(destino);
+                }}>
+                  <strong style={{ display: "flex", justifyContent: "space-between", fontSize: "1.4rem" }}>{total}<span aria-hidden="true">→</span></strong>
+                  <span style={{ fontSize: "0.85rem" }}>{titulo}</span>
+                </button>
+              ))}
             </div>
-            <div className="staff-stat">
-              <strong>{pendientesEntrega}</strong>
-              <span>Reservas pendientes de entrega</span>
+            <h3 style={{ margin: "20px 0 12px" }}>Gestión</h3>
+            <div style={{ display: "grid", gap: "8px" }}>
+              {[
+                ["reservas", "Reservas", "Gestión completa de reservas"],
+                ["entregas", "Entrega directa", "Entrega presencial en mesón"],
+                ["inventario", "Inventario", "Existencias y gestión de bodega"],
+                ["historial", "Historial", "Consultar operaciones realizadas"],
+              ].map(([destino, titulo, descripcion]) => (
+                <button key={destino} type="button" className="reserva-opcion" onClick={() => setSeccion(destino)}>
+                  <span><strong>{titulo}</strong><small>{descripcion}</small></span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              ))}
             </div>
-            <div className="staff-stat">
-              <strong>{stockCritico}</strong>
-              <span>Disponibilidad crítica (≤ 5)</span>
-            </div>
-            <div className="staff-stat">
-              <strong>{entregadas}</strong>
-              <span>Reservas entregadas</span>
-            </div>
-          </section>
-
-          <section className="staff-grid" style={{ marginBottom: "30px" }}>
-            <button
-              type="button"
-              className="staff-tile"
-              onClick={() => setSeccion("reservas")}
-              style={{ textAlign: "left", cursor: "pointer", border: "none", width: "100%" }}
-            >
-              <span className="staff-symbol">▤</span>
-              <span style={{ display: "block", font: '400 29px "DM Serif Display", Georgia, serif', margin: "8px 0" }}>Reservas</span>
-              <p>Consulta reservas por preparar y pendientes de retiro.</p>
-              <b>Ver reservas →</b>
-            </button>
-            <button
-              type="button"
-              className="staff-tile peach"
-              onClick={() => setSeccion("entregas")}
-              style={{ textAlign: "left", cursor: "pointer", border: "none", width: "100%" }}
-            >
-              <span className="staff-symbol">⌁</span>
-              <span style={{ display: "block", font: '400 29px "DM Serif Display", Georgia, serif', margin: "8px 0" }}>Entrega directa</span>
-              <p>Entrega presencial para alumnos en mesón de librería.</p>
-              <b>Registrar entrega →</b>
-            </button>
-            <button
-              type="button"
-              className="staff-tile sage"
-              onClick={() => setSeccion("inventario")}
-              style={{ textAlign: "left", cursor: "pointer", border: "none", width: "100%" }}
-            >
-              <span className="staff-symbol">▦</span>
-              <span style={{ display: "block", font: '400 29px "DM Serif Display", Georgia, serif', margin: "8px 0" }}>Inventario</span>
-              <p>Consulta existencias, catálogo, compras y ajustes de stock.</p>
-              <b>Ver inventario →</b>
-            </button>
-            <button
-              type="button"
-              className="staff-tile cream"
-              onClick={() => setSeccion("historial")}
-              style={{ textAlign: "left", cursor: "pointer", border: "none", width: "100%" }}
-            >
-              <span className="staff-symbol">↶</span>
-              <span style={{ display: "block", font: '400 29px "DM Serif Display", Georgia, serif', margin: "8px 0" }}>Historial</span>
-              <p>Revisa trazabilidad y movimientos registrados.</p>
-              <b>Consultar →</b>
-            </button>
           </section>
         </>
       )}
@@ -622,51 +406,58 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
       {/* MÓDULO: RESERVAS */}
       {seccion === "reservas" && (
         <section className="account-section" id="reservas">
-          <button
+          {filtroReservaEstado === "MENU" && !confirmacionReserva && <button
             type="button"
             className="back-link secondary"
             onClick={() => setSeccion("inicio")}
           >
             ← Volver al inicio {esAdmin ? "de administración" : "del encargado"}
-          </button>
+          </button>}
           <div className="section-heading">
             <div>
               <span className="eyebrow">OPERACIONES</span>
-              <h2 id="reservas">Reservas</h2>
+              <h2>Reservas</h2>
             </div>
           </div>
 
-          {/* Sub-filtros por estado */}
-          <div className="category-list" style={{ marginBottom: "16px" }}>
-            {[
-              ["TODAS", `Todas (${reservas.datos?.length ?? 0})`],
-              ["PENDIENTE", `Por preparar (${porPreparar})`],
-              ["LISTA_PARA_RETIRO", `Listas para retiro (${pendientesEntrega})`],
-              ["HISTORIAL", `Entregadas / Canceladas (${entregadas + (reservas.datos?.filter((r) => r.estado === "CANCELADA").length ?? 0)})`],
-            ].map(([clave, etiqueta]) => (
-              <button
-                key={clave}
-                type="button"
-                className={`category-chip ${filtroReservaEstado === clave ? "active" : ""}`}
-                onClick={() => {
-                  setFiltroReservaEstado(clave);
-                  setPaginaReserva(1);
-                }}
-              >
-                {etiqueta}
-              </button>
-            ))}
-          </div>
-
+          {reservas.error && <p role="alert">{reservas.error}</p>}
+          {reservas.cargando && <p>Cargando reservas…</p>}
+          {confirmacionReserva ? (
+            <div className="reserva-confirmacion" role="status" tabIndex={-1} ref={(el) => el?.focus()}>
+              <h3>✓ {confirmacionReserva.texto}</h3>
+              <h4>{nombreAlumno(confirmacionReserva.reserva.alumnoId)}</h4>
+              <p>{alumnosReserva[confirmacionReserva.reserva.alumnoId]?.curso}</p>
+              <p>{confirmacionReserva.reserva.items.reduce((n, i) => n + i.cantidad, 0)} materiales · ${confirmacionReserva.reserva.total.toLocaleString("es-CL")}</p>
+              <button className="btn" onClick={() => setConfirmacionReserva(null)}>Continuar</button>
+              <button className="btn secondary" onClick={() => { setConfirmacionReserva(null); setFiltroReservaEstado("MENU"); }}>Volver a Reservas</button>
+            </div>
+          ) : filtroReservaEstado === "MENU" ? (
+            <div className="reserva-menu">
+              {[
+                ["PENDIENTE", "Por preparar", "Preparar y verificar materiales", porPreparar],
+                ["LISTA_PARA_RETIRO", "Listas para retiro", "Registrar entregas", pendientesEntrega],
+                ["ENTREGADA", "Entregadas", "Consultar entregas realizadas", entregadas],
+                ["CANCELADA", "Canceladas", "Consultar cancelaciones", reservas.datos?.filter(r => r.estado === "CANCELADA").length ?? 0],
+                ["TODAS", "Todas las reservas", "Consultar historial completo", reservas.datos?.length ?? 0],
+              ].map(([clave, titulo, descripcion, total]) => (
+                <button key={clave} type="button" className="reserva-opcion" onClick={() => { setFiltroReservaEstado(String(clave)); setPaginaReserva(1); setBusquedaReserva(""); }}>
+                  <span><strong>{titulo}</strong><small>{descripcion}</small></span><b>{total} →</b>
+                </button>
+              ))}
+            </div>
+          ) : (<>
+          <button type="button" className="back-link secondary" onClick={() => { setFiltroReservaEstado("MENU"); setBusquedaReserva(""); }}>← Volver a Reservas</button>
+          <h3>{({PENDIENTE: "Por preparar", LISTA_PARA_RETIRO: "Listas para retiro", ENTREGADA: "Entregadas", CANCELADA: "Canceladas", TODAS: "Todas las reservas"} as Record<string,string>)[filtroReservaEstado]}</h3>
+          {aviso && !["Reserva preparada.", "Entrega registrada.", "Reserva cancelada."].includes(aviso) && <p role="alert" className="form-feedback error">{aviso}</p>}
           {/* Buscador de reserva */}
           <div style={{ marginBottom: "16px", maxWidth: "420px" }}>
             <label htmlFor="busqueda-reserva" style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-              Buscar por código o número de alumno
+              Buscar por nombre, curso o código
             </label>
             <input
               id="busqueda-reserva"
               className="input"
-              placeholder="Ej: RES-..., o 4"
+              placeholder="Ej: Tomás, 8° Básico o RES-..."
               value={busquedaReserva}
               onChange={(e) => {
                 setBusquedaReserva(e.target.value);
@@ -676,34 +467,34 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
             />
           </div>
 
-          {reservas.error && <p role="alert">{reservas.error}</p>}
-          {reservas.cargando && <p>Cargando reservas…</p>}
-          {reservasFiltradas.length === 0 && <p>No hay reservas en este estado.</p>}
+          {!reservas.cargando && !reservas.error && reservasFiltradas.length === 0 && <p>No hay reservas en este estado.</p>}
 
           <div style={{ display: "grid", gap: "16px" }}>
             {reservasPaginadas.map((r) => (
               <article key={r.id} className="card" style={{ padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
-                  <div>
-                    <span className={`staff-badge ${r.estado === "ENTREGADA" ? "staff-stock-ok" : r.estado === "CANCELADA" ? "staff-stock-bad" : "staff-stock-warn"}`}>
-                      {r.estado}
+                  <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+                    <span className="staff-badge" style={{ background: r.estado === "ENTREGADA" ? "#dcebdc" : r.estado === "CANCELADA" ? "#fbe3e3" : r.estado === "LISTA_PARA_RETIRO" ? "#dcebf7" : "#fff0ce", color: r.estado === "CANCELADA" ? "#922525" : "#21463d" }}>
+                      {({PENDIENTE: "Pendiente", LISTA_PARA_RETIRO: "Lista para retiro", ENTREGADA: "Entregada", CANCELADA: "Cancelada"} as Record<string,string>)[r.estado] ?? r.estado}
                     </span>
-                    <h3 style={{ margin: "6px 0 2px" }}>
-                      {r.codigo} · {r.estado}
+                    <h3 style={{ margin: "6px 0 2px", fontSize: "1.15rem", fontWeight: 700 }}>
+                      {nombreAlumno(r.alumnoId)}
                     </h3>
-                    <p style={{ margin: "4px 0", color: "var(--muted)", fontSize: "14px" }}>
-                      Alumno {r.alumnoId} · ${r.total.toLocaleString("es-CL")}
-                      {r.items?.length
-                        ? ` · ${r.items.map((i) => `${i.nombreProducto} (${i.cantidad})`).join(", ")}`
-                        : ""}
-                    </p>
+                    <small>{alumnosReserva[r.alumnoId]?.curso || "Curso no disponible"}</small>
+                    <p style={{ margin: "4px 0", fontSize: "12px" }}>Reserva: {fechaReserva(r.fechaCreacion)}</p>
+                    {r.estado === "ENTREGADA" && <p style={{ margin: "4px 0", fontSize: "12px" }}>Entrega: {fechasEntrega[r.id] ? fechaReserva(fechasEntrega[r.id]) : "Fecha no disponible"}</p>}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", margin: "8px 0" }}>
+                      <span>{r.items.reduce((n, i) => n + i.cantidad, 0)} materiales</span>
+                      <strong style={{ fontSize: "1.15rem", color: "#21463d" }}>${r.total.toLocaleString("es-CL")}</strong>
+                    </div>
+                    <details><summary>Ver detalle de la reserva</summary><ul>{r.items.map(i => <li key={i.productoId}>{i.cantidad} × {i.nombreProducto}</li>)}</ul><small style={{overflowWrap: "anywhere"}}>{r.codigo}</small></details>
                   </div>
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                     {r.estado === "PENDIENTE" && (
                       <button
                         className="btn"
                         disabled={procesando || !estaListaParaEmbolsar(r.id, r.items)}
-                        onClick={() => preparar(r.id)}
+                        onClick={async () => { if (await preparar(r.id)) setConfirmacionReserva({texto: "Reserva preparada correctamente", reserva: r}); }}
                       >
                         Marcar lista
                       </button>
@@ -712,7 +503,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                       <button
                         className="btn"
                         disabled={procesando}
-                        onClick={() => entregar(r.id)}
+                        onClick={async () => { if (await entregar(r.id)) setConfirmacionReserva({texto: "Entrega registrada correctamente", reserva: r}); }}
                       >
                         Registrar entrega
                       </button>
@@ -887,10 +678,12 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
 
                 {["PENDIENTE", "LISTA_PARA_RETIRO"].includes(r.estado) && (
                   <div style={{ marginTop: "14px", borderTop: "1px solid #e8e4da", paddingTop: "10px" }}>
+                    <details><summary>Cancelar reserva</summary>
                     <CancelacionReserva
                       procesando={procesando}
-                      cancelar={(motivo) => cancelar(r.id, motivo)}
+                      cancelar={async (motivo) => { if (await cancelar(r.id, motivo)) setConfirmacionReserva({texto: "Reserva cancelada correctamente", reserva: r}); }}
                     />
+                    </details>
                   </div>
                 )}
               </article>
@@ -921,6 +714,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
               </div>
             </div>
           )}
+          </>)}
         </section>
       )}
 

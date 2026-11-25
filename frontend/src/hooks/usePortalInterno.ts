@@ -27,9 +27,10 @@ export function usePortalInterno() {
   async function ejecutar(accion: () => Promise<void>) {
     setAviso("");
     try {
-      await realizar(accion);
+      return (await realizar(async () => { await accion(); return true; })) === true;
     } catch (e) {
       setAviso(mensajeError(e));
+      return false;
     }
   }
   function solicitar() {
