@@ -82,11 +82,14 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
 
       resolverPromesa();
 
-      await waitFor(() => {
-        if (boton.hasAttribute("disabled")) {
-          throw new Error("Aún bloqueado por useAccion");
-        }
-      });
+      await waitFor(
+        () => {
+          if (boton.hasAttribute("disabled")) {
+            throw new Error("Aún bloqueado por useAccion");
+          }
+        },
+        { timeout: 2500 },
+      );
 
       expect(boton.hasAttribute("disabled")).toBeFalse();
       expect(boton.textContent).toContain("Confirmar entrega");
