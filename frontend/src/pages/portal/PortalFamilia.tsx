@@ -16,16 +16,10 @@ interface PortalFamiliaProps {
 const pesos = (valor: number) => `$${valor.toLocaleString("es-CL")}`;
 const normalizarBusqueda = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-CL").trim();
 const estadosReserva: Record<string, string> = { PENDIENTE: "Pendiente", LISTA_PARA_RETIRO: "Lista para retiro", ENTREGADA: "Entregada", CANCELADA: "Cancelada" };
-function movimientoVisual(tipo: string, descripcion: string, monto: number) {
-  if (tipo === "LIBERACION_RESERVA") return { texto: `${pesos(monto)} liberados`, color: "#28639b", icono: "↗", fondo: "#e1edf8" };
-  if (tipo.includes("RETENCION") || tipo.includes("COMPROMISO") || /retención para reserva/i.test(descripcion)) return { texto: `${pesos(monto)} retenidos`, color: "#805400", icono: "🔒", fondo: "#fff0d3" };
-  if (tipo === "ABONO" || tipo === "DEVOLUCION") return { texto: `+${pesos(monto)}`, color: "#1b6238", icono: "+$", fondo: "#dcebdc" };
-  if (tipo === "ENTREGA") return { texto: `−${pesos(monto)}`, color: "#993a20", icono: "−$", fondo: "#f4dfd2" };
-  return { texto: pesos(monto), color: "#242b28", icono: "$", fondo: "#eeeae3" };
-}
-
 export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
   const [filtroReserva, setFiltroReserva] = useState("Todas");
+  const [categoriaReservaAlumno, setCategoriaReservaAlumno] = useState<string | null>(null);
+  useEffect(() => { setCategoriaReservaAlumno(null); }, [seccion]);
   const [cancelacionAbierta, setCancelacionAbierta] = useState<number | null>(null);
   const [pedidoAbierto, setPedidoAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -90,10 +84,11 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
   );
 
   const esApoderado = usuario?.rol === "APODERADO";
+  const filtroActivo = esApoderado ? filtroReserva : categoriaReservaAlumno;
   const inicioFamilia = seccion === "cuenta" || seccion === "inicio";
   const global = seccion === "correcciones" || seccion === "privacidad";
   const hijoValido = alumno > 0 && Boolean(alumnoSeleccionado);
-  const vistaCuenta = esApoderado ? seccion === "abonar" && hijoValido : inicioFamilia;
+  const vistaCuenta = esApoderado ? seccion === "abonar" && hijoValido : false;
   const mostrarInicio = esApoderado && (inicioFamilia || (!hijoValido && !global));
   useEffect(() => {
     if (!esApoderado) return;
@@ -128,6 +123,18 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
           <div className="family-reservation-owner"><small>CUENTA DEL ALUMNO</small><h3>{nombreAlumno}</h3><span>{alumnoSeleccionado?.curso}</span></div>
         </section>
       )}
+      {!esApoderado && inicioFamilia && <>
+        <section className="family-intro">
+          <div><h1>¡Hola, {usuario?.nombreCompleto?.trim().split(/\s+/)[0]}!</h1>
+          <p>Reserva tus materiales escolares y consulta el estado de tus pedidos.</p></div>
+        </section>
+        <section className="account-section family-v4-options">
+          <div className="family-v4-balance"><small>Tu saldo disponible</small><strong>{cuenta.datos ? pesos(cuenta.datos.saldoDisponible) : "—"}</strong></div>
+          {cuenta.cargando && <p>Cargando saldo…</p>}
+          {cuenta.error && <p role="alert">{cuenta.error}</p>}
+          {[["catalogo", "Reservar materiales", "Busca y selecciona tus útiles escolares.", "🛒"], ["reservas", "Mis reservas", "Revisa el estado de tus pedidos.", "▤"]].map(([id, titulo, descripcion, icono]) => <button key={id} type="button" className="family-v4-option" onClick={() => setSeccion(id)}><span aria-hidden="true">{icono}</span><span><strong>{titulo}</strong><small>{descripcion}</small></span><span aria-hidden="true">›</span></button>)}
+        </section>
+      </>}
       {(vistaCuenta || mostrarInicio) && (
         <>
           {(!esApoderado || mostrarInicio) && <section className="family-intro">
@@ -337,105 +344,6 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             )}
           </section>}
 
-          {/* Últimos movimientos del alumno en portada */}
-          {!esApoderado && <section className="family-activity" style={{ marginTop: "24px" }}>
-            <div className="section-heading">
-              <div>
-                <h2>Últimos movimientos</h2>
-              </div>
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={() => setSeccion("movimientos")}
-                style={{ fontSize: "13px" }}
-              >
-                Ver cartola completa →
-              </button>
-            </div>
-            {movimientos.cargando && <p>Cargando movimientos…</p>}
-            {movimientos.error && <p role="alert">{movimientos.error}</p>}
-            {movimientos.datos && movimientos.datos.length > 0 ? (
-              <div className="family-movement-list" style={{ display: "grid", gap: "8px", marginTop: "12px" }}>
-                {movimientos.datos.slice(0, 5).map((m) => {
-                  const visual = movimientoVisual(m.tipo, m.descripcion ?? "", m.monto);
-                  return (
-                    <div
-                      key={m.id}
-                      className="family-movement"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "10px 16px",
-                        background: "#ffffff",
-                        borderRadius: "12px",
-                        border: "1px solid #e2ddd3",
-                        gap: "12px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <span
-                          className="movement-icon"
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "10px",
-                            display: "grid",
-                            placeItems: "center",
-                            fontWeight: "bold",
-                            background: visual.fondo,
-                            color: visual.color,
-                            fontSize: "14px",
-                          }}
-                        >
-                          {visual.icono}
-                        </span>
-                        <div>
-                          <strong style={{ fontSize: "14px", color: "#173b31" }}>
-                            {m.descripcion || m.tipo}
-                          </strong>
-                          <br />
-                          <small className="muted" style={{ fontSize: "12px" }}>
-                            {new Date(m.fecha).toLocaleDateString("es-CL")}
-                          </small>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <strong style={{ color: visual.color, fontSize: "15px" }}>
-                          {visual.texto}
-                        </strong>
-                        <br />
-                        <small className="muted" style={{ fontSize: "12px" }}>
-                          Saldo total {pesos(m.saldoResultante)}
-                        </small>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              !movimientos.cargando && (
-                <p className="muted" style={{ marginTop: "10px" }}>
-                  No hay movimientos registrados para esta cuenta.
-                </p>
-              )
-            )}
-          </section>}
-
-          {!esApoderado && notificaciones.datos && notificaciones.datos.some((n) => n.alumnoId === alumno && n.estado === "SIMULADA") && (
-            <section className="account-section" style={{ marginTop: "20px" }}>
-              <span className="eyebrow">ALERTAS</span>
-              <h3>Alertas de saldo</h3>
-              {notificaciones.datos
-                .filter((n) => n.alumnoId === alumno && n.estado === "SIMULADA")
-                .map((n) => (
-                  <div key={n.id} className="card" style={{ padding: "12px 16px", marginBottom: "8px" }}>
-                    <p style={{ margin: 0 }}>{n.contenido}</p>
-                  </div>
-                ))}
-            </section>
-          )}
         </>
       )}
 
@@ -448,6 +356,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
 
       {(!esApoderado || hijoValido) && seccion === "catalogo" && (
         <section className="family-section family-mobile-catalog">
+          {!esApoderado && <button type="button" className="back-link secondary" onClick={volverOpciones}>← Volver al inicio</button>}
           {/* Franja compacta del alumno con saldo */}
           <div
             className="reserva-student-strip"
@@ -464,7 +373,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
               gap: "12px",
             }}
           >
-            {!(esApoderado && hijoValido && !inicioFamilia && !global) && (
+            {esApoderado && !(hijoValido && !inicioFamilia && !global) && (
             <div>
               <small style={{ textTransform: "uppercase", fontWeight: 700, color: "#65756c", fontSize: "11px", letterSpacing: "0.5px" }}>
                 Alumno seleccionado
@@ -638,9 +547,10 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
             </div>
             <aside id="family-order-panel" className={`reserva-aside ${pedidoAbierto ? "family-order-open" : ""}`}>
               <button type="button" className="btn secondary family-mobile-close" onClick={() => setPedidoAbierto(false)}>Volver al catálogo</button>
-              <span className="eyebrow">MI PEDIDO</span>
+              <span className="eyebrow" style={!esApoderado ? {display: "block", marginTop: 12} : undefined}>MI PEDIDO</span>
               <h3 style={{ margin: "4px 0 14px", fontSize: "1.45rem", color: "#173b31" }}>Mi reserva</h3>
-              <p className="family-payment-recipient">Reserva para {nombreAlumno}</p>
+              {esApoderado && <p className="family-payment-recipient">Reserva para {nombreAlumno}</p>}
+              {!esApoderado && seleccion.length === 0 && avisoReserva?.tipo === "exito" ? <div className="family-action-result"><AlertaMensaje mensaje={avisoReserva.mensaje} tipo="exito"/><p>Saldo disponible: <strong>{pesos(cuenta.datos?.saldoDisponible ?? 0)}</strong></p><button className="btn secondary" onClick={() => { setPedidoAbierto(false); setSeccion("reservas"); }}>Ver mis reservas →</button></div> : <>
               {seleccion.length === 0 ? (
                 <p className="muted" style={{ fontSize: "13px", margin: "10px 0 16px" }}>
                   Aún no has agregado materiales. Ajusta las cantidades en la lista para armar tu pedido.
@@ -737,7 +647,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 </div>
                 {totalSeleccion > (cuenta.datos?.saldoDisponible ?? 0) && (
                   <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#9c2e22", fontWeight: 600 }}>
-                    ⚠ El total supera el saldo disponible. Realiza un abono o disminuye las unidades.
+                    {esApoderado ? "⚠ El total supera el saldo disponible. Realiza un abono o disminuye las unidades." : "⚠ El total supera tu saldo disponible. Disminuye las unidades o solicita un abono a tu apoderado."}
                   </p>
                 )}
               </div>
@@ -752,6 +662,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
                 {procesando ? "Procesando…" : "Confirmar reserva"}
               </button>
               {avisoReserva && <div className="family-action-result"><AlertaMensaje mensaje={avisoReserva.mensaje} tipo={avisoReserva.tipo} />{avisoReserva.tipo === "exito" && <button className="btn secondary" onClick={() => { setPedidoAbierto(false); setFiltroReserva("Todas"); setSeccion("reservas"); }}>Ver mis reservas →</button>}</div>}
+              </>}
             </aside>
           </div>
         </section>
@@ -762,25 +673,29 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
           {!esApoderado && <button
             type="button"
             className="back-link secondary"
-            onClick={volverOpciones}
+            onClick={() => { if (categoriaReservaAlumno !== null) { setCategoriaReservaAlumno(null); setCancelacionAbierta(null); } else volverOpciones(); }}
           >
-            ← Volver a Mi Cuenta
+            {categoriaReservaAlumno !== null ? "← Volver a categorías" : "← Volver al inicio"}
           </button>}
           <div className="section-heading">
             <div>
               <span className="eyebrow">HISTORIAL</span>
-              <h2 id="reservas">Mis reservas</h2>
+              <h2 id="reservas">{!esApoderado && categoriaReservaAlumno !== null ? (estadosReserva[categoriaReservaAlumno] ?? "Todas las reservas") : "Mis reservas"}</h2>
             </div>
           </div>
 
-          <div className="family-reservation-owner"><small>ESTÁS ADMINISTRANDO LA CUENTA DE</small><h3>{nombreAlumno}</h3><span>{alumnoSeleccionado?.curso}</span></div>
+          {esApoderado && <div className="family-reservation-owner"><small>ESTÁS ADMINISTRANDO LA CUENTA DE</small><h3>{nombreAlumno}</h3><span>{alumnoSeleccionado?.curso}</span></div>}
+          {esApoderado && <>
           <div className="family-reservation-kpis"><div><small>Reservas pendientes</small><strong>{reservasAlumno.filter(r => r.estado === "PENDIENTE").length}</strong></div><div><small>Saldo comprometido</small><strong>{cuenta.datos ? pesos(cuenta.datos.saldoComprometido) : "—"}</strong></div></div>
           <div className="category-list" aria-label="Filtrar reservas">{["Todas", ...Object.keys(estadosReserva), ...Array.from(new Set(reservasAlumno.map(r => r.estado))).filter(e => !(e in estadosReserva))].map(e => <button key={e} type="button" className={`category-chip ${filtroReserva === e ? "active" : ""}`} aria-pressed={filtroReserva === e} onClick={() => setFiltroReserva(e)}>{estadosReserva[e] ?? e}</button>)}</div>
+          </>}
+          {!esApoderado && categoriaReservaAlumno === null && <><p>Selecciona el estado que deseas consultar.</p><div className="family-v4-options" style={{display:"grid", gap: 10}}>{[["PENDIENTE", "Pendientes", "◷"], ["LISTA_PARA_RETIRO", "Listas para retiro", "▣"], ["ENTREGADA", "Entregadas", "✓"], ["CANCELADA", "Canceladas", "×"], ["Todas", "Todas las reservas", "▤"]].map(([id, titulo, icono]) => <button key={id} type="button" className="family-v4-option" onClick={() => setCategoriaReservaAlumno(id)}><span aria-hidden="true">{icono}</span><span><strong>{titulo}</strong></span><span aria-hidden="true">›</span></button>)}</div></>}
+          {(esApoderado || categoriaReservaAlumno !== null) && <>
           {reservas.cargando && <p>Cargando reservas…</p>}
           {reservas.error && <p role="alert">{reservas.error}</p>}
-          {!reservas.cargando && !reservas.error && reservasAlumno.filter(r => filtroReserva === "Todas" || r.estado === filtroReserva).length === 0 && <p>No hay reservas en esta categoría.</p>}
+          {!reservas.cargando && !reservas.error && reservasAlumno.filter(r => filtroActivo === "Todas" || r.estado === filtroActivo).length === 0 && <p>No hay reservas en esta categoría.</p>}
           <div className="family-reservation-list">
-            {reservasAlumno.filter(r => filtroReserva === "Todas" || r.estado === filtroReserva).map(r => (
+            {reservasAlumno.filter(r => filtroActivo === "Todas" || r.estado === filtroActivo).map(r => (
               <article key={r.id} className="card family-reservation-card">
                 <div className="family-reservation-row"><small>{new Date(r.fechaCreacion).toLocaleDateString("es-CL")}</small><span className={`family-reservation-status status-${r.estado.toLowerCase()}`}>{estadosReserva[r.estado] ?? r.estado}</span></div>
                 <div className="family-reservation-row"><div><h3>{r.items.reduce((n,i) => n+i.cantidad,0)} materiales</h3><small>{r.items.length} {r.items.length === 1 ? "tipo de producto" : "tipos de productos"}</small></div><strong className="family-reservation-total">{pesos(r.total)}</strong></div>
@@ -792,17 +707,18 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
               </article>
             ))}
           </div>
-          {avisoCancelacion?.tipo === "exito" && !reservasAlumno.filter(r => filtroReserva === "Todas" || r.estado === filtroReserva).some(r => r.id === avisoCancelacion.id) && <AlertaMensaje mensaje={avisoCancelacion.mensaje} tipo="exito"/>}
-          <details className="family-reservation-notice"><summary>Comunicaciones de reserva</summary><p>Los correos son simulados. Los avisos asociados se muestran en el detalle de cada reserva.</p><button className="btn secondary" onClick={() => void avisosReserva.recargar()}>Actualizar avisos</button>{avisosReserva.error && <p role="alert">{avisosReserva.error}</p>}{avisosReserva.datos?.filter(a => a.alumnoId === alumno && !reservasAlumno.some(r => r.id === a.reservaId)).map(a => <div key={a.id}><strong>{a.asunto}</strong><p style={{whiteSpace:"pre-line"}}>{a.mensaje}</p></div>)}</details>
+          {avisoCancelacion?.tipo === "exito" && !reservasAlumno.filter(r => filtroActivo === "Todas" || r.estado === filtroActivo).some(r => r.id === avisoCancelacion.id) && <AlertaMensaje mensaje={avisoCancelacion.mensaje} tipo="exito"/>}
+          {esApoderado && <details className="family-reservation-notice"><summary>Comunicaciones de reserva</summary><p>Los correos son simulados. Los avisos asociados se muestran en el detalle de cada reserva.</p><button className="btn secondary" onClick={() => void avisosReserva.recargar()}>Actualizar avisos</button>{avisosReserva.error && <p role="alert">{avisosReserva.error}</p>}{avisosReserva.datos?.filter(a => a.alumnoId === alumno && !reservasAlumno.some(r => r.id === a.reservaId)).map(a => <div key={a.id}><strong>{a.asunto}</strong><p style={{whiteSpace:"pre-line"}}>{a.mensaje}</p></div>)}</details>}
+          </>}
         </section>
       )}
 
-      {(!esApoderado || hijoValido) && seccion === "movimientos" && (
+      {esApoderado && hijoValido && seccion === "movimientos" && (
         <CartolaFamilia key={alumno} cuenta={cuenta} movimientos={movimientos}
           abonos={abonos} esApoderado={esApoderado} volver={volverOpciones} />
       )}
 
-      {seccion === "correcciones" && (
+      {esApoderado && seccion === "correcciones" && (
         <section className="account-section">
           <button
             type="button"
@@ -815,7 +731,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
         </section>
       )}
 
-      {seccion === "privacidad" && (
+      {esApoderado && seccion === "privacidad" && (
         <section className="account-section">
           <button
             type="button"

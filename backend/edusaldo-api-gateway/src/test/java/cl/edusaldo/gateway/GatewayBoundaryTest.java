@@ -161,7 +161,7 @@ class GatewayBoundaryTest {
   }
 
   @Test
-  void titularesPuedenConsultarSusAlertasYElApoderadoSusAbonos() throws Exception {
+  void personalYApoderadosPuedenConsultarAlertasYElApoderadoSusAbonos() throws Exception {
     var policy = new GatewayAuthorizationPolicy(identity);
     for (String role : new String[] {"ADMINISTRADOR", "ENCARGADO", "APODERADO", "ALUMNO"}) {
       var who =
@@ -169,7 +169,8 @@ class GatewayBoundaryTest {
               "{\"usuarioId\":3,\"idEstablecimiento\":1,\"rol\":\""
                   + role
                   + "\",\"estado\":\"ACTIVA\"}");
-      assertTrue(
+      assertEquals(
+          !role.equals("ALUMNO"),
           policy
               .authorize("/api/saldos/notificaciones", "GET", json.createObjectNode(), who)
               .block());
@@ -183,6 +184,28 @@ class GatewayBoundaryTest {
           role.equals("ADMINISTRADOR"),
           policy.authorize("/api/categorias", "POST", json.createObjectNode(), who).block());
     }
+  }
+
+  @Test
+  void alumnoTienePermisosLimitadosYSoloSobreSusRecursos() throws Exception {
+    var client = mock(GatewayIdentityClient.class);
+    var policy = new GatewayAuthorizationPolicy(client);
+    var who = json.readTree("{\"usuarioId\":4,\"idEstablecimiento\":1,\"rol\":\"ALUMNO\",\"estado\":\"ACTIVA\",\"alumnos\":[5]}");
+    var empty = json.createObjectNode();
+    when(client.read("/api/usuarios/4", who)).thenReturn(Mono.just(json.readTree("{\"id\":4,\"idEstablecimiento\":1}")));
+    when(client.read("/api/usuarios/5", who)).thenReturn(Mono.just(json.readTree("{\"id\":5,\"idEstablecimiento\":1}")));
+    when(client.read("/api/reservas/7", who)).thenReturn(Mono.just(json.readTree("{\"alumnoId\":4,\"idEstablecimiento\":1}")));
+    when(client.read("/api/reservas/8", who)).thenReturn(Mono.just(json.readTree("{\"alumnoId\":5,\"idEstablecimiento\":1}")));
+    for (String path : new String[] {"/api/productos", "/api/categorias", "/api/saldos/cuenta/4", "/api/reservas/alumno/4", "/api/reservas/7"})
+      assertTrue(policy.authorize(path, "GET", empty, who).block(), path);
+    for (String path : new String[] {"/api/saldos/cuenta/4/movimientos", "/api/saldos/cuenta/5", "/api/reservas/alumno/5", "/api/reservas/8", "/api/reservas", "/api/reservas/notificaciones", "/api/saldos/notificaciones", "/api/saldos/abonos", "/api/entregas", "/api/devoluciones", "/api/usuarios/solicitudes-correccion"})
+      assertFalse(policy.authorize(path, "GET", empty, who).block(), path);
+    assertTrue(policy.authorize("/api/reservas", "POST", json.readTree("{\"alumnoId\":4}"), who).block());
+    assertFalse(policy.authorize("/api/reservas", "POST", json.readTree("{\"alumnoId\":5}"), who).block());
+    assertTrue(policy.authorize("/api/reservas/7/cancelar", "POST", empty, who).block());
+    assertFalse(policy.authorize("/api/reservas/8/cancelar", "POST", empty, who).block());
+    for (String path : new String[] {"/api/saldos/abonos/iniciar", "/api/saldos/abonos/confirmar", "/api/reservas/7/marcar-lista", "/api/reservas/7/entregar", "/api/usuarios/solicitudes-correccion"})
+      assertFalse(policy.authorize(path, "POST", empty, who).block(), path);
   }
 
   @Test

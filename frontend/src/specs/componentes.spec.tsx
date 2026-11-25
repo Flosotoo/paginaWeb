@@ -46,12 +46,6 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
 
   describe("BotonAccion (prevención de doble clic con useAccion)", () => {
     it("deshabilita el botón e ignora clics repetidos durante la ventana de procesamiento", async () => {
-      const origSetTimeout = window.setTimeout.bind(window);
-      spyOn(window, "setTimeout").and.callFake(((
-        handler: TimerHandler,
-        timeout?: number,
-      ) => origSetTimeout(handler, timeout === 1000 ? 15 : timeout)) as typeof window.setTimeout);
-
       let resolverPromesa!: () => void;
       const onClick = jasmine.createSpy("onClick").and.callFake(
         () =>
@@ -86,7 +80,7 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
         if (boton.hasAttribute("disabled")) {
           throw new Error("Aún bloqueado por useAccion");
         }
-      });
+      }, { timeout: 3000 });
 
       expect(boton.hasAttribute("disabled")).toBeFalse();
       expect(boton.textContent).toContain("Confirmar entrega");

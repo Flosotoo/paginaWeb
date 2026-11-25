@@ -17,6 +17,7 @@ import {
   MENU_ADMINISTRADOR,
   MENU_ENCARGADO,
   MENU_FAMILIA,
+  MENU_ALUMNO,
   SECCIONES_INVENTARIO,
   prefijoPortalPorRol,
 } from "./routes/LayoutPortal";
@@ -40,7 +41,7 @@ export const SECCIONES_POR_ROL: Record<Rol, readonly string[]> = {
   ],
   ENCARGADO: [...MENU_ENCARGADO.map(([id]) => id), ...SECCIONES_INVENTARIO.filter(id => id !== "inventario")],
   APODERADO: [...MENU_FAMILIA.map(([id]) => id), "opciones", "abonar", "notificaciones"],
-  ALUMNO: MENU_FAMILIA.map(([id]) => id),
+  ALUMNO: MENU_ALUMNO.map(([id]) => id),
 };
 
 export function resolverSeccionPermitida(rol: Rol, solicitada: string): string {

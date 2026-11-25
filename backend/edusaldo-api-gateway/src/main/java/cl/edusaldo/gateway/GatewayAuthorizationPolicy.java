@@ -54,7 +54,8 @@ public class GatewayAuthorizationPolicy {
                 u.path("idEstablecimiento").asLong(-1) == who.path("idEstablecimiento").asLong()
                     && (staff(who)
                         || who.path("usuarioId").asLong() == id
-                        || contains(who.path("alumnos"), id)))
+                        || (!who.path("rol").asText().equals("ALUMNO")
+                            && contains(who.path("alumnos"), id))))
         .onErrorResume(GatewayAuthorizationPolicy::denegarRecursoInaccesible);
   }
 
@@ -169,6 +170,21 @@ public class GatewayAuthorizationPolicy {
         || path.contains("/inactivar")
         || path.contains("/reactivar")) {
       if (!admin(who)) return Mono.just(false);
+    }
+    // Alumno: lista cerrada de operaciones; los controles de titularidad siguen abajo.
+    if (role.equals("ALUMNO")) {
+      boolean lectura = method.equals("GET") || method.equals("HEAD");
+      boolean permitido = lectura && (
+          path.matches("/api/(productos|categorias)(/\\d+)?")
+          || path.equals("/api/saldos/cuenta/" + uid)
+          || path.equals("/api/reservas/alumno/" + uid)
+          || path.matches("/api/reservas/\\d+"))
+          || method.equals("POST") && (
+              path.equals("/api/reservas") && body.hasNonNull("alumnoId")
+                  && body.path("alumnoId").asLong(-1) == uid
+              || path.matches("/api/reservas/\\d+/cancelar")
+              || path.equals("/api/auth/cambiar-password"));
+      if (!permitido) return Mono.just(false);
     }
     if (!staff(who)) {
       boolean allowed =

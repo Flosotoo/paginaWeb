@@ -31,11 +31,17 @@ export const MENU_FAMILIA: readonly [string, string][] = [
   ["privacidad", "Privacidad"],
 ];
 
+export const MENU_ALUMNO: readonly [string, string][] = [
+  ["cuenta", "Inicio"],
+  ["catalogo", "Reservar materiales"],
+  ["reservas", "Mis reservas"],
+];
+
 export const SECCIONES_INVENTARIO = ["inventario", "gestion-catalogo", "gestion-compras", "inventario-ajustes", "inventario-movimientos"] as const;
 
 export function obtenerMenuPorRol(rol: Rol): readonly [string, string][] {
   if (rol === "APODERADO") return [["cuenta", "Mis hijos"], ["correcciones", "Mis datos"], ["privacidad", "Privacidad"]];
-  if (rol === "ALUMNO") return MENU_FAMILIA;
+  if (rol === "ALUMNO") return MENU_ALUMNO;
   if (rol === "ADMINISTRADOR") return MENU_ADMINISTRADOR;
   return MENU_ENCARGADO;
 }

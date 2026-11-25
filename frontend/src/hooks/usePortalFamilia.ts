@@ -59,7 +59,7 @@ export function usePortalFamilia() {
     () => familiaService.movimientos(alumno),
     [alumno],
   );
-  const movimientos = useConsulta(cargarMovimientos, alumno > 0);
+  const movimientos = useConsulta(cargarMovimientos, alumno > 0 && usuario?.rol === "APODERADO");
   const cargarAbonos = useCallback(
     () => familiaService.abonos(alumno),
     [alumno],
@@ -72,7 +72,7 @@ export function usePortalFamilia() {
     () => familiaService.notificaciones(),
     [],
   );
-  const notificaciones = useConsulta(cargarNotificaciones);
+  const notificaciones = useConsulta(cargarNotificaciones, usuario?.rol === "APODERADO");
   const cargarAvisosReserva = useCallback(() => reservasService.notificaciones(), []);
   const avisosReserva = useConsulta(cargarAvisosReserva);
   const cargarReservas = useCallback(
@@ -173,6 +173,10 @@ export function usePortalFamilia() {
   const cancelar = (id: number, motivo: string) =>
     ejecutar(async () => {
       setAvisoCancelacion(null);
+      if (!reservas.datos?.some(r => r.id === id && r.alumnoId === alumno && r.estado === "PENDIENTE")) {
+        setAvisoCancelacion({ id, tipo: "error", mensaje: "Solo puedes cancelar una reserva propia pendiente de preparación." });
+        return;
+      }
       await reservasService.cancelar(id, motivo);
       setAvisoCancelacion({ id, tipo: "exito", mensaje: "Reserva cancelada. Se liberó el saldo comprometido." });
       await Promise.all([

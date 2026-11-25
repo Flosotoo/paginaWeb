@@ -27,6 +27,11 @@ describe("protección de rutas con React Router (<Outlet />) por sesión y rol",
   });
 
   it("restringe cada rol exclusivamente a sus secciones autorizadas", () => {
+    for (const seccion of ["movimientos", "abonar", "notificaciones", "correcciones", "privacidad", "opciones"]) {
+      expect(resolverSeccionPermitida("ALUMNO", seccion)).toBe("cuenta");
+    }
+    expect(resolverSeccionPermitida("ALUMNO", "catalogo")).toBe("catalogo");
+    expect(resolverSeccionPermitida("ALUMNO", "reservas")).toBe("reservas");
     expect(resolverSeccionPermitida("ENCARGADO", "#personas")).toBe("inicio");
     expect(resolverSeccionPermitida("ENCARGADO", "#auditoria")).toBe("inicio");
     expect(resolverSeccionPermitida("ENCARGADO", "#entregas")).toBe("entregas");
