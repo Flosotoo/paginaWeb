@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { usuariosService, type ResumenUsuario } from "../../services/usuarios";
 import { mensajeError } from "../../services/api";
 import { cuentaLibreriaService } from "../../services/cuentaLibreria";
 import type { MovimientoLibreria, ResumenCuentaLibreria } from "../../services/cuentaLibreria";
@@ -26,7 +27,13 @@ const csvCelda = (valor: string | number) =>
   `"${String(valor).replace(/^[=+@\-\t\r]/, "'$&").replace(/"/g, '""')}"`;
 
 export function CuentaLibreria() {
-  const [mes, setMes] = useState(hoy);
+  const [desde, setDesde] = useState(() => `${hoy()}-01`);
+  const [hasta, setHasta] = useState(() => {
+    const d = new Date();
+    return `${hoy()}-${new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()}`;
+  });
+  const [alumnos, setAlumnos] = useState<Record<number, ResumenUsuario>>({});
+  const [consultandoAlumnos, setConsultandoAlumnos] = useState(false);
   const [tipo, setTipo] = useState("TODOS");
   const [busqueda, setBusqueda] = useState("");
   const [resumen, setResumen] = useState<ResumenCuentaLibreria | null>(null);
@@ -35,14 +42,10 @@ export function CuentaLibreria() {
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
 
-  const mesValido = /^\d{4}-\d{2}$/.test(mes);
-  const desde = mesValido ? `${mes}-01` : "";
-  const hasta = mesValido
-    ? `${mes}-${String(new Date(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)), 0).getDate()).padStart(2, "0")}`
-    : "";
+  const periodoValido = /^\d{4}-\d{2}-\d{2}$/.test(desde) && /^\d{4}-\d{2}-\d{2}$/.test(hasta) && desde <= hasta;
 
   useEffect(() => {
-    if (!mesValido) {
+    if (!periodoValido) {
       setResumen(null);
       setMovimientos([]);
       setError("");
@@ -71,31 +74,50 @@ export function CuentaLibreria() {
     return () => {
       activo = false;
     };
-  }, [mesValido, desde, hasta, revision]);
+  }, [periodoValido, desde, hasta, revision]);
+
+  useEffect(() => {
+    let activo = true;
+    setAlumnos({});
+    const ids = [...new Set(movimientos.map(m => m.alumnoId))];
+    setConsultandoAlumnos(ids.length > 0);
+    Promise.allSettled(ids.map(id => usuariosService.obtenerPorId(id))).then(resultados => {
+      if (!activo) return;
+      const datos: Record<number, ResumenUsuario> = {};
+      resultados.forEach((r, i) => { if (r.status === "fulfilled") datos[ids[i]] = r.value; });
+      setAlumnos(datos);
+      setConsultandoAlumnos(false);
+    });
+    return () => { activo = false; };
+  }, [movimientos]);
+
+  const normalizar = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   const filtrados = useMemo(
     () =>
       movimientos.filter((m) => {
         if (tipo !== "TODOS" && m.tipo !== tipo) return false;
-        const q = busqueda.trim().toLowerCase();
+        const q = normalizar(busqueda.trim());
         return (
           !q ||
-          [m.referencia, m.detalle, String(m.alumnoId)].some((s) =>
-            s.toLowerCase().includes(q),
+          [m.referencia, m.detalle, String(m.alumnoId), alumnos[m.alumnoId]?.nombreCompleto ?? "", alumnos[m.alumnoId]?.curso ?? ""].some((s) =>
+            normalizar(s).includes(q),
           )
         );
       }),
-    [movimientos, tipo, busqueda],
+    [movimientos, tipo, busqueda, alumnos],
   );
 
   const descargar = () => {
     const filas = [
-      ["Fecha", "Tipo", "Referencia", "Alumno", "Detalle", "Monto CLP"],
+      ["Fecha", "Tipo", "Referencia", "ID alumno", "Alumno", "Curso", "Detalle", "Monto CLP"],
       ...filtrados.map((m) => [
         fechaLocal(m.fecha),
         m.tipo,
         m.referencia,
         m.alumnoId,
+        alumnos[m.alumnoId]?.nombreCompleto ?? "",
+        alumnos[m.alumnoId]?.curso ?? "",
         m.detalle,
         m.monto,
       ]),
@@ -107,7 +129,7 @@ export function CuentaLibreria() {
     );
     const enlace = document.createElement("a");
     enlace.href = url;
-    enlace.download = `cuenta-libreria-${mes}.csv`;
+    enlace.download = `cuenta-libreria-${desde}_${hasta}.csv`;
     enlace.click();
     URL.revokeObjectURL(url);
   };
@@ -118,19 +140,13 @@ export function CuentaLibreria() {
         <div>
           <span className="eyebrow">CONTROL FINANCIERO</span>
           <h2>Cuenta Librería</h2>
-          <p>Cartola mensual de abonos, entregas y devoluciones registradas.</p>
+          <p>Cartola por período de abonos, entregas y devoluciones registradas.</p>
         </div>
       </div>
 
-      <div className="cl-filtros card p-3 mb-3">
-        <label>
-          Período{" "}
-          <input
-            type="month"
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-          />
-        </label>
+      <div className="cl-filtros mb-3">
+        <label>Desde<input type="date" value={desde} onChange={e => setDesde(e.target.value)} /></label>
+        <label>Hasta<input type="date" value={hasta} onChange={e => setHasta(e.target.value)} /></label>
         <label>
           Movimiento{" "}
           <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
@@ -145,7 +161,7 @@ export function CuentaLibreria() {
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Alumno, concepto o referencia"
+            placeholder="Nombre, curso o referencia"
           />
         </label>
         <BotonAccion
@@ -157,6 +173,7 @@ export function CuentaLibreria() {
         />
       </div>
 
+      {!periodoValido && <p role="alert">Selecciona un intervalo de fechas válido.</p>}
       {cargando && <p role="status">Consultando movimientos…</p>}
       {error && (
         <AlertaMensaje
@@ -165,7 +182,7 @@ export function CuentaLibreria() {
         />
       )}
 
-      {!cargando && !error && resumen && (
+      {periodoValido && !cargando && !error && resumen && (
         <>
           <div className="row g-3 mb-3">
             <div className="col-12 col-sm-6 col-xl-3">
@@ -223,6 +240,7 @@ export function CuentaLibreria() {
               </button>
             </div>
 
+            {consultandoAlumnos && <p role="status">Consultando nombres de alumnos…</p>}
             <TablaResponsiva
               vacio={filtrados.length === 0}
               mensajeVacio="No hay movimientos que coincidan con los filtros."
@@ -241,14 +259,14 @@ export function CuentaLibreria() {
                 <tbody>
                   {filtrados.map((m) => (
                     <tr key={m.clave}>
-                      <td>{fechaLocal(m.fecha)}</td>
+                      <td className="cl-fecha">{fechaLocal(m.fecha)}</td>
                       <td>
                         <span className="pill-state">{m.tipo}</span>
                       </td>
-                      <td>{m.referencia}</td>
-                      <td>{m.alumnoId}</td>
+                      <td className="cl-referencia"><details><summary>Ver referencia</summary>{m.referencia}</details></td>
+                      <td><strong>{alumnos[m.alumnoId]?.nombreCompleto || `Alumno #${m.alumnoId}`}</strong><small className="cl-curso">{alumnos[m.alumnoId]?.curso}</small></td>
                       <td>{m.detalle}</td>
-                      <td className="cl-monto">
+                      <td className={`cl-monto cl-${m.tipo.toLowerCase()}`}>
                         {m.tipo === "DEVOLUCION" ? "−" : "+"}
                         {pesos(Math.abs(m.monto))}
                       </td>

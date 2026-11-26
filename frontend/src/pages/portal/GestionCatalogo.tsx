@@ -39,7 +39,7 @@ export function GestionCatalogo({
   const [cantidadContada, setCantidadContada] = useState("0");
 
   // Sub-navegación modular
-  const [subseccion, setSubseccion] = useState<string>("todas");
+  const [subseccion, setSubseccion] = useState<string>("");
 
   // Asistente de cálculo de precio por margen de utilidad
   const [costoUnitario, setCostoUnitario] = useState<string>("");
@@ -72,28 +72,32 @@ export function GestionCatalogo({
       {aviso && <p role="status" className="form-feedback" style={{ marginBottom: "16px" }}>{aviso}</p>}
       {categorias.error && <p role="alert">{categorias.error}</p>}
 
-      {/* Barra de sub-navegación modular */}
-      <div className="subnav-cards" style={{ marginBottom: "22px" }}>
-        {[
-          ["todas", "Vista completa", "Todas las herramientas en una sola pantalla"],
-          ["alta", "1. Categorías y Productos", "Crear grupos y registrar nuevos artículos"],
-          ["edicion", "2. Editar Catálogo", "Ajustar precios, stock y categorías"],
-          ["bodega", "3. Ingresos y Conteo", "Recepción de stock y auditoría física"],
-        ].map(([id, titulo, desc]) => (
-          <button
-            key={id}
-            type="button"
-            className={`subnav-card ${subseccion === id ? "active" : ""}`}
-            onClick={() => setSubseccion(id)}
-          >
-            <strong>{titulo}</strong>
-            <span>{desc}</span>
+      {subseccion === "" ? (
+        <div className="subnav-cards" style={{ marginBottom: "22px" }}>
+          {[
+            ...(usuario?.rol === "ADMINISTRADOR" ? [
+              ["categoria", "Crear categoría", "Organizar los materiales escolares"],
+              ["producto", "Crear producto", "Registrar materiales y calcular precios"],
+              ["edicion", "Editar catálogo", "Modificar productos y categorías"],
+            ] : []),
+            ["ingreso", "Ingreso de stock", "Registrar entradas manuales de unidades"],
+            ["conteo", "Conteo físico", "Registrar diferencias de inventario"],
+          ].map(([id, titulo, desc]) => (
+            <button key={id} type="button" className="subnav-card" onClick={() => setSubseccion(id)}>
+              <strong>{titulo}</strong>
+              <span>{desc}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="form-actions" style={{ marginBottom: "16px" }}>
+          <button type="button" className="btn secondary" onClick={() => setSubseccion("")}>
+            ← Volver al catálogo
           </button>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {usuario?.rol === "ADMINISTRADOR" && (subseccion === "todas" || subseccion === "alta") && (
-        <>
+      {usuario?.rol === "ADMINISTRADOR" && subseccion === "categoria" && (
           <div className="card">
             <span className="eyebrow">CATEGORÍAS</span>
             <h3>Nueva categoría</h3>
@@ -122,6 +126,9 @@ export function GestionCatalogo({
             </form>
           </div>
 
+      )}
+
+      {usuario?.rol === "ADMINISTRADOR" && subseccion === "producto" && (
           <div className="card">
             <span className="eyebrow">CATÁLOGO ESCOLAR</span>
             <h3>Nuevo producto</h3>
@@ -296,10 +303,9 @@ export function GestionCatalogo({
               </div>
             </form>
           </div>
-        </>
       )}
 
-      {usuario?.rol === "ADMINISTRADOR" && (subseccion === "todas" || subseccion === "edicion") && (
+      {usuario?.rol === "ADMINISTRADOR" && subseccion === "edicion" && (
         <EditarCatalogo
           categorias={categorias.datos ?? []}
           productos={productos}
@@ -311,8 +317,7 @@ export function GestionCatalogo({
         />
       )}
 
-      {(subseccion === "todas" || subseccion === "bodega") && (
-        <>
+      {subseccion === "ingreso" && (
           <div className="card">
             <span className="eyebrow">MOVIMIENTOS DE BODEGA</span>
             <h3>Ingreso de stock</h3>
@@ -372,6 +377,9 @@ export function GestionCatalogo({
             </form>
           </div>
 
+      )}
+
+      {subseccion === "conteo" && (
           <div className="card">
             <span className="eyebrow">AUDITORÍA FÍSICA</span>
             <h3>Conteo físico</h3>
@@ -427,7 +435,6 @@ export function GestionCatalogo({
               </div>
             </form>
           </div>
-        </>
       )}
     </section>
   );

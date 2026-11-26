@@ -10,9 +10,7 @@ import {
   MovimientosInventario,
 } from "./HistorialOperativo";
 import { CancelacionReserva } from "./CancelacionReserva";
-import { Administracion } from "./Administracion";
 import { CambiarClave } from "./CambiarClave";
-import { CorreosSimulados } from "./CorreosSimulados";
 import { Privacidad } from "./Privacidad";
 import { CorreccionDatos } from "./CorreccionDatos";
 import { EntregaMeson } from "./EntregaMeson";
@@ -68,6 +66,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
 
   // Sub-filtros y paginación para Reservas
   const accesoInicio = useRef<string | null>(null);
+  const [verExistencias, setVerExistencias] = useState(false);
   const [filtroReservaEstado, setFiltroReservaEstado] =
     useState<string>("MENU");
   const [confirmacionReserva, setConfirmacionReserva] = useState<{
@@ -79,6 +78,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
     const acceso = accesoInicio.current;
     accesoInicio.current = null;
     setFiltroReservaEstado(seccion === "reservas" && acceso ? acceso : "MENU");
+    setVerExistencias(seccion === "inventario" && acceso === "CRITICO");
     if (seccion === "inventario") {
       setFiltroStock(acceso === "CRITICO" ? "CRITICO" : "TODOS");
       setBusquedaInventario("");
@@ -97,6 +97,8 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
   const [pestanaCompras, setPestanaCompras] = useState<
     "proveedores" | "ordenes"
   >(esAdmin ? "proveedores" : "ordenes");
+  const [verCompras, setVerCompras] = useState(false);
+  useEffect(() => { setVerCompras(false); }, [seccion]);
   const [conteoPistoleo, setConteoPistoleo] = useState<
     Record<number, Record<number, number>>
   >({});
@@ -410,16 +412,15 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
               {
                 id: "inventario",
                 icono: "▦",
-                titulo: "Inventario",
+                titulo: "Inventario y Valorización",
                 descripcion:
                   "Existencias, stock crítico, valorización y control de inventario.",
               },
               {
-                id: "reservas",
-                icono: "📦",
-                titulo: "Reservas",
-                descripcion:
-                  "Seguimiento, preparación y cancelación de reservas escolares.",
+                id: "gestion-compras",
+                icono: "🛒",
+                titulo: "Gestión de Compras",
+                descripcion: "Proveedores, órdenes de compra y recepción de mercadería.",
               },
               {
                 id: "pagos",
@@ -434,25 +435,6 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                 titulo: "Usuarios y alumnos",
                 descripcion:
                   "Administración de usuarios, alumnos y sus vínculos.",
-              },
-              {
-                id: "configuracion",
-                icono: "⚙",
-                titulo: "Configuración del sistema",
-                descripcion:
-                  "Parámetros, auditoría y herramientas de administración.",
-              },
-              {
-                id: "correcciones",
-                icono: "✎",
-                titulo: "Mis datos",
-                descripcion: "Consulta y actualización de datos de tu cuenta.",
-              },
-              {
-                id: "privacidad",
-                icono: "🔒",
-                titulo: "Privacidad y seguridad",
-                descripcion: "Consentimientos y cambio de contraseña.",
               },
             ].map((tarjeta) => (
               <button
@@ -496,19 +478,29 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </section>
       )}
 
-      {SECCIONES_INVENTARIO.some((id) => id === seccion) && (
+      {SECCIONES_INVENTARIO.some((id) => id === seccion) && !(esAdmin && seccion === "gestion-compras") && (
         <section className="account-section">
           <button
             type="button"
             className="back-link secondary"
-            onClick={() => setSeccion("inicio")}
+            onClick={() => {
+              if (seccion === "inventario" && !verExistencias) {
+                setSeccion("inicio");
+              } else {
+                setVerExistencias(false);
+                setSeccion("inventario");
+              }
+            }}
           >
-            ← Volver al inicio
+            {seccion === "inventario" && !verExistencias
+              ? "← Volver al inicio"
+              : "← Volver a Inventario"}
           </button>
           <div className="section-heading">
-            <h2>Inventario</h2>
+            <h2>{esAdmin ? "Inventario y Valorización" : "Inventario"}</h2>
           </div>
-          <div className="subnav-cards" aria-label="Secciones de inventario">
+          {seccion === "inventario" && !verExistencias && (
+          <div className="reserva-menu" aria-label="Secciones de inventario">
             {[
               ["inventario", "Existencias", "Stock y conteo físico"],
               [
@@ -528,19 +520,19 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                 "Solicitudes y control",
               ],
               ["inventario-movimientos", "Movimientos", "Libro de bodega"],
-            ].map(([id, titulo, descripcion]) => {
-              const activo =
-                id === "proveedores" || id === "ordenes"
-                  ? seccion === "gestion-compras" && pestanaCompras === id
-                  : seccion === id;
+            ].filter(([id]) => !esAdmin || !["proveedores", "ordenes"].includes(id)).map(([id, titulo, descripcion]) => {
               return (
                 <button
                   key={id}
                   type="button"
-                  className={`subnav-card ${activo ? "active" : ""}`}
-                  aria-pressed={activo}
+                  className="reserva-opcion"
                   onClick={() => {
-                    if (id === "proveedores" || id === "ordenes") {
+                    if (id === "inventario") {
+                      setFiltroStock("TODOS");
+                      setBusquedaInventario("");
+                      setPaginaStock(1);
+                      setVerExistencias(true);
+                    } else if (id === "proveedores" || id === "ordenes") {
                       setPestanaCompras(id);
                       setSeccion("gestion-compras");
                     } else {
@@ -550,19 +542,33 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                     }
                   }}
                 >
-                  <strong>{titulo}</strong>
-                  <span>{descripcion}</span>
+                  <span>
+                    <strong>{titulo}</strong>
+                    <small>{descripcion}</small>
+                  </span>
+                  <span aria-hidden="true">→</span>
                 </button>
               );
             })}
           </div>
+          )}
         </section>
       )}
 
       {/* GESTIÓN DE COMPRAS: proveedores + órdenes de compra y recepción */}
       {seccion === "gestion-compras" && (
         <section className="account-section">
-          {pestanaCompras === "proveedores" ? (
+          {esAdmin && <>
+            <button type="button" className="back-link secondary" onClick={() => verCompras ? setVerCompras(false) : setSeccion("inicio")}>
+              {verCompras ? "← Volver a Gestión de Compras" : "← Volver al inicio"}
+            </button>
+            <h2>Gestión de Compras</h2>
+            {!verCompras && <div className="reserva-menu">
+              <button type="button" className="reserva-opcion" onClick={() => { setPestanaCompras("proveedores"); setVerCompras(true); }}><span><strong>Proveedores</strong><small>Maestro de proveedores</small></span><span aria-hidden="true">→</span></button>
+              <button type="button" className="reserva-opcion" onClick={() => { setPestanaCompras("ordenes"); setVerCompras(true); }}><span><strong>Compras y recepción</strong><small>Órdenes de compra y mercadería</small></span><span aria-hidden="true">→</span></button>
+            </div>}
+          </>}
+          {(!esAdmin || verCompras) && (pestanaCompras === "proveedores" ? (
             <GestionProveedores esAdmin={esAdmin} />
           ) : (
             <GestionOrdenesCompra
@@ -570,7 +576,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
               productos={productos.datos ?? []}
               onStockActualizado={productos.recargar}
             />
-          )}
+          ))}
         </section>
       )}
 
@@ -1285,7 +1291,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
       )}
 
       {/* MÓDULO: INVENTARIO */}
-      {seccion === "inventario" && (
+      {seccion === "inventario" && verExistencias && (
         <section className="account-section" id="inventario">
           <div className="section-heading">
             <h2>Existencias</h2>
@@ -1740,20 +1746,13 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </section>
       )}
 
-      {/* MÓDULO: AUDITORÍA Y PARÁMETROS (ADMIN) */}
+      {/* Rutas antiguas: la auditoría central ya no forma parte del portal. */}
       {esAdmin && ["auditoria", "configuracion"].includes(seccion) && (
         <section className="account-section">
-          <button
-            type="button"
-            className="back-link secondary"
-            onClick={() => setSeccion("inicio")}
-          >
+          <p>Esta sección ya no está disponible. Consulta los módulos de gestión correspondientes.</p>
+          <button type="button" className="btn secondary" onClick={() => setSeccion("inicio")}>
             ← Volver al inicio de administración
           </button>
-          <Administracion movimientos={movimientos} />
-          <div style={{ marginTop: "24px" }}>
-            <CorreosSimulados />
-          </div>
         </section>
       )}
 

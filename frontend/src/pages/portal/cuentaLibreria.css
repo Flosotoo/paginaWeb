@@ -11,3 +11,15 @@
 .cuenta-libreria .cl-encabezado { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .cuenta-libreria .cl-monto { font-weight: 700; white-space: nowrap; }
 .cuenta-libreria .cl-nota { font-size: 13px; color: #5c6962; line-height: 1.55; margin: 10px 0 20px; }
+
+.cuenta-libreria .cl-filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); align-items: end; padding: 16px; border: 1px solid #e2ddd3; border-radius: 14px; background: #fff; }
+.cuenta-libreria .cl-filtros label { min-width: 0; width: 100%; align-items: stretch; margin: 0; }
+.cuenta-libreria .cl-filtros input, .cuenta-libreria .cl-filtros select { width: 100%; min-width: 0; box-sizing: border-box; }
+.cuenta-libreria .cl-fecha { white-space: nowrap; }
+.cuenta-libreria .cl-curso { display: block; color: #52675d; }
+.cuenta-libreria .cl-referencia { overflow-wrap: anywhere; max-width: 180px; }
+.cuenta-libreria .cl-referencia summary { cursor: pointer; }
+.cuenta-libreria .cl-abono { color: #17643b; }
+.cuenta-libreria .cl-venta { color: #245477; }
+.cuenta-libreria .cl-devolucion { color: #a52b2b; }
+@media (max-width: 480px) { .cuenta-libreria .cl-filtros { grid-template-columns: minmax(0, 1fr); } }
