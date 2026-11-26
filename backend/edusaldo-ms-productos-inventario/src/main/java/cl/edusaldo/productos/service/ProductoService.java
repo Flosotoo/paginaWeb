@@ -52,6 +52,7 @@ public class ProductoService {
             dto.getPrecio(),
             dto.getStockInicial(),
             dto.getStockCritico());
+    p.inicializarCosto(dto.getCostoUnitarioInicial());
 
     return productoRepository.save(p);
   }
@@ -102,6 +103,7 @@ public class ProductoService {
         dto.getPrecio() != null ? dto.getPrecio() : p.getPrecio(),
         dto.getStockCritico() != null ? dto.getStockCritico() : p.getStockCritico(),
         cat);
+    p.inicializarCosto(dto.getCostoUnitarioInicial());
 
     return productoRepository.save(p);
   }

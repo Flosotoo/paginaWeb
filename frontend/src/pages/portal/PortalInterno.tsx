@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { SECCIONES_INVENTARIO } from "../../routes/LayoutPortal";
 import { CuentaLibreria } from "./CuentaLibreria";
+import { ValorizacionInventario } from "./ValorizacionInventario";
 import { GestionProveedores } from "./GestionProveedores";
 import { GestionOrdenesCompra } from "./GestionOrdenesCompra";
 import { PagosWebpayAdmin } from "./PagosWebpayAdmin";
@@ -499,6 +500,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
           <div className="section-heading">
             <h2>{esAdmin ? "Inventario y Valorización" : "Inventario"}</h2>
           </div>
+          {esAdmin && seccion === "inventario" && !verExistencias && <ValorizacionInventario />}
           {seccion === "inventario" && !verExistencias && (
           <div className="reserva-menu" aria-label="Secciones de inventario">
             {[

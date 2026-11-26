@@ -146,41 +146,41 @@ export function HistorialOperativo() {
 }
 
 export function MovimientosInventario({ movimientos }: { movimientos: ConsultaMovimientos }) {
-  return (
-      <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
-          <div>
-            <span className="eyebrow">LIBRO DE BODEGA</span>
-            <h3 style={{ margin: "2px 0 4px" }}>Movimientos de inventario</h3>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>
-              Registro de ingresos, reservas, entregas y ajustes.
-            </p>
-          </div>
-          <button className="btn secondary" onClick={() => void movimientos.recargar()}>
-            Actualizar movimientos
-          </button>
-        </div>
-
-        {movimientos.error && <p role="alert">{movimientos.error}</p>}
-        {movimientos.datos?.length === 0 && <p>No hay movimientos.</p>}
-
-        <div className="audit-feed">
-          {movimientos.datos?.map((m) => (
-            <div key={m.id} className="audit-card">
-              <div className="audit-card-top">
-                <span className={`pill-state ${m.tipo === "INGRESO" ? "" : m.tipo === "AJUSTE" ? "warn" : "neutral"}`}>
-                  {m.tipo}
-                </span>
-                <span>{m.fecha}</span>
-                <span>Responsable: {m.responsableId ?? "no informado"}</span>
-              </div>
-              <strong>{m.nombreProducto}</strong>
-              <div style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-                Físico: {m.variacionFisica} · Reservado: {m.variacionReservada} · Stock resultante: {m.stockResultante}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-  );
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+  const [tipo, setTipo] = useState("");
+  const [buscar, setBuscar] = useState("");
+  const normalizar = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const valido = !desde || !hasta || desde <= hasta;
+  const filas = [...(movimientos.datos ?? [])].filter(m =>
+    valido && m.variacionFisica !== 0 &&
+    (!desde || m.fecha.slice(0, 10) >= desde) && (!hasta || m.fecha.slice(0, 10) <= hasta) &&
+    (!tipo || (tipo === "INGRESO" ? m.variacionFisica > 0 : m.variacionFisica < 0)) &&
+    normalizar(m.nombreProducto).includes(normalizar(buscar.trim()))
+  ).sort((a,b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+  const exportar = () => {
+    const celda = (v: unknown) => '"' + String(v ?? "").replace(/^[=+@\-\t\r]/, "'$&").replace(/"/g, '""') + '"';
+    const csv = "\uFEFF" + [["Fecha", "Producto", "Motivo", "Ingreso", "Egreso", "Stock final", "Responsable"], ...filas.map(m => [m.fecha, m.nombreProducto, m.tipo, Math.max(0,m.variacionFisica), Math.max(0,-m.variacionFisica), m.stockResultante, m.responsableId])].map(r => r.map(celda).join(";")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], {type: "text/csv;charset=utf-8"}));
+    const a = document.createElement("a"); a.href = url; a.download = "movimientos-inventario.csv"; a.click(); URL.revokeObjectURL(url);
+  };
+  return <div className="card">
+    <div style={{background:"#e6dac6",borderRadius:16,padding:20,marginBottom:16}}>
+      <span className="eyebrow">LIBRO DE BODEGA</span><h3 style={{margin:"4px 0"}}>Movimientos de inventario</h3>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:12,alignItems:"end",marginBottom:16}}>
+      <label>Desde<input className="input" type="date" value={desde} onChange={e=>setDesde(e.target.value)}/></label>
+      <label>Hasta<input className="input" type="date" value={hasta} onChange={e=>setHasta(e.target.value)}/></label>
+      <label>Movimiento<select className="input" value={tipo} onChange={e=>setTipo(e.target.value)}><option value="">Todos</option><option value="INGRESO">Ingresos</option><option value="EGRESO">Egresos</option></select></label>
+      <label>Producto<input className="input" value={buscar} onChange={e=>setBuscar(e.target.value)}/></label>
+      <button type="button" className="btn" onClick={()=>void movimientos.recargar()}>Actualizar</button>
+      <button type="button" className="btn secondary" disabled={!filas.length || !!movimientos.error} onClick={exportar}>Exportar CSV</button>
+    </div>
+    {!valido && <p role="alert">Período inválido.</p>}
+    {movimientos.error && <p role="alert">{movimientos.error}</p>}
+    {valido && !movimientos.error && <div className="data-table-container"><table className="data-table"><thead><tr><th>Fecha</th><th>Producto</th><th>Motivo</th><th>Ingreso</th><th>Egreso</th><th>Stock final</th><th>Responsable</th></tr></thead><tbody>
+      {filas.map(m=><tr key={m.id}><td style={{whiteSpace:"nowrap"}}>{m.fecha.slice(0,10).split("-").reverse().join("-")}</td><td>{m.nombreProducto}</td><td>{({INGRESO:"Ingreso",ENTREGA:"Entrega",DEVOLUCION:"Devolución",COMPENSACION:"Compensación",AJUSTE:"Ajuste"} as Record<string,string>)[m.tipo] ?? m.tipo}</td><td style={{color:"#18543c",fontWeight:700}}>{m.variacionFisica>0 ? m.variacionFisica : "—"}</td><td style={{color:"#9c2e22",fontWeight:700}}>{m.variacionFisica<0 ? -m.variacionFisica : "—"}</td><td>{m.stockResultante}</td><td>{m.responsableId ?? "—"}</td></tr>)}
+      {!filas.length && <tr><td colSpan={7}>{movimientos.datos ? "Sin movimientos físicos para los filtros." : "Consultando movimientos…"}</td></tr>}
+    </tbody></table></div>}
+  </div>;
 }

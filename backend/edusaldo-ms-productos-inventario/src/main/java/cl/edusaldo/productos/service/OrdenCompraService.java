@@ -5,6 +5,8 @@ import cl.edusaldo.productos.dto.CrearOrdenCompraDTO;
 import cl.edusaldo.productos.dto.IngresoManualDTO;
 import cl.edusaldo.productos.dto.DetalleIngresoDTO;
 import java.util.*;
+import java.math.BigDecimal;
+import cl.edusaldo.productos.model.CostosInventario;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,13 +54,36 @@ public class OrdenCompraService {
  public Map<String,Object> recepcionar(Long id) {
   RequestContext.requireRoles("ENCARGADO", "ADMINISTRADOR");
   Long tenant=RequestContext.tenant();
-  var ordenes=db.queryForList("SELECT estado FROM ordenes_compra WHERE id=? AND id_establecimiento=? FOR UPDATE",id,tenant);
+  var ordenes=db.queryForList("SELECT estado,total_neto,iva,total FROM ordenes_compra WHERE id=? AND id_establecimiento=? FOR UPDATE",id,tenant);
   if(ordenes.isEmpty()) throw new NoSuchElementException("Orden no encontrada");
   String estado=String.valueOf(ordenes.get(0).get("estado"));
   if("RECIBIDA".equals(estado)) return obtener(id);
   if(!"APROBADA".equals(estado)) throw new IllegalStateException("La orden debe estar aprobada");
-  var detalles=db.query("SELECT producto_id,cantidad FROM ordenes_compra_detalle WHERE orden_id=? ORDER BY producto_id",
-      (rs,n)->new DetalleIngresoDTO(rs.getLong("producto_id"),rs.getInt("cantidad")),id);
+  BigDecimal netoOrden = new BigDecimal(ordenes.get(0).get("total_neto").toString());
+  BigDecimal ivaOrden = new BigDecimal(ordenes.get(0).get("iva").toString());
+  BigDecimal totalOrden = new BigDecimal(ordenes.get(0).get("total").toString());
+  if (netoOrden.signum() < 0 || ivaOrden.signum() < 0 || netoOrden.add(ivaOrden).compareTo(totalOrden) != 0)
+    throw new IllegalStateException("Totales de orden inconsistentes");
+  var lineas = db.queryForList("SELECT producto_id,cantidad,precio_unitario,subtotal FROM ordenes_compra_detalle WHERE orden_id=? ORDER BY producto_id",id);
+  List<DetalleIngresoDTO> detalles = new ArrayList<>();
+  BigDecimal netoAcumulado = BigDecimal.ZERO;
+  BigDecimal ivaAsignado = BigDecimal.ZERO;
+  for (var linea : lineas) {
+    long productoId = ((Number) linea.get("producto_id")).longValue();
+    int cantidad = ((Number) linea.get("cantidad")).intValue();
+    BigDecimal unitario = new BigDecimal(linea.get("precio_unitario").toString());
+    BigDecimal subtotal = new BigDecimal(linea.get("subtotal").toString());
+    if (cantidad <= 0 || unitario.signum() < 0 || subtotal.compareTo(unitario.multiply(BigDecimal.valueOf(cantidad))) != 0)
+      throw new IllegalStateException("Detalle de orden inconsistente");
+    netoAcumulado = netoAcumulado.add(subtotal);
+    BigDecimal ivaAcumulado = CostosInventario.ivaAcumulado(netoAcumulado, netoOrden, ivaOrden);
+    DetalleIngresoDTO detalle = new DetalleIngresoDTO(productoId,cantidad);
+    detalle.setCostoTotalAdquisicion(subtotal.add(ivaAcumulado.subtract(ivaAsignado)));
+    ivaAsignado = ivaAcumulado;
+    detalles.add(detalle);
+  }
+  if (netoAcumulado.compareTo(netoOrden) != 0 || ivaAsignado.compareTo(ivaOrden) != 0)
+    throw new IllegalStateException("Los detalles no cuadran con la orden");
   if(detalles.isEmpty() || detalles.stream().anyMatch(d->d.getCantidad()<=0))
    throw new IllegalStateException("Orden sin detalles válidos");
   IngresoManualDTO dto=new IngresoManualDTO();

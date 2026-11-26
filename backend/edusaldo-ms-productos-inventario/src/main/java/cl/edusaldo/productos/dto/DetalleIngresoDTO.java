@@ -1,6 +1,9 @@
 package cl.edusaldo.productos.dto;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import java.math.BigDecimal;
 import jakarta.validation.constraints.NotNull;
 
 public class DetalleIngresoDTO {
@@ -22,4 +25,10 @@ public class DetalleIngresoDTO {
     public void setProductoId(Long productoId) { this.productoId = productoId; }
     public int getCantidad() { return cantidad; }
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
+    // Costo final, incluido IVA. Null = pendiente de información.
+    @DecimalMin("0.0")
+    @Digits(integer = 20, fraction = 8)
+    private BigDecimal costoTotalAdquisicion;
+    public BigDecimal getCostoTotalAdquisicion() { return costoTotalAdquisicion; }
+    public void setCostoTotalAdquisicion(BigDecimal valor) { this.costoTotalAdquisicion = valor; }
 }

@@ -141,4 +141,9 @@ public class InventarioController {
             .collect(Collectors.toList());
     return ResponseEntity.ok(list);
   }
+  @GetMapping("/valorizacion")
+  @Operation(summary = "Consultar valorización de existencias exclusivamente por Administrador")
+  public InventarioService.Valorizacion valorizacion() {
+    return inventarioService.valorizacion();
+  }
 }

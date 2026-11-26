@@ -1,0 +1,12 @@
+EduSaldo - Etapa 29 - Registro de costos (fase backend)
+Copiar las carpetas backend y scripts al directorio raiz del repositorio, conservando las rutas.
+No ejecutar schema.sql ni reset de bases existentes. schema.sql actualizado solo para instalaciones nuevas.
+Compilar y probar antes de detener servicios y ejecutar la migracion una sola vez.
+La OC conserva neto, IVA y total; se distribuye el IVA redondeado del documento por linea.
+El valor total de stock permite obtener el costo promedio sin perder residuos de redondeo.
+Los costos de movimientos son importes positivos; el signo se obtiene de variacion_fisica.
+Costos desconocidos son NULL. Una entrada sin costo o stock anterior desconocido deja el valor global desconocido.
+Costo inicial por DTO costoUnitarioInicial; ingreso manual por DTO costoTotalAdquisicion. UI pendiente.
+No se exponen costos a los endpoints de catalogo compartidos con alumnos y apoderados.
+Falta endpoint de reportes restringido a administrador, cruce con operaciones completadas de ventas y devoluciones, interfaz y pruebas de integracion.
+No incluye cambios a JWT, gateway ni otros microservicios.

@@ -3,6 +3,7 @@ package cl.edusaldo.productos.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "movimientos_inventario")
@@ -54,6 +55,15 @@ public class MovimientoInventario {
   @Enumerated(EnumType.STRING)
   @Column(name = "tipo", nullable = false, length = 50)
   private TipoMovimientoInventario tipo;
+
+  @Column(name = "costo_total", precision = 28, scale = 8)
+  private BigDecimal costoTotal;
+
+  @JsonIgnore
+  public BigDecimal getCostoTotal() { return costoTotal; }
+  public void setCostoTotal(BigDecimal costoTotal) {
+    this.costoTotal = CostosInventario.normalizar(costoTotal);
+  }
 
   @Transient private int cantidad;
 

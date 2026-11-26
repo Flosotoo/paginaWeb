@@ -3,6 +3,9 @@ package cl.edusaldo.productos.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import java.math.BigDecimal;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -60,4 +63,10 @@ public class CrearProductoDTO {
     public void setStockInicial(int stockInicial) { this.stockInicial = stockInicial; }
     public int getStockCritico() { return stockCritico; }
     public void setStockCritico(int stockCritico) { this.stockCritico = stockCritico; }
+    // Costo final, incluido IVA. Null = pendiente de información.
+    @DecimalMin("0.0")
+    @Digits(integer = 20, fraction = 8)
+    private BigDecimal costoUnitarioInicial;
+    public BigDecimal getCostoUnitarioInicial() { return costoUnitarioInicial; }
+    public void setCostoUnitarioInicial(BigDecimal valor) { this.costoUnitarioInicial = valor; }
 }

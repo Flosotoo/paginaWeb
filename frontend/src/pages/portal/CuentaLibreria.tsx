@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { usuariosService, type ResumenUsuario } from "../../services/usuarios";
+import { administracionService, type ReporteCuenta, type ConstanciaAuditada } from "../../services/administracion";
 import { mensajeError } from "../../services/api";
 import { cuentaLibreriaService } from "../../services/cuentaLibreria";
 import type { MovimientoLibreria, ResumenCuentaLibreria } from "../../services/cuentaLibreria";
 import { AlertaMensaje } from "../../components/AlertaMensaje";
 import { BotonAccion } from "../../components/BotonAccion";
-import { TarjetaResumen } from "../../components/TarjetaResumen";
 import { TablaResponsiva } from "../../components/TablaResponsiva";
 import "./cuentaLibreria.css";
 
@@ -34,6 +34,13 @@ export function CuentaLibreria() {
   });
   const [alumnos, setAlumnos] = useState<Record<number, ResumenUsuario>>({});
   const [consultandoAlumnos, setConsultandoAlumnos] = useState(false);
+  const [cartolaAbierta, setCartolaAbierta] = useState(false);
+  const [consulta, setConsulta] = useState<"saldos" | "constancias" | null>(null);
+  const [cuentas, setCuentas] = useState<ReporteCuenta[]>([]);
+  const [constancias, setConstancias] = useState<ConstanciaAuditada[]>([]);
+  const [nombres, setNombres] = useState<Record<number, string>>({});
+  const [cargandoConsulta, setCargandoConsulta] = useState(false);
+  const [errorConsulta, setErrorConsulta] = useState("");
   const [tipo, setTipo] = useState("TODOS");
   const [busqueda, setBusqueda] = useState("");
   const [resumen, setResumen] = useState<ResumenCuentaLibreria | null>(null);
@@ -91,6 +98,36 @@ export function CuentaLibreria() {
     return () => { activo = false; };
   }, [movimientos]);
 
+  useEffect(() => {
+    if (!consulta || !periodoValido) return;
+    let activo = true;
+    setCargandoConsulta(true);
+    setErrorConsulta("");
+    setCuentas([]);
+    setConstancias([]);
+    setNombres({});
+    const cargar = async () => {
+      try {
+        const [usuarios, datos] = await Promise.all([
+          usuariosService.listar(),
+          consulta === "saldos"
+            ? administracionService.cuentas(desde, hasta)
+            : administracionService.constancias(),
+        ]);
+        if (!activo) return;
+        setNombres(Object.fromEntries(usuarios.map(u => [u.id, u.nombreCompleto])));
+        if (consulta === "saldos") setCuentas(datos as ReporteCuenta[]);
+        else setConstancias(datos as ConstanciaAuditada[]);
+      } catch (e) {
+        if (activo) setErrorConsulta(mensajeError(e));
+      } finally {
+        if (activo) setCargandoConsulta(false);
+      }
+    };
+    void cargar();
+    return () => { activo = false; };
+  }, [consulta, periodoValido, desde, hasta, revision]);
+
   const normalizar = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   const filtrados = useMemo(
@@ -136,17 +173,51 @@ export function CuentaLibreria() {
 
   return (
     <div className="cuenta-libreria">
-      <div className="section-heading">
+      <div className="section-heading cl-portada">
         <div>
           <span className="eyebrow">CONTROL FINANCIERO</span>
           <h2>Cuenta Librería</h2>
-          <p>Cartola por período de abonos, entregas y devoluciones registradas.</p>
         </div>
       </div>
 
       <div className="cl-filtros mb-3">
         <label>Desde<input type="date" value={desde} onChange={e => setDesde(e.target.value)} /></label>
         <label>Hasta<input type="date" value={hasta} onChange={e => setHasta(e.target.value)} /></label>
+        <BotonAccion
+          texto="Actualizar"
+          textoProcesando="Consultando…"
+          variante="secundario"
+          ocupadoExterno={cargando}
+          onClick={() => setRevision((v) => v + 1)}
+        />
+      </div>
+
+      {!periodoValido && <p role="alert">Selecciona un intervalo de fechas válido.</p>}
+      {cargando && <p role="status">Consultando movimientos…</p>}
+      {error && (
+        <AlertaMensaje
+          mensaje={`No se pudo cargar la información financiera: ${error}`}
+          tipo="error"
+        />
+      )}
+
+      {periodoValido && !cargando && !error && resumen && (
+        <>
+          <div className="cl-resumen">
+            <article className="cl-kpi cl-kpi-abonos"><span>Abonos</span><strong>{pesos(resumen.totalAbonadoPeriodo ?? 0)}</strong></article>
+            <article className="cl-kpi cl-kpi-ventas"><span>Ventas</span><strong>{pesos((resumen.totalEntregasPeriodo ?? 0) - (resumen.totalReintegrosDevolucion ?? 0))}</strong></article>
+            <article className="cl-kpi cl-kpi-costo"><span>Costo</span><strong title="Costo real de materiales vendidos pendiente de registro">—</strong></article>
+            <article className="cl-kpi cl-kpi-utilidad"><span>Utilidad</span><strong title="Pendiente de costo real">—</strong></article>
+          </div>
+          <div className="cl-margen"><span>Margen de utilidad</span><strong>—</strong></div>
+          <p className="cl-nota">— Costo real aún no disponible.</p>
+          <button type="button" className="reserva-opcion cl-consulta" aria-expanded={cartolaAbierta} aria-controls="cl-cartola" onClick={() => setCartolaAbierta(v => !v)}>
+            <strong>Cartola</strong>
+            <span aria-hidden="true">{cartolaAbierta ? "−" : "+"}</span>
+          </button>
+          {cartolaAbierta && (
+          <div id="cl-cartola">
+            <div className="cl-filtros mb-3">
         <label>
           Movimiento{" "}
           <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
@@ -164,63 +235,7 @@ export function CuentaLibreria() {
             placeholder="Nombre, curso o referencia"
           />
         </label>
-        <BotonAccion
-          texto="Actualizar"
-          textoProcesando="Consultando…"
-          variante="secundario"
-          ocupadoExterno={cargando}
-          onClick={() => setRevision((v) => v + 1)}
-        />
-      </div>
-
-      {!periodoValido && <p role="alert">Selecciona un intervalo de fechas válido.</p>}
-      {cargando && <p role="status">Consultando movimientos…</p>}
-      {error && (
-        <AlertaMensaje
-          mensaje={`No se pudo cargar la cartola: ${error}`}
-          tipo="error"
-        />
-      )}
-
-      {periodoValido && !cargando && !error && resumen && (
-        <>
-          <div className="row g-3 mb-3">
-            <div className="col-12 col-sm-6 col-xl-3">
-              <TarjetaResumen
-                etiqueta="Abonos del período"
-                valor={pesos(resumen.totalAbonadoPeriodo ?? 0)}
-              />
             </div>
-            <div className="col-12 col-sm-6 col-xl-3">
-              <TarjetaResumen
-                etiqueta="Entregas cobradas"
-                valor={pesos(resumen.totalEntregasPeriodo ?? 0)}
-              />
-            </div>
-            <div className="col-12 col-sm-6 col-xl-3">
-              <TarjetaResumen
-                etiqueta="Reintegros por devoluciones"
-                valor={pesos(resumen.totalReintegrosDevolucion ?? 0)}
-              />
-            </div>
-            <div className="col-12 col-sm-6 col-xl-3">
-              <TarjetaResumen
-                etiqueta="Ventas netas estimadas*"
-                valor={pesos(
-                  (resumen.totalEntregasPeriodo ?? 0) -
-                    (resumen.totalReintegrosDevolucion ?? 0),
-                )}
-                destacado
-              />
-            </div>
-          </div>
-
-          <p className="cl-nota">
-            * Ventas netas calculadas con el resumen de movimientos del backend.
-            No representan utilidad ni saldo de caja. Los saldos de alumnos son
-            cuentas distintas de los ingresos por ventas.
-          </p>
-
           <div className="card p-4">
             <div className="cl-encabezado mb-3">
               <div>
@@ -284,6 +299,39 @@ export function CuentaLibreria() {
             su acreditación. Los costos de compra y la utilidad requieren un
             registro adicional.
           </p>
+          </div>
+          )}
+          <button type="button" className="reserva-opcion cl-consulta" aria-expanded={consulta === "saldos"} onClick={() => setConsulta(v => v === "saldos" ? null : "saldos")}>
+            <strong>Saldos por alumno</strong><span aria-hidden="true">{consulta === "saldos" ? "−" : "+"}</span>
+          </button>
+          {consulta === "saldos" && (
+            <div className="card p-3">
+              {cargandoConsulta ? <p role="status">Consultando saldos…</p> : errorConsulta ? <p role="alert">{errorConsulta}</p> : (
+                <>
+                  <p className="cl-nota">Saldos actuales, no históricos.</p>
+                  <TablaResponsiva vacio={cuentas.length === 0} mensajeVacio="No hay cuentas registradas.">
+                    <table className="data-table"><thead><tr><th>Alumno</th><th>Actual</th><th>Comprometido</th><th>Disponible</th></tr></thead><tbody>
+                      {cuentas.map(({ cuenta: c }) => <tr key={c.alumnoId}><td>{nombres[c.alumnoId] ?? `Alumno #${c.alumnoId}`}</td><td>{pesos(c.saldoActual)}</td><td>{pesos(c.saldoComprometido)}</td><td>{pesos(c.saldoDisponible)}</td></tr>)}
+                    </tbody></table>
+                  </TablaResponsiva>
+                </>
+              )}
+            </div>
+          )}
+          <button type="button" className="reserva-opcion cl-consulta" aria-expanded={consulta === "constancias"} onClick={() => setConsulta(v => v === "constancias" ? null : "constancias")}>
+            <strong>Constancias de devolución</strong><span aria-hidden="true">{consulta === "constancias" ? "−" : "+"}</span>
+          </button>
+          {consulta === "constancias" && (
+            <div className="card p-3">
+              {cargandoConsulta ? <p role="status">Consultando constancias…</p> : errorConsulta ? <p role="alert">{errorConsulta}</p> : (
+                <TablaResponsiva vacio={!constancias.some(c => c.fecha.slice(0,10) >= desde && c.fecha.slice(0,10) <= hasta)} mensajeVacio="No hay constancias en el período.">
+                  <table className="data-table"><thead><tr><th>Fecha</th><th>Alumno</th><th>Responsable</th><th>Monto</th></tr></thead><tbody>
+                    {constancias.filter(c => c.fecha.slice(0,10) >= desde && c.fecha.slice(0,10) <= hasta).map(c => <tr key={c.id}><td>{fechaLocal(c.fecha)}</td><td>{nombres[c.alumnoId] ?? `Alumno #${c.alumnoId}`}</td><td>{nombres[c.administradorId] ?? `Usuario #${c.administradorId}`}</td><td>{pesos(c.montoClp)}</td></tr>)}
+                  </tbody></table>
+                </TablaResponsiva>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

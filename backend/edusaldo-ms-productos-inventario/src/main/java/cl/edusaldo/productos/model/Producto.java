@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Table(
@@ -46,6 +47,10 @@ public class Producto {
 
   @Column(name = "precio", nullable = false)
   private int precio;
+
+  // Valor del stock físico al costo final de adquisición (IVA incluido).
+  @Column(name = "valor_stock_costo", precision = 28, scale = 8)
+  private BigDecimal valorStockCosto;
 
   @Column(name = "stock_fisico", nullable = false)
   private int stockFisico = 0;
@@ -102,19 +107,39 @@ public class Producto {
     return getStockDisponible() <= this.stockCritico;
   }
 
+  @JsonIgnore
+  @Hidden
+  public BigDecimal getValorStockCosto() {
+    return stockFisico == 0 ? BigDecimal.ZERO : valorStockCosto;
+  }
+
+  /** Solo para el alta o regularización inicial documentada. No reescribe ventas anteriores. */
+  public void inicializarCosto(BigDecimal costoUnitario) {
+    if (costoUnitario == null) return;
+    if (valorStockCosto != null && stockFisico > 0)
+      throw new IllegalStateException("El inventario ya tiene un costo registrado");
+    valorStockCosto = CostosInventario.normalizar(
+        CostosInventario.normalizar(costoUnitario).multiply(BigDecimal.valueOf(stockFisico)));
+  }
+
   public MovimientoInventario ingresarStockManual(int cant, Long ingresoId, Long usuarioId) {
+    return ingresarStockManual(cant, ingresoId, usuarioId, null);
+  }
+
+  public MovimientoInventario ingresarStockManual(int cant, Long ingresoId, Long usuarioId,
+      BigDecimal costoTotal) {
     if (cant <= 0) {
       throw new IllegalArgumentException("La cantidad a ingresar debe ser mayor a cero.");
     }
-    this.stockFisico = Math.addExact(this.stockFisico, cant);
-    return new MovimientoInventario(
-        this,
-        TipoMovimientoInventario.INGRESO,
-        cant,
-        this.stockFisico,
-        LocalDateTime.now(),
-        ingresoId,
-        usuarioId);
+    costoTotal = CostosInventario.normalizar(costoTotal);
+    int nuevoStock = Math.addExact(this.stockFisico, cant);
+    valorStockCosto = CostosInventario.sumarIngreso(valorStockCosto, stockFisico, costoTotal);
+    this.stockFisico = nuevoStock;
+    MovimientoInventario mov = new MovimientoInventario(
+        this, TipoMovimientoInventario.INGRESO, cant, this.stockFisico,
+        LocalDateTime.now(), ingresoId, usuarioId);
+    mov.setCostoTotal(costoTotal);
+    return mov;
   }
 
   public MovimientoInventario retenerStockPorReserva(int cant, Long reservaId, Long usuarioId) {
@@ -169,7 +194,10 @@ public class Producto {
     }
     if (vieneDeReserva && cant > this.stockReservado)
       throw new IllegalStateException("La cantidad supera el stock reservado");
+    BigDecimal costoSalida = CostosInventario.proporcional(valorStockCosto, stockFisico, cant);
     this.stockFisico = Math.subtractExact(this.stockFisico, cant);
+    valorStockCosto = stockFisico == 0 ? BigDecimal.ZERO :
+        (costoSalida == null ? null : valorStockCosto.subtract(costoSalida));
     if (vieneDeReserva) this.stockReservado = Math.subtractExact(this.stockReservado, cant);
     MovimientoInventario movimiento =
         new MovimientoInventario(
@@ -180,33 +208,43 @@ public class Producto {
             LocalDateTime.now(),
             entregaId,
             usuarioId);
+    movimiento.setCostoTotal(costoSalida);
     movimiento.setVariacionReservada(vieneDeReserva ? Math.negateExact(cant) : 0);
     return movimiento;
   }
 
   public MovimientoInventario reponerStockPorDevolucion(
       int cant, Long devolucionId, Long usuarioId) {
-    return reponerStock(cant, devolucionId, usuarioId, TipoMovimientoInventario.DEVOLUCION);
+    return reponerStockPorDevolucion(cant, devolucionId, usuarioId, null);
+  }
+
+  public MovimientoInventario reponerStockPorDevolucion(int cant, Long devolucionId, Long usuarioId,
+      BigDecimal costoTotal) {
+    return reponerStock(cant, devolucionId, usuarioId, TipoMovimientoInventario.DEVOLUCION, costoTotal);
   }
 
   public MovimientoInventario reponerStockPorCompensacion(int cant, Long operacionId, Long usuarioId) {
-    return reponerStock(cant, operacionId, usuarioId, TipoMovimientoInventario.COMPENSACION);
+    return reponerStockPorCompensacion(cant, operacionId, usuarioId, null);
+  }
+
+  public MovimientoInventario reponerStockPorCompensacion(int cant, Long operacionId, Long usuarioId,
+      BigDecimal costoTotal) {
+    return reponerStock(cant, operacionId, usuarioId, TipoMovimientoInventario.COMPENSACION, costoTotal);
   }
 
   private MovimientoInventario reponerStock(
-      int cant, Long referenciaId, Long usuarioId, TipoMovimientoInventario tipo) {
+      int cant, Long referenciaId, Long usuarioId, TipoMovimientoInventario tipo, BigDecimal costoTotal) {
     if (cant <= 0) {
       throw new IllegalArgumentException("La cantidad a reponer debe ser mayor a cero.");
     }
-    this.stockFisico = Math.addExact(this.stockFisico, cant);
-    return new MovimientoInventario(
-        this,
-        tipo,
-        cant,
-        this.stockFisico,
-        LocalDateTime.now(),
-        referenciaId,
-        usuarioId);
+    costoTotal = CostosInventario.normalizar(costoTotal);
+    int nuevoStock = Math.addExact(this.stockFisico, cant);
+    valorStockCosto = CostosInventario.sumarIngreso(valorStockCosto, stockFisico, costoTotal);
+    this.stockFisico = nuevoStock;
+    MovimientoInventario mov = new MovimientoInventario(
+        this, tipo, cant, this.stockFisico, LocalDateTime.now(), referenciaId, usuarioId);
+    mov.setCostoTotal(costoTotal);
+    return mov;
   }
 
   public MovimientoInventario aplicarAjusteAprobado(int cant, Long solicitudId, Long adminId) {
@@ -220,6 +258,12 @@ public class Producto {
     if (Math.subtractExact(nuevoFisico, this.stockReservado) < 0) {
       throw new IllegalStateException("El ajuste dejaría el stock disponible en negativo.");
     }
+    BigDecimal costoAjuste = stockFisico == 0 ? null :
+        CostosInventario.proporcional(valorStockCosto, stockFisico, Math.abs(cant));
+    valorStockCosto = nuevoFisico == 0 ? BigDecimal.ZERO :
+        (costoAjuste == null ? null : (cant > 0
+            ? CostosInventario.normalizar(valorStockCosto.add(costoAjuste))
+            : valorStockCosto.subtract(costoAjuste)));
     this.stockFisico = nuevoFisico;
     MovimientoInventario mov =
         new MovimientoInventario(
@@ -231,6 +275,7 @@ public class Producto {
             solicitudId,
             adminId);
     mov.setVariacionFisica(cant);
+    mov.setCostoTotal(costoAjuste);
     return mov;
   }
 

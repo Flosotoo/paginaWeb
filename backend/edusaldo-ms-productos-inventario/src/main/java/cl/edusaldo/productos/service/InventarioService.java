@@ -5,6 +5,7 @@ import cl.edusaldo.productos.dto.*;
 import cl.edusaldo.productos.model.*;
 import cl.edusaldo.productos.repository.*;
 import java.util.List;
+import java.math.BigDecimal;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class InventarioService {
     ingreso.setIdEstablecimiento(RequestContext.tenant());
     ingreso = ingresoStockRepository.save(ingreso);
 
+    int numeroDetalle = 0;
     for (DetalleIngresoDTO det : dto.getDetalles()) {
       Producto p =
           productoRepository
@@ -58,7 +60,9 @@ public class InventarioService {
         entityManager.lock(p, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
 
       MovimientoInventario mov =
-          p.ingresarStockManual(det.getCantidad(), ingreso.getId(), dto.getEncargadoId());
+          p.ingresarStockManual(det.getCantidad(), ingreso.getId(), dto.getEncargadoId(),
+              det.getCostoTotalAdquisicion());
+      mov.setReferenciaUnica("INGRESO-" + ingreso.getId() + "-" + (++numeroDetalle));
       productoRepository.save(p);
       movimientoInventarioRepository.save(mov);
 
@@ -383,10 +387,25 @@ public class InventarioService {
     if (dto.getCantidad() > Math.subtractExact(entregado, devuelto))
       throw new IllegalStateException(
           "El reingreso supera las unidades pendientes de devolver de la entrega");
+    // Revertir el costo de la entrega original, no el costo promedio actual.
+    List<MovimientoInventario> movimientosEntrega = historial.stream()
+        .filter(m -> dto.getEntregaId().equals(m.getEntregaId())
+            && (m.getTipo() == TipoMovimientoInventario.ENTREGA
+                || m.getTipo() == TipoMovimientoInventario.DEVOLUCION
+                || m.getTipo() == TipoMovimientoInventario.COMPENSACION)).toList();
+    BigDecimal costoReingreso = null;
+    if (movimientosEntrega.stream().allMatch(m -> m.getCostoTotal() != null)) {
+      BigDecimal pendiente = movimientosEntrega.stream()
+          .map(m -> m.getTipo() == TipoMovimientoInventario.ENTREGA
+              ? m.getCostoTotal() : m.getCostoTotal().negate())
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+      costoReingreso = CostosInventario.proporcional(pendiente,
+          Math.subtractExact(entregado, devuelto), dto.getCantidad());
+    }
     MovimientoInventario mov =
         dto.getOperacionCompensacionId() == null
-            ? p.reponerStockPorDevolucion(dto.getCantidad(), dto.getDevolucionId(), dto.getUsuarioId())
-            : p.reponerStockPorCompensacion(dto.getCantidad(), dto.getOperacionCompensacionId(), dto.getUsuarioId());
+            ? p.reponerStockPorDevolucion(dto.getCantidad(), dto.getDevolucionId(), dto.getUsuarioId(), costoReingreso)
+            : p.reponerStockPorCompensacion(dto.getCantidad(), dto.getOperacionCompensacionId(), dto.getUsuarioId(), costoReingreso);
     mov.setEntregaId(dto.getEntregaId());
     mov.setDevolucionId(dto.getDevolucionId());
     mov.setOperacionCompensacionId(dto.getOperacionCompensacionId());
@@ -451,5 +470,29 @@ public class InventarioService {
       entityManager.lock(reserva, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
     reserva.finalizarProducto(producto.getId(), cantidad, consumir);
     reservaStockRepository.save(reserva);
+  }
+
+  public record ProductoValorizado(Long id, String nombre, String sku, int stockFisico,
+      BigDecimal costoPromedio, BigDecimal valorStockCosto) {}
+
+  public record Valorizacion(int productos, int sinCosto, BigDecimal total,
+      BigDecimal subtotalConocido, List<ProductoValorizado> detalle) {}
+
+  @Transactional(readOnly = true)
+  public Valorizacion valorizacion() {
+    RequestContext.requireRoles("ADMINISTRADOR");
+    var lista = productoRepository.findAllByIdEstablecimiento(RequestContext.tenant())
+        .stream().sorted(java.util.Comparator.comparing(Producto::getNombre))
+        .map(p -> {
+          BigDecimal valor = p.getValorStockCosto();
+          BigDecimal promedio = valor == null || p.getStockFisico() == 0 ? null :
+              valor.divide(BigDecimal.valueOf(p.getStockFisico()), 8, java.math.RoundingMode.HALF_UP);
+          return new ProductoValorizado(p.getId(), p.getNombre(), p.getSku(),
+              p.getStockFisico(), promedio, valor);
+        }).toList();
+    int sinCosto = (int) lista.stream().filter(p -> p.valorStockCosto() == null).count();
+    BigDecimal subtotal = lista.stream().map(ProductoValorizado::valorStockCosto)
+        .filter(java.util.Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+    return new Valorizacion(lista.size(), sinCosto, sinCosto == 0 ? subtotal : null, subtotal, lista);
   }
 }

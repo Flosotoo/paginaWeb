@@ -23,3 +23,26 @@
 .cuenta-libreria .cl-venta { color: #245477; }
 .cuenta-libreria .cl-devolucion { color: #a52b2b; }
 @media (max-width: 480px) { .cuenta-libreria .cl-filtros { grid-template-columns: minmax(0, 1fr); } }
+
+.cuenta-libreria .cl-consulta { width: 100%; margin: 12px 0 16px; text-align: left; }
+.cuenta-libreria .cl-resumen > * { min-width: 0; }
+
+/* Panel ejecutivo EduSaldo */
+.cuenta-libreria .cl-portada { background: #e6dac6; border-radius: 22px; padding: 24px; margin-bottom: 18px; }
+.cuenta-libreria .cl-portada h2 { margin: 4px 0 0; color: #193f35; }
+.cuenta-libreria .cl-resumen { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.cuenta-libreria .cl-resumen .cl-kpi { border-radius: 18px; padding: 20px; min-height: 112px; align-content: space-between; }
+.cuenta-libreria .cl-kpi span { font-size: 14px; font-weight: 600; color: inherit; }
+.cuenta-libreria .cl-kpi strong { font-size: clamp(22px, 3vw, 32px); color: inherit; }
+.cuenta-libreria .cl-resumen .cl-kpi-abonos { background: #e6dac6; color: #193f35; }
+.cuenta-libreria .cl-resumen .cl-kpi-ventas { background: #193f35; color: #fff; border-color: #193f35; }
+.cuenta-libreria .cl-resumen .cl-kpi-costo { background: #fffcf7; color: #193f35; }
+.cuenta-libreria .cl-resumen .cl-kpi-utilidad { background: #965c43; color: #fff; border-color: #965c43; }
+.cuenta-libreria .cl-margen { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #f3eee3; border-radius: 12px; padding: 12px 18px; }
+.cuenta-libreria .cl-margen strong { font-size: 22px; }
+.cuenta-libreria .cl-filtros > .btn { background: #193f35; color: #fff; border-color: #193f35; }
+.cuenta-libreria .cl-filtros > .btn:hover:not(:disabled) { background: #285448; }
+.cuenta-libreria .cl-consulta { background: #fffcf7; border: 1px solid #dcd5c7; border-radius: 16px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; color: #193f35; }
+.cuenta-libreria .cl-consulta > span { font-size: 22px; color: #965c43; }
+@media (max-width: 900px) { .cuenta-libreria .cl-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 380px) { .cuenta-libreria .cl-resumen .cl-kpi { padding: 12px; min-height: 90px; } }
