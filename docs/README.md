@@ -6,6 +6,7 @@ EduSaldo es una aplicación local para gestionar usuarios, saldos, inventario, r
 
 - [Planilla de requerimientos](EduSaldo%20-%20Plantilla%20Gesti%C3%B3n%20Requerimientos.xlsx): historias y criterios funcionales.
 - [Arquitectura de sistema](EduSaldo%20-%20Arquitectura%20de%20Sistema.docx): documento de arquitectura en formato Word.
+- [Seguridad y autenticación JWT](seguridad-jwt.md): flujo JWT HS256, revocación persistente, matriz RBAC de 4 perfiles y protección interna.
 - [Diagramas](diagramas/): arquitectura general, comunicaciones y modelos por microservicio.
 
 Los documentos y diagramas se contrastan con el código y las pruebas automatizadas del repositorio.

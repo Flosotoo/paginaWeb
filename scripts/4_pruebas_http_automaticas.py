@@ -271,8 +271,10 @@ class Scenario:
 
     def security(self):
         self.call('GET', f'/api/saldos/cuenta/{self.child}', 200, role='student')
-        self.call('GET', f'/api/saldos/cuenta/{self.child}', {401, 403})
+        self.call('GET', f'/api/saldos/cuenta/{self.child}', 401)
         self.call('GET', f'/api/saldos/cuenta/{self.child}', {403, 404}, role='other')
+        for global_path in ('/api/entregas/historial', '/api/entregas/dia', '/api/devoluciones', '/api/reservas'):
+            self.call('GET', global_path, 403, role='parent')
         anteriores, _ = self.call('GET', '/api/auditoria', 200, role='admin')
         ids = {r['id'] for r in anteriores}
         self.call('GET', '/api/auditoria?dato=valor-privado', 403, role='parent')
@@ -529,6 +531,17 @@ class Scenario:
         ).decode('ascii').rstrip('=')
         wrong_key = f'{header_b64}.{payload_b64}.{fake_sig}'
         status, _, _ = self.client.request('GET', '/api/productos', token=wrong_key)
+        expect_status(status, 401)
+
+        # 3b. Token expirado firmado con la clave válida del entorno y cabecera Bearer vacía.
+        jwt_secret = os.getenv('EDUSALDO_JWT_SECRET', 'edusaldo-local-dev-jwt-secret-change-in-production-2026').encode('utf-8')
+        expired_payload = encode_jwt_segment({**payload, 'iat': int(time.time()) - 7200, 'exp': int(time.time()) - 600})
+        expired_sig = base64.urlsafe_b64encode(
+            hmac.new(jwt_secret, f'{header_b64}.{expired_payload}'.encode('ascii'), hashlib.sha256).digest()
+        ).decode('ascii').rstrip('=')
+        status, _, _ = self.client.request('GET', '/api/productos', token=f'{header_b64}.{expired_payload}.{expired_sig}')
+        expect_status(status, 401)
+        status, _, _ = self.client.request('GET', '/api/productos', headers={'Authorization': 'Bearer '})
         expect_status(status, 401)
 
         # 4. Login temporal, cierre de sesión y verificación de revocación inmediata del JWT.
@@ -804,9 +817,26 @@ class Scenario:
                 'La devolución posterior a entrega en mesón no restauró saldo y stock')
 
 
+    def acceso_directo_microservicios(self):
+        targets = [
+            ('http://localhost:8091', '/api/usuarios'),
+            ('http://localhost:8092', '/api/saldos/abonos'),
+            ('http://localhost:8093', '/api/productos'),
+            ('http://localhost:8094', '/api/reservas'),
+        ]
+        for base, api_path in targets:
+            direct = Client(base, timeout=10)
+            status_api, _, _ = direct.request('GET', api_path)
+            expect_status(status_api, 401)
+            status_internal, _, _ = direct.request('GET', '/internal/salud')
+            expect_status(status_internal, 401)
+            status_docs, _, _ = direct.request('GET', '/swagger-ui/index.html')
+            expect_status(status_docs, 200)
+
+
 def main():
     scenario = Scenario(Client(os.getenv('EDUSALDO_GATEWAY', 'http://localhost:8090')))
-    checks = [('Preparación de actores y datos', scenario.prepare), ('CORS', scenario.cors), ('Autenticación JWT y revocación', scenario.jwt_security), ('Autorización y aislamiento', scenario.security), ('Pago y persistencia', scenario.payment), ('Confirmación concurrente', scenario.concurrent_payment), ('Pago rechazado', scenario.rejected_payment), ('Bloqueo de acceso', scenario.account_lock), ('Rechazo sin efectos', scenario.rejected_inputs), ('Reserva y cancelación', scenario.cancellation), ('Entrega y devolución', scenario.delivery_and_return), ('Entrega directa en mesón y circuito familiar', scenario.entrega_meson_y_circuito_familiar), ('Órdenes de compra y recepción de bodega', scenario.compras_y_recepcion), ('Contrato de ajustes', scenario.contrato_ajustes), ('Reporte de cuentas', scenario.reportes_cuentas), ('Corrección y concurrencia', scenario.concurrent_correction), ('Recuperación concurrente', scenario.concurrent_recovery), ('Cancelación ajena', scenario.cancelacion_ajena), ('RUT y duplicados', scenario.rut_validation), ('Alta de alumno y ciclo inicial', scenario.alta_alumno_y_ciclo_inicial), ('Liquidación y vínculo', scenario.liquidation), ('Contratos y colección Postman', verificar_contratos)]
+    checks = [('Preparación de actores y datos', scenario.prepare), ('CORS', scenario.cors), ('Autenticación JWT y revocación', scenario.jwt_security), ('Autorización y aislamiento', scenario.security), ('Acceso directo a microservicios y Swagger', scenario.acceso_directo_microservicios), ('Pago y persistencia', scenario.payment), ('Confirmación concurrente', scenario.concurrent_payment), ('Pago rechazado', scenario.rejected_payment), ('Bloqueo de acceso', scenario.account_lock), ('Rechazo sin efectos', scenario.rejected_inputs), ('Reserva y cancelación', scenario.cancellation), ('Entrega y devolución', scenario.delivery_and_return), ('Entrega directa en mesón y circuito familiar', scenario.entrega_meson_y_circuito_familiar), ('Órdenes de compra y recepción de bodega', scenario.compras_y_recepcion), ('Contrato de ajustes', scenario.contrato_ajustes), ('Reporte de cuentas', scenario.reportes_cuentas), ('Corrección y concurrencia', scenario.concurrent_correction), ('Recuperación concurrente', scenario.concurrent_recovery), ('Cancelación ajena', scenario.cancelacion_ajena), ('RUT y duplicados', scenario.rut_validation), ('Alta de alumno y ciclo inicial', scenario.alta_alumno_y_ciclo_inicial), ('Liquidación y vínculo', scenario.liquidation), ('Contratos y colección Postman', verificar_contratos)]
     try:
         for label, fn in checks:
             scenario.check(label, fn)
