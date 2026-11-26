@@ -19,6 +19,7 @@ public class CorreoSimuladoService {
 
   @Transactional
   public void registrar(Usuario usuario, String tipo, String contenido) {
+    if ("CLAVE_TEMPORAL".equals(tipo)) contenido = "Credencial temporal generada; no se conserva su valor.";
     correos.save(
         new CorreoSimulado(
             usuario, colegios.getReferenceById(usuario.getIdEstablecimiento()), tipo, contenido));

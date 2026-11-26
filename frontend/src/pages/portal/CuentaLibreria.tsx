@@ -171,6 +171,11 @@ export function CuentaLibreria() {
     URL.revokeObjectURL(url);
   };
 
+  const ventasPeriodo = (resumen?.totalEntregasPeriodo ?? 0) - (resumen?.totalReintegrosDevolucion ?? 0);
+  const costoPeriodo = resumen?.costoVentas ?? null;
+  const utilidadPeriodo = costoPeriodo === null ? null : ventasPeriodo - costoPeriodo;
+  const margenPeriodo = utilidadPeriodo === null || ventasPeriodo <= 0 ? null : utilidadPeriodo / ventasPeriodo * 100;
+
   return (
     <div className="cuenta-libreria">
       <div className="section-heading cl-portada">
@@ -206,11 +211,11 @@ export function CuentaLibreria() {
           <div className="cl-resumen">
             <article className="cl-kpi cl-kpi-abonos"><span>Abonos</span><strong>{pesos(resumen.totalAbonadoPeriodo ?? 0)}</strong></article>
             <article className="cl-kpi cl-kpi-ventas"><span>Ventas</span><strong>{pesos((resumen.totalEntregasPeriodo ?? 0) - (resumen.totalReintegrosDevolucion ?? 0))}</strong></article>
-            <article className="cl-kpi cl-kpi-costo"><span>Costo</span><strong title="Costo real de materiales vendidos pendiente de registro">—</strong></article>
-            <article className="cl-kpi cl-kpi-utilidad"><span>Utilidad</span><strong title="Pendiente de costo real">—</strong></article>
+            <article className="cl-kpi cl-kpi-costo"><span>Costo</span><strong>{costoPeriodo === null ? "—" : pesos(costoPeriodo)}</strong></article>
+            <article className="cl-kpi cl-kpi-utilidad"><span>Utilidad</span><strong>{utilidadPeriodo === null ? "—" : pesos(utilidadPeriodo)}</strong></article>
           </div>
-          <div className="cl-margen"><span>Margen de utilidad</span><strong>—</strong></div>
-          <p className="cl-nota">— Costo real aún no disponible.</p>
+          <div className="cl-margen"><span>Margen de utilidad</span><strong>{margenPeriodo === null ? "—" : `${margenPeriodo.toLocaleString("es-CL", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} %`}</strong></div>
+          {costoPeriodo === null && <p className="cl-nota">{resumen.motivoCosto ?? "Costo no disponible."}</p>}
           <button type="button" className="reserva-opcion cl-consulta" aria-expanded={cartolaAbierta} aria-controls="cl-cartola" onClick={() => setCartolaAbierta(v => !v)}>
             <strong>Cartola</strong>
             <span aria-hidden="true">{cartolaAbierta ? "−" : "+"}</span>
@@ -296,8 +301,7 @@ export function CuentaLibreria() {
             La cartola muestra abonos aprobados, entregas y devoluciones con
             operación completada. El resumen proviene del servicio de saldos;
             pueden existir diferencias de fecha entre el registro de un abono y
-            su acreditación. Los costos de compra y la utilidad requieren un
-            registro adicional.
+            su acreditación. La utilidad corresponde a ventas menos costo de los materiales vendidos.
           </p>
           </div>
           )}

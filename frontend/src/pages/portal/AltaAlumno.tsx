@@ -102,6 +102,8 @@ export function AltaAlumnoForm({
   );
   const [datos, setDatos] = useState<Datos>(inicial);
   const [apoderadoSelId, setApoderadoSelId] = useState("");
+  const [busquedaApoderado, setBusquedaApoderado] = useState("");
+  const normalizar = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const [errores, setErrores] = useState<ErroresCampo>({});
   const [feedbackError, setFeedbackError] = useState("");
   const [exito, setExito] = useState<AltaAlumnoRespuesta | null>(null);
@@ -161,6 +163,7 @@ export function AltaAlumnoForm({
   const limpiarFormulario = () => {
     setDatos(inicial);
     setApoderadoSelId("");
+    setBusquedaApoderado("");
     setErrores({});
     setFeedbackError("");
   };
@@ -319,8 +322,7 @@ export function AltaAlumnoForm({
 
   return (
     <div className="card" style={{ padding: "24px" }}>
-      <span className="eyebrow">MATRÍCULA Y VÍNCULO FAMILIAR</span>
-      <h3 style={{ margin: "4px 0 8px" }}>Matricular nuevo alumno</h3>
+      <h3 style={{ margin: "4px 0 8px" }}>Registrar nuevo alumno</h3>
       <p className="card-desc">
         Registra al estudiante y asócialo de inmediato con un apoderado responsable en una sola operación.
       </p>
@@ -456,7 +458,7 @@ export function AltaAlumnoForm({
                 <span className="eyebrow" style={{ color: "var(--forest)", fontSize: "10px" }}>
                   PASO 2 DE 2
                 </span>
-                <h4>Apoderado responsable</h4>
+                <h4>Adulto responsable</h4>
               </div>
             </div>
 
@@ -485,6 +487,7 @@ export function AltaAlumnoForm({
 
             {modoEfectivo === "existente" ? (
               <>
+                <label>Buscar apoderado por nombre o RUT<input className="input" value={busquedaApoderado} onChange={e => setBusquedaApoderado(e.target.value)} /></label>
                 <div className="form-grid-2" style={{ marginBottom: 0 }}>
                   <label>
                     Seleccionar apoderado *
@@ -499,7 +502,7 @@ export function AltaAlumnoForm({
                       }}
                     >
                       <option value="">Elige un apoderado registrado...</option>
-                      {apoderadosActivos.map((a) => (
+                      {apoderadosActivos.filter(a => String(a.id) === apoderadoSelId || normalizar(a.nombreCompleto).includes(normalizar(busquedaApoderado.trim())) || limpiarRut(a.rut).includes(limpiarRut(busquedaApoderado.trim())) && limpiarRut(busquedaApoderado.trim()).length > 0).map((a) => (
                         <option key={a.id} value={a.id}>
                           {a.nombreCompleto} · {formatearRutVisual(a.rut)}
                         </option>
@@ -696,13 +699,13 @@ export function AltaAlumnoForm({
           {exito && (
             <div className="form-feedback" role="status" style={{ flexDirection: "column", alignItems: "flex-start", gap: "6px" }}>
               <div>
-                <strong>✓ Alumno matriculado correctamente:</strong>{" "}
+                <strong>✓ Alumno registrado correctamente:</strong>{" "}
                 {exito.nombreAlumno} ({formatearRutVisual(exito.rutAlumno)}) · Apoderado:{" "}
                 {exito.nombreApoderado} ({exito.parentesco}).
               </div>
               {exito.correoAlumno && (
                 <div style={{ fontSize: "0.86rem" }}>
-                  Correo institucional asignado: <code>{exito.correoAlumno}</code> · La clave temporal quedó registrada en <strong>Auditoría → Correos simulados</strong>.
+                  Correo institucional asignado: <code>{exito.correoAlumno}</code>.
                 </div>
               )}
               {onVerNomina && (
@@ -720,7 +723,7 @@ export function AltaAlumnoForm({
 
           <div className="form-actions">
             <button className="btn" type="submit" disabled={procesando}>
-              {procesando ? "Matriculando…" : "Matricular alumno"}
+              {procesando ? "Registrando…" : "Registrar alumno"}
             </button>
             <button
               className="btn secondary"
@@ -740,7 +743,7 @@ export function AltaAlumnoForm({
         <aside className="direct-summary">
           <span className="eyebrow">VISTA PREVIA</span>
           <h4 style={{ fontSize: "1.15rem", margin: "4px 0 14px", color: "#173b31" }}>
-            Resumen de matrícula
+            Resumen del registro
           </h4>
 
           <div

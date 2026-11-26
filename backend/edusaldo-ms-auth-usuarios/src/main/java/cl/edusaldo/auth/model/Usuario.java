@@ -217,6 +217,7 @@ public abstract class Usuario {
     this.correo = correo;
   }
 
+  @JsonIgnore
   public String getPasswordHash() {
     return passwordHash;
   }

@@ -18,9 +18,19 @@ export interface ResultadoAccion<T = undefined> {
   datos?: T;
 }
 
+type Credencial = { nombre: string; identificador: string; clave: string };
+
+function credencialesFamilia(r: AltaAlumnoRespuesta): Credencial[] {
+  const lista: Credencial[] = [];
+  if (r.tempPasswordApoderado) lista.push({ nombre: r.nombreApoderado, identificador: r.correoApoderado ?? r.rutApoderado, clave: r.tempPasswordApoderado });
+  if (r.tempPasswordAlumno) lista.push({ nombre: r.nombreAlumno, identificador: r.correoAlumno ?? r.rutAlumno, clave: r.tempPasswordAlumno });
+  return lista;
+}
+
 export function useGestionUsuarios() {
   const { usuario } = useSesion();
   const [aviso, setAviso] = useState("");
+  const [credenciales, setCredenciales] = useState<Credencial[]>([]);
   const { realizar, procesando } = useAccion();
   const cargar = useCallback(() => usuariosService.listar(), []);
   const usuarios = useConsulta(cargar);
@@ -50,9 +60,11 @@ export function useGestionUsuarios() {
         ...datos,
         idEstablecimiento: usuario!.idEstablecimiento,
       });
+      if (creado.tempPassword) setCredenciales(prev => [...prev, { nombre: creado.nombreCompleto, identificador: creado.correo, clave: creado.tempPassword! }]);
+      const { tempPassword: _clave, ...datosPublicos } = creado;
       return {
         mensaje: `Cuenta registrada: ${creado.nombreCompleto} (${creado.rut}).`,
-        datos: creado,
+        datos: datosPublicos,
       };
     });
 
@@ -64,20 +76,23 @@ export function useGestionUsuarios() {
         ...datos,
         idEstablecimiento: usuario!.idEstablecimiento,
       });
+      setCredenciales(prev => [...prev, ...credencialesFamilia(resp)]);
+      const { tempPasswordAlumno: _al, tempPasswordApoderado: _ap, ...datosPublicos } = resp;
       return {
-        mensaje: `Alumno matriculado: ${resp.nombreAlumno} (${resp.rutAlumno}).`,
-        datos: resp,
+        mensaje: `Alumno registrado: ${resp.nombreAlumno} (${resp.rutAlumno}).`,
+        datos: datosPublicos,
       };
     });
 
   const importar = (filas: Omit<AltaAlumno, "idEstablecimiento">[]) =>
     ejecutar(async () => {
-      await importarNomina(
+      const resultados = await importarNomina(
         filas.map((fila) => ({
           ...fila,
           idEstablecimiento: usuario!.idEstablecimiento,
         })),
       );
+      setCredenciales(prev => [...prev, ...resultados.flatMap(credencialesFamilia)]);
       return { mensaje: `Nómina importada: ${filas.length} alumnos.` };
     });
 
@@ -96,11 +111,15 @@ export function useGestionUsuarios() {
   const restablecer = (id: number) =>
     ejecutar(async () => {
       const r = await usuariosService.restablecer(id);
-      return { mensaje: `Contraseña temporal: ${r.tempPassword}` };
+      const u = usuarios.datos?.find(v => v.id === id);
+      setCredenciales(prev => [...prev.filter(c => c.identificador !== (u?.correo ?? String(id))), { nombre: u?.nombreCompleto ?? `Usuario #${id}`, identificador: u?.correo ?? String(id), clave: r.tempPassword }]);
+      return { mensaje: "Contraseña temporal generada." };
     });
 
   return {
     usuarios,
+    credenciales,
+    cerrarCredenciales: () => setCredenciales([]),
     aviso,
     procesando,
     crear,

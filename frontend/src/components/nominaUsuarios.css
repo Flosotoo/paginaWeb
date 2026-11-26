@@ -1,0 +1,22 @@
+ .edu-nomina-lista { display:grid; gap:6px; margin-top:12px; }
+.edu-nomina-fila { border:1px solid #e1dbce; border-radius:10px; background:#fffcf7; overflow:hidden; }
+.edu-nomina-resumen { display:grid; grid-template-columns:minmax(0,2fr) minmax(85px,1fr) minmax(90px,auto) auto; align-items:center; gap:12px; width:100%; padding:12px 14px; text-align:left; border:0; background:transparent; color:#20433a; font:inherit; cursor:pointer; }
+.edu-nomina-resumen:hover,.edu-nomina-resumen[aria-expanded=true] { background:#e7eee4; }
+.edu-nomina-resumen:focus-visible { outline:2px solid #20433a; outline-offset:-3px; }
+.edu-nomina-nombre { font-weight:700; overflow-wrap:anywhere; }
+.edu-nomina-rol { text-transform:capitalize; color:#52675c; }
+.edu-nomina-resumen .pill-state { justify-self:start; white-space:nowrap; }
+.edu-nomina-ver { font-weight:600; white-space:nowrap; }
+.edu-nomina-detalle { padding:14px; border-top:1px solid #e1dbce; }
+.edu-nomina-detalle dl { display:flex; flex-wrap:wrap; gap:12px 32px; margin:0 0 12px; }
+.edu-nomina-detalle dt,.edu-credencial label { color:#52675c; font-size:.85rem; }
+.edu-nomina-detalle dd { margin:3px 0; overflow-wrap:anywhere; }
+.edu-nomina-nota { color:#52675c; font-size:.85rem; }
+dialog.edu-credenciales { width:min(560px,calc(100vw - 32px)); }
+.edu-credenciales-lista { display:grid; gap:12px; }
+.edu-credencial { display:grid; gap:8px; border:1px solid #e1dbce; border-radius:12px; padding:16px; }
+.edu-credencial h3 { margin:0 0 5px; color:#20433a; }
+.edu-credencial-campo { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px; border:1px solid #d8d3c6; border-radius:8px; background:#fff; }
+.edu-credencial-campo span { overflow-wrap:anywhere; min-width:0; }
+.edu-credencial > .btn { justify-self:start; }
+@media(max-width:580px) { .edu-nomina-resumen { grid-template-columns:minmax(0,1fr) auto; gap:6px 10px; } .edu-nomina-nombre { grid-column:1; } .edu-nomina-rol { grid-column:1; grid-row:2; } .edu-nomina-resumen .pill-state { grid-column:2; grid-row:1; } .edu-nomina-ver { grid-column:2; grid-row:2; } }

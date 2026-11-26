@@ -10,6 +10,8 @@ import {
 
 const pesos = (valor: number) => `$${valor.toLocaleString("es-CL")}`;
 
+const normalizarBusqueda = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-CL").trim();
+
 export function EntregaMeson({
   productos,
   actualizar,
@@ -72,29 +74,29 @@ export function EntregaMeson({
     void buscarAlumno(canonico);
   };
 
-  const productoSeleccionado = productos.find((p) => String(p.id) === String(producto));
-  const cantidadNum = Math.max(1, parseInt(cantidad, 10) || 1);
-  const totalMateriales = productoSeleccionado ? productoSeleccionado.precio * cantidadNum : 0;
+  const productoSeleccionado = productos.find((p) => p.estado === "ACTIVO" && String(p.id) === String(producto));
+  const cantidadNum = Number(cantidad);
+  const totalMateriales = productoSeleccionado && Number.isSafeInteger(cantidadNum) && cantidadNum > 0 ? productoSeleccionado.precio * cantidadNum : 0;
   const saldoDisp = cuentaAlumno?.saldoDisponible ?? 0;
   const saldoFinal = saldoDisp - totalMateriales;
   const saldoInsuficiente = Boolean(alumno && cuentaAlumno && totalMateriales > saldoDisp);
 
-  const productosFiltrados = productos
-    .filter((p) => p.estado === "ACTIVO")
-    .filter((p) =>
-      !filtroRapido.trim()
-        ? true
-        : `${p.nombre} ${p.categoria ?? ""} ${p.sku ?? ""}`
-            .toLocaleLowerCase("es-CL")
-            .includes(filtroRapido.trim().toLocaleLowerCase("es-CL")),
-    );
+  const consulta = normalizarBusqueda(filtroRapido);
+  const productosFiltrados = productos.filter((p) => p.estado === "ACTIVO" &&
+    normalizarBusqueda(`${p.nombre} ${p.categoria ?? ""} ${p.sku ?? ""}`).includes(consulta));
+  const cantidadValida = Boolean(productoSeleccionado && Number.isSafeInteger(cantidadNum) && cantidadNum > 0 && cantidadNum <= productoSeleccionado.stockDisponible);
+  const puedeEntregar = Boolean(alumno && cuentaAlumno && cantidadValida && !saldoInsuficiente && !procesando);
+  const registrarEntrega = () => {
+    if (puedeEntregar) void entregar(Number(producto), cantidadNum);
+  };
+  useEffect(() => { setProducto(""); setCantidad("1"); setFiltroRapido(""); }, [alumno?.id]);
 
   return (
     <section className="account-section">
-      <div className="section-heading" style={{ marginBottom: "20px" }}>
+      <div className="section-heading" style={{ marginBottom: "20px", background: "#21463d", borderRadius: 12, padding: "16px 20px" }}>
         <div>
-          <span className="eyebrow">LIBRERÍA Y MESÓN</span>
-          <h2 id="entregas">Entrega y devolución</h2>
+
+          <h2 id="entregas" style={{ color: "#fff", margin: 0 }}>Entrega directa</h2>
         </div>
       </div>
 
@@ -102,9 +104,7 @@ export function EntregaMeson({
 
       {/* Disposición a 2 Columnas para Entrega Directa */}
       <div className="card" style={{ padding: "24px" }}>
-        <span className="eyebrow">VENTA DIRECTA CON SALDO</span>
-        <h3 style={{ margin: "4px 0 10px" }}>Entrega presencial en mesón</h3>
-        <p className="card-desc">Permite a los estudiantes retirar materiales con cargo directo a su saldo disponible.</p>
+
 
         <div className="direct-layout">
           <div className="direct-main">
@@ -183,74 +183,51 @@ export function EntregaMeson({
                 {/* Buscador asistido de producto */}
                 <div style={{ marginBottom: "12px" }}>
                   <label htmlFor="filtro-materiales" style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-                    Filtro rápido por nombre o código SKU (opcional)
+                    Buscar por nombre o código SKU
                   </label>
                   <input
                     id="filtro-materiales"
                     className="input"
-                    placeholder="Escribe para filtrar la lista..."
+                    placeholder="Ej: lápiz, HB o SKU"
                     value={filtroRapido}
-                    onChange={(e) => setFiltroRapido(e.target.value)}
+                    onChange={(e) => { setFiltroRapido(e.target.value); setProducto(""); setCantidad("1"); }}
                     style={{ marginTop: "4px" }}
                   />
                 </div>
 
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void entregar(Number(producto), Number(cantidad));
-                  }}
-                  style={{ display: "grid", gap: "14px" }}
-                >
-                  <div className="form-grid-2">
-                    <label>
-                      Material
-                      <select
-                        aria-label="Material"
-                        className="input"
-                        value={producto}
-                        onChange={(e) => setProducto(e.target.value)}
-                        required
-                      >
-                        <option value="">Selecciona un producto</option>
-                        {productosFiltrados.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.nombre} · {pesos(p.precio)} ({p.stockDisponible} disp.)
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Unidades
-                      <input
-                        className="input"
-                        type="number"
-                        min="1"
-                        max={productoSeleccionado?.stockDisponible ?? 999}
-                        step="1"
-                        value={cantidad}
-                        onChange={(e) => setCantidad(e.target.value)}
-                        required
-                      />
-                    </label>
+                {consulta && (
+                  <div aria-label="Resultados de materiales" style={{ display: "grid", gap: 6, maxHeight: 260, overflowY: "auto", marginBottom: 12 }}>
+                    {productosFiltrados.length === 0 && <p role="status">No se encontraron materiales.</p>}
+                    {productosFiltrados.map(p => (
+                      <button key={p.id} type="button" className="btn secondary" aria-pressed={producto === String(p.id)} disabled={procesando || p.stockDisponible <= 0}
+                        style={{ textAlign: "left", justifyContent: "space-between", whiteSpace: "normal", borderRadius: 10, background: producto === String(p.id) ? "#dce8db" : "#fffcf7" }}
+                        onClick={() => { setProducto(String(p.id)); setCantidad("1"); }}>
+                        <span>{p.nombre}<small style={{ display: "block" }}>{p.sku} · {p.stockDisponible} disponibles</small></span>
+                        <strong>{pesos(p.precio)}</strong>
+                      </button>
+                    ))}
                   </div>
+                )}
+                <div className="form-grid-2">
+                  <label>Material
+                    <select aria-label="Material" className="input" value={producto} disabled={procesando} onChange={e => { setProducto(e.target.value); setCantidad("1"); }}>
+                      <option value="">Selecciona un producto</option>
+                      {productosFiltrados.map(p => <option key={p.id} value={p.id} disabled={p.stockDisponible <= 0}>{p.nombre} · {pesos(p.precio)} ({p.stockDisponible} disp.)</option>)}
+                    </select>
+                  </label>
+                  <label>Unidades
+                    <input className="input" type="number" min="1" max={productoSeleccionado?.stockDisponible ?? 1} step="1" value={cantidad} disabled={procesando || !productoSeleccionado} onChange={e => setCantidad(e.target.value)} required />
+                  </label>
+                </div>
+                {productoSeleccionado && !cantidadValida && <p role="alert" style={{ color: "#9c2e22" }}>Ingresa una cantidad entera entre 1 y {productoSeleccionado.stockDisponible}.</p>}
 
-                  <div className="form-actions" style={{ marginTop: "6px" }}>
-                    <button
-                      className="btn"
-                      disabled={procesando || !producto || saldoInsuficiente}
-                    >
-                      Registrar entrega directa
-                    </button>
-                  </div>
-                </form>
               </div>
             )}
           </div>
 
           {/* Columna Derecha: Resumen de Entrega en Vivo */}
           <aside className="direct-summary">
-            <span className="eyebrow">RESUMEN</span>
+
             <h2 style={{ fontSize: "1.25rem", margin: "4px 0 16px" }}>Resumen de entrega</h2>
 
             <div style={{ display: "grid", gap: "10px", fontSize: "0.92rem", borderBottom: "1px solid #d5e1d1", paddingBottom: "14px" }}>
@@ -268,7 +245,7 @@ export function EntregaMeson({
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Unidades:</span>
-                <strong>{producto ? cantidadNum : "—"}</strong>
+                <strong>{producto && cantidadValida ? cantidadNum : "—"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.05rem", fontWeight: 800 }}>
                 <span>Total a cargar:</span>
@@ -303,8 +280,8 @@ export function EntregaMeson({
                 type="button"
                 className="btn btn-wide"
                 style={{ width: "100%", marginTop: "16px" }}
-                disabled={procesando || !producto || saldoInsuficiente}
-                onClick={() => void entregar(Number(producto), Number(cantidad))}
+                disabled={!puedeEntregar}
+                onClick={registrarEntrega}
               >
                 {procesando ? "Procesando…" : "Registrar entrega directa"}
               </button>
@@ -315,7 +292,7 @@ export function EntregaMeson({
 
       {/* Módulo de Devoluciones */}
       <div className="card" style={{ marginTop: "24px", padding: "24px" }}>
-        <span className="eyebrow">REINGRESO DE MATERIALES</span>
+
         <h3 style={{ margin: "4px 0 10px" }}>Devolución de entrega</h3>
         <p className="card-desc">Reintegra stock y saldo al estudiante por productos no conformes o devueltos.</p>
         <form

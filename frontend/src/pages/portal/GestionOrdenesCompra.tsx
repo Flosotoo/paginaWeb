@@ -9,7 +9,6 @@ import {
 import { useAccion } from "../../hooks/useAccion";
 import { mensajeError } from "../../services/api";
 import { AlertaMensaje } from "../../components/AlertaMensaje";
-import { TarjetaResumen } from "../../components/TarjetaResumen";
 import { TablaResponsiva } from "../../components/TablaResponsiva";
 
 export interface GestionOrdenesCompraProps {
@@ -32,9 +31,9 @@ const pesos = (valor: number) =>
   }).format(valor);
 
 const ETIQUETA_ESTADO: Record<EstadoOrdenCompra, string> = {
-  PENDIENTE_APROBACION: "Pendiente aprobación",
+  PENDIENTE_APROBACION: "Por aprobar",
   APROBADA: "Aprobada",
-  RECIBIDA: "Recibida en bodega",
+  RECIBIDA: "Recibida",
 };
 
 export function GestionOrdenesCompra({
@@ -112,8 +111,8 @@ export function GestionOrdenesCompra({
     const neto = lineas.reduce((acc, l) => {
       const cant = Number(l.cantidad);
       const unit = Number(l.precioUnitario);
-      if (Number.isFinite(cant) && cant > 0 && Number.isFinite(unit) && unit >= 0) {
-        return acc + Math.round(cant) * Math.round(unit);
+      if (l.productoId && l.precioUnitario.trim() && Number.isSafeInteger(cant) && cant > 0 && Number.isSafeInteger(unit) && unit >= 0) {
+        return acc + cant * unit;
       }
       return acc;
     }, 0);
@@ -141,11 +140,8 @@ export function GestionOrdenesCompra({
       prev.map((linea, i) => {
         if (i !== idx) return linea;
         const siguiente = { ...linea, [campo]: valor };
-        if (campo === "productoId" && !linea.precioUnitario) {
-          const prod = productosActivos.find((p) => String(p.id) === valor);
-          if (prod) {
-            siguiente.precioUnitario = String(Math.max(1, Math.round(prod.precio * 0.7)));
-          }
+        if (campo === "productoId" && valor !== linea.productoId) {
+          siguiente.precioUnitario = "";
         }
         return siguiente;
       }),
@@ -167,6 +163,11 @@ export function GestionOrdenesCompra({
     const provNum = Number(proveedorId);
     if (!provNum) {
       setError("Selecciona un proveedor activo.");
+      return;
+    }
+
+    if (lineas.some(l => !l.precioUnitario.trim())) {
+      setError("Ingresa el costo neto cotizado por el proveedor en cada línea.");
       return;
     }
 
@@ -268,66 +269,36 @@ export function GestionOrdenesCompra({
 
   return (
     <div className="ordenes-compra-modulo">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div>
-          <span className="eyebrow">ABASTECIMIENTO DE BODEGA</span>
-          <h2 className="mb-1">Órdenes de Compra y Recepción</h2>
-          <p className="text-muted mb-0">
-            Solicita reposición a proveedores activos, aprueba órdenes y recepciona mercadería en inventario.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn"
-          onClick={() => {
-            setMostrarFormulario((v) => !v);
-            setError("");
-            setMensaje("");
-          }}
-        >
-          {mostrarFormulario ? "Cerrar formulario" : "+ Nueva orden de compra"}
-        </button>
-      </div>
-
       <AlertaMensaje mensaje={error} tipo="error" />
       <AlertaMensaje mensaje={mensaje} tipo="exito" />
 
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Por aprobar"
-            valor={pendientes}
-            detalle="Requieren autorización de administración"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Listas para recepcionar"
-            valor={aprobadas}
-            detalle="Aprobadas, pendientes de ingreso a bodega"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Órdenes recibidas"
-            valor={recibidas}
-            detalle="Stock acreditado en inventario"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Compras recepcionadas"
-            valor={pesos(montoRecibido)}
-            detalle="Total bruto acumulado (IVA incl.)"
-            destacado
-          />
-        </div>
+      <div className="row g-2 mb-3">
+        {[
+          { etiqueta: "Por aprobar", valor: pendientes, fondo: "#e6dac6", color: "#173b31" },
+          { etiqueta: "Por recepcionar", valor: aprobadas, fondo: "#fffcf7", color: "#173b31" },
+          { etiqueta: "Recibidas", valor: recibidas, fondo: "#fffcf7", color: "#173b31" },
+          { etiqueta: "Total compras", valor: pesos(montoRecibido), fondo: "#173b31", color: "#ffffff" },
+        ].map(kpi => (
+          <div key={kpi.etiqueta} className="col-6 col-xl-3">
+            <article style={{ background: kpi.fondo, color: kpi.color, border: "1px solid #ded8ca", borderRadius: "16px", padding: "16px", height: "100%" }}>
+              <span style={{ color: kpi.color, fontSize: "0.85rem" }}>{kpi.etiqueta}</span>
+              <strong style={{ display: "block", color: kpi.color, fontSize: "1.45rem", marginTop: "8px" }}>{kpi.valor}</strong>
+            </article>
+          </div>
+        ))}
+      </div>
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 className="mb-0">Órdenes de compra</h3>
+        <button type="button" className="btn" disabled={procesando} onClick={() => {
+          setMostrarFormulario(v => !v);
+          setError("");
+          setMensaje("");
+        }}>{mostrarFormulario ? "Cerrar formulario" : "+ Nueva orden"}</button>
       </div>
 
       {mostrarFormulario && (
         <form onSubmit={(e) => void enviarOrden(e)} className="card p-4 mb-4">
-          <span className="eyebrow">NUEVA SOLICITUD DE COMPRA</span>
-          <h3 className="mt-1 mb-3">Emitir orden a proveedor</h3>
+          <h3 className="mt-1 mb-3">Nueva orden</h3>
 
           <div className="row g-3 mb-3">
             <div className="col-12 col-md-6">
@@ -337,7 +308,10 @@ export function GestionOrdenesCompra({
                   aria-label="Proveedor activo"
                   className="input mt-1"
                   value={proveedorId}
-                  onChange={(e) => setProveedorId(e.target.value)}
+                  onChange={(e) => {
+                    setProveedorId(e.target.value);
+                    setLineas(prev => prev.map(l => ({ ...l, precioUnitario: "" })));
+                  }}
                   required
                 >
                   <option value="">Selecciona un proveedor</option>
@@ -414,13 +388,14 @@ export function GestionOrdenesCompra({
                   </div>
                   <div className="col-6 col-md-3">
                     <label className="w-100">
-                      Costo neto unit. CLP *
+                      Costo unitario neto *
                       <input
                         aria-label={`Costo línea ${idx + 1}`}
                         className="input mt-1"
                         type="number"
                         min="0"
                         step="1"
+                        placeholder="Precio cotizado"
                         value={linea.precioUnitario}
                         onChange={(e) => actualizarLinea(idx, "precioUnitario", e.target.value)}
                         required
@@ -523,7 +498,7 @@ export function GestionOrdenesCompra({
               {ordenesFiltradas.map((o) => (
                 <tr key={o.id}>
                   <td>
-                    <strong>OC-{o.id}</strong>
+                    <strong style={{ whiteSpace: "nowrap" }}>OC-{o.id}</strong>
                   </td>
                   <td>
                     {mapaProveedores.get(o.proveedor_id) ?? `Proveedor #${o.proveedor_id}`}
@@ -531,7 +506,7 @@ export function GestionOrdenesCompra({
                       <div className="small text-muted">{o.observacion}</div>
                     )}
                   </td>
-                  <td>{String(o.fecha_creacion ?? "").slice(0, 10)}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{String(o.fecha_creacion ?? "").slice(0, 10)}</td>
                   <td>
                     <span
                       className={`staff-badge ${
@@ -608,8 +583,8 @@ export function GestionOrdenesCompra({
                   <tr>
                     <th>Material</th>
                     <th>Cantidad</th>
-                    <th>Costo unitario</th>
-                    <th>Subtotal</th>
+                    <th>Costo unitario neto</th>
+                    <th>Subtotal neto</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -628,6 +603,11 @@ export function GestionOrdenesCompra({
                 </tbody>
               </table>
             </TablaResponsiva>
+            <div className="d-flex flex-wrap justify-content-end gap-3 mt-3">
+              <span>Neto: <strong>{pesos(ordenDetalle.total_neto)}</strong></span>
+              <span>IVA: <strong>{pesos(ordenDetalle.iva)}</strong></span>
+              <span>Total: <strong>{pesos(ordenDetalle.total)}</strong></span>
+            </div>
           </div>
         )}
       </div>

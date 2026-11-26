@@ -15,7 +15,16 @@ export interface ValorizacionInventario {
   subtotalConocido: number | string;
   detalle: { id: number; nombre: string; sku: string; stockFisico: number; costoPromedio: number | string | null; valorStockCosto: number | string | null }[];
 }
+export interface CostoMovimiento {
+  entregaId: number | null;
+  devolucionId: number | null;
+  productoId: number;
+  tipo: string;
+  cantidad: number;
+  costoTotal: number | string | null;
+}
 export const inventarioService = {
+  async costosVentas() { return (await api.get<CostoMovimiento[]>("/api/inventario/costos-ventas")).data; },
   async valorizacion() { return (await api.get<ValorizacionInventario>("/api/inventario/valorizacion")).data; },
   async movimientos() { return (await api.get<MovimientoInventario[]>('/api/inventario/movimientos')).data; },
   async ajustes() {

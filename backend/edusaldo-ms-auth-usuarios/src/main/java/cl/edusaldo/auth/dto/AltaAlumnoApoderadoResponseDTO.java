@@ -10,6 +10,16 @@ public class AltaAlumnoApoderadoResponseDTO {
     private String nombreApoderado;
     private String parentesco;
     private String mensaje;
+    private String correoApoderado;
+    private String tempPasswordAlumno;
+    private String tempPasswordApoderado;
+
+    public String getCorreoApoderado() { return correoApoderado; }
+    public void setCorreoApoderado(String valor) { correoApoderado = valor; }
+    public String getTempPasswordAlumno() { return tempPasswordAlumno; }
+    public void setTempPasswordAlumno(String valor) { tempPasswordAlumno = valor; }
+    public String getTempPasswordApoderado() { return tempPasswordApoderado; }
+    public void setTempPasswordApoderado(String valor) { tempPasswordApoderado = valor; }
 
     public AltaAlumnoApoderadoResponseDTO() {
     }

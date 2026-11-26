@@ -3,7 +3,6 @@ import { api, mensajeError } from "../../services/api";
 import { usuariosService, type Usuario } from "../../services/usuarios";
 import { exportarCsv } from "../../utils/exportarCsv";
 import { AlertaMensaje } from "../../components/AlertaMensaje";
-import { TarjetaResumen } from "../../components/TarjetaResumen";
 import { TablaResponsiva } from "../../components/TablaResponsiva";
 
 interface AbonoAdmin {
@@ -24,6 +23,12 @@ const pesos = (valor: number) =>
     maximumFractionDigits: 0,
   }).format(valor);
 
+const normalizar = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-CL").trim();
+const mesActual = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+
 export function PagosWebpayAdmin() {
   const [abonos, setAbonos] = useState<AbonoAdmin[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -31,6 +36,16 @@ export function PagosWebpayAdmin() {
   const [error, setError] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("TODOS");
   const [busqueda, setBusqueda] = useState("");
+  const [desde, setDesde] = useState(() => `${mesActual()}-01`);
+  const [hasta, setHasta] = useState(() => {
+    const d = new Date();
+    return `${mesActual()}-${new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()}`;
+  });
+  const periodoValido = Boolean(desde && hasta && desde <= hasta);
+  const periodo = useMemo(() => periodoValido ? abonos.filter(a => {
+    const fecha = a.fechaCreacion.slice(0, 10);
+    return fecha >= desde && fecha <= hasta;
+  }) : [], [abonos, desde, hasta, periodoValido]);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -60,10 +75,10 @@ export function PagosWebpayAdmin() {
 
   const filtrados = useMemo(
     () =>
-      abonos
+      periodo
         .filter((a) => filtroEstado === "TODOS" || a.estado === filtroEstado)
         .filter((a) => {
-          const q = busqueda.trim().toLocaleLowerCase("es-CL");
+          const q = normalizar(busqueda);
           if (!q) return true;
           const alumnoNombre = nombresPorId.get(a.alumnoId) ?? "";
           const apoderadoNombre = nombresPorId.get(a.apoderadoId) ?? "";
@@ -74,31 +89,32 @@ export function PagosWebpayAdmin() {
             alumnoNombre,
             apoderadoNombre,
             a.medioPago,
-          ].some((v) => v.toLocaleLowerCase("es-CL").includes(q));
+          ].some((v) => normalizar(v).includes(q));
         })
         .sort((a, b) => b.id - a.id),
-    [abonos, filtroEstado, busqueda, nombresPorId],
+    [periodo, filtroEstado, busqueda, nombresPorId],
   );
 
-  const aprobados = abonos.filter((a) => a.estado === "APROBADO");
-  const rechazados = abonos.filter((a) => a.estado === "RECHAZADO");
+  const aprobados = periodo.filter((a) => a.estado === "APROBADO");
+  const rechazados = periodo.filter((a) => a.estado === "RECHAZADO");
   const montoAprobado = aprobados.reduce((s, a) => s + a.monto, 0);
 
   return (
     <div className="pagos-admin-modulo">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div>
-          <span className="eyebrow">SEGUIMIENTO TRANSACCIONAL</span>
-          <h2 className="mb-1">Pagos y Abonos Electrónicos</h2>
-          <p className="text-muted mb-0">
-            Registro consolidado de recargas electrónicas procesadas en la pasarela Webpay simulada.
-          </p>
+      <header style={{background: "#20433a", color: "#fff", borderRadius: 12, padding: "16px 20px", marginBottom: 18}}>
+        <h2 style={{color: "inherit", margin: 0}}>Pagos electrónicos</h2>
+        <p style={{color: "inherit", margin: "4px 0 0"}}>Webpay · Pasarela simulada</p>
+      </header>
+      <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+        <div className="d-flex flex-wrap gap-3">
+          <label>Desde<input className="input mt-1" type="date" value={desde} onChange={e => setDesde(e.target.value)} /></label>
+          <label>Hasta<input className="input mt-1" type="date" value={hasta} onChange={e => setHasta(e.target.value)} /></label>
         </div>
         <div className="d-flex gap-2">
           <button
             type="button"
             className="btn secondary"
-            disabled={filtrados.length === 0}
+            disabled={cargando || Boolean(error) || !periodoValido || filtrados.length === 0}
             onClick={() =>
               exportarCsv(
                 "pagos-webpay.csv",
@@ -130,37 +146,20 @@ export function PagosWebpayAdmin() {
 
       <AlertaMensaje mensaje={error} tipo="error" />
 
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Transacciones registradas"
-            valor={abonos.length}
-            detalle="Histórico del establecimiento"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Abonos aprobados"
-            valor={aprobados.length}
-            detalle="Acreditados en cuenta del alumno"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Intentos rechazados"
-            valor={rechazados.length}
-            detalle="Sin cargo ni efecto contable"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <TarjetaResumen
-            etiqueta="Total recaudado aprobado"
-            valor={pesos(montoAprobado)}
-            detalle="Conciliado en saldos estudiantiles"
-            destacado
-          />
-        </div>
+      {!periodoValido && <p role="alert">Selecciona un período válido.</p>}
+      <div className="row g-3 mb-3" aria-label="Resumen del período">
+        {[
+          { etiqueta: "Transacciones", valor: periodo.length, fondo: "#f3f0e7", color: "#193f35" },
+          { etiqueta: "Aprobadas", valor: aprobados.length, fondo: "#dce8db", color: "#193f35" },
+          { etiqueta: "Rechazadas", valor: rechazados.length, fondo: "#f4e5df", color: "#854b39" },
+          { etiqueta: "Total recaudado", valor: pesos(montoAprobado), fondo: "#20433a", color: "#fff" },
+        ].map(k => <div key={k.etiqueta} className="col-6 col-xl-3">
+          <article style={{background:k.fondo, color:k.color, borderRadius:12, padding:16, minHeight:90, display:"grid", gap:8}}>
+            <span>{k.etiqueta}</span><strong style={{fontSize:"1.5rem", color:"inherit"}}>{cargando || error || !periodoValido ? "—" : k.valor}</strong>
+          </article>
+        </div>)}
       </div>
+      <p className="small text-muted">Resumen según fecha de creación del abono, independiente de los filtros de búsqueda y estado.</p>
 
       <div className="card p-4">
         <div className="row g-3 align-items-end mb-3">
@@ -198,37 +197,33 @@ export function PagosWebpayAdmin() {
 
         <TablaResponsiva
           cargando={cargando}
-          vacio={filtrados.length === 0}
+          vacio={Boolean(error) || !periodoValido || filtrados.length === 0}
           mensajeCarga="Consultando abonos…"
           mensajeVacio="No se encontraron transacciones con los filtros aplicados."
         >
           <table className="data-table">
             <thead>
               <tr>
-                <th>Operación</th>
-                <th>Fecha</th>
+                <th>Fecha / Operación</th>
                 <th>Alumno</th>
                 <th>Apoderado</th>
-                <th>Medio</th>
                 <th>Monto</th>
                 <th>Estado</th>
               </tr>
             </thead>
             <tbody>
-              {filtrados.map((a) => (
+              {(!error && periodoValido ? filtrados : []).map((a) => (
                 <tr key={a.id}>
                   <td>
-                    <strong>ABO-{a.id}</strong>
+                    <div style={{whiteSpace:"nowrap"}}>{new Date(a.fechaCreacion).toLocaleDateString("es-CL")}</div>
+                    <small style={{whiteSpace:"nowrap"}}>{new Date(a.fechaCreacion).toLocaleTimeString("es-CL", {hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false})}</small>
+                    <details><summary>ABO-{a.id}</summary><small>Medio: {a.medioPago}</small></details>
                   </td>
-                  <td>{new Date(a.fechaCreacion).toLocaleString("es-CL")}</td>
                   <td>
                     {nombresPorId.get(a.alumnoId) ?? `Alumno #${a.alumnoId}`}
                   </td>
                   <td>
                     {nombresPorId.get(a.apoderadoId) ?? `Apoderado #${a.apoderadoId}`}
-                  </td>
-                  <td>
-                    <span className="pill-state neutral">{a.medioPago}</span>
                   </td>
                   <td>
                     <strong>{pesos(a.monto)}</strong>

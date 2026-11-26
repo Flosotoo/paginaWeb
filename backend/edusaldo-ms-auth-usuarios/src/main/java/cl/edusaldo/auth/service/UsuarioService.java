@@ -16,7 +16,9 @@ public class UsuarioService {
   private static final java.security.SecureRandom CLAVES_TEMPORALES = new java.security.SecureRandom();
 
   private static String claveTemporal() {
-    return "Edu" + (100000 + CLAVES_TEMPORALES.nextInt(900000));
+    byte[] bytes = new byte[18];
+    CLAVES_TEMPORALES.nextBytes(bytes);
+    return "Edu1!" + java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
   }
 
   private java.util.Optional<Usuario> buscarIdentificador(String identificador) {
@@ -129,6 +131,17 @@ public class UsuarioService {
 
   @Transactional
   public Usuario crearUsuario(CrearUsuarioDTO dto) {
+    return crearUsuarioInterno(dto, clave -> {});
+  }
+
+  @Transactional
+  public UsuarioCreadoResponseDTO crearUsuarioConCredencial(CrearUsuarioDTO dto) {
+    var clave = new java.util.concurrent.atomic.AtomicReference<String>();
+    Usuario u = crearUsuarioInterno(dto, clave::set);
+    return new UsuarioCreadoResponseDTO(u, clave.get());
+  }
+
+  private Usuario crearUsuarioInterno(CrearUsuarioDTO dto, java.util.function.Consumer<String> credencial) {
     dto.setRut(Rut.normalizar(dto.getRut()));
     if (usuarioRepository.existsByRut(dto.getRut())) {
       throw new IllegalArgumentException("El RUT ya se encuentra registrado.");
@@ -211,6 +224,7 @@ public class UsuarioService {
         u.getClass().getSimpleName(),
         guardado.getId().toString(),
         "Usuario creado: " + guardado.getRut() + " (" + guardado.getRol() + ")");
+    credencial.accept(passwordTemporal);
     return guardado;
   }
 
@@ -237,6 +251,7 @@ public class UsuarioService {
           "El RUT del alumno ya está registrado: " + dto.getRutAlumno());
     }
 
+    var claveApoderado = new java.util.concurrent.atomic.AtomicReference<String>();
     Apoderado apoderado =
         apoderadoRepository
             .findByRut(dto.getRutApoderado())
@@ -256,6 +271,7 @@ public class UsuarioService {
                             + dto.getCorreoApoderado().trim());
                   }
                   String passTempApoderado = claveTemporal();
+                  claveApoderado.set(passTempApoderado);
                   Apoderado nuevoApoderado =
                       new Apoderado(
                           dto.getRutApoderado(),
@@ -315,7 +331,7 @@ public class UsuarioService {
         alumno.calcularEdad() >= 12 ? EstadoCuenta.PRIMER_ACCESO : EstadoCuenta.ACTIVA);
 
     Alumno alumnoGuardado = alumnoRepository.save(alumno);
-    if (correoSimuladoService != null)
+    if (correoSimuladoService != null && alumnoGuardado.calcularEdad() >= 12)
       correoSimuladoService.registrar(alumnoGuardado, "CLAVE_TEMPORAL", passTempAlumno);
     if (adscripcionRepository != null && alumnoGuardado.getId() != null) {
       adscripcionRepository.save(
@@ -339,7 +355,7 @@ public class UsuarioService {
             + parentesco
             + ")");
 
-    return new AltaAlumnoApoderadoResponseDTO(
+    var respuesta = new AltaAlumnoApoderadoResponseDTO(
         alumnoGuardado.getId(),
         apoderado.getId(),
         alumnoGuardado.getRut(),
@@ -349,6 +365,10 @@ public class UsuarioService {
         apoderado.getNombreCompleto(),
         parentesco.name(),
         "Alta atómica realizada exitosamente");
+    respuesta.setCorreoApoderado(apoderado.getCorreo());
+    respuesta.setTempPasswordApoderado(claveApoderado.get());
+    if (alumnoGuardado.calcularEdad() >= 12) respuesta.setTempPasswordAlumno(passTempAlumno);
+    return respuesta;
   }
 
   @Transactional

@@ -146,4 +146,19 @@ public class InventarioController {
   public InventarioService.Valorizacion valorizacion() {
     return inventarioService.valorizacion();
   }
+  public record CostoMovimiento(Long entregaId, Long devolucionId, Long productoId,
+      String tipo, int cantidad, java.math.BigDecimal costoTotal) {}
+
+  @GetMapping("/costos-ventas")
+  @Operation(summary = "Costos históricos de entregas y devoluciones, solo Administrador")
+  public List<CostoMovimiento> costosVentas() {
+    cl.edusaldo.productos.config.RequestContext.requireRoles("ADMINISTRADOR");
+    return inventarioService.listarMovimientos(null, null).stream()
+        .filter(m -> m.getTipo() == TipoMovimientoInventario.ENTREGA
+            || m.getTipo() == TipoMovimientoInventario.DEVOLUCION
+            || m.getTipo() == TipoMovimientoInventario.COMPENSACION)
+        .map(m -> new CostoMovimiento(m.getEntregaId(), m.getDevolucionId(),
+            m.getProductoId(), m.getTipo().name(), Math.abs(m.getVariacionFisica()), m.getCostoTotal()))
+        .toList();
+  }
 }

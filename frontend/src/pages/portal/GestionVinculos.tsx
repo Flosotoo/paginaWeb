@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Usuario } from "../../services/usuarios";
 import { useVinculos } from "../../hooks/useVinculos";
 import {
@@ -9,8 +9,10 @@ import {
 export function GestionVinculos({
   usuarios,
   recargarUsuarios,
+  alumnoId,
 }: {
   usuarios: Usuario[];
+  alumnoId?: number;
   recargarUsuarios?: () => Promise<unknown>;
 }) {
   const {
@@ -23,6 +25,9 @@ export function GestionVinculos({
     desvincular,
     actualizarCurso,
   } = useVinculos(recargarUsuarios);
+  useEffect(() => { if (alumnoId !== undefined) setAlumno(alumnoId); }, [alumnoId, setAlumno]);
+  const [busquedaApoderado, setBusquedaApoderado] = useState("");
+  const normalizar = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const [curso, setCurso] = useState("");
   const [nombreAlumno, setNombreAlumno] = useState("");
   const [apellidoAlumno, setApellidoAlumno] = useState("");
@@ -34,16 +39,12 @@ export function GestionVinculos({
   const [motivo, setMotivo] = useState("");
   return (
     <div className="card" id="vinculos">
-      <span className="eyebrow">FAMILIAS Y TUTORES</span>
-      <h3>Vínculos familiares</h3>
-      <p className="card-desc">
-        Consulta y administra la asociación entre apoderados y estudiantes, o actualiza los datos del alumno.
-      </p>
+      <h3>Datos y vínculos del alumno</h3>
 
       {aviso && <p role="status" className="form-feedback" style={{ marginBottom: "14px" }}>{aviso}</p>}
       {vinculos.error && <p role="alert">{vinculos.error}</p>}
 
-      <label style={{ maxWidth: "460px" }}>
+      {alumnoId === undefined && <label style={{ maxWidth: "460px" }}>
         Alumno vinculado
         <select
           className="input"
@@ -59,13 +60,12 @@ export function GestionVinculos({
               </option>
             ))}
         </select>
-      </label>
+      </label>}
 
-      {alumno > 0 && (
+      {alumno > 0 && (alumnoId === undefined || alumno === alumnoId) && (
         <div style={{ marginTop: "20px", display: "grid", gap: "20px" }}>
-          <div style={{ padding: "18px", background: "#fbf9f5", border: "1px solid #e9e3d8", borderRadius: "14px" }}>
-            <span className="eyebrow">ACTUALIZACIÓN DE FICHA</span>
-            <h4 style={{ margin: "4px 0 12px" }}>Actualizar curso y datos del alumno</h4>
+          <details style={{ padding: "12px", background: "#fbf9f5", border: "1px solid #e9e3d8", borderRadius: "12px" }}>
+            <summary>Actualizar curso y datos del alumno</summary>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -161,17 +161,17 @@ export function GestionVinculos({
                 </button>
               </div>
             </form>
-          </div>
+          </details>
 
-          <div style={{ padding: "18px", background: "#fbf9f5", border: "1px solid #e9e3d8", borderRadius: "14px" }}>
-            <span className="eyebrow">ASOCIACIÓN FAMILIAR</span>
-            <h4 style={{ margin: "4px 0 12px" }}>Vincular nuevo apoderado</h4>
+          <details style={{ padding: "12px", background: "#fbf9f5", border: "1px solid #e9e3d8", borderRadius: "12px" }}>
+            <summary>Vincular otro apoderado</summary>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 void vincular(Number(apoderado), parentesco);
               }}
             >
+              <label>Buscar apoderado por nombre o RUT<input className="input" value={busquedaApoderado} onChange={e => setBusquedaApoderado(e.target.value)} /></label>
               <div className="form-grid-2">
                 <label>
                   Apoderado a vincular
@@ -185,7 +185,7 @@ export function GestionVinculos({
                     {usuarios
                       .filter(
                         (u) =>
-                          u.rol.endsWith("APODERADO") && u.estado !== "INACTIVA",
+                          u.rol.endsWith("APODERADO") && u.estado !== "INACTIVA" && (String(u.id) === apoderado || normalizar(u.nombreCompleto).includes(normalizar(busquedaApoderado.trim())) || (busquedaApoderado.trim().replace(/[.\-]/g, "").length > 0 && u.rut.replace(/[.\-]/g, "").includes(busquedaApoderado.trim().replace(/[.\-]/g, ""))) ),
                       )
                       .map((u) => (
                         <option key={u.id} value={u.id}>
@@ -214,11 +214,12 @@ export function GestionVinculos({
                 </button>
               </div>
             </form>
-          </div>
+          </details>
 
-          <div>
-            <span className="eyebrow">APODERADOS ACTUALES</span>
-            <h4 style={{ margin: "4px 0 10px" }}>Vínculos registrados</h4>
+          <details style={{ padding: 12, border: "1px solid #e9e3d8", borderRadius: 12 }}>
+            <summary>Consultar apoderados e historial</summary>
+            {vinculos.cargando && <p role="status">Consultando vínculos…</p>}
+            {vinculos.datos?.length === 0 && <p>No hay vínculos registrados.</p>}
             <label style={{ maxWidth: "460px", marginBottom: "12px" }}>
               Motivo de desvinculación
               <input
@@ -267,7 +268,7 @@ export function GestionVinculos({
                 </article>
               ))}
             </div>
-          </div>
+          </details>
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { ModalConfirmacion, type SolicitudConfirmacion } from "../../components/ModalConfirmacion";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useAccion } from "../../hooks/useAccion";
 import { mensajeError as mensajeErrorApi } from "../../services/api";
@@ -22,6 +23,7 @@ function formatearErrorProveedor(error: unknown): string {
 }
 
 export function GestionProveedores({ esAdmin }: Props) {
+  const [confirmacion, setConfirmacion] = useState<SolicitudConfirmacion | null>(null);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [cargando, setCargando] = useState(true);
   const { procesando, realizar } = useAccion();
@@ -88,7 +90,6 @@ export function GestionProveedores({ esAdmin }: Props) {
   const cambiarEstado = async (p: Proveedor) => {
     if (!esAdmin || procesando) return;
     const activar = p.estado !== "ACTIVO";
-    if (!window.confirm(`¿Confirmas ${activar ? "activar" : "desactivar"} a ${p.razonSocial}?`)) return;
     setError("");
     setMensaje("");
     await realizar(async () => {
@@ -114,6 +115,7 @@ export function GestionProveedores({ esAdmin }: Props) {
 
   return (
     <div className="proveedores-modulo">
+      {confirmacion && <ModalConfirmacion solicitud={confirmacion} cerrar={() => setConfirmacion(null)} />}
       <div className="section-heading" style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <div><span className="eyebrow">GESTIÓN DE COMPRAS</span><h2>Proveedores</h2><p>Maestro de proveedores de la librería escolar.</p></div>
         {esAdmin && <button type="button" className="btn" onClick={() => { limpiar(); setMostrarFormulario(true); setError(""); setMensaje(""); }}>+ Nuevo proveedor</button>}
@@ -184,7 +186,7 @@ export function GestionProveedores({ esAdmin }: Props) {
                       {esAdmin ? (
                         <div style={{ display: "flex", gap: 6, flexWrap: "nowrap" }}>
                           <button type="button" className="btn secondary" disabled={procesando} onClick={() => editar(p)}>Editar</button>
-                          <button type="button" className="btn secondary" disabled={procesando} onClick={() => void cambiarEstado(p)}>
+                          <button type="button" className="btn secondary" disabled={procesando} onClick={() => setConfirmacion({ titulo: p.estado === "ACTIVO" ? "Desactivar proveedor" : "Activar proveedor", mensaje: `¿Deseas ${p.estado === "ACTIVO" ? "desactivar" : "activar"} a ${p.razonSocial}?`, accion: p.estado === "ACTIVO" ? "Desactivar" : "Activar", advertencia: p.estado === "ACTIVO", ejecutar: () => cambiarEstado(p) })}>
                             {p.estado === "ACTIVO" ? "Desactivar" : "Activar"}
                           </button>
                         </div>

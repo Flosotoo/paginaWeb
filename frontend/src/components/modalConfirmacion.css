@@ -1,0 +1,18 @@
+dialog.edu-confirmacion {
+  box-sizing: border-box; width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px);
+  margin: auto; padding: 24px; overflow: auto; border: 1px solid #d8d3c6;
+  border-radius: 18px; background: #fffcf7; color: #20433a; font: inherit;
+  box-shadow: 0 18px 60px #142e2933;
+}
+dialog.edu-confirmacion::backdrop { background: #142e2966; }
+.edu-confirmacion-titulo { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #e4dfd4; }
+.edu-confirmacion-titulo h2 { margin: 0; font: inherit; font-size: 1.3rem; font-weight: 700; color: #20433a; }
+.edu-confirmacion-titulo > span { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border-radius: 12px; background: #dce8db; font-weight: 700; }
+.edu-confirmacion p { margin: 16px 0; line-height: 1.5; overflow-wrap: anywhere; }
+.edu-confirmacion-detalle { padding: 12px; background: #f3f0e7; border-radius: 10px; font-size: .9rem; }
+.edu-confirmacion-motivo { display: grid; gap: 8px; margin: 16px 0; }
+.edu-confirmacion-motivo textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.edu-confirmacion-acciones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.edu-confirmacion .btn.edu-confirmacion-advertencia { background: #965c43; border-color: #965c43; color: #fff; }
+.edu-confirmacion .btn:disabled { opacity: .55; cursor: not-allowed; }
+.edu-confirmacion button:focus-visible { outline: 2px solid #20433a; outline-offset: 3px; }

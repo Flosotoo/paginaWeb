@@ -30,32 +30,41 @@ public class UsuarioController {
     this.usuarioService = usuarioService;
   }
 
+  private void exigirAdministrador() {
+    if (!"ADMINISTRADOR".equals(cl.edusaldo.auth.service.TenantContext.role())
+        || cl.edusaldo.auth.service.TenantContext.actor() == null)
+      throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN, "Permiso administrativo requerido");
+  }
+
   @PostMapping
   @Operation(summary = "Crear nuevo usuario de personal o apoderado con clave temporal")
   public ResponseEntity<UsuarioResponseDTO> crear(@Valid @RequestBody CrearUsuarioDTO dto) {
+    exigirAdministrador();
     if (dto.getRol() == cl.edusaldo.auth.model.Rol.ADMINISTRADOR) {
       throw new IllegalArgumentException(
           "Por política de seguridad, las cuentas de Administrador son creadas exclusivamente por"
               + " EduSaldo y no mediante este registro.");
     }
-    Usuario u = usuarioService.crearUsuario(dto);
-    return ResponseEntity.status(HttpStatus.CREATED).body(new UsuarioResponseDTO(u));
+    return ResponseEntity.status(HttpStatus.CREATED).header("Cache-Control", "no-store")
+        .body(usuarioService.crearUsuarioConCredencial(dto));
   }
 
   @PostMapping("/alumnos")
   @Operation(summary = "Registrar alumno y vincular apoderado")
   public ResponseEntity<AltaAlumnoApoderadoResponseDTO> registrarAlumnoConApoderado(
       @Valid @RequestBody AltaAlumnoApoderadoDTO dto) {
+    exigirAdministrador();
     AltaAlumnoApoderadoResponseDTO resp = usuarioService.registrarAlumnoConApoderado(dto);
-    return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    return ResponseEntity.status(HttpStatus.CREATED).header("Cache-Control", "no-store").body(resp);
   }
 
   @PostMapping("/alumnos/importacion-masiva")
   @Operation(summary = "Importar nómina masiva de alumnos con apoderado")
   public ResponseEntity<List<AltaAlumnoApoderadoResponseDTO>> importarNominaMasiva(
       @Valid @RequestBody List<@Valid AltaAlumnoApoderadoDTO> nomina) {
+    exigirAdministrador();
     List<AltaAlumnoApoderadoResponseDTO> res = usuarioService.importarNominaMasiva(nomina);
-    return ResponseEntity.status(HttpStatus.CREATED).body(res);
+    return ResponseEntity.status(HttpStatus.CREATED).header("Cache-Control", "no-store").body(res);
   }
 
   @GetMapping("/alumnos/buscar")
@@ -173,8 +182,9 @@ public class UsuarioController {
   @Operation(summary = "Restablecer contraseña temporal por administrador")
   public ResponseEntity<Map<String, String>> resetPassword(
       @PathVariable Long id, @RequestParam(required = false) Long adminId) {
+    exigirAdministrador();
     String temp = usuarioService.restablecerPassword(id, adminId);
-    return ResponseEntity.ok(
+    return ResponseEntity.ok().header("Cache-Control", "no-store").body(
         Map.of("tempPassword", temp, "message", "Contraseña temporal generada"));
   }
 

@@ -28,7 +28,7 @@ export const usuariosService = {
     return (await api.get<ResumenUsuario>(`/api/usuarios/${id}`)).data;
   },
   async crear(datos: NuevoUsuario) {
-    return (await api.post<Usuario>("/api/usuarios", datos)).data;
+    return (await api.post<Usuario & { tempPassword?: string }>("/api/usuarios", datos)).data;
   },
   async inactivar(id: number) {
     await api.put(`/api/usuarios/${id}/inactivar`);
@@ -67,6 +67,9 @@ export interface AltaAlumnoRespuesta {
   nombreApoderado: string;
   parentesco: string;
   mensaje: string;
+  correoApoderado?: string;
+  tempPasswordAlumno?: string | null;
+  tempPasswordApoderado?: string | null;
 }
 export async function registrarAlumno(datos: AltaAlumno) {
   return (await api.post<AltaAlumnoRespuesta>("/api/usuarios/alumnos", datos))
@@ -126,5 +129,5 @@ export const vinculosService = {
   },
 };
 export async function importarNomina(datos: AltaAlumno[]) {
-  return (await api.post('/api/usuarios/alumnos/importacion-masiva', datos)).data;
+  return (await api.post<AltaAlumnoRespuesta[]>('/api/usuarios/alumnos/importacion-masiva', datos)).data;
 }

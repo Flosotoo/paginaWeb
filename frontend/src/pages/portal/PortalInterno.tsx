@@ -1,3 +1,5 @@
+import { ModalConfirmacion, type SolicitudConfirmacion } from "../../components/ModalConfirmacion";
+import "./estiloEduSaldo.css";
 import { useEffect, useState, useRef } from "react";
 import { SECCIONES_INVENTARIO } from "../../routes/LayoutPortal";
 import { CuentaLibreria } from "./CuentaLibreria";
@@ -51,6 +53,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
   } = usePortalInterno(seccion);
 
   const esAdmin = usuario?.rol === "ADMINISTRADOR";
+  const [confirmacionAjuste, setConfirmacionAjuste] = useState<SolicitudConfirmacion | null>(null);
   const nombreAlumno = (id: number) =>
     alumnosReserva[id]?.nombreCompleto || `Alumno ${id}`;
   const normalizarBusqueda = (texto: string) =>
@@ -86,6 +89,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
       setPaginaStock(1);
     }
     setConfirmacionReserva(null);
+    setConfirmacionAjuste(null);
     setErrorReservaId(null);
     setBusquedaReserva("");
     setPaginaReserva(1);
@@ -280,189 +284,74 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
 
   return (
     <main className="dashboard staff-dashboard">
+      {confirmacionAjuste && <ModalConfirmacion solicitud={confirmacionAjuste} cerrar={() => setConfirmacionAjuste(null)} />}
       {aviso && seccion !== "reservas" && (
         <p role="status" className="form-feedback">
           {aviso}
         </p>
       )}
 
-      {/* VISTA INICIO PARA ENCARGADO */}
-      {!esAdmin && seccion === "inicio" && (
-        <>
-          <section
-            className="account-section"
-            style={{ padding: "16px", marginBottom: "12px" }}
-          >
-            <span className="eyebrow">ÁREA DEL ENCARGADO</span>
-            <h2 style={{ margin: "4px 0 0" }}>Panel del Encargado</h2>
-          </section>
-          <section
-            className="account-section"
-            style={{ padding: "16px", marginBottom: "12px" }}
-          >
-            <h3 style={{ margin: "0 0 12px" }}>Estado de operaciones</h3>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: "8px",
-              }}
-            >
-              {[
-                {
-                  titulo: "Por preparar",
-                  total: porPreparar,
-                  filtro: "PENDIENTE",
-                  destino: "reservas",
-                },
-                {
-                  titulo: "Listas para retiro",
-                  total: pendientesEntrega,
-                  filtro: "LISTA_PARA_RETIRO",
-                  destino: "reservas",
-                },
-                {
-                  titulo: "Stock crítico",
-                  total: stockCritico,
-                  filtro: "CRITICO",
-                  destino: "inventario",
-                },
-                {
-                  titulo: "Entregadas",
-                  total: entregadas,
-                  filtro: "ENTREGADA",
-                  destino: "reservas",
-                },
-              ].map(({ titulo, total, filtro, destino }) => (
-                <button
-                  key={filtro}
-                  type="button"
-                  className="subnav-card"
-                  style={{
-                    minWidth: 0,
-                    textAlign: "left",
-                    padding: "12px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    accesoInicio.current = filtro;
-                    setSeccion(destino);
-                  }}
-                >
-                  <strong
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: "1.4rem",
-                    }}
-                  >
-                    {total}
-                    <span aria-hidden="true">→</span>
-                  </strong>
-                  <span style={{ fontSize: "0.85rem" }}>{titulo}</span>
-                </button>
-              ))}
-            </div>
-            <h3 style={{ margin: "20px 0 12px" }}>Gestión</h3>
-            <div style={{ display: "grid", gap: "8px" }}>
-              {[
-                ["reservas", "Reservas", "Gestión completa de reservas"],
-                ["entregas", "Entrega directa", "Entrega presencial en mesón"],
-                ["inventario", "Inventario", "Existencias y gestión de bodega"],
-                ["historial", "Historial", "Consultar operaciones realizadas"],
-              ].map(([destino, titulo, descripcion]) => (
-                <button
-                  key={destino}
-                  type="button"
-                  className="reserva-opcion"
-                  onClick={() => setSeccion(destino)}
-                >
-                  <span>
-                    <strong>{titulo}</strong>
-                    <small>{descripcion}</small>
-                  </span>
-                  <span aria-hidden="true">→</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
-
-      {/* INICIO ADMINISTRADOR */}
-      {esAdmin && seccion === "inicio" && (
-        <>
-          <section className="admin-welcome" style={{ marginBottom: "25px" }}>
+      {/* Inicio común de los perfiles internos */}
+      {seccion === "inicio" && (
+        <div className="inicio-interno">
+          <section className="inicio-interno-portada">
             <div>
-              <span className="eyebrow">CENTRO GENERAL DE PADRES</span>
-              <h2>Administración de EduSaldo</h2>
-              <p>Accede a las áreas de gestión de la librería escolar.</p>
+              <h2>¡Hola, {usuario?.nombreCompleto?.trim().split(/\s+/)[0] || "Usuario"}!</h2>
+              <p>{esAdmin ? "Administración de la librería escolar." : "Gestión de la librería escolar."}</p>
             </div>
-            <div className="admin-welcome-mark">e</div>
+            <img className="inicio-interno-ilustracion" src="/assets/img/materiales-escolares.svg" alt="" />
           </section>
-
-          <div className="admin-home-grid" style={{ marginBottom: "30px" }}>
-            {[
-              {
-                id: "cuenta-libreria",
-                icono: "▤",
-                titulo: "Cuenta Librería",
-                descripcion:
-                  "Consulta y administración de la cuenta de la librería.",
-              },
-              {
-                id: "inventario",
-                icono: "▦",
-                titulo: "Inventario y Valorización",
-                descripcion:
-                  "Existencias, stock crítico, valorización y control de inventario.",
-              },
-              {
-                id: "gestion-compras",
-                icono: "🛒",
-                titulo: "Gestión de Compras",
-                descripcion: "Proveedores, órdenes de compra y recepción de mercadería.",
-              },
-              {
-                id: "pagos",
-                icono: "💰",
-                titulo: "Pagos",
-                descripcion:
-                  "Consulta, conciliación y exportación de recargas electrónicas Webpay.",
-              },
-              {
-                id: "personas",
-                icono: "👥",
-                titulo: "Usuarios y alumnos",
-                descripcion:
-                  "Administración de usuarios, alumnos y sus vínculos.",
-              },
-            ].map((tarjeta) => (
-              <button
-                key={tarjeta.id}
-                type="button"
-                className="admin-home-card"
-                onClick={() => setSeccion(tarjeta.id)}
-                style={{
-                  textAlign: "left",
-                  background: "#fffcf7",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "100%",
-                }}
-              >
-                <span className="admin-card-icon" aria-hidden="true">
-                  {tarjeta.icono}
-                </span>
-                <div>
-                  <h3>{tarjeta.titulo}</h3>
-                  <p>{tarjeta.descripcion}</p>
-                </div>
-                <b aria-hidden="true">→</b>
+          {!esAdmin && (
+            <section className="inicio-interno-panel" aria-labelledby="inicio-estado-reservas">
+              <h3 id="inicio-estado-reservas">Estado de reservas</h3>
+              {reservas.error && <p role="alert">{reservas.error}</p>}
+              <div className="inicio-interno-indicadores">
+                {[
+                  { titulo: "Por preparar", total: porPreparar, filtro: "PENDIENTE" },
+                  { titulo: "Listas para retiro", total: pendientesEntrega, filtro: "LISTA_PARA_RETIRO" },
+                  { titulo: "Entregadas", total: entregadas, filtro: "ENTREGADA" },
+                ].map(({ titulo, total, filtro }) => (
+                  <button key={filtro} type="button" className="inicio-interno-kpi"
+                    onClick={() => { accesoInicio.current = filtro; setSeccion("reservas"); }}>
+                    <strong>{reservas.cargando || reservas.error || !reservas.datos ? "—" : total}<span aria-hidden="true">›</span></strong>
+                    <span>{titulo}</span>
+                  </button>
+                ))}
+              </div>
+              {productos.error && <p role="alert">{productos.error}</p>}
+              <button type="button" className={`inicio-interno-stock ${!productos.cargando && !productos.error && stockCritico > 0 ? "alerta" : ""}`}
+                onClick={() => { accesoInicio.current = "CRITICO"; setSeccion("inventario"); }}>
+                <span>Productos con stock crítico</span>
+                <strong>{productos.cargando || productos.error || !productos.datos ? "—" : stockCritico}</strong>
+                <span aria-hidden="true">›</span>
               </button>
-            ))}
-          </div>
-        </>
+            </section>
+          )}
+          <section className="inicio-interno-panel" aria-labelledby="inicio-accesos">
+            <h3 id="inicio-accesos">¿Qué deseas hacer?</h3>
+            <div className="inicio-interno-accesos">
+              {(esAdmin ? [
+                ["cuenta-libreria", "Cuenta Librería", "▤", "Consultar ingresos, ventas y utilidad"],
+                ["inventario", "Inventario y Valorización", "▦", "Controlar existencias y costos"],
+                ["gestion-compras", "Gestión de Compras", "▣", "Proveedores y órdenes de compra"],
+                ["pagos", "Pagos", "$", "Consultar abonos y pagos Webpay"],
+                ["personas", "Usuarios y alumnos", "♙", "Administrar usuarios y sus vínculos"],
+                ["reservas", "Reservas", "☷", "Consultar y gestionar reservas"],
+              ] : [
+                ["reservas", "Reservas", "☷", "Preparar y entregar materiales"],
+                ["entregas", "Entrega directa", "↗", "Registrar entregas en mesón"],
+                ["inventario", "Inventario", "▦", "Gestionar existencias"],
+                ["historial", "Historial", "▤", "Consultar operaciones"],
+              ]).map(([destino, titulo, icono, descripcion]) => (
+                <button key={destino} type="button" className="inicio-interno-acceso" onClick={() => setSeccion(destino)}>
+                  <span className="inicio-interno-icono" aria-hidden="true">{icono}</span>
+                  <span className="inicio-interno-texto"><strong>{titulo}</strong><small>{descripcion}</small></span>
+                  <span aria-hidden="true" className="inicio-interno-flecha">›</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
       )}
 
       {/* CUENTA LIBRERÍA: cartola financiera integrada */}
@@ -1665,7 +1554,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                       <button
                         className="btn"
                         disabled={procesando}
-                        onClick={() => aprobar(a.id)}
+                        onClick={() => setConfirmacionAjuste({ titulo: "Aprobar ajuste de inventario", mensaje: `¿Deseas aprobar el ajuste #${a.id}?`, detalle: "Esta operación autoriza el cambio de existencias solicitado.", accion: "Aprobar ajuste", ejecutar: () => aprobar(a.id) })}
                       >
                         Aprobar
                       </button>
@@ -1673,8 +1562,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                         className="btn secondary"
                         disabled={procesando}
                         onClick={() => {
-                          const razon = window.prompt("Motivo del rechazo");
-                          if (razon?.trim()) void rechazar(a.id, razon);
+                          setConfirmacionAjuste({ titulo: "Rechazar ajuste de inventario", mensaje: `Indica el motivo del rechazo del ajuste #${a.id}.`, accion: "Rechazar ajuste", motivo: true, advertencia: true, ejecutar: (razon) => rechazar(a.id, razon) });
                         }}
                       >
                         Rechazar

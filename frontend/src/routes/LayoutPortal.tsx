@@ -7,7 +7,7 @@ import { rutaInicioPorRol } from "./RutaProtegida";
 export const MENU_ADMINISTRADOR: readonly [string, string][] = [
   ["inicio", "Inicio"], ["cuenta-libreria", "Cuenta Librería"],
   ["inventario", "Inventario y Valorización"], ["gestion-compras", "Gestión de Compras"],
-  ["pagos", "Pagos"], ["personas", "Usuarios y alumnos"],
+  ["pagos", "Pagos"], ["personas", "Usuarios y alumnos"], ["reservas", "Reservas"],
 ];
 export const MENU_ENCARGADO: readonly [string, string][] = [
   ["inicio", "Inicio"], ["reservas", "Reservas"], ["entregas", "Entrega directa"],
@@ -36,9 +36,12 @@ export function LayoutPortal() {
   const { pathname } = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
   if (!usuario) return null;
-  const menuItems = obtenerMenuPorRol(usuario.rol);
+  const menuPersonal = usuario.rol !== "ALUMNO" && usuario.estado !== "PRIMER_ACCESO";
+  const menuItems = obtenerMenuPorRol(usuario.rol).filter(([id]) => !menuPersonal || !["correcciones", "privacidad"].includes(id));
   const prefijo = prefijoPortalPorRol(usuario.rol);
   const esAdmin = usuario.rol === "ADMINISTRADOR";
+  // El nombre completo no distingue nombres de apellidos; usar el primer nombre evita suposiciones.
+  const nombreCorto = usuario.nombreCompleto?.trim().split(/\s+/)[0] || "Usuario";
   const irAInicio = () => { setMenuAbierto(false); navigate(rutaInicioPorRol(usuario.rol)); };
   return (
     <>
@@ -54,9 +57,19 @@ export function LayoutPortal() {
             </nav>
           </>}
           <div className="header-account">
-            <span className="user-bubble">{usuario.nombreCompleto?.charAt(0) || "U"}</span>
-            <span className="user-name">{usuario.nombreCompleto}</span>
-            {esAdmin && usuario.estado !== "PRIMER_ACCESO" && <details style={{ position: "relative" }}><summary style={{ cursor: "pointer", color: "white" }}>Más</summary><div style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#fffcf7", padding: "12px", minWidth: "180px", borderRadius: "8px", display: "grid", gap: "8px" }}>{[["reservas", "Reservas"], ["correcciones", "Mis datos"], ["privacidad", "Privacidad y seguridad"]].map(([id, texto]) => <NavLink key={id} to={`/interno/${id}`} style={{ color: "#193f35" }} onClick={e => { e.currentTarget.closest("details")?.removeAttribute("open"); setMenuAbierto(false); }}>{texto}</NavLink>)}</div></details>}
+            <span className="user-bubble">{nombreCorto.charAt(0)}</span>
+            {menuPersonal ? (
+              <details key={pathname} style={{ position: "relative" }}>
+                <summary aria-label={`Menú personal de ${nombreCorto}`} style={{ cursor: "pointer", color: "white", display: "flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap", listStyle: "none" }}>
+                  <span>{nombreCorto}</span><span aria-hidden="true">▾</span>
+                </summary>
+                <div style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#fffcf7", padding: "12px", minWidth: "180px", borderRadius: "8px", display: "grid", gap: "8px" }}>
+                  {[["correcciones", "Mis datos"], ["privacidad", "Privacidad y seguridad"]].map(([id, texto]) => (
+                    <NavLink key={id} to={`${prefijo}/${id}`} style={{ color: "#193f35" }} onClick={e => { e.currentTarget.closest("details")?.removeAttribute("open"); setMenuAbierto(false); }}>{texto}</NavLink>
+                  ))}
+                </div>
+              </details>
+            ) : <span className="user-name">{nombreCorto}</span>}
             <button className="logout" id="logout" type="button" onClick={() => { setMenuAbierto(false); void salir().catch(() => undefined).finally(() => navigate("/acceso", { replace: true })); }}>Cerrar sesión</button>
           </div>
         </div>
