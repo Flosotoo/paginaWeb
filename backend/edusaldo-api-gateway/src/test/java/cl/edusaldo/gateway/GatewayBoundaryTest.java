@@ -440,4 +440,110 @@ class GatewayBoundaryTest {
     assertFalse(policy.authorize("/api/operaciones", "GET", json.createObjectNode(), who).block());
     assertTrue(policy.authorize("/api/auth/sesion", "GET", json.createObjectNode(), who).block());
   }
+
+  @Test
+  void peticionSinTokenOMalformadaDevuelve401SinConsultarAuth() {
+    var client = mock(GatewayIdentityClient.class);
+    when(client.configured()).thenReturn(true);
+
+    var sinHeader = MockServerWebExchange.from(MockServerHttpRequest.get("/api/productos"));
+    var bearerVacio =
+        MockServerWebExchange.from(
+            MockServerHttpRequest.get("/api/productos").header("Authorization", "Bearer "));
+    var esquemaBasic =
+        MockServerWebExchange.from(
+            MockServerHttpRequest.get("/api/productos").header("Authorization", "Basic dXNlcjpwYXNz"));
+
+    for (var ex : new MockServerWebExchange[] {sinHeader, bearerVacio, esquemaBasic}) {
+      filter(client)
+          .filter(
+              ex,
+              e -> {
+                throw new AssertionError("No debe enrutar sin token válido");
+              })
+          .block();
+      assertEquals(HttpStatus.UNAUTHORIZED, ex.getResponse().getStatusCode());
+    }
+    verify(client, never()).session(anyString());
+  }
+
+  @Test
+  void tokenConFirmaValidaPeroRevocadoEnAuthDevuelve401() {
+    var client = mock(GatewayIdentityClient.class);
+    when(client.configured()).thenReturn(true);
+    var bearer = bearerFor(3, 1, "APODERADO");
+    var unauthorized =
+        org.springframework.web.reactive.function.client.WebClientResponseException.create(
+            401, "Unauthorized", HttpHeaders.EMPTY, new byte[0], StandardCharsets.UTF_8);
+    when(client.session(bearer)).thenReturn(Mono.error(unauthorized));
+
+    var ex =
+        MockServerWebExchange.from(
+            MockServerHttpRequest.get("/api/productos").header("Authorization", bearer));
+    filter(client)
+        .filter(
+            ex,
+            e -> {
+              throw new AssertionError("No debe enrutar token revocado");
+            })
+        .block();
+    assertEquals(HttpStatus.UNAUTHORIZED, ex.getResponse().getStatusCode());
+    verify(client).session(bearer);
+  }
+
+  @Test
+  void matrizDePermisosCuatroPerfilesEnComprasEntregasYOperaciones() throws Exception {
+    var client = mock(GatewayIdentityClient.class);
+    var policy = new GatewayAuthorizationPolicy(client);
+    var empty = json.createObjectNode();
+
+    for (String role : new String[] {"ADMINISTRADOR", "ENCARGADO", "APODERADO", "ALUMNO"}) {
+      var who =
+          json.readTree(
+              "{\"usuarioId\":10,\"idEstablecimiento\":1,\"rol\":\""
+                  + role
+                  + "\",\"estado\":\"ACTIVA\",\"alumnos\":[4]}");
+      boolean esStaff = role.equals("ADMINISTRADOR") || role.equals("ENCARGADO");
+      boolean esAdmin = role.equals("ADMINISTRADOR");
+
+      // Listados globales operativos: solo personal (ADMIN / ENCARGADO).
+      for (String globalPath :
+          new String[] {
+            "/api/entregas/historial",
+            "/api/entregas/dia",
+            "/api/devoluciones",
+            "/api/reservas",
+            "/api/operaciones",
+            "/api/proveedores",
+            "/api/ordenes-compra"
+          }) {
+        assertEquals(
+            esStaff,
+            policy.authorize(globalPath, "GET", empty, who).block(),
+            role + " GET " + globalPath);
+      }
+
+      // Acciones operativas de compras y mesón.
+      assertEquals(
+          esStaff,
+          policy.authorize("/api/ordenes-compra", "POST", empty, who).block(),
+          role + " POST /api/ordenes-compra");
+      assertEquals(
+          esStaff,
+          policy.authorize("/api/ordenes-compra/1/recepcionar", "PATCH", empty, who).block(),
+          role + " PATCH /api/ordenes-compra/1/recepcionar");
+      assertEquals(
+          esAdmin,
+          policy.authorize("/api/ordenes-compra/1/aprobar", "PATCH", empty, who).block(),
+          role + " PATCH /api/ordenes-compra/1/aprobar");
+      assertEquals(
+          esAdmin,
+          policy.authorize("/api/proveedores", "POST", empty, who).block(),
+          role + " POST /api/proveedores");
+      assertEquals(
+          esStaff,
+          policy.authorize("/api/entregas/meson", "POST", empty, who).block(),
+          role + " POST /api/entregas/meson");
+    }
+  }
 }

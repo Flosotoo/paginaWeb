@@ -193,9 +193,13 @@ public class GatewayAuthorizationPolicy {
               || path.startsWith("/api/saldos/cuenta/") && !write
               || path.equals("/api/saldos/notificaciones") && !write
               || path.equals("/api/saldos/abonos") && !write && role.equals("APODERADO")
-              || path.startsWith("/api/reservas")
-              || path.startsWith("/api/entregas") && !write
-              || path.startsWith("/api/devoluciones") && !write
+              || (path.equals("/api/reservas") && method.equals("POST")
+                  || path.startsWith("/api/reservas/"))
+              || (path.matches("/api/entregas/alumno/\\d+") || path.matches("/api/entregas/\\d+"))
+                  && !write
+              || (path.matches("/api/devoluciones/alumno/\\d+")
+                      || path.matches("/api/devoluciones/\\d+"))
+                  && !write
               || (path.startsWith("/api/usuarios/") && !write
                   || path.equals("/api/usuarios/solicitudes-correccion") && method.equals("POST"))
               || (path.equals("/api/saldos/abonos/iniciar")
