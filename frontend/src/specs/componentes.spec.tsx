@@ -4,6 +4,8 @@ import { AlertaMensaje } from "../components/AlertaMensaje";
 import { BotonAccion } from "../components/BotonAccion";
 import { ModalConfirmacion } from "../components/ModalConfirmacion";
 import { ModalCredenciales } from "../components/ModalCredenciales";
+import { CorreosSimulados } from "../pages/portal/CorreosSimulados";
+import { authService } from "../services/auth";
 import { TablaResponsiva } from "../components/TablaResponsiva";
 import { TarjetaAlumno } from "../components/TarjetaAlumno";
 import { TarjetaResumen } from "../components/TarjetaResumen";
@@ -273,6 +275,36 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
 
       fireEvent.click(screen.getByRole("button", { name: "Finalizar" }));
       expect(finalizar).toHaveBeenCalledTimes(1);
+    });
+
+    it("consulta y recarga la bandeja de correos simulados bajo demanda", async () => {
+      let llamadas = 0;
+      spyOn(authService, "correosSimulados").and.callFake(async () => {
+        llamadas += 1;
+        return [
+          {
+            id: llamadas,
+            destinatario: "carlos.perez@gmail.com",
+            tipo: "RECUPERACION",
+            contenido: `Código generado #${llamadas}`,
+          },
+        ];
+      });
+
+      render(<CorreosSimulados />);
+      await waitFor(() => {
+        if (!document.body.textContent?.includes("Código generado #1")) {
+          throw new Error("Esperando carga inicial de correos simulados");
+        }
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Actualizar bandeja" }));
+      await waitFor(() => {
+        if (!document.body.textContent?.includes("Código generado #2")) {
+          throw new Error("Esperando recarga manual de correos simulados");
+        }
+      });
+      expect(llamadas).toBe(2);
     });
   });
 });

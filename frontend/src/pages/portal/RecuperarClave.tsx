@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAccion } from "../../hooks/useAccion";
 import { authService } from "../../services/auth";
 import { mensajeError } from "../../services/api";
-export function RecuperarClave() {
+export function RecuperarClave({ abierto = false }: { abierto?: boolean }) {
   const [correo, setCorreo] = useState("");
   const [token, setToken] = useState("");
   const [clave, setClave] = useState("");
@@ -20,7 +20,7 @@ export function RecuperarClave() {
     }
   }
   return (
-    <details>
+    <details open={abierto || undefined}>
       <summary>Recuperar contraseña</summary>
       <p>
         El correo es simulado. Solicita el código al administrador del

@@ -1,5 +1,6 @@
 import {
   HashRouter,
+  Link,
   Navigate,
   Route,
   Routes,
@@ -152,7 +153,16 @@ export function Aplicacion() {
         element={
           <main className="dashboard">
             <section className="account-section">
-              <RecuperarClave />
+              <div style={{ marginBottom: "16px" }}>
+                <Link className="back-link secondary" to="/acceso">
+                  ← Volver al inicio de sesión
+                </Link>
+              </div>
+              <div className="card">
+                <span className="eyebrow">ACCESO Y SEGURIDAD</span>
+                <h2>Recuperación de contraseña</h2>
+                <RecuperarClave abierto />
+              </div>
             </section>
           </main>
         }

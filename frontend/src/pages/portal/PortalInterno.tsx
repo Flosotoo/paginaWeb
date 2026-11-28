@@ -19,6 +19,8 @@ import { CorreccionDatos } from "./CorreccionDatos";
 import { EntregaMeson } from "./EntregaMeson";
 import { GestionCatalogo } from "./GestionCatalogo";
 import { GestionUsuarios } from "./GestionUsuarios";
+import { Administracion } from "./Administracion";
+import { CorreosSimulados } from "./CorreosSimulados";
 import { usePortalInterno } from "../../hooks/usePortalInterno";
 import { construirHtmlEtiquetaBolsa } from "../../utils/codigoBarras";
 
@@ -1546,8 +1548,12 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                       {a.estado}
                     </span>
                     <p style={{ margin: "6px 0 0", fontSize: "14px" }}>
-                      Producto {a.productoId} · {a.cantidad} · {a.motivo} ·{" "}
-                      {a.estado}
+                      <strong>
+                        {productos.datos?.find((p) => p.id === a.productoId)
+                          ?.nombre ?? `Producto #${a.productoId}`}
+                      </strong>{" "}
+                      · Ajuste: {a.cantidad > 0 ? `+${a.cantidad}` : a.cantidad}{" "}
+                      · {a.motivo}
                     </p>
                   </div>
                   {esAdmin && a.estado === "PENDIENTE" && (
@@ -1637,13 +1643,24 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
         </section>
       )}
 
-      {/* Rutas antiguas: la auditoría central ya no forma parte del portal. */}
+      {/* MÓDULO: CONFIGURACIÓN Y AUDITORÍA (ADMIN) */}
       {esAdmin && ["auditoria", "configuracion"].includes(seccion) && (
         <section className="account-section">
-          <p>Esta sección ya no está disponible. Consulta los módulos de gestión correspondientes.</p>
-          <button type="button" className="btn secondary" onClick={() => setSeccion("inicio")}>
+          <button
+            type="button"
+            className="back-link secondary"
+            onClick={() => setSeccion("inicio")}
+          >
             ← Volver al inicio de administración
           </button>
+          <Administracion
+            key={seccion}
+            movimientos={movimientos}
+            subseccionInicial={seccion === "auditoria" ? "auditoria" : "todas"}
+          />
+          <div style={{ marginTop: "24px" }}>
+            <CorreosSimulados />
+          </div>
         </section>
       )}
 

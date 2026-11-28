@@ -74,7 +74,11 @@ export function CorreccionDatos() {
 
       <div className="card">
         <span className="eyebrow">HISTORIAL DE SOLICITUDES</span>
-        <h3>Mis solicitudes registradas</h3>
+        <h3>
+          {usuario?.rol === "ADMINISTRADOR"
+            ? "Solicitudes del establecimiento"
+            : "Mis solicitudes registradas"}
+        </h3>
         {solicitudes.datos?.length === 0 && (
           <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>No hay solicitudes de corrección pendientes.</p>
         )}

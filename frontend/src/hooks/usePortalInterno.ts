@@ -102,7 +102,7 @@ export function usePortalInterno(seccion?: string) {
   const esAdmin = usuario?.rol === "ADMINISTRADOR";
   useEffect(() => {
     let vigente = true;
-    if (seccion !== "reservas" || esAdmin) return;
+    if (seccion !== "reservas") return;
     void entregasService
       .historial()
       .then((data) => {

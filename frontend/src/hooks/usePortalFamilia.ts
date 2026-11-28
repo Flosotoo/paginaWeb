@@ -74,7 +74,10 @@ export function usePortalFamilia() {
   );
   const notificaciones = useConsulta(cargarNotificaciones, usuario?.rol === "APODERADO");
   const cargarAvisosReserva = useCallback(() => reservasService.notificaciones(), []);
-  const avisosReserva = useConsulta(cargarAvisosReserva);
+  const avisosReserva = useConsulta(
+    cargarAvisosReserva,
+    usuario?.rol === "APODERADO",
+  );
   const cargarReservas = useCallback(
     () => reservasService.porAlumno(alumno),
     [alumno],
@@ -113,13 +116,17 @@ export function usePortalFamilia() {
       const reserva = await reservasService.crear(alumno, items);
       setCarrito({});
       setAvisoReserva({ tipo: "exito", id: reserva.id, mensaje: `Reserva realizada con éxito: ${items.reduce((n, i) => n + i.cantidad, 0)} materiales por $${reserva.total.toLocaleString("es-CL")}.` });
-      await Promise.all([
+      await Promise.allSettled([
         cuenta.recargar(),
-        ...(usuario?.rol === "APODERADO" ? [saldosAlumnos.recargar()] : []),
-        movimientos.recargar(),
         reservas.recargar(),
-        avisosReserva.recargar(),
         productos.recargar(),
+        ...(usuario?.rol === "APODERADO"
+          ? [
+              saldosAlumnos.recargar(),
+              movimientos.recargar(),
+              avisosReserva.recargar(),
+            ]
+          : []),
       ]);
     }, mensaje => setAvisoReserva({ tipo: "error", mensaje }));
   const MIN_ABONO = 100;
@@ -163,7 +170,7 @@ export function usePortalFamilia() {
           : `Pago rechazado. El abono de $${valor.toLocaleString("es-CL")} no se acreditó. Puedes intentar nuevamente.`,
       });
       await cuenta.recargar();
-      await Promise.all([
+      await Promise.allSettled([
         movimientos.recargar(),
         notificaciones.recargar(),
         abonos.recargar(),
@@ -179,12 +186,13 @@ export function usePortalFamilia() {
       }
       await reservasService.cancelar(id, motivo);
       setAvisoCancelacion({ id, tipo: "exito", mensaje: "Reserva cancelada. Se liberó el saldo comprometido." });
-      await Promise.all([
+      await Promise.allSettled([
         cuenta.recargar(),
-        ...(usuario?.rol === "APODERADO" ? [saldosAlumnos.recargar()] : []),
-        movimientos.recargar(),
         reservas.recargar(),
         productos.recargar(),
+        ...(usuario?.rol === "APODERADO"
+          ? [saldosAlumnos.recargar(), movimientos.recargar()]
+          : []),
       ]);
     }, mensaje => setAvisoCancelacion({ id, tipo: "error", mensaje }));
   return {

@@ -6,9 +6,16 @@ export function CorreosSimulados() {
   const correos = useConsulta(consultar);
   return (
     <div className="card">
-      <span className="eyebrow">BANDEJA DE SALIDA SIMULADA</span>
-      <h3 id="correos">Correos simulados</h3>
-      <p className="card-desc">Estos mensajes son generados por el sistema de notificaciones simulado y no se envían por correo real.</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <span className="eyebrow">BANDEJA DE SALIDA SIMULADA</span>
+          <h3 id="correos" style={{ margin: "2px 0 4px" }}>Correos simulados</h3>
+          <p className="card-desc" style={{ margin: 0 }}>Estos mensajes son generados por el sistema de notificaciones simulado y no se envían por correo real.</p>
+        </div>
+        <button type="button" className="btn secondary" disabled={correos.cargando} onClick={() => void correos.recargar()}>
+          {correos.cargando ? "Actualizando…" : "Actualizar bandeja"}
+        </button>
+      </div>
       {correos.error && <p role="alert">{correos.error}</p>}
       {correos.datos?.length === 0 && <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>No hay mensajes emitidos.</p>}
       <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
