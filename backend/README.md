@@ -77,7 +77,8 @@ Las rutas principales son:
 - `POST /api/inventario/ajustes/solicitar` registra una solicitud; `POST /api/inventario/ajustes/{id}/aprobar` o `/rechazar` la resuelve por un administrador.
 
 - `GET /api/proveedores`, `POST /api/proveedores`, `PUT /api/proveedores/{id}` y `PATCH /api/proveedores/{id}/activar|desactivar` administran el maestro de proveedores con validación RUT Módulo 11.
-- `POST /api/ordenes-compra`, `PATCH /api/ordenes-compra/{id}/aprobar` y `PATCH /api/ordenes-compra/{id}/recepcionar` ejecutan el ciclo de órdenes de compra e ingreso idempotente a inventario.
+- `POST /api/ordenes-compra`, `PATCH /api/ordenes-compra/{id}/aprobar` y `PATCH /api/ordenes-compra/{id}/recepcionar` ejecutan el ciclo de órdenes de compra e ingreso idempotente a inventario con valorización por costo promedio ponderado.
+- `GET /api/inventario/valorizacion` y `GET /api/inventario/costos-ventas` exponen la valorización de existencias y el costo histórico de entregas/devoluciones exclusivamente para `ADMINISTRADOR`.
 
 En desarrollo local (`edusaldo.swagger.public=true`), los cuatro microservicios exponen su interfaz de documentación en `/swagger-ui.html` y `/api-docs` configurada con `OpenApiConfig` apuntando a `http://localhost:8090` y esquema `bearerAuth` (JWT), mientras mantienen bloqueado con `401` cualquier acceso directo a `/api/**` sin `X-Internal-Key`. En el perfil `prod` (`application-prod.yml`), Swagger queda deshabilitado y los secretos deben suministrarse obligatoriamente por variables de entorno.
 

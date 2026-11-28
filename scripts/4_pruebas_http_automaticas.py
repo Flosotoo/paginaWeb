@@ -253,7 +253,7 @@ class Scenario:
         marker = uuid.uuid4().hex[:12]
         category, _ = self.call('POST', '/api/categorias', 201, {'nombre': 'Prueba ' + marker, 'descripcion': 'Datos de prueba'}, 'admin')
         category_id = self.ident(category)
-        product, _ = self.call('POST', '/api/productos', 201, {'categoriaId': category_id, 'sku': 'TEST-' + marker, 'nombre': 'Cuaderno de prueba', 'cursoNivel': 'Todos', 'precio': 1000, 'stockInicial': 5, 'stockCritico': 1}, 'admin')
+        product, _ = self.call('POST', '/api/productos', 201, {'categoriaId': category_id, 'sku': 'TEST-' + marker, 'nombre': 'Cuaderno de prueba', 'cursoNivel': 'Todos', 'precio': 1000, 'stockInicial': 5, 'stockCritico': 1, 'costoUnitarioInicial': 600}, 'admin')
         self.product = self.ident(product)
         require(product.get('precio') == 1000 and product.get('stockFisico') == 5 and product.get('stockReservado') == 0, 'Producto creado con valores inesperados')
         self.account()
@@ -624,6 +624,42 @@ class Scenario:
         buscado, _ = self.call('GET', f'/api/usuarios/alumnos/buscar?rut={rut_alumno}', 200, role='staff')
         require(buscado.get('id') == nuevo_id, 'Alumno recién creado no fue encontrado en mesón')
 
+        # Importación masiva (equivalente a carga CSV) y verificación de saldo $0.
+        num_csv = 24000000 + int(uuid.uuid4().hex[:6], 16) % 1500000
+        tot_csv = sum(int(d) * (2 + idx % 6) for idx, d in enumerate(str(num_csv)[::-1]))
+        dv_csv = 11 - tot_csv % 11
+        rut_csv = f'{num_csv}-{("K" if dv_csv == 10 else "0" if dv_csv == 11 else dv_csv)}'
+        masiva, _ = self.call('POST', '/api/usuarios/alumnos/importacion-masiva', 201,
+                              [{**base_payload, 'rutAlumno': rut_csv, 'primerNombreAlumno': 'Nomina'}], 'admin')
+        require(isinstance(masiva, list) and len(masiva) == 1 and type(masiva[0].get('alumnoId')) is int,
+                'Importación masiva no creó el alumno esperado')
+        cuenta_csv, _ = self.call('GET', f'/api/saldos/cuenta/{masiva[0]["alumnoId"]}', 200, role='parent')
+        require(cuenta_csv.get('saldoActual') == 0, 'Alumno importado por nómina no inició con saldo cero')
+
+        # Primer acceso obligatorio y saneamiento de claves temporales en correos simulados.
+        num_enc = 18000000 + int(uuid.uuid4().hex[:6], 16) % 900000
+        tot_enc = sum(int(d) * (2 + idx % 6) for idx, d in enumerate(str(num_enc)[::-1]))
+        dv_enc = 11 - tot_enc % 11
+        rut_enc = f'{num_enc}-{("K" if dv_enc == 10 else "0" if dv_enc == 11 else dv_enc)}'
+        correo_enc = f'enc.{uuid.uuid4().hex[:8]}@colegio.cl'
+        creado_enc, _ = self.call('POST', '/api/usuarios', 201,
+                                  {'rut': rut_enc, 'primerNombre': 'Nuevo', 'primerApellido': 'Encargado',
+                                   'correo': correo_enc, 'rol': 'ENCARGADO'}, 'admin')
+        temp_pwd = creado_enc.get('tempPassword')
+        require(isinstance(temp_pwd, str) and len(temp_pwd) >= 8, 'Alta de usuario no entregó clave temporal única')
+        bandeja, _ = self.call('GET', '/api/auth/correos-simulados', 200, role='admin')
+        require(all(temp_pwd not in str(m.get('contenido', '')) for m in bandeja),
+                'La clave temporal quedó expuesta en correos simulados')
+        self.login('primer_acceso', correo_enc, temp_pwd, 'ENCARGADO')
+        require(self.sessions['primer_acceso'].get('estado') == 'PRIMER_ACCESO', 'Usuario nuevo no entró en PRIMER_ACCESO')
+        self.call('GET', '/api/productos', 403, role='primer_acceso')
+        nueva_pwd = 'ClaveDefinitiva2026!'
+        self.call('POST', '/api/auth/cambiar-password', 200,
+                  {'identificador': correo_enc, 'passwordActual': temp_pwd, 'passwordNueva': nueva_pwd}, 'primer_acceso')
+        self.login('primer_acceso', correo_enc, nueva_pwd, 'ENCARGADO')
+        require(self.sessions['primer_acceso'].get('estado') == 'ACTIVA', 'Cambio de clave inicial no activó la cuenta')
+        self.call('GET', '/api/productos', 200, role='primer_acceso')
+
     def liquidation(self):
         before = self.account()
         constancias_previas, _ = self.call('GET', '/api/saldos/constancias', 200, role='admin')
@@ -784,6 +820,32 @@ class Scenario:
         reintento, _ = self.call('PATCH', f'/api/ordenes-compra/{oc_id}/recepcionar', 200, role='staff')
         require(reintento.get('estado') == 'RECIBIDA' and self.stock() == stock_despues,
                 'Reintento de recepción duplicó el ingreso de stock')
+        # Restricción RBAC de valorización/costos y devolución a costo histórico tras cambio de CPP
+        for ruta_costo in ('/api/inventario/valorizacion', '/api/inventario/costos-ventas'):
+            self.call('GET', ruta_costo, 403, role='staff')
+            self.call('GET', ruta_costo, 403, role='parent')
+        val, _ = self.call('GET', '/api/inventario/valorizacion', 200, role='admin')
+        require(isinstance(val, dict) and val.get('sinCosto') == 0 and val.get('total') is not None,
+                'Valorización de inventario no reportó costos completos')
+        entrega_hist, _ = self.call('POST', '/api/entregas/meson', 201,
+                                    {'alumnoId': self.child, 'items': [{'productoId': self.product, 'cantidad': 1}]}, 'staff')
+        ent_hist_id = self.ident(entrega_hist)
+        det_hist_id = self.ident(entrega_hist['items'][0])
+        oc2, _ = self.call('POST', '/api/ordenes-compra', 201,
+                           {'proveedorId': prov_id, 'observacion': 'Segundo lote a mayor costo',
+                            'detalles': [{'productoId': self.product, 'cantidad': 2, 'precioUnitario': 1200}]}, 'staff')
+        oc2_id = self.ident(oc2)
+        self.call('PATCH', f'/api/ordenes-compra/{oc2_id}/aprobar', 200, role='admin')
+        self.call('PATCH', f'/api/ordenes-compra/{oc2_id}/recepcionar', 200, role='staff')
+        dev_hist, _ = self.call('POST', '/api/devoluciones', 201,
+                                {'entregaId': ent_hist_id, 'motivo': 'Prueba costo histórico',
+                                 'items': [{'detalleEntregaId': det_hist_id, 'cantidad': 1}]}, 'staff')
+        dev_hist_id = self.ident(dev_hist)
+        costos_movs, _ = self.call('GET', '/api/inventario/costos-ventas', 200, role='admin')
+        c_ent = next((c for c in costos_movs if c.get('tipo') == 'ENTREGA' and c.get('entregaId') == ent_hist_id), None)
+        c_dev = next((c for c in costos_movs if c.get('tipo') == 'DEVOLUCION' and c.get('devolucionId') == dev_hist_id), None)
+        require(c_ent is not None and c_dev is not None and float(c_ent['costoTotal']) == float(c_dev['costoTotal']),
+                'La devolución no utilizó el costo histórico exacto de la entrega original')
 
     def entrega_meson_y_circuito_familiar(self):
         antes_cuenta, antes_stock = self.account(), self.stock()
@@ -832,6 +894,8 @@ class Scenario:
             expect_status(status_internal, 401)
             status_docs, _, _ = direct.request('GET', '/swagger-ui/index.html')
             expect_status(status_docs, 200)
+            status_openapi, _, _ = direct.request('GET', '/api-docs')
+            expect_status(status_openapi, 200)
 
 
 def main():

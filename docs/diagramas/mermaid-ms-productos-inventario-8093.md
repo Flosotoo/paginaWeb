@@ -20,6 +20,7 @@ class Producto {
   +String descripcion
   +String cursoNivel
   +int precio
+  +BigDecimal valorStockCosto
   +int stockFisico
   +int stockReservado
   +int stockCritico
@@ -117,6 +118,7 @@ class MovimientoInventario {
   +Long id
   +TipoMovimientoInventario tipo
   +int variacionFisica
+  +BigDecimal costoTotal
   +int variacionReservada
   +int stockResultante
   +Long responsableId

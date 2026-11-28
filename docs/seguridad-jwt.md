@@ -61,6 +61,7 @@ sequenceDiagram
 | Entregas en mesón e historiales globales (`POST /api/entregas/meson`, `GET /api/entregas/historial`, `/dia`, `GET /api/devoluciones`) | Sí | Sí | No (`403`) | No (`403`) |
 | Proveedores (`GET /api/proveedores*` y modificaciones) | Lectura y escritura | Solo lectura | No (`403`) | No (`403`) |
 | Órdenes de compra (listar, crear, recepcionar / aprobar) | Todo (incl. aprobar) | Listar, crear y recepcionar (`403` aprobar) | No (`403`) | No (`403`) |
+| Valorización y costos de ventas (`GET /api/inventario/valorizacion`, `/costos-ventas`) | Sí (su colegio) | No (`403`) | No (`403`) | No (`403`) |
 | Usuarios, configuración, auditoría y aprobación de ajustes | Sí (su colegio) | No (`403`) | No (`403`) | No (`403`) |
 
 Las cuentas en estado `PRIMER_ACCESO` solo pueden consultar su sesión, cambiar la contraseña, aceptar el consentimiento y cerrar sesión.
@@ -69,7 +70,7 @@ Las cuentas en estado `PRIMER_ACCESO` solo pueden consultar su sesión, cambiar 
 
 Los cuatro microservicios validan cada petición con `InternalAccessFilter`:
 - Cualquier llamada directa a `/api/**` o `/internal/**` sin una clave `X-Internal-Key` válida responde `401`.
-- En desarrollo local, Swagger (`/swagger-ui.html`, `/v3/api-docs`) queda habilitado en solo lectura (`GET`) con `edusaldo.swagger.public=true` (apagado en el perfil `prod`) y configurado para probar contra `http://localhost:8090` usando `bearerAuth`.
+- En desarrollo local, Swagger (`/swagger-ui.html`, `/api-docs`) queda habilitado en solo lectura (`GET`) con `edusaldo.swagger.public=true` (apagado en el perfil `prod`) y configurado para probar contra `http://localhost:8090` usando `bearerAuth`.
 
 ## 6. Cómo comprobarlo
 
