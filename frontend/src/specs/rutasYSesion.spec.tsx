@@ -102,7 +102,8 @@ describe("RutaProtegida (<Outlet />), LayoutPortal y SesionContext con mocks", (
       obtenerMenuPorRol("ENCARGADO").some(([id]) => id === "inventario"),
     ).toBeTrue();
     expect(obtenerMenuPorRol("ENCARGADO").some(([id]) => id === "gestion-compras")).toBeFalse();
-    expect(obtenerMenuPorRol("ADMINISTRADOR").some(([id]) => id === "gestion-compras")).toBeFalse();
+    expect(obtenerMenuPorRol("ADMINISTRADOR").some(([id]) => id === "gestion-compras")).toBeTrue();
+    expect(obtenerMenuPorRol("ADMINISTRADOR").some(([id]) => id === "reservas")).toBeTrue();
     expect(
       obtenerMenuPorRol("ALUMNO").some(([id]) => id === "catalogo"),
     ).toBeTrue();
@@ -149,7 +150,7 @@ describe("RutaProtegida (<Outlet />), LayoutPortal y SesionContext con mocks", (
       expect(screen.getByTestId("vista-familia")).not.toBeNull();
     });
     expect(screen.queryByTestId("vista-interno")).toBeNull();
-    expect(screen.getByText("Carlos Pérez")).not.toBeNull();
+    expect(screen.getByLabelText("Menú personal de Carlos")).not.toBeNull();
 
     const toggleMenu = screen.getByRole("button", { name: /abrir menú/i });
     fireEvent.click(toggleMenu);

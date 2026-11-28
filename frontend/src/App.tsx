@@ -28,6 +28,7 @@ import "./portal.css";
 const SECCIONES_ADMIN_ADICIONALES = [
   "personas",
   "reservas",
+  "configuracion",
   "auditoria",
   "correcciones",
   "privacidad",

@@ -43,6 +43,8 @@ describe("protección de rutas con React Router (<Outlet />) por sesión y rol",
     expect(resolverSeccionPermitida("APODERADO", "#catalogo")).toBe("catalogo");
     expect(resolverSeccionPermitida("ADMINISTRADOR", "#entregas")).toBe("inicio");
     expect(resolverSeccionPermitida("ADMINISTRADOR", "#personas")).toBe("personas");
+    expect(resolverSeccionPermitida("ADMINISTRADOR", "#configuracion")).toBe("configuracion");
+    expect(resolverSeccionPermitida("ENCARGADO", "#configuracion")).toBe("inicio");
   });
 
   it("redirige a /acceso y no renderiza portales cuando no hay sesión", async () => {

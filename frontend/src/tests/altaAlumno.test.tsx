@@ -35,7 +35,7 @@ describe("AltaAlumnoForm (preservación, validaciones y modos)", () => {
     fireEvent.change(inputFecha, { target: { value: "2035-01-01" } }); // futura
     fireEvent.change(inputCurso, { target: { value: "7° Básico A" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /matricular alumno/i }));
+    fireEvent.click(screen.getByRole("button", { name: /registrar alumno/i }));
 
     expect(crear).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(/revisa los campos/i);
@@ -91,7 +91,7 @@ describe("AltaAlumnoForm (preservación, validaciones y modos)", () => {
     fireEvent.change(selectApoderado, { target: { value: "3" } });
 
     // Primer envío: el servidor devuelve error -> NO debe limpiar ningún campo.
-    fireEvent.click(screen.getByRole("button", { name: /matricular alumno/i }));
+    fireEvent.click(screen.getByRole("button", { name: /registrar alumno/i }));
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(/ya está registrado/i),
     );
@@ -99,7 +99,7 @@ describe("AltaAlumnoForm (preservación, validaciones y modos)", () => {
     expect(inputCurso).toHaveValue("7° Básico A");
 
     // Segundo envío: el servidor confirma 201 -> muestra correo institucional y limpia formulario.
-    fireEvent.click(screen.getByRole("button", { name: /matricular alumno/i }));
+    fireEvent.click(screen.getByRole("button", { name: /registrar alumno/i }));
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(
         /lucas\.perez@alumnos\.colegio\.cl/i,
@@ -151,7 +151,7 @@ describe("AltaAlumnoForm (preservación, validaciones y modos)", () => {
       target: { value: "camila@test.cl" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /matricular alumno/i }));
+    fireEvent.click(screen.getByRole("button", { name: /registrar alumno/i }));
     expect(crear).not.toHaveBeenCalled();
     expect(
       screen.getAllByText(/no pueden ser iguales/i).length,

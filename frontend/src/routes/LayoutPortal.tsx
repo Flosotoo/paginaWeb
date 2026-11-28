@@ -63,8 +63,8 @@ export function LayoutPortal() {
                 <summary aria-label={`Menú personal de ${nombreCorto}`} style={{ cursor: "pointer", color: "white", display: "flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap", listStyle: "none" }}>
                   <span>{nombreCorto}</span><span aria-hidden="true">▾</span>
                 </summary>
-                <div style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#fffcf7", padding: "12px", minWidth: "180px", borderRadius: "8px", display: "grid", gap: "8px" }}>
-                  {[["correcciones", "Mis datos"], ["privacidad", "Privacidad y seguridad"]].map(([id, texto]) => (
+                <div style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#fffcf7", padding: "12px", minWidth: "190px", borderRadius: "8px", display: "grid", gap: "8px" }}>
+                  {[...(esAdmin ? [["configuracion", "Configuración y auditoría"]] : []), ["correcciones", "Mis datos"], ["privacidad", "Privacidad y seguridad"]].map(([id, texto]) => (
                     <NavLink key={id} to={`${prefijo}/${id}`} style={{ color: "#193f35" }} onClick={e => { e.currentTarget.closest("details")?.removeAttribute("open"); setMenuAbierto(false); }}>{texto}</NavLink>
                   ))}
                 </div>

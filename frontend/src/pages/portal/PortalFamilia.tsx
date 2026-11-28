@@ -120,7 +120,7 @@ export function PortalFamilia({ seccion, setSeccion }: PortalFamiliaProps) {
   }, [esApoderado, tokenPago, seccion, setSeccion]);
   const volverOpciones = () => setSeccion(esApoderado ? "opciones" : "cuenta");
   const opciones = [
-    ["abonar", "Abonar saldo", "Agregar dinero a su cuenta", "＋"],
+    ["abonar", "Abonar saldo", "Agregar dinero a su cuenta", "$"],
     ["catalogo", "Reservar materiales", "Consultar catálogo y reservar", "🛒"],
     ["reservas", "Revisar reservas", "Consultar estado de pedidos", "▤"],
     ["movimientos", "Revisar movimientos", "Consultar cartola", "↔"],

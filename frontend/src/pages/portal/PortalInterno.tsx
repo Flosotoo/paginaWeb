@@ -337,6 +337,7 @@ export function PortalInterno({ seccion, setSeccion }: PortalInternoProps) {
                 ["pagos", "Pagos", "$", "Consultar abonos y pagos Webpay"],
                 ["personas", "Usuarios y alumnos", "♙", "Administrar usuarios y sus vínculos"],
                 ["reservas", "Reservas", "☷", "Consultar y gestionar reservas"],
+                ["configuracion", "Configuración y auditoría", "⚙", "Parámetros, políticas, auditoría y correos"],
               ] : [
                 ["reservas", "Reservas", "☷", "Preparar y entregar materiales"],
                 ["entregas", "Entrega directa", "↗", "Registrar entregas en mesón"],

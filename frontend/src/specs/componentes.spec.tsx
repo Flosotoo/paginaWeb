@@ -2,6 +2,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AlertaMensaje } from "../components/AlertaMensaje";
 import { BotonAccion } from "../components/BotonAccion";
+import { ModalConfirmacion } from "../components/ModalConfirmacion";
+import { ModalCredenciales } from "../components/ModalCredenciales";
 import { TablaResponsiva } from "../components/TablaResponsiva";
 import { TarjetaAlumno } from "../components/TarjetaAlumno";
 import { TarjetaResumen } from "../components/TarjetaResumen";
@@ -192,6 +194,85 @@ describe("Componentes reutilizables EduSaldo (Props, Estado y Bootstrap)", () =>
 
       fireEvent.click(boton);
       expect(onSeleccionar).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("ModalConfirmacion y ModalCredenciales", () => {
+    it("exige motivo antes de confirmar, reporta fallo controlado y cierra al completar", async () => {
+      const cerrar = jasmine.createSpy("cerrar");
+      let rechazarPrimero = true;
+      const ejecutar = jasmine.createSpy("ejecutar").and.callFake(async () => {
+        if (rechazarPrimero) {
+          rechazarPrimero = false;
+          throw new Error("fallo");
+        }
+      });
+
+      render(
+        <ModalConfirmacion
+          cerrar={cerrar}
+          solicitud={{
+            titulo: "Rechazar ajuste",
+            mensaje: "Confirma el rechazo del ajuste.",
+            detalle: "Ajuste #12",
+            accion: "Confirmar rechazo",
+            motivo: true,
+            advertencia: true,
+            ejecutar,
+          }}
+        />,
+      );
+
+      const botonConfirmar = screen.getByRole("button", {
+        name: "Confirmar rechazo",
+      });
+      expect(botonConfirmar.hasAttribute("disabled")).toBeTrue();
+
+      const areaMotivo = screen.getByRole("textbox");
+      fireEvent.change(areaMotivo, { target: { value: "Diferencia no cuadrada" } });
+      expect(botonConfirmar.hasAttribute("disabled")).toBeFalse();
+
+      fireEvent.click(botonConfirmar);
+      await waitFor(() => {
+        if (!screen.queryByRole("alert")) {
+          throw new Error("Esperando alerta de error");
+        }
+      });
+      expect(cerrar).not.toHaveBeenCalled();
+
+      fireEvent.click(botonConfirmar);
+      await waitFor(() => {
+        if (cerrar.calls.count() === 0) {
+          throw new Error("Esperando cierre tras éxito");
+        }
+      });
+      expect(ejecutar).toHaveBeenCalledWith("Diferencia no cuadrada");
+    });
+
+    it("oculta claves temporales por defecto, permite revelarlas y limpia al finalizar", () => {
+      const finalizar = jasmine.createSpy("finalizar");
+      render(
+        <ModalCredenciales
+          finalizar={finalizar}
+          credenciales={[
+            {
+              nombre: "Ana Soto",
+              identificador: "ana.soto@colegio.cl",
+              clave: "Edu1!ClaveTemporal99",
+            },
+          ]}
+        />,
+      );
+
+      expect(document.body.textContent).not.toContain("Edu1!ClaveTemporal99");
+      fireEvent.click(screen.getByRole("button", { name: "Mostrar" }));
+      expect(document.body.textContent).toContain("Edu1!ClaveTemporal99");
+
+      fireEvent.click(screen.getByRole("button", { name: "Ocultar" }));
+      expect(document.body.textContent).not.toContain("Edu1!ClaveTemporal99");
+
+      fireEvent.click(screen.getByRole("button", { name: "Finalizar" }));
+      expect(finalizar).toHaveBeenCalledTimes(1);
     });
   });
 });
