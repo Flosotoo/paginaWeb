@@ -552,6 +552,10 @@ class GatewayBoundaryTest {
           esAdmin,
           policy.authorize("/api/inventario/costos-ventas", "GET", empty, who).block(),
           role + " GET /api/inventario/costos-ventas");
+      assertEquals(
+          esAdmin,
+          policy.authorize("/api/auth/correos-simulados", "GET", empty, who).block(),
+          role + " GET /api/auth/correos-simulados");
     }
   }
 }

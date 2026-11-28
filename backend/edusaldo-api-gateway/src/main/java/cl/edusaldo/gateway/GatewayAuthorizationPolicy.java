@@ -92,11 +92,10 @@ public class GatewayAuthorizationPolicy {
                 "/api/auth/sesion",
                 "/api/auth/cambiar-password",
                 "/api/auth/cerrar-sesion",
-                "/api/auth/correos-simulados",
                 "/api/consentimiento")
             .contains(path)) return Mono.just(false);
     if (path.startsWith("/api/auth/")
-        && Set.of("/api/auth/sesion", "/api/auth/cerrar-sesion", "/api/auth/correos-simulados")
+        && Set.of("/api/auth/sesion", "/api/auth/cerrar-sesion")
             .contains(path)) return Mono.just(true);
     if (path.startsWith("/api/consentimiento")) {
       if (body.hasNonNull("usuarioId")
@@ -162,6 +161,7 @@ public class GatewayAuthorizationPolicy {
     String role = who.path("rol").asText();
     long uid = who.path("usuarioId").asLong();
     if (path.startsWith("/api/auditoria")
+        || path.equals("/api/auth/correos-simulados")
         || path.startsWith("/api/parametros")
         || path.startsWith("/api/politica-acceso")
         || path.startsWith("/api/configuracion")
