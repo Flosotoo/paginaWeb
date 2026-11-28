@@ -75,6 +75,9 @@ public class CorreoSimulado {
   }
 
   public String getContenido() {
+    if ("CLAVE_TEMPORAL".equals(tipo)) {
+      return "Credencial temporal generada; no se conserva su valor.";
+    }
     return contenido;
   }
 

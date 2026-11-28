@@ -95,6 +95,35 @@ public class GlobalExceptionHandler {
                 ex.getReason() == null ? "Acceso rechazado" : ex.getReason()));
   }
 
+  @ExceptionHandler({
+    org.springframework.web.bind.MissingServletRequestParameterException.class,
+    org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class
+  })
+  public ResponseEntity<Map<String, Object>> handleInvalidParameter(Exception ex) {
+    return ResponseEntity.badRequest()
+        .body(Map.of("status", 400, "message", "Parámetros requeridos ausentes o inválidos"));
+  }
+
+  @ExceptionHandler(org.springframework.web.ErrorResponseException.class)
+  public ResponseEntity<Map<String, Object>> springErrorResponse(
+      org.springframework.web.ErrorResponseException ex) {
+    return ResponseEntity.status(ex.getStatusCode())
+        .body(Map.of("status", ex.getStatusCode().value(), "message", ex.getMessage()));
+  }
+
+  @ExceptionHandler({
+    org.springframework.web.HttpRequestMethodNotSupportedException.class,
+    org.springframework.web.HttpMediaTypeNotSupportedException.class,
+    org.springframework.web.servlet.resource.NoResourceFoundException.class
+  })
+  public ResponseEntity<Map<String, Object>> methodOrMediaNotSupported(
+      jakarta.servlet.ServletException ex) {
+    org.springframework.http.HttpStatusCode code =
+        ((org.springframework.web.ErrorResponse) ex).getStatusCode();
+    return ResponseEntity.status(code)
+        .body(Map.of("status", code.value(), "message", ex.getMessage()));
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
     Map<String, Object> err = new HashMap<>();

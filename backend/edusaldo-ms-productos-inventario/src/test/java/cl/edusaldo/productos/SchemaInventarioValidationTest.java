@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import cl.edusaldo.productos.config.RequestContext;
 import cl.edusaldo.productos.dto.CrearOrdenCompraDTO;
+import cl.edusaldo.productos.dto.ReingresarStockDTO;
 import cl.edusaldo.productos.model.Proveedor;
+import cl.edusaldo.productos.service.InventarioService;
 import cl.edusaldo.productos.service.OrdenCompraService;
 import cl.edusaldo.productos.service.ProveedorService;
+import java.math.BigDecimal;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -79,6 +82,7 @@ class SchemaInventarioValidationTest {
 
   @Autowired ProveedorService proveedorService;
   @Autowired OrdenCompraService ordenCompraService;
+  @Autowired InventarioService inventarioService;
   @Autowired org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
   @AfterEach
@@ -145,6 +149,23 @@ class SchemaInventarioValidationTest {
         stockInicial + 5,
         jdbcTemplate.queryForObject(
             "SELECT stock_fisico FROM productos WHERE id = 1", Integer.class));
+
+    // La valorización de semillas + recepción reporta 0 productos sin costo
+    var valorizacion = inventarioService.valorizacion();
+    assertEquals(0, valorizacion.sinCosto());
+    assertNotNull(valorizacion.total());
+
+    // Una devolución de la entrega semilla (entrega_id=1, costo unitario histórico 950)
+    // debe reingresar a 950 aunque la recepción reciente (1190 c/u) haya elevado el CPP.
+    ReingresarStockDTO devolucion = new ReingresarStockDTO(1L, 1, 99L, 1L);
+    devolucion.setEntregaId(1L);
+    inventarioService.reingresarStockPorDevolucion(devolucion);
+    BigDecimal costoDevolucion =
+        jdbcTemplate.queryForObject(
+            "SELECT costo_total FROM movimientos_inventario WHERE devolucion_id = 99",
+            BigDecimal.class);
+    assertNotNull(costoDevolucion);
+    assertEquals(0, new BigDecimal("950").compareTo(costoDevolucion));
 
     assertThrows(NoSuchElementException.class, () -> ordenCompraService.obtener(999999L));
   }

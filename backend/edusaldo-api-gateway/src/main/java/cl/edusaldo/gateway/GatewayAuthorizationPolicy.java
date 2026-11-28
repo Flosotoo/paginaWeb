@@ -217,7 +217,11 @@ public class GatewayAuthorizationPolicy {
         && write
         && !admin(who)) return Mono.just(false);
     if (path.startsWith("/api/inventario")
-        && (path.endsWith("/aprobar") || path.endsWith("/rechazar") || path.endsWith("/resolver"))
+        && (path.endsWith("/aprobar")
+            || path.endsWith("/rechazar")
+            || path.endsWith("/resolver")
+            || path.equals("/api/inventario/valorizacion")
+            || path.equals("/api/inventario/costos-ventas"))
         && !admin(who)) return Mono.just(false);
     if (write
         && body.has("idEstablecimiento")

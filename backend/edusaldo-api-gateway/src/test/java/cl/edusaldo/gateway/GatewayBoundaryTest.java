@@ -544,6 +544,14 @@ class GatewayBoundaryTest {
           esStaff,
           policy.authorize("/api/entregas/meson", "POST", empty, who).block(),
           role + " POST /api/entregas/meson");
+      assertEquals(
+          esAdmin,
+          policy.authorize("/api/inventario/valorizacion", "GET", empty, who).block(),
+          role + " GET /api/inventario/valorizacion");
+      assertEquals(
+          esAdmin,
+          policy.authorize("/api/inventario/costos-ventas", "GET", empty, who).block(),
+          role + " GET /api/inventario/costos-ventas");
     }
   }
 }
